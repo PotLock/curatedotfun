@@ -1,13 +1,14 @@
 import { and, eq, sql } from "drizzle-orm";
 import { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { Moderation, TwitterSubmission } from "types/twitter";
 import {
+  feedPlugins,
+  feeds,
   moderationHistory,
   submissionCounts,
-  submissions,
-  feeds,
   submissionFeeds,
+  submissions
 } from "./schema";
-import { Moderation, TwitterSubmission } from "types/twitter";
 
 export function upsertFeed(
   db: BunSQLiteDatabase,
@@ -172,11 +173,11 @@ export function getSubmission(
     submittedAt: result.submittedAt,
     moderationHistory: result.moderationHistory
       ? JSON.parse(`[${result.moderationHistory}]`)
-          .filter((m: any) => m !== null)
-          .map((m: any) => ({
-            ...m,
-            timestamp: new Date(m.timestamp),
-          }))
+        .filter((m: any) => m !== null)
+        .map((m: any) => ({
+          ...m,
+          timestamp: new Date(m.timestamp),
+        }))
       : [],
   };
 }
@@ -223,11 +224,11 @@ export function getSubmissionByAcknowledgmentTweetId(
     submittedAt: result.submittedAt,
     moderationHistory: result.moderationHistory
       ? JSON.parse(`[${result.moderationHistory}]`)
-          .filter((m: any) => m !== null)
-          .map((m: any) => ({
-            ...m,
-            timestamp: new Date(m.timestamp),
-          }))
+        .filter((m: any) => m !== null)
+        .map((m: any) => ({
+          ...m,
+          timestamp: new Date(m.timestamp),
+        }))
       : [],
   };
 }
@@ -268,11 +269,11 @@ export function getAllSubmissions(db: BunSQLiteDatabase): TwitterSubmission[] {
     submittedAt: result.submittedAt,
     moderationHistory: result.moderationHistory
       ? JSON.parse(result.moderationHistory)
-          .filter((m: any) => m !== null)
-          .map((m: any) => ({
-            ...m,
-            timestamp: new Date(m.timestamp),
-          }))
+        .filter((m: any) => m !== null)
+        .map((m: any) => ({
+          ...m,
+          timestamp: new Date(m.timestamp),
+        }))
       : [],
   }));
 }
@@ -317,11 +318,11 @@ export function getSubmissionsByStatus(
     submittedAt: result.submittedAt,
     moderationHistory: result.moderationHistory
       ? JSON.parse(result.moderationHistory)
-          .filter((m: any) => m !== null)
-          .map((m: any) => ({
-            ...m,
-            timestamp: new Date(m.timestamp),
-          }))
+        .filter((m: any) => m !== null)
+        .map((m: any) => ({
+          ...m,
+          timestamp: new Date(m.timestamp),
+        }))
       : [],
   }));
 }
@@ -408,6 +409,46 @@ export function removeFromSubmissionFeed(
     );
 }
 
+// Feed Plugin queries
+export function getFeedPlugin(
+  db: BunSQLiteDatabase,
+  feedId: string,
+  pluginId: string,
+) {
+  return db
+    .select()
+    .from(feedPlugins)
+    .where(
+      and(
+        eq(feedPlugins.feedId, feedId),
+        eq(feedPlugins.pluginId, pluginId)
+      )
+    )
+    .get();
+}
+
+export function upsertFeedPlugin(
+  db: BunSQLiteDatabase,
+  feedId: string,
+  pluginId: string,
+  config: Record<string, any>
+) {
+  return db
+    .insert(feedPlugins)
+    .values({
+      feedId,
+      pluginId,
+      config: JSON.stringify(config),
+    })
+    .onConflictDoUpdate({
+      target: [feedPlugins.feedId, feedPlugins.pluginId],
+      set: {
+        config: JSON.stringify(config),
+        updatedAt: new Date().toISOString(),
+      },
+    });
+}
+
 export function getSubmissionsByFeed(
   db: BunSQLiteDatabase,
   feedId: string,
@@ -452,11 +493,11 @@ export function getSubmissionsByFeed(
     submittedAt: result.submittedAt,
     moderationHistory: result.moderationHistory
       ? JSON.parse(result.moderationHistory)
-          .filter((m: any) => m !== null)
-          .map((m: any) => ({
-            ...m,
-            timestamp: new Date(m.timestamp),
-          }))
+        .filter((m: any) => m !== null)
+        .map((m: any) => ({
+          ...m,
+          timestamp: new Date(m.timestamp),
+        }))
       : [],
   }));
 }

@@ -1,13 +1,7 @@
 import { Scraper, SearchMode, Tweet } from "agent-twitter-client";
+import { TwitterCookie } from "types/twitter";
 import { logger } from "../../utils/logger";
-import {
-  TwitterCookie,
-  cacheCookies,
-  ensureCacheDirectory,
-  getCachedCookies,
-  getLastCheckedTweetId,
-  saveLastCheckedTweetId,
-} from "../../utils/cache";
+import { db } from "../db";
 
 export class TwitterService {
   private client: Scraper;
@@ -19,19 +13,18 @@ export class TwitterService {
       username: string;
       password: string;
       email: string;
+      twoFactorSecret?: string;
     },
   ) {
     this.client = new Scraper();
     this.twitterUsername = config.username;
   }
 
-  private async setCookiesFromArray(cookiesArray: TwitterCookie[]) {
-    const cookieStrings = cookiesArray.map(
+  private async setCookiesFromArray(cookies: TwitterCookie[]) {
+    const cookieStrings = cookies.map(
       (cookie) =>
-        `${cookie.key}=${cookie.value}; Domain=${cookie.domain}; Path=${cookie.path}; ${
-          cookie.secure ? "Secure" : ""
-        }; ${cookie.httpOnly ? "HttpOnly" : ""}; SameSite=${
-          cookie.sameSite || "Lax"
+        `${cookie.name}=${cookie.value}; Domain=${cookie.domain}; Path=${cookie.path}; ${cookie.secure ? "Secure" : ""
+        }; ${cookie.httpOnly ? "HttpOnly" : ""}; SameSite=${cookie.sameSite || "Lax"
         }`,
     );
     await this.client.setCookies(cookieStrings);
@@ -39,17 +32,14 @@ export class TwitterService {
 
   async initialize() {
     try {
-      // Ensure cache directory exists
-      await ensureCacheDirectory();
-
       // Check for cached cookies
-      const cachedCookies = await getCachedCookies(this.twitterUsername);
+      const cachedCookies = db.getTwitterCookies(this.twitterUsername);
       if (cachedCookies) {
         await this.setCookiesFromArray(cachedCookies);
       }
 
       // Load last checked tweet ID from cache
-      this.lastCheckedTweetId = await getLastCheckedTweetId();
+      this.lastCheckedTweetId = db.getTwitterCacheValue("last_tweet_id");
 
       // Try to login with retries
       logger.info("Attempting Twitter login...");
@@ -59,12 +49,22 @@ export class TwitterService {
             this.config.username,
             this.config.password,
             this.config.email,
+            this.config.twoFactorSecret
           );
 
           if (await this.client.isLoggedIn()) {
             // Cache the new cookies
             const cookies = await this.client.getCookies();
-            await cacheCookies(this.config.username, cookies);
+            const formattedCookies = cookies.map(cookie => ({
+              name: cookie.key,
+              value: cookie.value,
+              domain: cookie.domain,
+              path: cookie.path,
+              secure: cookie.secure,
+              httpOnly: cookie.httpOnly,
+              sameSite: cookie.sameSite as "Strict" | "Lax" | "None" | undefined,
+            }));
+            db.setTwitterCookies(this.config.username, formattedCookies);
             break;
           }
         } catch (error) {
@@ -154,7 +154,7 @@ export class TwitterService {
 
   async setLastCheckedTweetId(tweetId: string) {
     this.lastCheckedTweetId = tweetId;
-    await saveLastCheckedTweetId(tweetId);
+    db.setTwitterCacheValue("last_tweet_id", tweetId);
     logger.info(`Last checked tweet ID updated to: ${tweetId}`);
   }
 

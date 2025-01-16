@@ -1,10 +1,10 @@
-# fly.toml app configuration file generated for public-goods-news-quiet-wildflower-8563 on 2024-12-18T14:47:13-06:00
+# fly.toml app configuration file generated for curatedotfun on 2025-01-15T13:48:42-07:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'public-goods-news-quiet-wildflower-8563'
-primary_region = 'lax'
+app = 'curatedotfun'
+primary_region = 'den'
 
 [build]
   dockerfile = 'Dockerfile'
@@ -13,8 +13,8 @@ primary_region = 'lax'
   PORT = '3000'
 
 [[mounts]]
-  source = 'data'
-  destination = '/.data'
+  source = "litefs"
+  destination = "/var/lib/litefs"
   initial_size = '1GB'
 
 [http_service]
@@ -29,3 +29,4 @@ primary_region = 'lax'
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
+  

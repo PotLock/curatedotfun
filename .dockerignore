@@ -79,3 +79,8 @@ frontend/**/*.sw?
 # flyctl launch added from node_modules/tailwindcss/stubs/.gitignore
 !node_modules/tailwindcss/stubs/**/*
 fly.toml
+
+# workspace
+landing-page
+docs
+.github

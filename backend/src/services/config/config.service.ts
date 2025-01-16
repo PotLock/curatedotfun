@@ -9,8 +9,8 @@ export class ConfigService {
   private configPath: string;
 
   private constructor() {
-    // Default to local config file path
-    this.configPath = path.resolve(process.cwd(), "../curate.config.json");
+    // Always look for config relative to the distribution directory
+    this.configPath = path.resolve(__dirname, "../../../../curate.config.json");
   }
 
   public static getInstance(): ConfigService {

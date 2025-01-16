@@ -6,6 +6,10 @@ import {
   text,
 } from "drizzle-orm/sqlite-core";
 
+// From exports/plugins
+export * from "../twitter/schema";
+export * from "../rss/schema";
+
 // Reusable timestamp columns
 const timestamps = {
   createdAt: text("created_at")
@@ -103,4 +107,21 @@ export const submissionCounts = table(
     ...timestamps,
   },
   (table) => [index("submission_counts_date_idx").on(table.lastResetDate)],
+);
+
+export const feedPlugins = table(
+  "feed_plugins",
+  {
+    feedId: text("feed_id")
+      .notNull()
+      .references(() => feeds.id, { onDelete: "cascade" }),
+    pluginId: text("plugin_id").notNull(),
+    config: text("config").notNull(), // JSON string of plugin-specific config
+    ...timestamps,
+  },
+  (table) => [
+    index("feed_plugins_feed_idx").on(table.feedId),
+    index("feed_plugins_plugin_idx").on(table.pluginId),
+    primaryKey({ columns: [table.feedId, table.pluginId] }), // Ensure one config per plugin per feed
+  ],
 );

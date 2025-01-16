@@ -1,7 +1,7 @@
 export interface DistributorPlugin {
   name: string;
-  initialize(config: Record<string, string>): Promise<void>;
-  distribute(content: string): Promise<void>;
+  initialize(feedId: string, config: Record<string, string>): Promise<void>;
+  distribute(feedId: string, content: string): Promise<void>;
   shutdown?(): Promise<void>;
 }
 
@@ -14,6 +14,8 @@ export interface TransformerPlugin {
 
 export type Plugin = DistributorPlugin | TransformerPlugin;
 
+import type { DBOperations } from "../services/db/operations";
+
 export interface PluginModule {
-  default: new () => Plugin;
+  default: new (dbOperations?: DBOperations) => Plugin;
 }

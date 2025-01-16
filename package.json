@@ -1,23 +1,21 @@
 {
-  "name": "public-goods-news",
+  "name": "curate-dot-fun",
   "private": true,
   "type": "module",
   "packageManager": "bun@1.0.27",
   "scripts": {
     "dev": "bunx turbo run dev",
     "build": "bunx turbo run build",
-    "start": "NODE_ENV=production bun run backend/dist/index.js",
+    "start": "NODE_ENV=production cd backend && bun run dist/index.js",
     "lint": "bunx turbo run lint",
-    "deploy:init": "fly launch",
-    "deploy:volumes": "fly volumes create sqlite --size 1 --region lax && fly volumes create cache --size 1 --region lax",
+    "deploy:init": "fly launch && fly consul attach",
     "deploy": "fly deploy",
     "fmt": "prettier --write '**/*.{js,jsx,ts,tsx,json}'",
     "fmt:check": "prettier --check '**/*.{js,jsx,ts,tsx,json}'"
   },
   "workspaces": [
     "frontend",
-    "backend",
-    "docs"
+    "backend"
   ],
   "devDependencies": {
     "turbo": "latest",

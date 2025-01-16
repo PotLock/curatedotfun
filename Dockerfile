@@ -1,52 +1,73 @@
-FROM oven/bun as deps
+## NOTE
+# This Dockerfile builds the frontend and backend separately,
+# frontend uses npm and backend requires bun.
+# This separation is a temporary solution for a Bun issue with rsbuild,
+# see: https://github.com/oven-sh/bun/issues/11628 
 
+# Frontend deps & build stage
+FROM node:20 as frontend-builder
 WORKDIR /app
 
-# Copy package files for all workspaces
-COPY package.json bun.lockb turbo.json ./
+# Copy frontend package files
 COPY frontend/package.json ./frontend/
+
+# Install frontend dependencies
+RUN cd frontend && npm install
+
+# Copy frontend source code
+COPY frontend ./frontend
+
+# Build frontend
+RUN cd frontend && npm run build
+
+# Backend deps & build stage
+FROM oven/bun as backend-builder
+WORKDIR /app
+
+# Copy backend package files
+COPY package.json ./
 COPY backend/package.json ./backend/
 
-# Install dependencies
-RUN bun install
+# Install backend dependencies
+RUN cd backend && bun install
 
-# Build stage
-FROM oven/bun as builder
-WORKDIR /app
+# Copy backend source code
+COPY backend ./backend
 
-# Set NODE_ENV for build process
-ENV NODE_ENV="production"
-
-# Copy all files from deps stage including node_modules
-COPY --from=deps /app ./
-
-# Copy source code
-COPY . .
-
-# Build both frontend and backend
-RUN bun run build
+# Build backend
+RUN cd backend && bun run build
 
 # Production stage
 FROM oven/bun as production
 WORKDIR /app
 
-# Create directory for mount with correct permissions
-RUN mkdir -p /.data/db /.data/cache && \
-    chown -R bun:bun /.data
+# Install LiteFS dependencies
+RUN apt-get update -y && apt-get install -y ca-certificates fuse3 sqlite3
 
-# Copy only necessary files from builder
-COPY --from=builder --chown=bun:bun /app/package.json /app/bun.lockb /app/turbo.json ./
-COPY --from=builder --chown=bun:bun /app/node_modules ./node_modules
-COPY --from=builder --chown=bun:bun /app/frontend/dist ./frontend/dist
-COPY --from=builder --chown=bun:bun /app/backend/dist ./backend/dist
+# Copy LiteFS binary
+COPY --from=flyio/litefs:0.5 /usr/local/bin/litefs /usr/local/bin/litefs
+
+# Create directories for mounts with correct permissions
+RUN mkdir -p /litefs /var/lib/litefs && \
+    chown -R bun:bun /litefs /var/lib/litefs
+
+# Create volume mount points
+# Copy only necessary files from builders
+COPY --from=backend-builder --chown=bun:bun /app/package.json ./
+COPY --chown=bun:bun curate.config.json ./
+
+COPY --from=frontend-builder --chown=bun:bun /app/frontend/dist ./frontend/dist
+COPY --from=backend-builder --chown=bun:bun /app/backend/dist ./backend/dist
 
 # Set environment variables
-ENV DATABASE_URL="file:/.data/db/sqlite.db"
-ENV CACHE_DIR="/.data/cache"
+ENV DATABASE_URL="file:/litefs/db"
 ENV NODE_ENV="production"
 
 # Expose the port
 EXPOSE 3000
 
-# Start the application using the production start script
-CMD ["bun", "run", "start"]
+# Copy LiteFS configuration
+COPY --chown=bun:bun litefs.yml /etc/litefs.yml
+
+# Start LiteFS (runs app with distributed file system for SQLite)
+ENTRYPOINT ["litefs", "mount"]

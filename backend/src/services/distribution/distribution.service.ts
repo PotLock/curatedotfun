@@ -6,6 +6,10 @@ import { db } from "../db";
 export class DistributionService {
   private plugins: Map<string, Plugin> = new Map();
 
+  getPlugin(name: string): Plugin | undefined {
+    return this.plugins.get(name);
+  }
+
   async initialize(config: PluginsConfig): Promise<void> {
     // Load all plugins
     for (const [name, pluginConfig] of Object.entries(config)) {
@@ -21,7 +25,9 @@ export class DistributionService {
     try {
       // Dynamic import of plugin from URL
       const module = (await import(config.url)) as PluginModule;
-      const plugin = new module.default();
+      
+      // Create plugin instance with database operations if needed
+      const plugin = new module.default(db.getOperations());
 
       // Store the plugin instance
       this.plugins.set(name, plugin);
@@ -56,6 +62,7 @@ export class DistributionService {
   }
 
   async distributeContent(
+    feedId: string,
     pluginName: string,
     content: string,
     config: Record<string, string>,
@@ -66,8 +73,18 @@ export class DistributionService {
     }
 
     try {
-      await plugin.initialize(config);
-      await plugin.distribute(content);
+      // Get plugin config
+      const storedPlugin = db.getFeedPlugin(feedId, pluginName);
+      if (!storedPlugin) {
+        // Store initial config
+        db.upsertFeedPlugin(feedId, pluginName, config);
+      } else {
+        // Use stored config
+        config = JSON.parse(storedPlugin.config);
+      }
+
+      await plugin.initialize(feedId, config);
+      await plugin.distribute(feedId, content);
     } catch (error) {
       logger.error(
         `Error distributing content with plugin ${pluginName}:`,
@@ -109,7 +126,12 @@ export class DistributionService {
 
     // Distribute to all configured outputs
     for (const dist of distribute) {
-      await this.distributeContent(dist.plugin, processedContent, dist.config);
+      await this.distributeContent(
+        feedId,
+        dist.plugin,
+        processedContent,
+        dist.config
+      );
     }
     if (!feed?.outputs.recap?.enabled) {
       // Remove from submission feed after successful distribution if no recap
@@ -158,7 +180,7 @@ export class DistributionService {
 
     // Distribute to all configured outputs
     for (const dist of distribute) {
-      await this.distributeContent(dist.plugin, processedContent, dist.config);
+      await this.distributeContent(feedId, dist.plugin, processedContent, dist.config);
     }
 
     // Remove from submission feed after successful recap

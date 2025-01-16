@@ -6,6 +6,7 @@ import { swagger } from "@elysiajs/swagger";
 import { DistributionService } from "services/distribution/distribution.service";
 import configService, { validateEnv } from "./config/config";
 import { db } from "./services/db";
+import RssPlugin from "./external/rss";
 import { SubmissionService } from "./services/submissions/submission.service";
 import { TwitterService } from "./services/twitter/client";
 import {
@@ -50,6 +51,7 @@ export async function main() {
       username: process.env.TWITTER_USERNAME!,
       password: process.env.TWITTER_PASSWORD!,
       email: process.env.TWITTER_EMAIL!,
+      twoFactorSecret: process.env.TWITTER_2FA_SECRET
     });
     await twitterService.initialize();
     succeedSpinner("twitter-init", "Twitter service initialized");
@@ -146,6 +148,10 @@ export async function main() {
         }
         return content;
       })
+      .get("/api/feeds", () => {
+        const config = configService.getConfig();
+        return config.feeds;
+      })
       .get("/api/config/:feedId", ({ params: { feedId } }) => {
         const config = configService.getConfig();
         const feed = config.feeds.find((f) => f.id === feedId);
@@ -153,6 +159,19 @@ export async function main() {
           throw new Error(`Feed not found: ${feedId}`);
         }
         return feed;
+      })
+      .get("/plugin/rss/:feedId", ({ params: { feedId } }) => {
+        const rssPlugin = distributionService.getPlugin("rss");
+        if (!rssPlugin || !(rssPlugin instanceof RssPlugin)) {
+          throw new Error("RSS plugin not found or invalid");
+        }
+        
+        const service = rssPlugin.getServices().get(feedId);
+        if (!service) {
+          throw new Error("RSS service not initialized for this feed");
+        }
+        
+        return service.getItems();
       })
       .post("/api/feeds/:feedId/process", async ({ params: { feedId } }) => {
         // Get feed config
