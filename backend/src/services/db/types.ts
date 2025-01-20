@@ -1,4 +1,5 @@
-import { SubmissionStatus } from "../../types/twitter";
+import { Plugin, SubmissionStatus } from "@curatedotfun/types";
+import { DBOperations } from "./operations";
 
 export interface DbSubmission {
   tweetId: string;
@@ -32,4 +33,8 @@ export interface DbFeedQueryResult extends DbQueryResult {
   sf: {
     status: SubmissionStatus;
   };
+}
+
+export interface PluginModule {
+  default: new (dbOperations?: DBOperations) => Plugin;
 }

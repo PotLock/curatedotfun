@@ -13,9 +13,3 @@ export interface TransformerPlugin {
 }
 
 export type Plugin = DistributorPlugin | TransformerPlugin;
-
-import type { DBOperations } from "../services/db/operations";
-
-export interface PluginModule {
-  default: new (dbOperations?: DBOperations) => Plugin;
-}

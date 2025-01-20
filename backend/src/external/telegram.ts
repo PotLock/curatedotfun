@@ -1,4 +1,4 @@
-import { DistributorPlugin } from "../types/plugin";
+import { DistributorPlugin } from "@curatedotfun/types";
 
 export default class TelegramPlugin implements DistributorPlugin {
   name = "telegram";

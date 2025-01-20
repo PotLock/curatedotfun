@@ -18,7 +18,7 @@ import {
   startSpinner,
   succeedSpinner,
 } from "./utils/logger";
-import { TwitterCookie } from "types/twitter";
+import { TwitterCookie } from "@curatedotfun/types";
 
 const PORT = Number(process.env.PORT) || 3000;
 const FRONTEND_DIST_PATH =

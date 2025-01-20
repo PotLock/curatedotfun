@@ -14,7 +14,7 @@ import {
   TwitterCookie,
   TwitterSubmission,
   SubmissionStatus,
-} from "types/twitter";
+} from "@curatedotfun/types";
 import * as rssQueries from "../rss/queries";
 import * as twitterQueries from "../twitter/queries";
 export class DatabaseService {

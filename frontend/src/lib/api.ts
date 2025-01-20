@@ -1,6 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import type { FeedConfig, AppConfig } from "../types/config";
-import type { TwitterSubmissionWithFeedData } from "../types/twitter";
+import type { FeedConfig, AppConfig, TwitterSubmissionWithFeedData } from "@curatedotfun/types";
 
 export function useFeedConfig(feedId: string) {
   return useQuery<FeedConfig>({

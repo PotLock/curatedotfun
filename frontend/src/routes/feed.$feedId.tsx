@@ -4,7 +4,7 @@ import FeedList from "../components/FeedList";
 import Layout from "../components/Layout";
 import { useFeedConfig, useFeedItems } from "../lib/api";
 import { useState } from "react";
-import { TwitterSubmission } from "../types/twitter";
+import { TwitterSubmission } from "@curatedotfun/types";
 import { useBotId } from "../lib/config";
 
 export const Route = createFileRoute("/feed/$feedId")({

@@ -1,11 +1,8 @@
 import { Tweet } from "agent-twitter-client";
-import { AppConfig } from "../../types/config";
-import {
-  Moderation,
+import { AppConfig, Moderation,
   SubmissionFeed,
   SubmissionStatus,
-  TwitterSubmission,
-} from "../../types/twitter";
+  TwitterSubmission, } from "@curatedotfun/types";
 import { logger } from "../../utils/logger";
 import { db } from "../db";
 import { TwitterService } from "../twitter/client";

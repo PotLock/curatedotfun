@@ -1,5 +1,5 @@
-import { Plugin, PluginModule } from "types/plugin";
-import { PluginConfig, PluginsConfig } from "../../types/config";
+import { Plugin, PluginConfig, PluginsConfig } from "@curatedotfun/types";
+import { PluginModule } from "services/db/types";
 import { logger } from "../../utils/logger";
 
 export class DistributionService {

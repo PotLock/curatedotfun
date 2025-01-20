@@ -28,6 +28,7 @@ export interface DistributorConfig {
   plugin: string;
   config: Record<string, string>;
 }
+
 export interface StreamConfig {
   enabled: boolean;
   transform?: TransformConfig;

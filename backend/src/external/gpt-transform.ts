@@ -1,4 +1,4 @@
-import { TransformerPlugin } from "../types/plugin";
+import { TransformerPlugin } from "@curatedotfun/types";
 
 interface Message {
   role: "system" | "user" | "assistant";

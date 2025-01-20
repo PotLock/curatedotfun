@@ -1,5 +1,5 @@
 import { ConfigService } from "../services/config";
-import { AppConfig } from "../types/config";
+import { AppConfig } from "@curatedotfun/types";
 
 export function validateEnv() {
   // Validate required Twitter credentials

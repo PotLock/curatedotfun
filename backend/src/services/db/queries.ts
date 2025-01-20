@@ -6,7 +6,7 @@ import {
   TwitterSubmission,
   SubmissionStatus,
   TwitterSubmissionWithFeedData,
-} from "types/twitter";
+} from "@curatedotfun/types";
 import {
   feedPlugins,
   feeds,

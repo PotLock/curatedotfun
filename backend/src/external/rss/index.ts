@@ -1,6 +1,6 @@
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
-import { DistributorPlugin } from "types/plugin";
+import { DistributorPlugin } from "@curatedotfun/types";
 import { RssService } from "./rss.service";
 import type { RssItem } from "../../services/rss/queries";
 import type { DBOperations } from "../../services/db/operations";

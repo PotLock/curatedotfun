@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { FaChevronRight } from "react-icons/fa";
-import type { FeedConfig } from "../types/config";
+import type { FeedConfig } from "@curatedotfun/types";
 
 const FeedList = () => {
   const { feedId } = useParams({ from: "/feed/$feedId" });

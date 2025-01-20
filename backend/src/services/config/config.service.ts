@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import { AppConfig } from "../../types/config";
+import { AppConfig } from "@curatedotfun/types";
 import { hydrateConfigValues } from "../../utils/config";
 
 export class ConfigService {
