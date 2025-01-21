@@ -8,8 +8,13 @@ export interface GlobalConfig {
 }
 
 export interface PluginConfig {
-  type: "distributor" | "transformer";
+  type: "distributor" | "transformer" | "inbound";
   url: string;
+}
+
+export interface InboundConfig {
+  plugin: string;
+  config: Record<string, string>;
 }
 
 export interface ModerationConfig {
@@ -58,5 +63,6 @@ export interface FeedConfig {
 export interface AppConfig {
   global: GlobalConfig;
   plugins: PluginsConfig;
+  inbounds: InboundConfig[];
   feeds: FeedConfig[];
 }

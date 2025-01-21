@@ -6,10 +6,6 @@ import {
   text,
 } from "drizzle-orm/sqlite-core";
 
-// From exports/plugins
-export * from "../twitter/schema";
-export * from "../rss/schema";
-
 // Reusable timestamp columns
 const timestamps = {
   createdAt: text("created_at")
@@ -39,19 +35,13 @@ export const feeds = table("feeds", {
 export const submissions = table(
   "submissions",
   {
-    tweetId: text("tweet_id").primaryKey(),
-    userId: text("user_id").notNull(), // Original tweet author
-    username: text("username").notNull(), // Original tweet author
-    curatorId: text("curator_id").notNull(), // Who submitted it
-    curatorUsername: text("curator_username").notNull(),
-    curatorTweetId: text("curator_tweet_id").notNull(), // The tweet where they submitted it
-    content: text("content").notNull(), // Original tweet content
-    curatorNotes: text("curator_notes"),
+    id: text("id").primaryKey(), // Platform-specific ID
+    data: text("data").notNull(), // JSON containing content data
+    metadata: text("metadata").notNull(), // JSON containing submission metadata
     submittedAt: text("submitted_at"),
     ...timestamps,
   },
   (submissions) => [
-    index("submissions_user_id_idx").on(submissions.userId),
     index("submissions_submitted_at_idx").on(submissions.submittedAt),
   ],
 );
@@ -61,7 +51,7 @@ export const submissionFeeds = table(
   {
     submissionId: text("submission_id")
       .notNull()
-      .references(() => submissions.tweetId, { onDelete: "cascade" }),
+      .references(() => submissions.id, { onDelete: "cascade" }),
     feedId: text("feed_id")
       .notNull()
       .references(() => feeds.id, { onDelete: "cascade" }),
@@ -69,7 +59,7 @@ export const submissionFeeds = table(
       .notNull()
       .$type<SubmissionStatus>()
       .default(SubmissionStatus.PENDING),
-    moderationResponseTweetId: text("moderation_response_tweet_id"),
+    metadata: text("metadata"), // JSON containing moderation data
     ...timestamps,
   },
   (table) => [
@@ -82,20 +72,19 @@ export const moderationHistory = table(
   "moderation_history",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    tweetId: text("tweet_id")
+    submissionId: text("submission_id")
       .notNull()
-      .references(() => submissions.tweetId, { onDelete: "cascade" }),
+      .references(() => submissions.id, { onDelete: "cascade" }),
     feedId: text("feed_id")
       .notNull()
       .references(() => feeds.id, { onDelete: "cascade" }),
-    adminId: text("admin_id").notNull(),
     action: text("action").notNull(),
+    metadata: text("metadata"), // JSON containing moderation details
     note: text("note"),
     ...timestamps,
   },
   (table) => [
-    index("moderation_history_tweet_idx").on(table.tweetId),
-    index("moderation_history_admin_idx").on(table.adminId),
+    index("moderation_history_submission_idx").on(table.submissionId),
     index("moderation_history_feed_idx").on(table.feedId),
   ],
 );

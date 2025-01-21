@@ -19,25 +19,28 @@ export default class RssPlugin implements DistributorPlugin {
   }
 
   async initialize(
-    feedId: string,
     config: Record<string, string>,
   ): Promise<void> {
     if (!config.title) {
       throw new Error("RSS plugin requires title");
     }
 
+    if (!config.feedId) {
+      throw new Error("RSS plugin requires feed id");
+    }
+
     const maxItems = config.maxItems ? parseInt(config.maxItems) : 100;
 
     // Create a new RSS service for this feed
     const service = new RssService(
-      feedId,
+      config.feedId,
       config.title,
       maxItems,
       config.path,
       this.dbOps,
     );
 
-    this.services.set(feedId, service);
+    this.services.set(config.feedId, service);
   }
 
   async distribute(feedId: string, content: string): Promise<void> {

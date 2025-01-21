@@ -6,7 +6,6 @@ export default class TelegramPlugin implements DistributorPlugin {
   private channelId: string | null = null;
 
   async initialize(
-    feedId: string,
     config: Record<string, string>,
   ): Promise<void> {
     // Validate required config
@@ -31,7 +30,7 @@ export default class TelegramPlugin implements DistributorPlugin {
     }
   }
 
-  async distribute(feedId: string, content: string): Promise<void> {
+  async distribute(_: string, content: string): Promise<void> {
     if (!this.botToken || !this.channelId) {
       throw new Error("Telegram plugin not initialized");
     }

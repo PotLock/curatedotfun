@@ -8,13 +8,8 @@ import { DBOperations } from "./operations";
 import * as queries from "./queries";
 
 // Twitter & RSS
-import {
-  SubmissionFeed,
-  Moderation,
-  TwitterCookie,
-  TwitterSubmission,
-  SubmissionStatus,
-} from "types/twitter";
+import { TwitterCookie } from "types/twitter";
+import { Submission, SubmissionFeed, ModerationAction, SubmissionStatus, SubmissionWithFeedData } from "../../types/submission";
 import * as rssQueries from "../rss/queries";
 import * as twitterQueries from "../twitter/queries";
 export class DatabaseService {
@@ -34,11 +29,11 @@ export class DatabaseService {
     return this.operations;
   }
 
-  saveSubmission(submission: TwitterSubmission): void {
+  saveSubmission(submission: Omit<Submission, "moderationHistory">): void {
     queries.saveSubmission(this.db, submission).run();
   }
 
-  saveModerationAction(moderation: Moderation): void {
+  saveModerationAction(moderation: ModerationAction): void {
     queries.saveModerationAction(this.db, moderation).run();
   }
 
@@ -46,7 +41,7 @@ export class DatabaseService {
     submissionId: string,
     feedId: string,
     status: SubmissionStatus,
-    moderationResponseTweetId: string,
+    metadata?: Record<string, any>,
   ): void {
     queries
       .updateSubmissionFeedStatus(
@@ -54,16 +49,16 @@ export class DatabaseService {
         submissionId,
         feedId,
         status,
-        moderationResponseTweetId,
+        metadata,
       )
       .run();
   }
 
-  getSubmission(tweetId: string): TwitterSubmission | null {
-    return queries.getSubmission(this.db, tweetId);
+  getSubmission(id: string): Submission | null {
+    return queries.getSubmission(this.db, id);
   }
 
-  getAllSubmissions(): TwitterSubmission[] {
+  getAllSubmissions(): Submission[] {
     return queries.getAllSubmissions(this.db);
   }
 
@@ -102,7 +97,7 @@ export class DatabaseService {
 
   getSubmissionsByFeed(
     feedId: string,
-  ): (TwitterSubmission & { status: SubmissionStatus })[] {
+  ): SubmissionWithFeedData[] {
     return queries.getSubmissionsByFeed(this.db, feedId);
   }
 

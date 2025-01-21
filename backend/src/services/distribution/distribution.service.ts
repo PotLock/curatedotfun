@@ -83,7 +83,7 @@ export class DistributionService {
         config = JSON.parse(storedPlugin.config);
       }
 
-      await plugin.initialize(feedId, config);
+      await plugin.initialize({ ...config, feedId });
       await plugin.distribute(feedId, content);
     } catch (error) {
       logger.error(
