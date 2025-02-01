@@ -9,7 +9,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { promises as fs } from "fs";
 import configService, { validateEnv } from "./config/config";
-import RssPlugin from "./external/rss";
+import { loadRssPlugin } from "./external/plugin-loader";
 import { db } from "./services/db";
 import { DistributionService } from "./services/distribution/distribution.service";
 import { SubmissionService } from "./services/submissions/submission.service";
@@ -51,6 +51,16 @@ export async function main() {
     startSpinner("distribution-init", "Initializing distribution service...");
     distributionService = new DistributionService();
     const config = configService.getConfig();
+    
+    // Load RSS plugin dynamically
+    try {
+      const rssPlugin = await loadRssPlugin(db.getOperations());
+      distributionService.registerPlugin("rss", rssPlugin);
+      logger.info("RSS plugin loaded successfully");
+    } catch (error) {
+      logger.error("Failed to load RSS plugin:", error);
+    }
+    
     await distributionService.initialize(config.plugins);
     succeedSpinner("distribution-init", "distribution service initialized");
 
@@ -196,11 +206,13 @@ export async function main() {
       if (!distributionService) {
         throw new Error("Distribution service not available");
       }
-      const rssPlugin = distributionService.getPlugin("rss");
-      if (!rssPlugin || !(rssPlugin instanceof RssPlugin)) {
-        throw new Error("RSS plugin not found or invalid");
+      const plugin = distributionService.getPlugin("rss");
+      if (!plugin) {
+        throw new Error("RSS plugin not found");
       }
 
+      // Since we know this is an RSS plugin, we can safely cast it
+      const rssPlugin = plugin as unknown as { getServices(): Map<string, { getItems(): any }> };
       const service = rssPlugin.getServices().get(feedId);
       if (!service) {
         throw new Error("RSS service not initialized for this feed");

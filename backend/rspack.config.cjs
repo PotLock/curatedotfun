@@ -10,6 +10,10 @@ const config = {
     publicPath: 'http://localhost:3001/',
     library: { type: 'commonjs-module' },
   },
+  devServer: {
+    port: 3001,
+    hot: true,
+  },
   module: {
     rules: [
       {
@@ -32,7 +36,13 @@ const config = {
       remoteType: 'script',
       isServer: true,
       name: 'host',
+      library: { type: 'commonjs-module' },
+      filename: 'remoteEntry.js',
+      shared: {},
       useRuntimePlugin: true,
+      remotes: {
+        '@curatedotfun/distributor-rss': 'rss@http://localhost:3002/remoteEntry.js',
+      }
     })
   ],
   resolve: {

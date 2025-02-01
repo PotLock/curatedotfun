@@ -10,6 +10,11 @@ export class DistributionService {
     return this.plugins.get(name);
   }
 
+  registerPlugin(name: string, plugin: Plugin): void {
+    this.plugins.set(name, plugin);
+    logger.info(`Successfully registered plugin: ${name}`);
+  }
+
   async initialize(config: PluginsConfig): Promise<void> {
     // Load all plugins
     for (const [name, pluginConfig] of Object.entries(config)) {
