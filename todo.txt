@@ -1,0 +1,54 @@
+Migration Plan: Bun to Rspack/Rsbuild with Fastify
+
+1. Backend Package.json Updates:
+   - Remove dependencies:
+     * bun
+     * bun-types
+     * @elysiajs/cors
+     * @elysiajs/static
+     * @elysiajs/swagger
+     * elysia
+     * elysia-helmet
+   
+   - Add dependencies:
+     * fastify
+     * @fastify/cors
+     * @fastify/static
+     * @fastify/swagger
+     * jest
+     * @types/jest
+     * ts-jest
+     * nodemon (for development)
+
+2. Build Configuration:
+   - Create rspack.config.js for backend
+   - Configure TypeScript and ESM support
+   - Set up build output structure
+   - Configure proper source maps
+
+3. Code Migration:
+   - Convert Elysia routes to Fastify routes
+   - Update CORS middleware
+   - Migrate static file handling
+   - Update swagger implementation
+   - Replace any bun-specific APIs with node equivalents
+
+4. Test Suite Updates:
+   - Configure Jest in package.json
+   - Set up ts-jest
+   - Convert existing tests to Jest format
+   - Update test mocks
+   - Ensure test coverage reporting
+
+5. Development Environment:
+   - Configure nodemon for hot reloading
+   - Update TypeScript settings
+   - Set up proper development scripts
+
+6. Root Package.json Updates:
+   - Remove bun as package manager
+   - Update workspace scripts
+   - Update turbo configuration
+   - Ensure proper node version is specified
+
+Note: Save all type errors and package installations until ready to address them.

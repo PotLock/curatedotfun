@@ -1,5 +1,4 @@
-import type { RssItem } from "../../services/rss/queries";
-import type { DBOperations } from "../../services/db/operations";
+import { DBOperations, RssItem } from "./types";
 
 export class RssService {
   constructor(

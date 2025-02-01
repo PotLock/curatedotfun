@@ -1,9 +1,7 @@
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
-import { DistributorPlugin } from "types/plugin";
 import { RssService } from "./rss.service";
-import type { RssItem } from "../../services/rss/queries";
-import type { DBOperations } from "../../services/db/operations";
+import { DistributorPlugin, RssItem, DBOperations } from "./types";
 
 export default class RssPlugin implements DistributorPlugin {
   name = "@curatedotfun/rss";
