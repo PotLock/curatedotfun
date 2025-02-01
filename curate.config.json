@@ -57,6 +57,14 @@
               }
             },
             {
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "-1002472938420",
+                "messageThreadId": "11"
+              }
+            },
+            {
               "plugin": "@curatedotfun/rss",
               "config": {
                 "title": "Crypto Grant Wire",
@@ -104,7 +112,17 @@
       },
       "outputs": {
         "stream": {
-          "enabled": false
+          "enabled": false,
+          "distribute": [
+            {
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "-1002472938420",
+                "messageThreadId": "7"
+              }
+            }
+          ]
         }
       }
     },
@@ -134,7 +152,17 @@
       },
       "outputs": {
         "stream": {
-          "enabled": false
+          "enabled": false,
+          "distribute": [
+            {
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "-1002472938420",
+                "messageThreadId": "8"
+              }
+            }
+          ]
         }
       }
     },
@@ -177,7 +205,17 @@
       },
       "outputs": {
         "stream": {
-          "enabled": false
+          "enabled": false,
+          "distribute": [
+            {
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "-1002472938420",
+                "messageThreadId": "6"
+              }
+            }
+          ]
         }
       }
     },
@@ -192,7 +230,17 @@
       },
       "outputs": {
         "stream": {
-          "enabled": false
+          "enabled": false,
+          "distribute": [
+            {
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "-1002472938420",
+                "messageThreadId": "5"
+              }
+            }
+          ]
         }
       }
     },
@@ -252,7 +300,17 @@
       },
       "outputs": {
         "stream": {
-          "enabled": false
+          "enabled": false,
+          "distribute": [
+            {
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "-1002472938420",
+                "messageThreadId": "10"
+              }
+            }
+          ]
         }
       }
     },
@@ -267,7 +325,17 @@
       },
       "outputs": {
         "stream": {
-          "enabled": false
+          "enabled": false,
+          "distribute": [
+            {
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "-1002472938420",
+                "messageThreadId": "9"
+              }
+            }
+          ]
         }
       }
     },
@@ -314,7 +382,17 @@
       },
       "outputs": {
         "stream": {
-          "enabled": false
+          "enabled": false,
+          "distribute": [
+            {
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "-1002472938420",
+                "messageThreadId": "12"
+              }
+            }
+          ]
         },
         "recap": {
           "enabled": false
@@ -491,7 +569,17 @@
       },
       "outputs": {
         "stream": {
-          "enabled": false
+          "enabled": false,
+          "distribute": [
+            {
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "-1002472938420",
+                "messageThreadId": "4"
+              }
+            }
+          ]
         }
       }
     },
@@ -506,7 +594,16 @@
       },
       "outputs": {
         "stream": {
-          "enabled": false
+          "enabled": false,
+          "distribute": [
+            {
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "@americancryptofoundation"
+              }
+            }
+          ]
         }
       }
     },
