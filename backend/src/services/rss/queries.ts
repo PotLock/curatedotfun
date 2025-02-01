@@ -1,5 +1,5 @@
 import { and, eq, sql } from "drizzle-orm";
-import { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { rssItems } from "./schema";
 
 export interface RssItem {
@@ -11,7 +11,7 @@ export interface RssItem {
 }
 
 export function saveRssItem(
-  db: BunSQLiteDatabase,
+  db: BetterSQLite3Database,
   feedId: string,
   item: RssItem,
 ) {
@@ -26,7 +26,7 @@ export function saveRssItem(
 }
 
 export function getRssItems(
-  db: BunSQLiteDatabase,
+  db: BetterSQLite3Database,
   feedId: string,
   limit: number = 100,
 ): RssItem[] {
@@ -48,7 +48,7 @@ export function getRssItems(
 }
 
 export function deleteOldRssItems(
-  db: BunSQLiteDatabase,
+  db: BetterSQLite3Database,
   feedId: string,
   limit: number = 100,
 ) {

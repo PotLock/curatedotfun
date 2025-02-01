@@ -1,10 +1,13 @@
-import { cors } from "@elysiajs/cors";
-import { staticPlugin } from "@elysiajs/static";
-import { swagger } from "@elysiajs/swagger";
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { logger as honoLogger } from "hono/logger";
+import { secureHeaders } from "hono/secure-headers";
+import { serve } from "@hono/node-server";
+import { serveStatic } from "@hono/node-server/serve-static";
+import { swaggerUI } from "@hono/swagger-ui";
 import dotenv from "dotenv";
-import { Elysia } from "elysia";
-import { helmet } from "elysia-helmet";
 import path from "path";
+import { promises as fs } from "fs";
 import configService, { validateEnv } from "./config/config";
 import RssPlugin from "./external/rss";
 import { db } from "./services/db";
@@ -87,198 +90,184 @@ export async function main() {
     // Initialize server
     startSpinner("server", "Starting server...");
 
-    const app = new Elysia()
-      .use(
-        helmet({
-          contentSecurityPolicy: {
-            directives: {
-              defaultSrc: ["'self'"],
-              imgSrc: ["'self'", "data:", "https:"],
-              fontSrc: ["'self'", "data:", "https:"],
-            },
-          },
-          crossOriginEmbedderPolicy: false,
-          crossOriginResourcePolicy: { policy: "cross-origin" },
-          xFrameOptions: { action: "sameorigin" },
-        }),
-      )
-      .use(
-        cors({
-          origin: ALLOWED_ORIGINS,
-          methods: ["GET", "POST"],
-        }),
-      )
-      .use(swagger())
-      // Include test routes in development
-      .use(process.env.NODE_ENV === "development" ? testRoutes : new Elysia())
-      .get("/health", () => new Response("OK", { status: 200 }))
+    const app = new Hono();
+
+    // Middleware
+    app.use("*", honoLogger());
+    app.use("*", cors({
+      origin: ALLOWED_ORIGINS,
+      allowMethods: ["GET", "POST"],
+    }));
+    app.use("*", secureHeaders({
+      contentSecurityPolicy: {
+        defaultSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        fontSrc: ["'self'", "data:", "https:"],
+      },
+      crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: "cross-origin",
+      xFrameOptions: "sameorigin",
+    }));
+
+    // Swagger UI
+    app.use("/swagger/*", swaggerUI({ url: "/api/swagger.json" }));
+
+    // Include test routes in development
+    if (process.env.NODE_ENV === "development") {
+      app.route("/", testRoutes);
+    }
+
+    app.get("/health", (c) => c.text("OK", 200))
       // API Routes
-      .get("/api/twitter/last-tweet-id", () => {
-        if (!twitterService) {
-          throw new Error("Twitter service not available");
-        }
-        const lastTweetId = twitterService.getLastCheckedTweetId();
-        return { lastTweetId };
-      })
-      .post(
-        "/api/twitter/last-tweet-id",
-        async ({ body }: { body: { tweetId: string } }) => {
-          if (!twitterService) {
-            throw new Error("Twitter service not available");
-          }
-          if (
-            !body?.tweetId ||
-            typeof body.tweetId !== "string" ||
-            !body.tweetId.match(/^\d+$/)
-          ) {
-            throw new Error("Invalid tweetId format");
-          }
-          await twitterService.setLastCheckedTweetId(body.tweetId);
-          return { success: true };
-        },
-      )
-      .get(
-        "/api/submission/:submissionId",
-        ({
-          params: { submissionId },
-        }: {
-          params: { submissionId: string };
-        }) => {
-          const content = db.getSubmission(submissionId);
-          if (!content) {
-            throw new Error(`Content not found: ${submissionId}`);
-          }
-          return content;
-        },
-      )
-      .get("/api/submissions", () => {
-        return db.getAllSubmissions();
-      })
-      .get(
-        "/api/submissions/:feedId",
-        ({ params: { feedId } }: { params: { feedId: string } }) => {
-          const config = configService.getConfig();
-          const feed = config.feeds.find(
-            (f) => f.id.toLowerCase() === feedId.toLowerCase(),
-          );
-          if (!feed) {
-            throw new Error(`Feed not found: ${feedId}`);
-          }
-          return db.getSubmissionsByFeed(feedId);
-        },
-      )
-      .get(
-        "/api/feed/:feedId",
-        ({ params: { feedId } }: { params: { feedId: string } }) => {
-          const config = configService.getConfig();
-          const feed = config.feeds.find(
-            (f) => f.id.toLowerCase() === feedId.toLowerCase(),
-          );
-          if (!feed) {
-            throw new Error(`Feed not found: ${feedId}`);
-          }
+    app.get("/api/twitter/last-tweet-id", async (c) => {
+      if (!twitterService) {
+        throw new Error("Twitter service not available");
+      }
+      const lastTweetId = twitterService.getLastCheckedTweetId();
+      return c.json({ lastTweetId });
+    })
+    app.post("/api/twitter/last-tweet-id", async (c) => {
+      if (!twitterService) {
+        throw new Error("Twitter service not available");
+      }
+      const body = await c.req.json();
+      if (
+        !body?.tweetId ||
+        typeof body.tweetId !== "string" ||
+        !body.tweetId.match(/^\d+$/)
+      ) {
+        throw new Error("Invalid tweetId format");
+      }
+      await twitterService.setLastCheckedTweetId(body.tweetId);
+      return c.json({ success: true });
+    })
+    app.get("/api/submission/:submissionId", (c) => {
+      const submissionId = c.req.param("submissionId");
+      const content = db.getSubmission(submissionId);
+      if (!content) {
+        throw new Error(`Content not found: ${submissionId}`);
+      }
+      return c.json(content);
+    })
+    app.get("/api/submissions", (c) => {
+      return c.json(db.getAllSubmissions());
+    })
+    app.get("/api/submissions/:feedId", (c) => {
+      const feedId = c.req.param("feedId");
+      const config = configService.getConfig();
+      const feed = config.feeds.find(
+        (f) => f.id.toLowerCase() === feedId.toLowerCase(),
+      );
+      if (!feed) {
+        throw new Error(`Feed not found: ${feedId}`);
+      }
+      return c.json(db.getSubmissionsByFeed(feedId));
+    })
+    app.get("/api/feed/:feedId", (c) => {
+      const feedId = c.req.param("feedId");
+      const config = configService.getConfig();
+      const feed = config.feeds.find(
+        (f) => f.id.toLowerCase() === feedId.toLowerCase(),
+      );
+      if (!feed) {
+        throw new Error(`Feed not found: ${feedId}`);
+      }
+      return c.json(db.getSubmissionsByFeed(feedId));
+    })
+    app.get("/api/config", async (c) => {
+      const rawConfig = await configService.getRawConfig();
+      return c.json(rawConfig);
+    })
+    app.get("/api/feeds", async (c) => {
+      const rawConfig = await configService.getRawConfig();
+      return c.json(rawConfig.feeds);
+    })
+    app.get("/api/config/:feedId", (c) => {
+      const feedId = c.req.param("feedId");
+      const config = configService.getConfig();
+      const feed = config.feeds.find((f) => f.id === feedId);
+      if (!feed) {
+        throw new Error(`Feed not found: ${feedId}`);
+      }
+      return c.json(feed);
+    })
+    app.get("/plugin/rss/:feedId", (c) => {
+      const feedId = c.req.param("feedId");
+      if (!distributionService) {
+        throw new Error("Distribution service not available");
+      }
+      const rssPlugin = distributionService.getPlugin("rss");
+      if (!rssPlugin || !(rssPlugin instanceof RssPlugin)) {
+        throw new Error("RSS plugin not found or invalid");
+      }
 
-          return db.getSubmissionsByFeed(feedId);
-        },
-      )
-      .get("/api/config", async () => {
-        const rawConfig = await configService.getRawConfig();
-        return rawConfig;
-      })
-      .get("/api/feeds", async () => {
-        const rawConfig = await configService.getRawConfig();
-        return rawConfig.feeds;
-      })
-      .get(
-        "/api/config/:feedId",
-        ({ params: { feedId } }: { params: { feedId: string } }) => {
-          const config = configService.getConfig();
-          const feed = config.feeds.find((f) => f.id === feedId);
-          if (!feed) {
-            throw new Error(`Feed not found: ${feedId}`);
-          }
-          return feed;
-        },
-      )
-      .get(
-        "/plugin/rss/:feedId",
-        ({ params: { feedId } }: { params: { feedId: string } }) => {
-          if (!distributionService) {
-            throw new Error("Distribution service not available");
-          }
-          const rssPlugin = distributionService.getPlugin("rss");
-          if (!rssPlugin || !(rssPlugin instanceof RssPlugin)) {
-            throw new Error("RSS plugin not found or invalid");
-          }
+      const service = rssPlugin.getServices().get(feedId);
+      if (!service) {
+        throw new Error("RSS service not initialized for this feed");
+      }
 
-          const service = rssPlugin.getServices().get(feedId);
-          if (!service) {
-            throw new Error("RSS service not initialized for this feed");
-          }
+      return c.json(service.getItems());
+    })
+    // app.post("/api/feeds/:feedId/process", async (c) => {
+    //   const feedId = c.req.param("feedId");
+    //   // Get feed config
+    //   const config = configService.getConfig();
+    //   const feed = config.feeds.find((f) => f.id === feedId);
+    //   if (!feed) {
+    //     throw new Error(`Feed not found: ${feedId}`);
+    //   }
 
-          return service.getItems();
-        },
-      )
-      // .post(
-      //   "/api/feeds/:feedId/process",
-      //   async ({ params: { feedId } }: { params: { feedId: string } }) => {
-      //     // Get feed config
-      //     const config = configService.getConfig();
-      //     const feed = config.feeds.find((f) => f.id === feedId);
-      //     if (!feed) {
-      //       throw new Error(`Feed not found: ${feedId}`);
-      //     }
+    //   // Get approved submissions for this feed
+    //   const submissions = db
+    //     .getSubmissionsByFeed(feedId)
+    //     .filter((sub) =>
+    //       db
+    //         .getFeedsBySubmission(sub.tweetId)
+    //         .some((feed) => feed.status === "approved"),
+    //     );
 
-      //     // Get approved submissions for this feed
-      //     const submissions = db
-      //       .getSubmissionsByFeed(feedId)
-      //       .filter((sub) =>
-      //         db
-      //           .getFeedsBySubmission(sub.tweetId)
-      //           .some((feed) => feed.status === "approved"),
-      //       );
+    //   if (submissions.length === 0) {
+    //     return c.json({ processed: 0 });
+    //   }
 
-      //     if (submissions.length === 0) {
-      //       return { processed: 0 };
-      //     }
+    //   // Process each submission through stream output
+    //   let processed = 0;
+    //   if (!distributionService) {
+    //     throw new Error("Distribution service not available");
+    //   }
+    //   for (const submission of submissions) {
+    //     try {
+    //       await distributionService.processStreamOutput(
+    //         feedId,
+    //         submission.tweetId,
+    //         submission.content,
+    //       );
+    //       processed++;
+    //     } catch (error) {
+    //       logger.error(
+    //         `Error processing submission ${submission.tweetId}:`,
+    //         error,
+    //       );
+    //     }
+    //   }
 
-      //     // Process each submission through stream output
-      //     let processed = 0;
-      //     if (!distributionService) {
-      //       throw new Error("Distribution service not available");
-      //     }
-      //     for (const submission of submissions) {
-      //       try {
-      //         await distributionService.processStreamOutput(
-      //           feedId,
-      //           submission.tweetId,
-      //           submission.content,
-      //         );
-      //         processed++;
-      //       } catch (error) {
-      //         logger.error(
-      //           `Error processing submission ${submission.tweetId}:`,
-      //           error,
-      //         );
-      //       }
-      //     }
+    //   return c.json({ processed });
+    // });
+    // Serve static files
+    app.use("/*", serveStatic({ root: FRONTEND_DIST_PATH }));
+    
+    // Serve index.html for all other routes (SPA fallback)
+    app.get("/*", async (c) => {
+      const content = await fs.readFile(`${FRONTEND_DIST_PATH}/index.html`, 'utf-8');
+      return c.html(content);
+    });
 
-      //     return { processed };
-      //   },
-      // )
-      // This was the most annoying thing to set up and debug. Serves our frontend and handles routing. alwaysStatic is essential.
-      .use(
-        staticPlugin({
-          assets: FRONTEND_DIST_PATH,
-          prefix: "/",
-          alwaysStatic: true,
-        }),
-      )
-      .get("/*", () => Bun.file(`${FRONTEND_DIST_PATH}/index.html`))
-      .listen({
-        port: PORT,
-        hostname: "0.0.0.0",
-      });
+    // Start the server
+    serve({
+      fetch: app.fetch.bind(app),
+      port: PORT,
+      hostname: "0.0.0.0"
+    });
 
     succeedSpinner("server", `Server running on port ${PORT}`);
 

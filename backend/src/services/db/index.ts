@@ -1,8 +1,8 @@
-import { Database } from "bun:sqlite";
-import { BunSQLiteDatabase, drizzle } from "drizzle-orm/bun-sqlite";
+import Database from "better-sqlite3";
+import { BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3";
 import { join } from "node:path";
 
-import { logger } from "utils/logger";
+import { logger } from "../../utils/logger";
 
 import { DBOperations } from "./operations";
 import * as queries from "./queries";
@@ -14,19 +14,19 @@ import {
   TwitterCookie,
   TwitterSubmission,
   SubmissionStatus,
-} from "types/twitter";
+} from "../../types/twitter";
 import * as rssQueries from "../rss/queries";
 import * as twitterQueries from "../twitter/queries";
 export class DatabaseService {
-  private db: BunSQLiteDatabase;
+  private db: BetterSQLite3Database;
   private operations: DBOperations;
   private static readonly DB_PATH =
     process.env.DATABASE_URL?.replace("file:", "") ||
     join(".db", "submissions.sqlite");
 
   constructor() {
-    const sqlite = new Database(DatabaseService.DB_PATH, { create: true });
-    this.db = drizzle(sqlite);
+    const sqlite = new Database(DatabaseService.DB_PATH);
+    this.db = drizzle(sqlite, { logger: process.env.NODE_ENV === "development" });
     this.operations = new DBOperations(this.db);
   }
 

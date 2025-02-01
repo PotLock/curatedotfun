@@ -1,5 +1,5 @@
 import { Tweet } from "agent-twitter-client";
-import { Elysia } from "elysia";
+import { Hono } from "hono";
 import { MockTwitterService } from "../__tests__/mocks/twitter-service.mock";
 
 // Create a single mock instance to maintain state
@@ -29,16 +29,16 @@ const createTweet = (
   };
 };
 
-export const testRoutes = new Elysia({ prefix: "/api/test" })
-  .guard({
-    beforeHandle: ({ request }) => {
-      // Only allow in development and test environments
-      if (process.env.NODE_ENV === "production") {
-        return new Response("Not found", { status: 404 });
-      }
-    },
+export const testRoutes = new Hono()
+  .use("/api/test/*", async (c, next) => {
+    // Only allow in development and test environments
+    if (process.env.NODE_ENV === "production") {
+      return c.text("Not found", 404);
+    }
+    await next();
   })
-  .post("/tweets", async ({ body }) => {
+  .post("/api/test/tweets", async (c) => {
+    const body = await c.req.json();
     const { id, text, username, inReplyToStatusId, hashtags } = body as {
       id: string;
       text: string;
@@ -48,11 +48,11 @@ export const testRoutes = new Elysia({ prefix: "/api/test" })
     };
     const tweet = createTweet(id, text, username, inReplyToStatusId, hashtags);
     mockTwitterService.addMockTweet(tweet);
-    return tweet;
+    return c.json(tweet);
   })
-  .post("/reset", () => {
+  .post("/api/test/reset", (c) => {
     mockTwitterService.clearMockTweets();
-    return { success: true };
+    return c.json({ success: true });
   });
 
 // Export for use in tests and for replacing the real service

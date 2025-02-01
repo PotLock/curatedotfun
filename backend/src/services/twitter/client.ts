@@ -1,5 +1,5 @@
 import { Scraper, SearchMode, Tweet } from "agent-twitter-client";
-import { TwitterCookie } from "types/twitter";
+import { TwitterCookie } from "../../types/twitter";
 import { logger } from "../../utils/logger";
 import { db } from "../db";
 
