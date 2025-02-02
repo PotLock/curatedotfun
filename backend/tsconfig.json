@@ -16,7 +16,9 @@
     "paths": {
       "*": ["src/*"]
     },
-    "types": ["bun-types"]
+    "types": ["bun-types"],
+    "experimentalDecorators": true, // @injectable
+    "emitDecoratorMetadata": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests"]

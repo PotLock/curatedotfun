@@ -29,6 +29,8 @@
   },
   "dependencies": {
     "@curatedotfun/supabase": "^0.0.5",
-    "elysia-rate-limit": "^4.1.0"
+    "elysia-rate-limit": "^4.1.0",
+    "ioredis": "^5.4.2",
+    "tsyringe": "^4.8.0"
   }
 }
