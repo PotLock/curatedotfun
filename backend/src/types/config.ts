@@ -8,7 +8,7 @@ export interface GlobalConfig {
 }
 
 export interface PluginConfig {
-  type: "distributor" | "transformer";
+  type: "distributor" | "transformer" | "archive";
   url: string;
 }
 
@@ -59,4 +59,8 @@ export interface AppConfig {
   global: GlobalConfig;
   plugins: PluginsConfig;
   feeds: FeedConfig[];
+  archive?: {
+    plugin: string;
+    config: Record<string, string>;
+  };
 }

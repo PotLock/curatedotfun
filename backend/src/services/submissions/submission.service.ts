@@ -7,6 +7,7 @@ import {
   TwitterSubmission,
 } from "../../types/twitter";
 import { logger } from "../../utils/logger";
+import { ArchiveService } from "../archive/archive.service";
 import { db } from "../db";
 import { TwitterService } from "../twitter/client";
 import { DistributionService } from "./../distribution/distribution.service";
@@ -17,9 +18,10 @@ export class SubmissionService {
 
   constructor(
     private readonly twitterService: TwitterService,
-    private readonly DistributionService: DistributionService,
+    private readonly distributionService: DistributionService,
     private readonly config: AppConfig,
-  ) {}
+    private readonly archiveService?: ArchiveService,
+  ) { }
 
   private async initializeAdminIds(): Promise<void> {
     // Try to load admin IDs from cache first
@@ -198,8 +200,8 @@ export class SubmissionService {
       const existingSubmission = db.getSubmission(originalTweet.id!);
       const existingFeeds = existingSubmission
         ? (db.getFeedsBySubmission(
-            existingSubmission.tweetId,
-          ) as SubmissionFeed[])
+          existingSubmission.tweetId,
+        ) as SubmissionFeed[])
         : [];
 
       // Create new submission if it doesn't exist
@@ -291,11 +293,30 @@ export class SubmissionService {
             );
 
             if (feed.outputs.stream?.enabled) {
-              await this.DistributionService.processStreamOutput(
+              await this.distributionService.processStreamOutput(
                 feed.id,
                 originalTweet.id!,
                 originalTweet.text || "",
               );
+            }
+
+            // Archive the approved feed item
+            if (this.archiveService) {
+              await this.archiveService.archiveFeedItem({
+                id: originalTweet.id!,
+                feed_id: feed.id,
+                submitted_by: curatorTweet.username!,
+                submitted_at: new Date().toISOString(),
+                status: SubmissionStatus.APPROVED,
+                approved_by: curatorTweet.username!,
+                approved_at: new Date().toISOString(),
+                content: originalTweet.text || "",
+                metadata: {
+                  curator_notes: this.extractDescription(originalTweet.username!, tweet) || "",
+                  curator_tweet_id: tweet.id!,
+                  moderation_tweet_id: tweet.id!
+                }
+              });
             }
           }
         } else {
@@ -330,11 +351,30 @@ export class SubmissionService {
             );
 
             if (feed.outputs.stream?.enabled) {
-              await this.DistributionService.processStreamOutput(
+              await this.distributionService.processStreamOutput(
                 feed.id,
                 originalTweet.id!,
                 originalTweet.text || "",
               );
+            }
+
+            // Archive the approved feed item
+            if (this.archiveService) {
+              await this.archiveService.archiveFeedItem({
+                id: originalTweet.id!,
+                feed_id: feed.id,
+                submitted_by: curatorTweet.username!,
+                submitted_at: new Date().toISOString(),
+                status: SubmissionStatus.APPROVED,
+                approved_by: curatorTweet.username!,
+                approved_at: new Date().toISOString(),
+                content: originalTweet.text || "",
+                metadata: {
+                  curator_notes: this.extractDescription(originalTweet.username!, tweet) || "",
+                  curator_tweet_id: tweet.id!,
+                  moderation_tweet_id: tweet.id!
+                }
+              });
             }
           }
         }
@@ -352,7 +392,9 @@ export class SubmissionService {
 
   private async handleAcknowledgement(tweet: Tweet): Promise<void> {
     // Like the tweet
-    await this.twitterService.likeTweet(tweet.id);
+    if (tweet.id) {
+      await this.twitterService.likeTweet(tweet.id);
+    }
 
     // // Reply to curator's tweet confirming submission
     // await this.twitterService.replyToTweet(
@@ -432,9 +474,9 @@ export class SubmissionService {
 
     // Process based on action
     if (action === "approve") {
-      await this.processApproval(tweet, submission, pendingFeeds);
+      await this.processApproval(tweet, submission, pendingFeeds, adminUsername);
     } else {
-      await this.processRejection(tweet, submission, pendingFeeds);
+      await this.processRejection(tweet, submission, pendingFeeds, adminUsername);
     }
 
     await this.handleAcknowledgement(tweet);
@@ -444,6 +486,7 @@ export class SubmissionService {
     tweet: Tweet,
     submission: TwitterSubmission,
     pendingFeeds: SubmissionFeed[],
+    adminUsername: string,
   ): Promise<void> {
     try {
       // Process each pending feed
@@ -461,11 +504,31 @@ export class SubmissionService {
           );
 
           if (feed.outputs.stream?.enabled) {
-            await this.DistributionService.processStreamOutput(
+            await this.distributionService.processStreamOutput(
               pendingFeed.feedId,
               submission.tweetId,
               submission.content,
             );
+          }
+
+          // Archive the approved feed item
+          if (this.archiveService) {
+            await this.archiveService.archiveFeedItem({
+              id: submission.tweetId,
+              feed_id: pendingFeed.feedId,
+              submitted_by: submission.curatorUsername,
+              submitted_at: submission.submittedAt!,
+              status: SubmissionStatus.APPROVED,
+              approved_by: adminUsername,
+              approved_at: new Date().toISOString(),
+              content: submission.content,
+              metadata: {
+                curator_notes: submission.curatorNotes || "",
+                curator_tweet_id: submission.curatorTweetId,
+                moderation_tweet_id: tweet.id!,
+                moderation_note: this.extractNote(submission.username, tweet) || ""
+              }
+            });
           }
         }
       }
@@ -481,6 +544,7 @@ export class SubmissionService {
     tweet: Tweet,
     submission: TwitterSubmission,
     pendingFeeds: SubmissionFeed[],
+    adminUsername: string,
   ): Promise<void> {
     try {
       // Process each pending feed
@@ -493,6 +557,26 @@ export class SubmissionService {
             SubmissionStatus.REJECTED,
             tweet.id!,
           );
+
+          // Archive the rejected feed item
+          if (this.archiveService) {
+            await this.archiveService.archiveFeedItem({
+              id: submission.tweetId,
+              feed_id: pendingFeed.feedId,
+              submitted_by: submission.curatorUsername,
+              submitted_at: submission.submittedAt!,
+              status: SubmissionStatus.REJECTED,
+              approved_by: adminUsername,
+              approved_at: new Date().toISOString(),
+              content: submission.content,
+              metadata: {
+                curator_notes: submission.curatorNotes || "",
+                curator_tweet_id: submission.curatorTweetId,
+                moderation_tweet_id: tweet.id!,
+                moderation_note: this.extractNote(submission.username, tweet) || ""
+              }
+            });
+          }
         }
       }
     } catch (error) {

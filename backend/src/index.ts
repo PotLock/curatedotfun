@@ -19,6 +19,7 @@ import {
   startSpinner,
   succeedSpinner,
 } from "./utils/logger";
+import { ArchiveService } from "services/archive/archive.service";
 
 const PORT = Number(process.env.PORT) || 3000;
 const FRONTEND_DIST_PATH =
@@ -35,6 +36,7 @@ export async function main() {
   let twitterService: TwitterService | null = null;
   let submissionService: SubmissionService | null = null;
   let distributionService: DistributionService | null = null;
+  let archiveService: ArchiveService | undefined = undefined;
 
   try {
     // Load environment variables and config
@@ -69,12 +71,27 @@ export async function main() {
       }
       succeedSpinner("twitter-init", "Twitter service initialized");
 
+
+      if (config.archive) {
+        try {
+          startSpinner("archive-init", "Initializing archive service");
+          archiveService = new ArchiveService();
+          await archiveService.initialize(config.archive!);
+          succeedSpinner("submission-init", "Archive service initialized");
+        } catch (error) {
+          failSpinner("submission-init", "Failed to initialize archive service");
+          logger.warn("Twitter service initialization failed:", error);
+          logger.info("Continuing without Archive service");
+        }
+      }
+
       // Initialize submission service
       startSpinner("submission-init", "Initializing submission service...");
       submissionService = new SubmissionService(
         twitterService,
         distributionService,
         config,
+        archiveService
       );
       await submissionService.initialize();
       succeedSpinner("submission-init", "Submission service initialized");

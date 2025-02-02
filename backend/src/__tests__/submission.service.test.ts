@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { SubmissionService } from "../services/submissions/submission.service";
 import { AppConfig, PluginsConfig } from "../types/config";
 import { SubmissionStatus } from "../types/twitter";
+import { MockArchiveService } from "./mocks/archive-service.mock";
 import { MockDistributionService } from "./mocks/distribution-service.mock";
 import drizzleMock from "./mocks/drizzle.mock";
 import { MockTwitterService } from "./mocks/twitter-service.mock";
@@ -11,6 +12,7 @@ describe("SubmissionService", () => {
   let submissionService: SubmissionService;
   let mockTwitterService: MockTwitterService;
   let mockDistributionService: MockDistributionService;
+  let mockArchiveService: MockArchiveService;
 
   // Map readable IDs to realistic Twitter IDs
   const TWEET_IDS = {
@@ -112,10 +114,12 @@ describe("SubmissionService", () => {
     // Create fresh instances
     mockTwitterService = new MockTwitterService();
     mockDistributionService = new MockDistributionService();
+    mockArchiveService = new MockArchiveService();
     submissionService = new SubmissionService(
       mockTwitterService as any,
       mockDistributionService as any,
       mockConfig,
+      mockArchiveService as any,
     );
 
     // Setup user IDs
@@ -130,6 +134,185 @@ describe("SubmissionService", () => {
 
   afterEach(async () => {
     await submissionService.stop();
+  });
+
+  describe("Archival", () => {
+    it("should archive submissions when they are created", async () => {
+      const originalTweet: Tweet = {
+        id: TWEET_IDS.original1_tweet,
+        text: "Original content",
+        username: user1.username,
+        userId: user1.id,
+        timeParsed: new Date(),
+        hashtags: [],
+        mentions: [],
+        photos: [],
+        urls: [],
+        videos: [],
+        thread: [],
+      };
+
+      const curatorTweet: Tweet = {
+        id: TWEET_IDS.curator1_reply,
+        text: "@test_bot !submit #test",
+        username: curator1.username,
+        userId: curator1.id,
+        inReplyToStatusId: TWEET_IDS.original1_tweet,
+        timeParsed: new Date(),
+        hashtags: ["test"],
+        mentions: [botAccount],
+        photos: [],
+        urls: [],
+        videos: [],
+        thread: [],
+      };
+
+      mockTwitterService.addMockTweet(originalTweet);
+      mockTwitterService.addMockTweet(curatorTweet);
+
+      await submissionService.startMentionsCheck();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify submission was archived
+      expect(mockArchiveService.archivedItems).toHaveLength(1);
+      const archivedItem = mockArchiveService.archivedItems[0];
+      expect(archivedItem).toMatchObject({
+        id: TWEET_IDS.original1_tweet,
+        feed_id: "test",
+        submitted_by: curator1.username,
+        status: "approved",
+        approved_by: curator1.username,
+        approved_at: expect.any(String),
+        content: "Original content",
+        metadata: {
+          curator_notes: expect.any(String),
+          curator_tweet_id: TWEET_IDS.curator1_reply,
+          moderation_tweet_id: TWEET_IDS.curator1_reply
+        }
+      });
+    });
+
+    it("should update archive when submission is approved", async () => {
+      // Setup existing submission
+      drizzleMock.getSubmission.mockReturnValue({
+        tweetId: TWEET_IDS.original1_tweet,
+        userId: user1.id,
+        username: user1.username,
+        curatorId: curator1.id,
+        curatorUsername: curator1.username,
+        curatorTweetId: TWEET_IDS.curator1_reply,
+        content: "Original content",
+        submittedAt: new Date().toISOString(),
+      });
+
+      drizzleMock.getFeedsBySubmission.mockReturnValue([
+        {
+          submissionId: TWEET_IDS.original1_tweet,
+          feedId: "test2",
+          status: SubmissionStatus.PENDING,
+        },
+      ]);
+
+      // Admin approving submission
+      const moderationTweet: Tweet = {
+        id: TWEET_IDS.mod1_reply,
+        text: "!approve",
+        username: admin1.username,
+        userId: admin1.id,
+        inReplyToStatusId: TWEET_IDS.curator1_reply,
+        timeParsed: new Date(),
+        hashtags: [],
+        mentions: [botAccount],
+        photos: [],
+        urls: [],
+        videos: [],
+        thread: [],
+      };
+
+      mockTwitterService.addMockTweet(moderationTweet);
+      await submissionService.startMentionsCheck();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify archive was updated
+      expect(mockArchiveService.archivedItems).toHaveLength(1);
+      const archivedItem = mockArchiveService.archivedItems[0];
+      expect(archivedItem).toMatchObject({
+        id: TWEET_IDS.original1_tweet,
+        feed_id: "test2",
+        submitted_by: curator1.username,
+        status: "approved",
+        approved_by: admin1.username,
+        approved_at: expect.any(String),
+        content: "Original content",
+        metadata: {
+          curator_notes: expect.any(String),
+          curator_tweet_id: TWEET_IDS.curator1_reply,
+          moderation_tweet_id: TWEET_IDS.mod1_reply,
+          moderation_note: expect.any(String)
+        }
+      });
+    });
+
+    it("should update archive when submission is rejected", async () => {
+      // Setup existing submission
+      drizzleMock.getSubmission.mockReturnValue({
+        tweetId: TWEET_IDS.original1_tweet,
+        userId: user1.id,
+        username: user1.username,
+        curatorId: curator1.id,
+        curatorUsername: curator1.username,
+        curatorTweetId: TWEET_IDS.curator1_reply,
+        content: "Original content",
+        submittedAt: new Date().toISOString(),
+      });
+
+      drizzleMock.getFeedsBySubmission.mockReturnValue([
+        {
+          submissionId: TWEET_IDS.original1_tweet,
+          feedId: "test2",
+          status: SubmissionStatus.PENDING,
+        },
+      ]);
+
+      // Admin rejecting submission
+      const moderationTweet: Tweet = {
+        id: TWEET_IDS.mod1_reply,
+        text: "!reject",
+        username: admin1.username,
+        userId: admin1.id,
+        inReplyToStatusId: TWEET_IDS.curator1_reply,
+        timeParsed: new Date(),
+        hashtags: [],
+        mentions: [botAccount],
+        photos: [],
+        urls: [],
+        videos: [],
+        thread: [],
+      };
+
+      mockTwitterService.addMockTweet(moderationTweet);
+      await submissionService.startMentionsCheck();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify archive was updated
+      expect(mockArchiveService.archivedItems).toHaveLength(1);
+      const archivedItem = mockArchiveService.archivedItems[0];
+      expect(archivedItem).toMatchObject({
+        id: TWEET_IDS.original1_tweet,
+        feed_id: "test2",
+        submitted_by: curator1.username,
+        status: "rejected",
+        approved_by: admin1.username,
+        approved_at: expect.any(String),
+        content: "Original content",
+        metadata: {
+          curator_notes: expect.any(String),
+          curator_tweet_id: TWEET_IDS.curator1_reply,
+          moderation_tweet_id: TWEET_IDS.mod1_reply,
+          moderation_note: expect.any(String)
+        }
+      });
+    });
   });
 
   describe("Curator Submissions", () => {
