@@ -7,7 +7,19 @@
       "twitter": []
     }
   },
+  "archive": {
+    "plugin": "@curatedotfun/supabase-archive",
+    "config": {
+      "url": "{SUPABASE_URL}",
+      "serviceKey": "{SUPABASE_SECRET_KEY}",
+      "tableName": "{SUPABASE_TABLE_NAME}"
+    }
+  },
   "plugins": {
+    "@curatedotfun/supabase-archive": {
+      "type": "archive",
+      "url": "./external/supabase-archive"
+    },
     "@curatedotfun/telegram": {
       "type": "distributor",
       "url": "./external/telegram"

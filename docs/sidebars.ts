@@ -29,7 +29,7 @@ const sidebars: SidebarsConfig = {
     {
       type: "category",
       label: "Integration",
-      items: ["developers/plugins"],
+      items: ["developers/plugins", "developers/archive"],
     },
     {
       type: "category",
