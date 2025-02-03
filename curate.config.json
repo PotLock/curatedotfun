@@ -11,8 +11,7 @@
     "plugin": "@curatedotfun/supabase-archive",
     "config": {
       "url": "{SUPABASE_URL}",
-      "serviceKey": "{SUPABASE_SECRET_KEY}",
-      "tableName": "{SUPABASE_TABLE_NAME}"
+      "serviceKey": "{SUPABASE_SECRET_KEY}"
     }
   },
   "plugins": {

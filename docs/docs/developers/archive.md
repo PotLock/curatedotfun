@@ -10,12 +10,12 @@ To enable archiving, add the archive configuration to your `curate.config.json`:
 {
   "plugins": {
     "supabase-archive": {
-      "type": "archive",
-      "url": "file:./backend/src/external/supabase-archive"
+      "type": "@curatedotfun/supabase-archive",
+      "url": "./external/supabase-archive"
     }
   },
   "archive": {
-    "plugin": "supabase-archive",
+    "plugin": "@curatedotfun/supabase-archive",
     "config": {
       "url": "YOUR_SUPABASE_URL",
       "serviceKey": "YOUR_SUPABASE_SERVICE_KEY"
@@ -30,12 +30,7 @@ To enable archiving, add the archive configuration to your `curate.config.json`:
 
 2. Get your project URL and service key from the project settings
 
-3. Execute the following SQL in your Supabase SQL editor to set up the required functions and policies:
-
-```sql
--- Create feed archives table and functions
-[COPY CONTENTS OF feed-archives.sql HERE]
-```
+3. Execute the [initial SQL](../../../backend/src/external/supabase-archive/feed-archives.sql) in your Supabase SQL editor to set up the required functions and policies.
 
 ## Data Structure
 
@@ -70,13 +65,3 @@ const approvedItems = await archiveService.getFeedItemsByApprover("admin123");
 // Get overall statistics
 const stats = await archiveService.getFeedStats();
 ```
-
-## Security
-
-The Supabase implementation includes Row Level Security (RLS) policies that:
-
-- Restrict read access to authenticated users
-- Restrict write access to authenticated users
-- Enable updates only for authenticated users
-
-Make sure to keep your service key secure and never expose it in client-side code.

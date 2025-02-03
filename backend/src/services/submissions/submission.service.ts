@@ -306,10 +306,10 @@ export class SubmissionService {
                 id: originalTweet.id!,
                 feed_id: feed.id,
                 submitted_by: curatorTweet.username!,
-                submitted_at: new Date().toISOString(),
+                submitted_at: curatorTweet.timeParsed?.toISOString(),
                 status: SubmissionStatus.APPROVED,
                 approved_by: curatorTweet.username!,
-                approved_at: new Date().toISOString(),
+                approved_at: curatorTweet.timeParsed?.toISOString(),
                 content: originalTweet.text || "",
                 metadata: {
                   curator_notes: this.extractDescription(originalTweet.username!, tweet) || "",
@@ -364,10 +364,10 @@ export class SubmissionService {
                 id: originalTweet.id!,
                 feed_id: feed.id,
                 submitted_by: curatorTweet.username!,
-                submitted_at: new Date().toISOString(),
+                submitted_at: curatorTweet.timeParsed?.toISOString(),
                 status: SubmissionStatus.APPROVED,
                 approved_by: curatorTweet.username!,
-                approved_at: new Date().toISOString(),
+                approved_at: curatorTweet.timeParsed?.toISOString(),
                 content: originalTweet.text || "",
                 metadata: {
                   curator_notes: this.extractDescription(originalTweet.username!, tweet) || "",
@@ -520,7 +520,7 @@ export class SubmissionService {
               submitted_at: submission.submittedAt!,
               status: SubmissionStatus.APPROVED,
               approved_by: adminUsername,
-              approved_at: new Date().toISOString(),
+              approved_at: tweet.timeParsed?.toISOString(),
               content: submission.content,
               metadata: {
                 curator_notes: submission.curatorNotes || "",
@@ -567,7 +567,7 @@ export class SubmissionService {
               submitted_at: submission.submittedAt!,
               status: SubmissionStatus.REJECTED,
               approved_by: adminUsername,
-              approved_at: new Date().toISOString(),
+              approved_at: tweet.timeParsed?.toISOString(),
               content: submission.content,
               metadata: {
                 curator_notes: submission.curatorNotes || "",

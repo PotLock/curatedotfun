@@ -236,53 +236,62 @@ export async function main() {
           return service.getItems();
         },
       )
-      // .post(
-      //   "/api/feeds/:feedId/process",
-      //   async ({ params: { feedId } }: { params: { feedId: string } }) => {
-      //     // Get feed config
-      //     const config = configService.getConfig();
-      //     const feed = config.feeds.find((f) => f.id === feedId);
-      //     if (!feed) {
-      //       throw new Error(`Feed not found: ${feedId}`);
-      //     }
+      .post(
+        "/api/feeds/:feedId/process",
+        async ({ params: { feedId } }: { params: { feedId: string } }) => {
+          // Get feed config
+          const config = configService.getConfig();
+          const feed = config.feeds.find((f) => f.id === feedId);
+          if (!feed) {
+            throw new Error(`Feed not found: ${feedId}`);
+          }
 
-      //     // Get approved submissions for this feed
-      //     const submissions = db
-      //       .getSubmissionsByFeed(feedId)
-      //       .filter((sub) =>
-      //         db
-      //           .getFeedsBySubmission(sub.tweetId)
-      //           .some((feed) => feed.status === "approved"),
-      //       );
+          // Get approved submissions for this feed
+          const submissions = db
+            .getSubmissionsByFeed(feedId)
+            .filter((sub) =>
+              db
+                .getFeedsBySubmission(sub.tweetId)
+                .some((feed) => feed.status === "approved"),
+            );
 
-      //     if (submissions.length === 0) {
-      //       return { processed: 0 };
-      //     }
+          if (submissions.length === 0) {
+            return { processed: 0 };
+          }
 
-      //     // Process each submission through stream output
-      //     let processed = 0;
-      //     if (!distributionService) {
-      //       throw new Error("Distribution service not available");
-      //     }
-      //     for (const submission of submissions) {
-      //       try {
-      //         await distributionService.processStreamOutput(
-      //           feedId,
-      //           submission.tweetId,
-      //           submission.content,
-      //         );
-      //         processed++;
-      //       } catch (error) {
-      //         logger.error(
-      //           `Error processing submission ${submission.tweetId}:`,
-      //           error,
-      //         );
-      //       }
-      //     }
+          // Process each submission through stream output
+          let processed = 0;
+          if (!distributionService) {
+            throw new Error("Distribution service not available");
+          }
+          for (const submission of submissions) {
+            await archiveService?.archiveFeedItem({
+              id: submission.tweetId,
+              feed_id: feedId,
+              content: submission.content,
+              status: "approved", 
+              submitted_by: submission.curatorUsername, 
+              submitted_at: submission.submittedAt || undefined,
+            })
 
-      //     return { processed };
-      //   },
-      // )
+            try {
+              await distributionService.processStreamOutput(
+                feedId,
+                submission.tweetId,
+                submission.content,
+              );
+              processed++;
+            } catch (error) {
+              logger.error(
+                `Error processing submission ${submission.tweetId}:`,
+                error,
+              );
+            }
+          }
+
+          return { processed };
+        },
+      )
       // This was the most annoying thing to set up and debug. Serves our frontend and handles routing. alwaysStatic is essential.
       .use(
         staticPlugin({
