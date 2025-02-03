@@ -1,6 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 import { ArchivePlugin, FeedArchiveItem } from "../../types/archive";
-import { logger } from "../../utils/logger";
 
 export default class SupabaseArchivePlugin implements ArchivePlugin {
   name = "supabase-archive";
@@ -26,13 +25,13 @@ export default class SupabaseArchivePlugin implements ArchivePlugin {
       });
       
       if (error) {
-        logger.error("Failed to initialize Supabase archive table:", error);
+        console.error("Failed to initialize Supabase archive table:", error);
         throw error;
       }
 
-      logger.info("Successfully initialized Supabase archive plugin");
+      console.info("Successfully initialized Supabase archive plugin");
     } catch (error) {
-      logger.error("Error initializing Supabase archive plugin:", error);
+      console.error("Error initializing Supabase archive plugin:", error);
       throw error;
     }
   }
@@ -53,13 +52,13 @@ export default class SupabaseArchivePlugin implements ArchivePlugin {
         .single();
 
       if (error) {
-        logger.error("Failed to archive feed item:", error);
+        console.error("Failed to archive feed item:", error);
         throw error;
       }
 
       return data;
     } catch (error) {
-      logger.error("Error archiving feed item:", error);
+      console.error("Error archiving feed item:", error);
       throw error;
     }
   }
@@ -73,13 +72,13 @@ export default class SupabaseArchivePlugin implements ArchivePlugin {
         .order("created_at", { ascending: false });
 
       if (error) {
-        logger.error("Failed to get feed items by submitter:", error);
+        console.error("Failed to get feed items by submitter:", error);
         throw error;
       }
 
       return data;
     } catch (error) {
-      logger.error("Error getting feed items by submitter:", error);
+      console.error("Error getting feed items by submitter:", error);
       throw error;
     }
   }
@@ -93,13 +92,13 @@ export default class SupabaseArchivePlugin implements ArchivePlugin {
         .order("updated_at", { ascending: false });
 
       if (error) {
-        logger.error("Failed to get feed items by status:", error);
+        console.error("Failed to get feed items by status:", error);
         throw error;
       }
 
       return data;
     } catch (error) {
-      logger.error("Error getting feed items by status:", error);
+      console.error("Error getting feed items by status:", error);
       throw error;
     }
   }
@@ -113,13 +112,13 @@ export default class SupabaseArchivePlugin implements ArchivePlugin {
         .order("approved_at", { ascending: false });
 
       if (error) {
-        logger.error("Failed to get feed items by approver:", error);
+        console.error("Failed to get feed items by approver:", error);
         throw error;
       }
 
       return data;
     } catch (error) {
-      logger.error("Error getting feed items by approver:", error);
+      console.error("Error getting feed items by approver:", error);
       throw error;
     }
   }
@@ -134,19 +133,19 @@ export default class SupabaseArchivePlugin implements ArchivePlugin {
       const { data, error } = await this.supabase.rpc("get_feed_archive_stats");
       
       if (error) {
-        logger.error("Failed to get feed stats:", error);
+        console.error("Failed to get feed stats:", error);
         throw error;
       }
 
       return data;
     } catch (error) {
-      logger.error("Error getting feed stats:", error);
+      console.error("Error getting feed stats:", error);
       throw error;
     }
   }
 
   async shutdown(): Promise<void> {
     // No cleanup needed for Supabase client
-    logger.info("Shutting down Supabase archive plugin");
+    console.info("Shutting down Supabase archive plugin");
   }
 }

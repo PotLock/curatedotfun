@@ -247,6 +247,27 @@ export class SubmissionService {
         };
         db.saveSubmission(submission);
         db.incrementDailySubmissionCount(userId);
+
+        // Archive the approved feed item
+        if (this.archiveService) {
+          for (const feedId of feedIds) {
+            await this.archiveService.archiveFeedItem({
+              id: originalTweet.id!,
+              feed_id: feedId,
+              submitted_by: curatorTweet.username!,
+              submitted_at: curatorTweet.timeParsed?.toISOString(),
+              status: SubmissionStatus.APPROVED,
+              approved_by: curatorTweet.username!,
+              approved_at: curatorTweet.timeParsed?.toISOString(),
+              content: originalTweet.text || "",
+              metadata: {
+                curator_notes: this.extractDescription(originalTweet.username!, tweet) || "",
+                curator_tweet_id: tweet.id!,
+                moderation_tweet_id: tweet.id!
+              }
+            });
+          }
+        }
       }
 
       // Process each feed

@@ -77,7 +77,7 @@ export async function main() {
           startSpinner("archive-init", "Initializing archive service");
           archiveService = new ArchiveService();
           await archiveService.initialize(config.archive!);
-          succeedSpinner("submission-init", "Archive service initialized");
+          succeedSpinner("archive-init", "Archive service initialized");
         } catch (error) {
           failSpinner("submission-init", "Failed to initialize archive service");
           logger.warn("Twitter service initialization failed:", error);
@@ -341,6 +341,7 @@ export async function main() {
     [
       "env",
       "twitter-init",
+      "archive-init",
       "distribution-init",
       "submission-monitor",
       "server",

@@ -1,6 +1,5 @@
 import { ArchivePlugin, FeedArchiveItem } from "../../types/archive";
 import { logger } from "../../utils/logger";
-import { db } from "../db";
 
 export class ArchiveService {
   private plugins: Map<string, ArchivePlugin> = new Map();
@@ -19,11 +18,12 @@ export class ArchiveService {
 
   private async loadPlugin(name: string, config: Record<string, string>): Promise<void> {
     try {
-      // Dynamic import of plugin
-      const module = await import(config.url);
+      // Dynamic import of plugin 
+      // TODO: Introduce plugin registry
+      const module = await import("./external/supabase-archive");
       
       // Create plugin instance with database operations if needed
-      const plugin = new module.default(db.getOperations());
+      const plugin = new module.default();
       
       // Store the plugin instance
       this.plugins.set(name, plugin);

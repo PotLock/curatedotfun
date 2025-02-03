@@ -1,6 +1,8 @@
 -- Create the feed_archives table if it doesn't exist
 create or replace function create_feed_archives_if_not_exists(table_name text, indexes text[])
 returns void as $$
+declare
+  index_name text;
 begin
   -- Create table if it doesn't exist
   if not exists (select from pg_tables where schemaname = 'public' and tablename = table_name) then
@@ -35,6 +37,15 @@ returns json as $$
 declare
   result json;
 begin
+  if not exists (select from pg_tables where schemaname = 'public' and tablename = 'feed_archives') then
+    return json_build_object(
+      'total', 0,
+      'by_status', '{}'::jsonb,
+      'by_submitter', '{}'::jsonb,
+      'by_approver', '{}'::jsonb
+    );
+  end if;
+
   with stats as (
     select
       count(*) as total,
@@ -73,16 +84,27 @@ end;
 $$ language plpgsql security definer;
 
 -- Add RLS policies
-alter table feed_archives enable row level security;
+do $$
+begin
+  if exists (select from pg_tables where schemaname = 'public' and tablename = 'feed_archives') then
+    alter table feed_archives enable row level security;
 
-create policy "Enable read access for authenticated users"
-  on feed_archives for select
-  using (auth.role() = 'authenticated');
+    if not exists (select from pg_policies where tablename = 'feed_archives' and policyname = 'Enable read access for authenticated users') then
+      create policy "Enable read access for authenticated users"
+        on feed_archives for select
+        using (auth.role() = 'authenticated');
+    end if;
 
-create policy "Enable insert for authenticated users"
-  on feed_archives for insert
-  with check (auth.role() = 'authenticated');
+    if not exists (select from pg_policies where tablename = 'feed_archives' and policyname = 'Enable insert for authenticated users') then
+      create policy "Enable insert for authenticated users"
+        on feed_archives for insert
+        with check (auth.role() = 'authenticated');
+    end if;
 
-create policy "Enable update for authenticated users"
-  on feed_archives for update
-  using (auth.role() = 'authenticated');
+    if not exists (select from pg_policies where tablename = 'feed_archives' and policyname = 'Enable update for authenticated users') then
+      create policy "Enable update for authenticated users"
+        on feed_archives for update
+        using (auth.role() = 'authenticated');
+    end if;
+  end if;
+end $$;
