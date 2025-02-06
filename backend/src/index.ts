@@ -87,7 +87,7 @@ export async function main() {
     // Initialize server
     startSpinner("server", "Starting server...");
 
-    const app = new Elysia()
+    new Elysia()
       .use(
         helmet({
           contentSecurityPolicy: {

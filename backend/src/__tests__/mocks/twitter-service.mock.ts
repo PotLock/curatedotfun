@@ -34,8 +34,8 @@ export class MockTwitterService extends TwitterService {
 
         // Sort by ID descending (newest first) to match Twitter search behavior
         const sortedTweets = [...matchingTweets].sort((a, b) => {
-          const aId = BigInt(a.id);
-          const bId = BigInt(b.id);
+          const aId = BigInt(a.id!);
+          const bId = BigInt(b.id!);
           return bId > aId ? 1 : bId < aId ? -1 : 0;
         });
 
@@ -129,12 +129,12 @@ export class MockTwitterService extends TwitterService {
     // Get latest tweets first (up to batch size), excluding already checked tweets
     const latestTweets = [...this.mockTweets]
       .sort((a, b) => {
-        const aId = BigInt(a.id);
-        const bId = BigInt(b.id);
+        const aId = BigInt(a.id!);
+        const bId = BigInt(b.id!);
         return bId > aId ? -1 : bId < aId ? 1 : 0; // Descending order (newest first)
       })
       .filter((tweet) => {
-        const tweetId = BigInt(tweet.id);
+        const tweetId = BigInt(tweet.id!);
         return !lastCheckedId || tweetId > lastCheckedId;
       })
       .slice(0, BATCH_SIZE);
@@ -153,8 +153,8 @@ export class MockTwitterService extends TwitterService {
 
     // Sort chronologically (oldest to newest) to match real service
     newMentions.sort((a, b) => {
-      const aId = BigInt(a.id);
-      const bId = BigInt(b.id);
+      const aId = BigInt(a.id!);
+      const bId = BigInt(b.id!);
       return aId > bId ? 1 : aId < bId ? -1 : 0;
     });
 
@@ -162,7 +162,7 @@ export class MockTwitterService extends TwitterService {
     if (latestTweets.length > 0) {
       // Use the first tweet from latestTweets since it's the newest (they're in descending order)
       const highestId = latestTweets[0].id;
-      await this.setLastCheckedTweetId(highestId);
+      await this.setLastCheckedTweetId(highestId!);
     }
 
     return newMentions;

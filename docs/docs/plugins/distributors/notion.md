@@ -20,7 +20,7 @@ The Notion plugin enables distribution of curated content to a Notion database, 
    - Create a new page in Notion
    - Type `/database` and select "Table - Full page"
    - Add the following properties to your database (matching TwitterSubmission type):
-     - tweetId (Text)
+     - tweetId (Title)
      - userId (Text)
      - username (Text)
      - curatorId (Text)
@@ -31,6 +31,14 @@ The Notion plugin enables distribution of curated content to a Notion database, 
      - createdAt (Date)
      - submittedAt (Date)
      - status (Select with options: pending, approved, rejected)
+
+   :::important
+   Make sure to set up the properties with the exact types specified:
+   - tweetId must be a Title property (not Text)
+   - createdAt and submittedAt must be Date properties
+   - status must be a Select property with the options: pending, approved, rejected
+   - All other fields should be Text properties
+   :::
 
 3. Share the database with your integration:
    - Open your database as a full page

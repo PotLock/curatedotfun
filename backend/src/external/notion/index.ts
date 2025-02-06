@@ -38,14 +38,33 @@ export default class NotionPlugin implements DistributorPlugin {
     submission: TwitterSubmission,
   ): Promise<void> {
     if (!this.client || !this.databaseId) {
-      throw new Error("Notion plugin not initialized");
+      console.error("Notion plugin not initialized");
+      return;
     }
 
     try {
       await this.createDatabaseRow(submission);
     } catch (error) {
-      console.error("Failed to create Notion database row:", error);
-      throw error;
+      // Log the error but don't throw it to prevent application crash
+      console.error("Failed to create Notion database row:", {
+        error,
+        feedId,
+        submissionId: submission.tweetId,
+      });
+
+      // Log specific validation errors if available
+      if (error instanceof Error && "body" in error) {
+        try {
+          const body = JSON.parse((error as any).body);
+          console.error("Notion API validation error:", {
+            message: body.message,
+            code: body.code,
+            requestId: body.request_id,
+          });
+        } catch (parseError) {
+          console.error("Error parsing Notion API error body:", error);
+        }
+      }
     }
   }
 
@@ -61,9 +80,11 @@ export default class NotionPlugin implements DistributorPlugin {
         database_id: this.databaseId,
       },
       properties: {
+        // Title property for tweetId (must be first property)
         tweetId: {
-          rich_text: [{ text: { content: submission.tweetId } }],
+          title: [{ text: { content: submission.tweetId } }],
         },
+        // Text properties
         userId: {
           rich_text: [{ text: { content: submission.userId } }],
         },
@@ -87,14 +108,22 @@ export default class NotionPlugin implements DistributorPlugin {
         curatorTweetId: {
           rich_text: [{ text: { content: submission.curatorTweetId } }],
         },
+        // Date properties
         createdAt: {
-          rich_text: [{ text: { content: submission.createdAt } }],
+          date: {
+            start: new Date(submission.createdAt).toISOString(),
+          },
         },
         submittedAt: {
-          rich_text: [{ text: { content: submission.submittedAt || "" } }],
+          date: submission.submittedAt
+            ? { start: new Date(submission.submittedAt).toISOString() }
+            : null,
         },
-        status: {
-          rich_text: [{ text: { content: submission.status || "pending" } }],
+        // Select property for status
+        "status?": {
+          select: {
+            name: submission.status || "pending",
+          },
         },
       },
     });
