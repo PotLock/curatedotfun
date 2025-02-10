@@ -1,61 +1,48 @@
 import { TwitterSubmission } from "types/twitter";
 import { AppConfig, PluginConfig, PluginsConfig } from "../../types/config";
-import { Plugin, PluginModule } from "../../types/plugin";
 import { logger } from "../../utils/logger";
 import { db } from "../db";
+import { PluginLoader } from "../plugin-loader";
+import { TransformerPlugin, DistributorPlugin } from "@curatedotfun/types";
 
 export class DistributionService {
-  private plugins: Map<string, Plugin> = new Map();
+  private pluginLoader: PluginLoader;
 
-  getPlugin(name: string): Plugin | undefined {
-    return this.plugins.get(name);
+  constructor() {
+    // Reload plugins every minute in development
+    this.pluginLoader = new PluginLoader(
+      process.env.NODE_ENV === "development" ? 60 * 1000 : 5 * 60 * 1000
+    );
   }
 
   async initialize(config: PluginsConfig): Promise<void> {
     // Load all plugins
     for (const [name, pluginConfig] of Object.entries(config)) {
       try {
-        await this.loadPlugin(name, pluginConfig);
+        await this.pluginLoader.loadPlugin(name, pluginConfig);
       } catch (error) {
         logger.error(`Failed to load plugin ${name}:`, error);
       }
     }
   }
 
-  private async loadPlugin(name: string, config: PluginConfig): Promise<void> {
-    try {
-      // Dynamic import of plugin from URL
-      const module = (await import(config.url)) as PluginModule;
-
-      // Create plugin instance with database operations if needed
-      const plugin = new module.default(db.getOperations());
-
-      // Store the plugin instance
-      this.plugins.set(name, plugin);
-
-      logger.info(`Successfully loaded plugin: ${name}`);
-    } catch (error) {
-      logger.error(`Error loading plugin ${name}:`, {
-        error,
-        pluginUrl: config.url,
-      });
-    }
-  }
 
   async transformContent(
     pluginName: string,
     submission: TwitterSubmission,
-    config: any,
+    config: Record<string, unknown>,
   ): Promise<string> {
-    const plugin = this.plugins.get(pluginName);
-    if (!plugin || !("transform" in plugin)) {
-      logger.error(`Transformer plugin ${pluginName} not found or invalid`);
-      return submission.content;
-    }
-
     try {
-      await plugin.initialize(config);
-      return await plugin.transform(submission);
+      const transformer = await this.pluginLoader.loadPlugin<"transform", string, string>(
+        pluginName,
+        {
+          url: config.url as string,
+          type: "transform",
+          config,
+        }
+      ) as TransformerPlugin;
+
+      return await transformer.transform(submission.content);
     } catch (error) {
       logger.error(`Error transforming content with plugin ${pluginName}:`, {
         error,
@@ -71,14 +58,8 @@ export class DistributionService {
     feedId: string,
     pluginName: string,
     submission: TwitterSubmission,
-    config: Record<string, string>,
+    config: Record<string, unknown>,
   ): Promise<void> {
-    const plugin = this.plugins.get(pluginName);
-    if (!plugin || !("distribute" in plugin)) {
-      logger.error(`Distributor plugin ${pluginName} not found or invalid`);
-      return;
-    }
-
     try {
       // Get plugin config
       const storedPlugin = db.getFeedPlugin(feedId, pluginName);
@@ -90,8 +71,16 @@ export class DistributionService {
         config = JSON.parse(storedPlugin.config);
       }
 
-      await plugin.initialize(feedId, config);
-      await plugin.distribute(feedId, submission);
+      const distributor = await this.pluginLoader.loadPlugin<"distributor", string>(
+        pluginName,
+        {
+          url: config.url as string,
+          type: "distributor",
+          config,
+        }
+      ) as DistributorPlugin;
+
+      await distributor.distribute({ input: submission.content });
     } catch (error) {
       logger.error(`Error distributing content with plugin ${pluginName}:`, {
         error,
@@ -228,16 +217,7 @@ export class DistributionService {
   }
 
   async shutdown(): Promise<void> {
-    // Shutdown all plugins
-    for (const [name, plugin] of this.plugins.entries()) {
-      try {
-        if (plugin.shutdown) {
-          await plugin.shutdown();
-        }
-      } catch (error) {
-        logger.error(`Error shutting down plugin ${name}:`, error);
-      }
-    }
-    this.plugins.clear();
+    // Clear the plugin cache
+    this.pluginLoader.clearCache();
   }
 }

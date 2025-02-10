@@ -1,0 +1,228 @@
+# Simplified Distribution Service Architecture
+
+## Core Concepts
+
+1. JSON-Driven Configuration
+```typescript
+interface PluginConfig {
+  // Core plugin metadata
+  name: string;
+  version: string;
+  type: 'transform' | 'distribute';
+  
+  // Plugin capabilities
+  routes?: {
+    path: string;
+    method: 'GET' | 'POST';
+    description: string;
+  }[];
+  
+  // Data handling
+  schema: {
+    input: JSONSchema;  // JSON Schema for input validation
+    output?: JSONSchema; // JSON Schema for output validation (transforms)
+    config: JSONSchema;  // JSON Schema for plugin configuration
+  };
+  
+  // AI assistance
+  examples: {
+    input: unknown;
+    output?: unknown;
+    config: Record<string, unknown>;
+    description: string;
+  }[];
+}
+```
+
+2. Simplified Plugin Interface
+```typescript
+interface Plugin {
+  // Core methods
+  initialize(config: Record<string, unknown>): Promise<void>;
+  
+  // Optional route handler
+  handleRoute?(ctx: Hono.Context): Promise<Response>;
+  
+  // Plugin-specific actions
+  transform?(input: unknown): Promise<unknown>;
+  distribute?(input: unknown): Promise<void>;
+}
+```
+
+## Recommended Packages
+
+1. Core Framework:
+- hono - Web framework
+  * Pros: Fast, lightweight, great TypeScript support
+  * Use case: API routes, middleware
+
+2. Queue System:
+- graphile-worker - PostgreSQL-based job queue
+  * Pros: Uses existing Postgres, reliable, typed
+  * Use case: Background jobs, retries
+
+3. Validation:
+- zod - Schema validation
+  * Pros: TypeScript integration, JSON Schema support
+  * Use case: Config validation, API inputs
+
+4. Plugin System:
+- @module-federation/node - Dynamic loading
+  * Pros: Hot reloading, versioning
+  * Use case: Plugin loading
+
+## Project Structure
+```
+backend/
+├── src/
+│   ├── plugins/           # Plugin implementations
+│   │   ├── manifest.ts    # Plugin registry
+│   │   ├── loader.ts      # Module federation setup
+│   │   └── types.ts       # Plugin type definitions
+│   ├── routes/            # API routes
+│   │   └── plugin.ts      # Plugin-specific routes
+│   ├── queue/             # Job queue
+│   │   ├── worker.ts      # Worker setup
+│   │   └── jobs.ts        # Job definitions
+│   └── config/            # Configuration
+       └── schema.ts       # JSON schemas
+```
+
+## Implementation Plan
+
+1. Core Setup
+- [ ] Switch to Hono
+  - Basic server setup
+  - Plugin route handling
+  - Error middleware
+
+2. Plugin System
+- [ ] JSON Schema Validation
+  - Input/output schemas
+  - Config validation
+  - Example validation
+
+3. Queue System
+- [ ] Graphile Worker Setup
+  - Job definitions
+  - Worker processes
+  - Error handling
+
+4. Plugin Routes
+- [ ] Dynamic Route Registration
+  - Plugin route mounting
+  - Auth middleware
+  - Rate limiting
+
+## Example Plugin Configuration
+
+```json
+{
+  "name": "telegram-distributor",
+  "version": "1.0.0",
+  "type": "distribute",
+  
+  "routes": [
+    {
+      "path": "/webhook",
+      "method": "POST",
+      "description": "Telegram webhook endpoint"
+    }
+  ],
+  
+  "schema": {
+    "input": {
+      "type": "object",
+      "properties": {
+        "content": { "type": "string" },
+        "media": { 
+          "type": "array",
+          "items": { "type": "string", "format": "uri" }
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "required": ["botToken", "channelId"],
+      "properties": {
+        "botToken": { "type": "string" },
+        "channelId": { "type": "string" }
+      }
+    }
+  },
+  
+  "examples": [
+    {
+      "description": "Send text message",
+      "input": {
+        "content": "Hello world!"
+      },
+      "config": {
+        "botToken": "123:ABC",
+        "channelId": "@channel"
+      }
+    }
+  ]
+}
+```
+
+## AI Prompt Examples
+
+1. Create Distribution Plugin:
+```
+Create a distribution plugin for [platform] with these requirements:
+- Send messages to [channel/group]
+- Support text and media
+- Handle rate limits
+- Add webhook endpoint
+```
+
+2. Create Transform Plugin:
+```
+Create a transform plugin that:
+- Takes [input format] and converts to [output format]
+- Validates [specific fields]
+- Enriches with [additional data]
+```
+
+3. Compose Pipeline:
+```
+Create a pipeline that:
+- Monitors [source] for new content
+- Transforms using [plugin]
+- Distributes to [destinations]
+```
+
+## Testing Strategy
+
+1. Schema Validation
+- [ ] JSON Schema correctness
+- [ ] Example validation
+- [ ] Config validation
+
+2. Plugin Testing
+- [ ] Mock integrations
+- [ ] Route testing
+- [ ] Error cases
+
+3. Integration Testing
+- [ ] Full pipeline tests
+- [ ] Queue processing
+- [ ] Plugin interactions
+
+## Documentation
+
+1. Plugin Development
+- [ ] Schema guidelines
+- [ ] Example best practices
+- [ ] Route handling
+
+2. AI Integration
+- [ ] Prompt templates
+- [ ] Configuration examples
+- [ ] Common patterns
+
+3. Deployment
+- [ ] Environment setup
+- [ ] Queue management
+- [ ] Monitoring
