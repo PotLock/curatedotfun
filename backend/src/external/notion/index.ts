@@ -2,10 +2,24 @@ import { Client } from "@notionhq/client";
 import { DistributorPlugin } from "types/plugin";
 import { TwitterSubmission } from "types/twitter";
 
+interface Message {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+interface OpenRouterResponse {
+  choices: {
+    message: {
+      content: string;
+    };
+  }[];
+}
+
 export default class NotionPlugin implements DistributorPlugin {
   name = "notion";
   private client: Client | null = null;
   private databaseId: string | null = null;
+  private aiToken: string | null = null;
 
   async initialize(
     feedId: string,
@@ -21,6 +35,7 @@ export default class NotionPlugin implements DistributorPlugin {
 
     this.client = new Client({ auth: config.token });
     this.databaseId = config.databaseId;
+    if (config.aiToken) this.aiToken = config.aiToken;
 
     try {
       // Validate credentials by attempting to query the database
@@ -43,7 +58,52 @@ export default class NotionPlugin implements DistributorPlugin {
     }
 
     try {
-      await this.createDatabaseRow(submission);
+      let title = `Post by ${submission.username}`;
+      if (this.aiToken) {
+        try {
+          const messages: Message[] = [
+            { role: "system", content: "Summarize the main idea of this tweet content and the associated curator's notes into a clear, engaging title. Keep it concise, between 30–50 characters, highlighting the key message without losing its impact. Respond with the title only—no extra text, explanations, or quotation marks." },
+            { role: "user", content: `CONTENT: ${submission.content}, NOTES: ${submission.curatorNotes}` },
+          ];
+
+          const response = await fetch(
+            "https://openrouter.ai/api/v1/chat/completions",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${this.aiToken}`,
+                "HTTP-Referer": "https://curate.fun",
+                "X-Title": "CurateDotFun",
+              },
+              body: JSON.stringify({
+                model: "openai/gpt-3.5-turbo", // Default to GPT-3.5-turbo for cost efficiency
+                messages,
+                temperature: 0.7,
+                max_tokens: 1000,
+              }),
+            },
+          );
+
+          if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`OpenRouter API error: ${error}`);
+          }
+
+          const result = (await response.json()) as OpenRouterResponse;
+
+          if (!result.choices?.[0]?.message?.content) {
+            throw new Error("Invalid response from OpenRouter API");
+          }
+
+          title = result.choices[0].message.content;
+        } catch (error: unknown) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error occurred";
+          throw new Error(`GPT transformation failed: ${errorMessage}`);
+        }
+      }
+      await this.createDatabaseRow(title, submission);
     } catch (error) {
       // Log the error but don't throw it to prevent application crash
       console.error("Failed to create Notion database row:", {
@@ -69,6 +129,7 @@ export default class NotionPlugin implements DistributorPlugin {
   }
 
   private async createDatabaseRow(
+    title: string,
     submission: TwitterSubmission,
   ): Promise<void> {
     if (!this.client || !this.databaseId) {
@@ -81,49 +142,17 @@ export default class NotionPlugin implements DistributorPlugin {
       },
       properties: {
         // Title property for tweetId (must be first property)
-        tweetId: {
-          title: [{ text: { content: submission.tweetId } }],
+        tweetId: { // Name
+          title: [{ text: { content: title } }],
         },
         // Text properties
-        userId: {
-          rich_text: [{ text: { content: submission.userId } }],
+        userId: { // Link
+          rich_text: [{ text: { content: `https://x.com/${submission.username}/status/${submission.tweetId}` } }],
         },
-        username: {
-          rich_text: [{ text: { content: submission.username } }],
-        },
-        curatorId: {
-          rich_text: [{ text: { content: submission.curatorId } }],
-        },
-        curatorUsername: {
-          rich_text: [{ text: { content: submission.curatorUsername } }],
-        },
-        content: {
-          rich_text: [{ text: { content: submission.content.slice(0, 2000) } }],
-        },
-        curatorNotes: {
-          rich_text: submission.curatorNotes
-            ? [{ text: { content: submission.curatorNotes } }]
-            : [],
-        },
-        curatorTweetId: {
-          rich_text: [{ text: { content: submission.curatorTweetId } }],
-        },
-        // Date properties
-        createdAt: {
-          date: {
-            start: new Date(submission.createdAt).toISOString(),
-          },
-        },
-        submittedAt: {
+        submittedAt: { // Date Added
           date: submission.submittedAt
             ? { start: new Date(submission.submittedAt).toISOString() }
             : null,
-        },
-        // Select property for status
-        "status?": {
-          select: {
-            name: submission.status || "pending",
-          },
         },
       },
     });

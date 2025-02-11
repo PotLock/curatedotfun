@@ -52,7 +52,7 @@
       },
       "outputs": {
         "stream": {
-          "enabled": false,
+          "enabled": true,
           "distribute": [
             {
               "plugin": "@curatedotfun/telegram",
@@ -60,6 +60,14 @@
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "-1002472938420",
                 "messageThreadId": "11"
+              }
+            },
+            {
+              "plugin": "@curatedotfun/notion",
+              "config": {
+                "token": "{CRYPTOGRANTWIRE_NOTION_TOKEN}",
+                "databaseId": "191000c0d5908055bdb7d6ec9bef599c",
+                "aiToken": "{OPENROUTER_API_KEY}"
               }
             }
           ]
