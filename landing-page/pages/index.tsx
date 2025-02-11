@@ -1,77 +1,30 @@
-import { useEffect, useState } from "react";
-import Head from "next/head";
-import Link from "next/link";
-import { TypeAnimation } from "react-type-animation";
-import {
-  FaTwitter,
-  FaBook,
-  FaGithub,
-  FaTelegram,
-  FaCopy,
-  FaCheck,
-  FaGlobeAmericas,
-} from "react-icons/fa";
-import {
-  Newspaper,
-  Workflow,
-  Bot,
-  Gift,
-  ExternalLink,
-  SatelliteDish,
-  CalendarRange,
-  Podcast,
-  Plus,
-  Minus,
-} from "lucide-react";
-import Image from "next/image";
 import TweetWall from "@/components/TweetWall";
+import {
+  Bot,
+  CalendarRange,
+  ExternalLink,
+  Gift,
+  Minus,
+  Newspaper,
+  Plus,
+  Podcast,
+  SatelliteDish,
+  Workflow,
+} from "lucide-react";
+import Head from "next/head";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import {
+  FaBook,
+  FaCheck,
+  FaCopy,
+  FaGithub,
+  FaGlobeAmericas,
+  FaTelegram,
+  FaTwitter,
+} from "react-icons/fa";
 import hashtagData from "../../curate.config.json";
-
-const SlotEmoji = ({
-  finalEmoji,
-  duration,
-  interval,
-  emojiSet,
-}: {
-  finalEmoji: string;
-  duration: number;
-  interval: number;
-  emojiSet: string[];
-}) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isSpinning, setIsSpinning] = useState(true);
-
-  useEffect(() => {
-    const startSpinning = () => {
-      setIsSpinning(true);
-      const intervalId = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % emojiSet.length);
-      }, interval);
-
-      setTimeout(() => {
-        clearInterval(intervalId);
-        setIsSpinning(false);
-        setCurrentIndex(emojiSet.indexOf(finalEmoji));
-      }, duration);
-
-      return intervalId;
-    };
-
-    let intervalId = startSpinning();
-
-    const restartInterval = setInterval(() => {
-      clearInterval(intervalId);
-      intervalId = startSpinning();
-    }, 5000);
-
-    return () => {
-      clearInterval(intervalId);
-      clearInterval(restartInterval);
-    };
-  }, [emojiSet, finalEmoji, interval, duration]);
-
-  return <span className="inline-block">{emojiSet[currentIndex]}</span>;
-};
 
 const PARTNERS = [
   {
@@ -707,7 +660,7 @@ export default function Home() {
                   <span className="font-mono">!submit @curatedotfun</span>
                   <br />
                   <span className="font-mono text-neutral-500 rounded-sm bg-neutral-100 p-2">
-                    #Hashtag
+                    #hashtag
                   </span>
                 </p>
               </div>
@@ -874,7 +827,7 @@ export default function Home() {
                   />
                 </div>
                 <p className="font-['PT_Root_UI'] text-[16px] md:text-[18px] leading-[26px] md:leading-[30px] text-[#57606A] text-center md:text-left">
-                  Turn Crowdsourced contents into bite-sized, engaging recaps
+                  Turn crowdsourced content into bite-sized, engaging recaps
                   with AI-powered summaries. Effortlessly transform articles,
                   threads, or videos into multiple formats like newsletters,
                   tweets, or podcast scripts.
@@ -954,7 +907,7 @@ export default function Home() {
               <div className="border-r border-[#E5E5E5]">
                 <Image
                   src="/assets/images/curate-engine2.png"
-                  alt="Chron Jobs Flow"
+                  alt="Cron Jobs Flow"
                   width={400}
                   height={200}
                   className="w-full mb-6 md:mb-8"
@@ -1103,7 +1056,7 @@ export default function Home() {
                     All new America x crypto
                   </p>
                   <span className="inline-block px-3 py-1 bg-gray-800 text-white rounded-md text-sm">
-                    #publicgoods
+                    #usa
                   </span>
                 </Link>
               </div>
@@ -1137,7 +1090,7 @@ export default function Home() {
                     Feed for Web3 grant + DAO Governance
                   </p>
                   <span className="inline-block px-3 py-1 bg-gray-800 text-white rounded-md text-sm">
-                    #publicgoods
+                    #grants
                   </span>
                 </Link>
               </div>
