@@ -160,8 +160,12 @@ export class SubmissionService {
       }
 
       if (
-        curatorTweet.username === this.config.global.botId || // if self
-        this.config.global.blacklist["twitter"].includes(curatorTweet.username)
+        curatorTweet.username.toLowerCase() ===
+          this.config.global.botId.toLowerCase() || // if self
+        this.config.global.blacklist["twitter"].some(
+          (blacklisted) =>
+            blacklisted.toLowerCase() === curatorTweet.username?.toLowerCase(),
+        )
       ) {
         logger.error(`${tweet.id}: Submitted by bot or blacklisted user`);
         // or blacklisted
@@ -261,7 +265,8 @@ export class SubmissionService {
         }
 
         const isModerator = feed.moderation.approvers.twitter.some(
-          (approver) => approver.toLowerCase() === curatorTweet.username!.toLowerCase()
+          (approver) =>
+            approver.toLowerCase() === curatorTweet.username!.toLowerCase(),
         );
         const existingFeed = existingFeeds.find(
           (f) => f.feedId.toLowerCase() === lowercaseFeedId,
@@ -404,7 +409,7 @@ export class SubmissionService {
       .filter((feed) => {
         const feedConfig = this.config.feeds.find((f) => f.id === feed.feedId);
         return feedConfig?.moderation.approvers.twitter.some(
-          (approver) => approver.toLowerCase() === adminUsername.toLowerCase()
+          (approver) => approver.toLowerCase() === adminUsername.toLowerCase(),
         );
       });
 
@@ -508,10 +513,9 @@ export class SubmissionService {
 
   private getModerationAction(tweet: Tweet): "approve" | "reject" | null {
     const hashtags = tweet.hashtags?.map((tag) => tag.toLowerCase()) || [];
-    if (tweet.text?.includes("!approve") || hashtags.includes("approve"))
-      return "approve";
-    if (tweet.text?.includes("!reject") || hashtags.includes("reject"))
-      return "reject";
+    const text = tweet.text?.toLowerCase() || "";
+    if (text.includes("!approve")) return "approve";
+    if (text.includes("!reject")) return "reject";
     return null;
   }
 

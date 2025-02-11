@@ -768,10 +768,10 @@ describe("SubmissionService", () => {
         thread: [],
       };
 
-      // Curator submitting with differently cased hashtags
+      // Curator submitting with different casing
       const curatorTweet: Tweet = {
         id: TWEET_IDS.curator1_reply,
-        text: "@test_bot !submit #DeSci #DAO",
+        text: "@TEST_BOT !SUBMIT #DeSci #DAO", // Different case for bot name and command
         username: "CURATOR1", // Different case than config which has "curator1"
         userId: curator1.id,
         inReplyToStatusId: TWEET_IDS.original1_tweet,
