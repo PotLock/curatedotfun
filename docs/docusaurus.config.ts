@@ -66,7 +66,7 @@ const config: Config = {
     navbar: {
       title: "curate.fun",
       logo: {
-        alt: "curate.fun  DocsLogo",
+        alt: "curate.fun Docs Logo",
         src: "img/logo.png",
       },
       items: [
