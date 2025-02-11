@@ -260,8 +260,8 @@ export class SubmissionService {
           continue;
         }
 
-        const isModerator = feed.moderation.approvers.twitter.includes(
-          curatorTweet.username!,
+        const isModerator = feed.moderation.approvers.twitter.some(
+          (approver) => approver.toLowerCase() === curatorTweet.username!.toLowerCase()
         );
         const existingFeed = existingFeeds.find(
           (f) => f.feedId.toLowerCase() === lowercaseFeedId,
@@ -403,7 +403,9 @@ export class SubmissionService {
       .filter((feed) => feed.status === SubmissionStatus.PENDING)
       .filter((feed) => {
         const feedConfig = this.config.feeds.find((f) => f.id === feed.feedId);
-        return feedConfig?.moderation.approvers.twitter.includes(adminUsername);
+        return feedConfig?.moderation.approvers.twitter.some(
+          (approver) => approver.toLowerCase() === adminUsername.toLowerCase()
+        );
       });
 
     if (pendingFeeds.length === 0) {

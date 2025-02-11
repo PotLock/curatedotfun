@@ -752,7 +752,7 @@ describe("SubmissionService", () => {
       });
     });
 
-    it("should handle hashtags case-insensitively", async () => {
+    it("should handle hashtags and moderator names case-insensitively", async () => {
       // Original tweet being submitted
       const originalTweet: Tweet = {
         id: TWEET_IDS.original1_tweet,
@@ -772,7 +772,7 @@ describe("SubmissionService", () => {
       const curatorTweet: Tweet = {
         id: TWEET_IDS.curator1_reply,
         text: "@test_bot !submit #DeSci #DAO",
-        username: curator1.username,
+        username: "CURATOR1", // Different case than config which has "curator1"
         userId: curator1.id,
         inReplyToStatusId: TWEET_IDS.original1_tweet,
         timeParsed: new Date(),
@@ -799,7 +799,7 @@ describe("SubmissionService", () => {
         userId: user1.id,
         username: user1.username,
         curatorId: curator1.id,
-        curatorUsername: curator1.username,
+        curatorUsername: "CURATOR1",
         content: "Original content",
         createdAt: expect.any(String),
         submittedAt: expect.any(String),
@@ -809,7 +809,7 @@ describe("SubmissionService", () => {
       // Verify feed submissions were saved with case-insensitive matching
       expect(drizzleMock.saveSubmissionToFeed).toHaveBeenCalledTimes(2);
 
-      // Both feeds should be saved as pending initially
+      // Both feeds should be saved and auto-approved since curator1 is a moderator
       expect(drizzleMock.saveSubmissionToFeed.mock.calls[0]).toEqual([
         TWEET_IDS.original1_tweet,
         "DeSci", // Should match feed ID
@@ -820,6 +820,44 @@ describe("SubmissionService", () => {
         "DAO", // Should match feed ID
         SubmissionStatus.PENDING,
       ]);
+
+      // Verify both feeds were auto-approved despite case difference in moderator name
+      expect(drizzleMock.updateSubmissionFeedStatus).toHaveBeenCalledTimes(2);
+      expect(drizzleMock.updateSubmissionFeedStatus).toHaveBeenCalledWith(
+        TWEET_IDS.original1_tweet,
+        "DeSci",
+        SubmissionStatus.APPROVED,
+        TWEET_IDS.curator1_reply,
+      );
+      expect(drizzleMock.updateSubmissionFeedStatus).toHaveBeenCalledWith(
+        TWEET_IDS.original1_tweet,
+        "DAO",
+        SubmissionStatus.APPROVED,
+        TWEET_IDS.curator1_reply,
+      );
+
+      // Verify moderation history was saved for both auto-approvals
+      expect(drizzleMock.saveModerationAction).toHaveBeenCalledTimes(2);
+      expect(drizzleMock.saveModerationAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tweetId: TWEET_IDS.original1_tweet,
+          feedId: "DeSci",
+          adminId: "CURATOR1",
+          action: "approve",
+          note: expect.any(String),
+          timestamp: expect.any(Date),
+        }),
+      );
+      expect(drizzleMock.saveModerationAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tweetId: TWEET_IDS.original1_tweet,
+          feedId: "DAO",
+          adminId: "CURATOR1",
+          action: "approve",
+          note: expect.any(String),
+          timestamp: expect.any(Date),
+        }),
+      );
     });
 
     it("should ignore submissions from blacklisted users", async () => {
