@@ -58,7 +58,7 @@ export default class NotionPlugin implements DistributorPlugin {
     }
 
     try {
-      let title = `Post by ${submission.username}`;
+      let title = `${submission.username}: ${submission.content.slice(0, 30)}...`;
       if (this.aiToken) {
         try {
           const messages: Message[] = [
@@ -98,16 +98,29 @@ export default class NotionPlugin implements DistributorPlugin {
           }
 
           const result = (await response.json()) as OpenRouterResponse;
+          const aiTitle = result.choices?.[0]?.message?.content?.trim();
 
-          if (!result.choices?.[0]?.message?.content) {
+          // Validate AI response
+          if (!aiTitle) {
             throw new Error("Invalid response from OpenRouter API");
           }
 
-          title = result.choices[0].message.content;
+          // Validate title length (30-50 chars as per system prompt)
+          if (aiTitle.length >= 30 && aiTitle.length <= 50) {
+            title = aiTitle;
+          } else {
+            console.warn("AI-generated title length out of bounds:", {
+              length: aiTitle.length,
+              title: aiTitle,
+            });
+          }
         } catch (error: unknown) {
           const errorMessage =
             error instanceof Error ? error.message : "Unknown error occurred";
-          throw new Error(`GPT transformation failed: ${errorMessage}`);
+          console.warn(
+            "GPT title generation failed, using fallback title:",
+            errorMessage,
+          );
         }
       }
       await this.createDatabaseRow(title, submission);
