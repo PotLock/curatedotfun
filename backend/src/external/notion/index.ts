@@ -62,8 +62,15 @@ export default class NotionPlugin implements DistributorPlugin {
       if (this.aiToken) {
         try {
           const messages: Message[] = [
-            { role: "system", content: "Summarize the main idea of this tweet content and the associated curator's notes into a clear, engaging title. Keep it concise, between 30–50 characters, highlighting the key message without losing its impact. Respond with the title only—no extra text, explanations, or quotation marks." },
-            { role: "user", content: `CONTENT: ${submission.content}, NOTES: ${submission.curatorNotes}` },
+            {
+              role: "system",
+              content:
+                "Summarize the main idea of this tweet content and the associated curator's notes into a clear, engaging title. Keep it concise, between 30–50 characters, highlighting the key message without losing its impact. Respond with the title only—no extra text, explanations, or quotation marks.",
+            },
+            {
+              role: "user",
+              content: `CONTENT: ${submission.content}, NOTES: ${submission.curatorNotes}`,
+            },
           ];
 
           const response = await fetch(
@@ -142,14 +149,23 @@ export default class NotionPlugin implements DistributorPlugin {
       },
       properties: {
         // Title property for tweetId (must be first property)
-        tweetId: { // Name
+        tweetId: {
+          // Name
           title: [{ text: { content: title } }],
         },
         // Text properties
-        userId: { // Link
-          rich_text: [{ text: { content: `https://x.com/${submission.username}/status/${submission.tweetId}` } }],
+        userId: {
+          // Link
+          rich_text: [
+            {
+              text: {
+                content: `https://x.com/${submission.username}/status/${submission.tweetId}`,
+              },
+            },
+          ],
         },
-        submittedAt: { // Date Added
+        submittedAt: {
+          // Date Added
           date: submission.submittedAt
             ? { start: new Date(submission.submittedAt).toISOString() }
             : null,
