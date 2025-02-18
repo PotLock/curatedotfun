@@ -1,5 +1,5 @@
 import { and, eq, sql } from "drizzle-orm";
-import { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { LibSQLDatabase } from "drizzle-orm/libsql";
 import { rssItems } from "./schema";
 
 export interface RssItem {
@@ -11,7 +11,7 @@ export interface RssItem {
 }
 
 export function saveRssItem(
-  db: BunSQLiteDatabase,
+  db: LibSQLDatabase,
   feedId: string,
   item: RssItem,
 ) {
@@ -26,7 +26,7 @@ export function saveRssItem(
 }
 
 export function getRssItems(
-  db: BunSQLiteDatabase,
+  db: LibSQLDatabase,
   feedId: string,
   limit: number = 100,
 ): RssItem[] {
@@ -36,7 +36,7 @@ export function getRssItems(
     .where(eq(rssItems.feedId, feedId))
     .orderBy(sql`${rssItems.publishedAt} DESC`)
     .limit(limit)
-    .all();
+    .all().then();
 
   return results.map((item) => ({
     title: item.title || undefined,
@@ -48,7 +48,7 @@ export function getRssItems(
 }
 
 export function deleteOldRssItems(
-  db: BunSQLiteDatabase,
+  db: LibSQLDatabase,
   feedId: string,
   limit: number = 100,
 ) {

@@ -1,8 +1,7 @@
-import { Database } from "bun:sqlite";
-import { BunSQLiteDatabase, drizzle } from "drizzle-orm/bun-sqlite";
-import { join } from "node:path";
+import { join } from 'path';
+import { LibSQLDatabase, drizzle } from "drizzle-orm/libsql";
 
-import { logger } from "utils/logger";
+import { logger } from "../../utils/logger";
 
 import { DBOperations } from "./operations";
 import * as queries from "./queries";
@@ -14,19 +13,18 @@ import {
   TwitterCookie,
   TwitterSubmission,
   SubmissionStatus,
-} from "types/twitter";
+} from "../../types/twitter";
 import * as rssQueries from "../rss/queries";
 import * as twitterQueries from "../twitter/queries";
 export class DatabaseService {
-  private db: BunSQLiteDatabase;
+  private db: LibSQLDatabase;
   private operations: DBOperations;
   private static readonly DB_PATH =
-    process.env.DATABASE_URL?.replace("file:", "") ||
-    join(".db", "submissions.sqlite");
+    process.env.DATABASE_URL ||
+    `file:${join(process.cwd(), ".db", "submissions.sqlite")}`;
 
   constructor() {
-    const sqlite = new Database(DatabaseService.DB_PATH, { create: true });
-    this.db = drizzle(sqlite);
+    this.db = drizzle(DatabaseService.DB_PATH);
     this.operations = new DBOperations(this.db);
   }
 
@@ -35,11 +33,11 @@ export class DatabaseService {
   }
 
   saveSubmission(submission: TwitterSubmission): void {
-    queries.saveSubmission(this.db, submission).run();
+    queries.saveSubmission(this.db, submission);
   }
 
   saveModerationAction(moderation: Moderation): void {
-    queries.saveModerationAction(this.db, moderation).run();
+    queries.saveModerationAction(this.db, moderation);
   }
 
   updateSubmissionFeedStatus(
@@ -55,33 +53,32 @@ export class DatabaseService {
         feedId,
         status,
         moderationResponseTweetId,
-      )
-      .run();
+      );
   }
 
-  getSubmission(tweetId: string): TwitterSubmission | null {
-    return queries.getSubmission(this.db, tweetId);
+  async getSubmission(tweetId: string): Promise<TwitterSubmission | null> {
+    return await queries.getSubmission(this.db, tweetId);
   }
 
-  getSubmissionByCuratorTweetId(
+  async getSubmissionByCuratorTweetId(
     curatorTweetId: string,
-  ): TwitterSubmission | null {
-    return queries.getSubmissionByCuratorTweetId(this.db, curatorTweetId);
+  ): Promise<TwitterSubmission | null> {
+    return await queries.getSubmissionByCuratorTweetId(this.db, curatorTweetId);
   }
 
-  getAllSubmissions(): TwitterSubmission[] {
-    return queries.getAllSubmissions(this.db);
+  async getAllSubmissions(): Promise<TwitterSubmission[]> {
+    return await queries.getAllSubmissions(this.db);
   }
 
-  getDailySubmissionCount(userId: string): number {
+  async getDailySubmissionCount(userId: string): Promise<number> {
     const today = new Date().toISOString().split("T")[0];
     // Clean up old entries first
-    queries.cleanupOldSubmissionCounts(this.db, today).run();
+    await queries.cleanupOldSubmissionCounts(this.db, today);
     return queries.getDailySubmissionCount(this.db, userId, today);
   }
 
-  incrementDailySubmissionCount(userId: string): void {
-    queries.incrementDailySubmissionCount(this.db, userId).run();
+  async incrementDailySubmissionCount(userId: string): Promise<void> {
+    queries.incrementDailySubmissionCount(this.db, userId);
   }
 
   upsertFeeds(
@@ -95,44 +92,44 @@ export class DatabaseService {
     feedId: string,
     status: SubmissionStatus = SubmissionStatus.PENDING,
   ): void {
-    queries.saveSubmissionToFeed(this.db, submissionId, feedId, status).run();
+    queries.saveSubmissionToFeed(this.db, submissionId, feedId, status);
   }
 
-  getFeedsBySubmission(submissionId: string): SubmissionFeed[] {
-    return queries.getFeedsBySubmission(this.db, submissionId);
+  async getFeedsBySubmission(submissionId: string): Promise<SubmissionFeed[]> {
+    return await queries.getFeedsBySubmission(this.db, submissionId);
   }
 
   removeFromSubmissionFeed(submissionId: string, feedId: string): void {
-    queries.removeFromSubmissionFeed(this.db, submissionId, feedId).run();
+    queries.removeFromSubmissionFeed(this.db, submissionId, feedId);
   }
 
-  getSubmissionsByFeed(
+  async getSubmissionsByFeed(
     feedId: string,
-  ): (TwitterSubmission & { status: SubmissionStatus })[] {
-    return queries.getSubmissionsByFeed(this.db, feedId);
+  ): Promise<(TwitterSubmission & { status: SubmissionStatus })[]> {
+    return await queries.getSubmissionsByFeed(this.db, feedId);
   }
 
   // Feed Plugin Management
-  getFeedPlugin(feedId: string, pluginId: string) {
-    return queries.getFeedPlugin(this.db, feedId, pluginId);
+  async getFeedPlugin(feedId: string, pluginId: string) {
+    return await queries.getFeedPlugin(this.db, feedId, pluginId);
   }
 
-  upsertFeedPlugin(
+  async upsertFeedPlugin(
     feedId: string,
     pluginId: string,
     config: Record<string, any>,
   ) {
-    return queries.upsertFeedPlugin(this.db, feedId, pluginId, config).run();
+    return await queries.upsertFeedPlugin(this.db, feedId, pluginId, config);
   }
 
   // Twitter Cookie Management
   setTwitterCookies(username: string, cookies: TwitterCookie[] | null): void {
     const cookiesJson = JSON.stringify(cookies);
-    twitterQueries.setTwitterCookies(this.db, username, cookiesJson).run();
+    twitterQueries.setTwitterCookies(this.db, username, cookiesJson).execute();
   }
 
-  getTwitterCookies(username: string): TwitterCookie[] | null {
-    const result = twitterQueries.getTwitterCookies(this.db, username);
+  async getTwitterCookies(username: string): Promise<TwitterCookie[] | null> {
+    const result = await twitterQueries.getTwitterCookies(this.db, username);
     if (!result) return null;
 
     try {
@@ -144,30 +141,30 @@ export class DatabaseService {
   }
 
   deleteTwitterCookies(username: string): void {
-    twitterQueries.deleteTwitterCookies(this.db, username).run();
+    twitterQueries.deleteTwitterCookies(this.db, username).execute();
   }
 
   // Twitter Cache Management
   setTwitterCacheValue(key: string, value: string): void {
-    twitterQueries.setTwitterCacheValue(this.db, key, value).run();
+    twitterQueries.setTwitterCacheValue(this.db, key, value).execute();
   }
 
-  getTwitterCacheValue(key: string): string | null {
-    const result = twitterQueries.getTwitterCacheValue(this.db, key);
+  async getTwitterCacheValue(key: string): Promise<string | null> {
+    const result = await twitterQueries.getTwitterCacheValue(this.db, key);
     return result?.value ?? null;
   }
 
   deleteTwitterCacheValue(key: string): void {
-    twitterQueries.deleteTwitterCacheValue(this.db, key).run();
+    twitterQueries.deleteTwitterCacheValue(this.db, key).execute();
   }
 
   clearTwitterCache(): void {
-    twitterQueries.clearTwitterCache(this.db).run();
+    twitterQueries.clearTwitterCache(this.db).execute();
   }
 
   // RSS Management
   saveRssItem(feedId: string, item: rssQueries.RssItem): void {
-    rssQueries.saveRssItem(this.db, feedId, item).run();
+    rssQueries.saveRssItem(this.db, feedId, item).execute();
   }
 
   getRssItems(feedId: string, limit?: number): rssQueries.RssItem[] {
@@ -175,7 +172,7 @@ export class DatabaseService {
   }
 
   deleteOldRssItems(feedId: string, limit: number): void {
-    rssQueries.deleteOldRssItems(this.db, feedId, limit).run();
+    rssQueries.deleteOldRssItems(this.db, feedId, limit).execute();
   }
 }
 

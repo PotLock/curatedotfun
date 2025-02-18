@@ -10,11 +10,7 @@
   "plugins": {
     "@curatedotfun/telegram": {
       "type": "distributor",
-      "url": "./external/telegram"
-    },
-    "@curatedotfun/notion": {
-      "type": "distributor",
-      "url": "./external/notion"
+      "url": "http://localhost:3007/remoteEntry.js"
     }
   },
   "feeds": [
@@ -31,14 +27,6 @@
         "stream": {
           "enabled": true,
           "distribute": [
-            {
-              "plugin": "@curatedotfun/notion",
-              "config": {
-                "token": "{CRYPTOGRANTWIRE_NOTION_TOKEN}",
-                "databaseId": "191000c0d5908055bdb7d6ec9bef599c",
-                "aiToken": "{OPENROUTER_API_KEY}"
-              }
-            },
             {
               "plugin": "@curatedotfun/telegram",
               "config": {

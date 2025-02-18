@@ -14,13 +14,13 @@ export class ConfigService {
     if (process.env.NODE_ENV === "development") {
       this.configPath = path.resolve(
         __dirname,
-        "../../../../curate.config.test.json",
+        "../../curate.config.test.json",
       );
       logger.info("Using test configuration");
     } else {
       this.configPath = path.resolve(
         __dirname,
-        "../../../../curate.config.json",
+        "../../curate.config.json",
       );
       logger.info("Using production configuration");
     }

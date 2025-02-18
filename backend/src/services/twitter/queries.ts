@@ -1,18 +1,18 @@
 import { eq } from "drizzle-orm";
 import { twitterCache, twitterCookies } from "./schema";
-import { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { LibSQLDatabase } from "drizzle-orm/libsql";
 
 // Twitter Cookie Management
-export function getTwitterCookies(db: BunSQLiteDatabase, username: string) {
+export function getTwitterCookies(db: LibSQLDatabase, username: string) {
   return db
     .select()
     .from(twitterCookies)
     .where(eq(twitterCookies.username, username))
-    .get();
+    .get().then();
 }
 
 export function setTwitterCookies(
-  db: BunSQLiteDatabase,
+  db: LibSQLDatabase,
   username: string,
   cookiesJson: string,
 ) {
@@ -31,17 +31,17 @@ export function setTwitterCookies(
     });
 }
 
-export function deleteTwitterCookies(db: BunSQLiteDatabase, username: string) {
+export function deleteTwitterCookies(db: LibSQLDatabase, username: string) {
   return db.delete(twitterCookies).where(eq(twitterCookies.username, username));
 }
 
 // Twitter Cache Management
-export function getTwitterCacheValue(db: BunSQLiteDatabase, key: string) {
-  return db.select().from(twitterCache).where(eq(twitterCache.key, key)).get();
+export function getTwitterCacheValue(db: LibSQLDatabase, key: string) {
+  return db.select().from(twitterCache).where(eq(twitterCache.key, key)).get().then();
 }
 
 export function setTwitterCacheValue(
-  db: BunSQLiteDatabase,
+  db: LibSQLDatabase,
   key: string,
   value: string,
 ) {
@@ -60,10 +60,10 @@ export function setTwitterCacheValue(
     });
 }
 
-export function deleteTwitterCacheValue(db: BunSQLiteDatabase, key: string) {
+export function deleteTwitterCacheValue(db: LibSQLDatabase, key: string) {
   return db.delete(twitterCache).where(eq(twitterCache.key, key));
 }
 
-export function clearTwitterCache(db: BunSQLiteDatabase) {
+export function clearTwitterCache(db: LibSQLDatabase) {
   return db.delete(twitterCache);
 }

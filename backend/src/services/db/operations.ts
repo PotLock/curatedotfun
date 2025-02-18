@@ -1,4 +1,4 @@
-import { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { LibSQLDatabase } from "drizzle-orm/libsql";
 import {
   RssItem,
   saveRssItem,
@@ -8,7 +8,7 @@ import {
 
 // These are made available for plugins
 export class DBOperations {
-  constructor(private db: BunSQLiteDatabase) {}
+  constructor(private db: LibSQLDatabase) {}
 
   // RSS Operations
   saveRssItem(feedId: string, item: RssItem): void {

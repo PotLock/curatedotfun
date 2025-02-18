@@ -2,8 +2,10 @@ import { TwitterSubmission } from "types/twitter";
 import { AppConfig, PluginsConfig } from "../../types/config";
 import {
   ActionArgs,
-  PluginConfig
+  PluginConfig,
+  PluginType
 } from "../../types/plugins";
+import { PluginError, PluginLoadError, PluginInitError, PluginExecutionError } from "../../types/errors";
 import { logger } from "../../utils/logger";
 import { PluginService } from "../plugins/plugin.service";
 
@@ -37,20 +39,37 @@ export class DistributionService {
     input: T,
     config: Record<string, unknown>,
   ): Promise<U> {
-    const plugin = this.pluginService.getPlugin<"transform", T, U>(
-      pluginName
-    );
-    if (!plugin) {
-      logger.error(`Transformer plugin ${pluginName} not found or invalid`);
-      throw new Error(`Transformer plugin ${pluginName} not found or invalid`);
-    }
-
     try {
-      const args: ActionArgs<T, Record<string, unknown>> = {
-        input,
-        config,
+      // Get original plugin config to maintain URL
+      const originalConfig = this.pluginService.getLoadedConfigs()[pluginName];
+      if (!originalConfig) {
+        throw new PluginLoadError(pluginName, "", new Error("Plugin not initialized"));
+      }
+
+      const pluginConfig: PluginConfig<"transform", Record<string, unknown>> = {
+        type: "transform",
+        url: originalConfig.url,
+        config
       };
-      return await plugin.transform(args);
+
+      const plugin = await this.pluginService.getPlugin<"transform", T, U>(
+        pluginName,
+        pluginConfig
+      );
+
+      if (!plugin) {
+        throw new PluginLoadError(pluginName, pluginConfig.url, new Error("Plugin not found"));
+      }
+
+      try {
+        const args: ActionArgs<T, Record<string, unknown>> = {
+          input,
+          config,
+        };
+        return await plugin.transform(args);
+      } catch (error) {
+        throw new PluginExecutionError(pluginName, "transform", error as Error);
+      }
     } catch (error) {
       logger.error(`Error transforming content with plugin ${pluginName}:`, {
         error,
@@ -66,26 +85,49 @@ export class DistributionService {
     input: T,
     config: Record<string, unknown>,
   ): Promise<void> {
-    const plugin = this.pluginService.getPlugin<"distributor", T>(
-      pluginName
-    );
-    if (!plugin) {
-      logger.error(`Distributor plugin ${pluginName} not found or invalid`);
-      return;
-    }
-
     try {
-      const args: ActionArgs<T, Record<string, unknown>> = {
-        input,
-        config,
+      // Get original plugin config to maintain URL
+      const originalConfig = this.pluginService.getLoadedConfigs()[pluginName];
+      if (!originalConfig) {
+        throw new PluginLoadError(pluginName, "", new Error("Plugin not initialized"));
+      }
+
+      const pluginConfig: PluginConfig<"distributor", Record<string, unknown>> = {
+        type: "distributor",
+        url: originalConfig.url,
+        config
       };
-      await plugin.distribute(args);
+
+      const plugin = await this.pluginService.getPlugin<"distributor", T>(
+        pluginName,
+        pluginConfig
+      );
+
+      if (!plugin) {
+        throw new PluginLoadError(pluginName, pluginConfig.url, new Error("Plugin not found"));
+      }
+
+      try {
+        const args: ActionArgs<T, Record<string, unknown>> = {
+          input,
+          config,
+        };
+        await plugin.distribute(args);
+      } catch (error) {
+        throw new PluginExecutionError(pluginName, "distribute", error as Error);
+      }
     } catch (error) {
+      // Log but don't crash on plugin errors
       logger.error(`Error distributing content with plugin ${pluginName}:`, {
         error,
         feedId,
         pluginName,
       });
+
+      // Only throw if it's not a plugin error (system error)
+      if (!(error instanceof PluginError)) {
+        throw error;
+      }
     }
   }
 

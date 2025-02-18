@@ -5,7 +5,6 @@ import "dotenv/config";
 import { Elysia } from "elysia";
 import { helmet } from "elysia-helmet";
 import path from "path";
-import RssPlugin from "./external/rss";
 import { mockTwitterService, testRoutes } from "./routes/test";
 import { ConfigService } from "./services/config/config.service";
 import { db } from "./services/db";
@@ -37,6 +36,7 @@ export async function main() {
   let distributionService: DistributionService | null = null;
 
   try {
+    console.log("env", process.env.NODE_ENV);
     // Load  config
     startSpinner("config", "Loading config...");
     const configService = ConfigService.getInstance();
@@ -156,7 +156,7 @@ export async function main() {
       })
       .get(
         "/api/submissions/:feedId",
-        ({
+        async ({
           params: { feedId },
           query: { status },
         }: {
@@ -170,7 +170,7 @@ export async function main() {
           if (!feed) {
             throw new Error(`Feed not found: ${feedId}`);
           }
-          let submissions = db.getSubmissionsByFeed(feedId);
+          let submissions = await db.getSubmissionsByFeed(feedId);
           if (status) {
             submissions = submissions.filter((sub) => sub.status === status);
           }
@@ -210,25 +210,6 @@ export async function main() {
           return feed;
         },
       )
-      .get(
-        "/plugin/rss/:feedId",
-        ({ params: { feedId } }: { params: { feedId: string } }) => {
-          if (!distributionService) {
-            throw new Error("Distribution service not available");
-          }
-          const rssPlugin = distributionService.getPlugin("rss");
-          if (!rssPlugin || !(rssPlugin instanceof RssPlugin)) {
-            throw new Error("RSS plugin not found or invalid");
-          }
-
-          const service = rssPlugin.getServices().get(feedId);
-          if (!service) {
-            throw new Error("RSS service not initialized for this feed");
-          }
-
-          return service.getItems();
-        },
-      )
       .post(
         "/api/feeds/:feedId/process",
         async ({ params: { feedId } }: { params: { feedId: string } }) => {
@@ -240,15 +221,10 @@ export async function main() {
           }
 
           // Get approved submissions for this feed
-          const submissions = db
-            .getSubmissionsByFeed(feedId)
-            .filter((sub) =>
-              db
-                .getFeedsBySubmission(sub.tweetId)
-                .some((feed) => feed.status === "approved"),
-            );
+          const submissions = await db.getSubmissionsByFeed(feedId);
+          const approvedSubmissions = submissions.filter((sub) => sub.status === "approved");
 
-          if (submissions.length === 0) {
+          if (approvedSubmissions.length === 0) {
             return { processed: 0 };
           }
 
@@ -257,7 +233,7 @@ export async function main() {
           if (!distributionService) {
             throw new Error("Distribution service not available");
           }
-          for (const submission of submissions) {
+          for (const submission of approvedSubmissions) {
             try {
               await distributionService.processStreamOutput(feedId, submission);
               processed++;

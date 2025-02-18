@@ -1,12 +1,13 @@
-import { loadRemote, init } from "@module-federation/runtime";
 import { performReload, revalidate } from "@module-federation/node/utils";
+import { init, loadRemote } from "@module-federation/runtime";
 import {
   BotPlugin,
+  PluginCache,
+  PluginConfig,
   PluginType,
   PluginTypeMap,
-  PluginConfig,
-  PluginCache,
 } from "../../types/plugins";
+import { createPluginInstanceKey, validatePluginConfig } from "../../utils/plugin";
 
 /**
  * PluginLoader handles the dynamic loading and caching of bot plugins.
@@ -85,7 +86,7 @@ export class PluginLoader {
       name: "host",
       remotes: [
         {
-          name: name,
+          name,
           entry: remoteUrl,
         },
       ],
@@ -125,7 +126,12 @@ export class PluginLoader {
     name: string,
     pluginConfig: PluginConfig<T, TConfig>,
   ): Promise<PluginTypeMap<TInput, TOutput, TConfig>[T]> {
-    const cached = this.pluginCache.get(name);
+    // validate
+    validatePluginConfig(pluginConfig);
+
+    // generate deterministic cache key
+    const instanceKey = createPluginInstanceKey(name, pluginConfig);
+    const cached = this.pluginCache.get(instanceKey);
     if (cached && this.isCacheValid(cached.lastLoaded)) {
       // Cast the cached instance back to its specific plugin type with config
       // We need to use unknown as an intermediate step because the cache stores a more generic type
@@ -155,6 +161,12 @@ export class PluginLoader {
       // Get the plugin factory (handle both default and named exports)
       const Plugin = container.default || container;
 
+      if (!Plugin) {
+        throw new Error(
+          `Failed to load plugin ${name}: No default export found`,
+        );
+      }
+
       // Create instance
       const plugin = new Plugin() as PluginTypeMap<TInput, TOutput, TConfig>[T];
 
@@ -166,8 +178,8 @@ export class PluginLoader {
         __config: pluginConfig,
       });
 
-      // Store in cache
-      this.pluginCache.set(name, {
+      // Store in cache using instance key
+      this.pluginCache.set(instanceKey, {
         instance: pluginWithConfig,
         lastLoaded: new Date(),
       });
@@ -178,7 +190,7 @@ export class PluginLoader {
       if (error.code === "ECONNREFUSED" || error.code === "ENOENT") {
         throw new Error(
           `Failed to load plugin ${name}: Could not connect to ${pluginConfig.url}. ` +
-            `Make sure the plugin is accessible.`,
+          `Make sure the plugin is accessible.`,
         );
       }
       console.error(`Failed to load plugin ${name}:`, error);
@@ -220,8 +232,9 @@ export class PluginLoader {
       this.pluginCache.clear();
 
       await Promise.all(
-        entries.map(async ([name, cache]) => {
+        entries.map(async ([_, cache]) => {
           const pluginConfig = cache.instance.__config;
+          const name = cache.instance.name;
           if (pluginConfig) {
             await this.loadPlugin(
               name,
