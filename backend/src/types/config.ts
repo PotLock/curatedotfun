@@ -8,8 +8,9 @@ export interface GlobalConfig {
 }
 
 export interface PluginConfig {
-  type: "distributor" | "transformer";
+  type: "distributor" | "transform";
   url: string;
+  config?: Record<string, unknown>;
 }
 
 export interface ModerationConfig {

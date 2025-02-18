@@ -1,102 +1,89 @@
 import { TwitterSubmission } from "types/twitter";
-import { AppConfig, PluginConfig, PluginsConfig } from "../../types/config";
-import { Plugin, PluginModule } from "../../types/plugin";
+import { AppConfig, PluginsConfig } from "../../types/config";
+import {
+  ActionArgs,
+  PluginConfig
+} from "../../types/plugins";
 import { logger } from "../../utils/logger";
-import { db } from "../db";
+import { PluginService } from "../plugins/plugin.service";
 
 export class DistributionService {
-  private plugins: Map<string, Plugin> = new Map();
+  private pluginService: PluginService;
 
-  getPlugin(name: string): Plugin | undefined {
-    return this.plugins.get(name);
+  constructor() {
+    this.pluginService = PluginService.getInstance();
   }
 
-  async initialize(config: PluginsConfig): Promise<void> {
-    // Load all plugins
-    for (const [name, pluginConfig] of Object.entries(config)) {
-      try {
-        await this.loadPlugin(name, pluginConfig);
-      } catch (error) {
-        logger.error(`Failed to load plugin ${name}:`, error);
+  async initialize(pluginsConfig: PluginsConfig): Promise<void> {
+    const configs: Record<string, PluginConfig<"transform" | "distributor">> = {};
+
+    // Convert config to proper format
+    for (const [name, conf] of Object.entries(pluginsConfig)) {
+      if (conf.type === "distributor" || conf.type === "transform") {
+        const pluginConfig = typeof conf.config === 'string' ? JSON.parse(conf.config) : (conf.config || {});
+        configs[name] = {
+          type: conf.type,
+          url: conf.url,
+          config: pluginConfig,
+        };
       }
     }
+
+    await this.pluginService.initializePlugins(configs);
   }
 
-  private async loadPlugin(name: string, config: PluginConfig): Promise<void> {
-    try {
-      // Dynamic import of plugin from URL
-      const module = (await import(config.url)) as PluginModule;
-
-      // Create plugin instance with database operations if needed
-      const plugin = new module.default(db.getOperations());
-
-      // Store the plugin instance
-      this.plugins.set(name, plugin);
-
-      logger.info(`Successfully loaded plugin: ${name}`);
-    } catch (error) {
-      logger.error(`Error loading plugin ${name}:`, {
-        error,
-        pluginUrl: config.url,
-      });
-    }
-  }
-
-  async transformContent(
+  async transformContent<T = TwitterSubmission, U = string>(
     pluginName: string,
-    submission: TwitterSubmission,
-    config: any,
-  ): Promise<string> {
-    const plugin = this.plugins.get(pluginName);
-    if (!plugin || !("transform" in plugin)) {
+    input: T,
+    config: Record<string, unknown>,
+  ): Promise<U> {
+    const plugin = this.pluginService.getPlugin<"transform", T, U>(
+      pluginName
+    );
+    if (!plugin) {
       logger.error(`Transformer plugin ${pluginName} not found or invalid`);
-      return submission.content;
+      throw new Error(`Transformer plugin ${pluginName} not found or invalid`);
     }
 
     try {
-      await plugin.initialize(config);
-      return await plugin.transform(submission);
+      const args: ActionArgs<T, Record<string, unknown>> = {
+        input,
+        config,
+      };
+      return await plugin.transform(args);
     } catch (error) {
       logger.error(`Error transforming content with plugin ${pluginName}:`, {
         error,
-        submissionId: submission.tweetId,
         pluginName,
       });
-      // Return original content if transformation fails
-      return submission.content;
+      throw error;
     }
   }
 
-  async distributeContent(
+  async distributeContent<T = TwitterSubmission>(
     feedId: string,
     pluginName: string,
-    submission: TwitterSubmission,
-    config: Record<string, string>,
+    input: T,
+    config: Record<string, unknown>,
   ): Promise<void> {
-    const plugin = this.plugins.get(pluginName);
-    if (!plugin || !("distribute" in plugin)) {
+    const plugin = this.pluginService.getPlugin<"distributor", T>(
+      pluginName
+    );
+    if (!plugin) {
       logger.error(`Distributor plugin ${pluginName} not found or invalid`);
       return;
     }
 
     try {
-      // Get plugin config
-      const storedPlugin = db.getFeedPlugin(feedId, pluginName);
-      if (!storedPlugin) {
-        // Store initial config
-        db.upsertFeedPlugin(feedId, pluginName, config);
-      } else {
-        // Use stored config
-        config = JSON.parse(storedPlugin.config);
-      }
-
-      await plugin.initialize(feedId, config);
-      await plugin.distribute(feedId, submission);
+      const args: ActionArgs<T, Record<string, unknown>> = {
+        input,
+        config,
+      };
+      await plugin.distribute(args);
     } catch (error) {
       logger.error(`Error distributing content with plugin ${pluginName}:`, {
         error,
         feedId,
-        submissionId: submission.tweetId,
         pluginName,
       });
     }
@@ -107,6 +94,7 @@ export class DistributionService {
     submission: TwitterSubmission,
   ): Promise<void> {
     try {
+      // TODO: Replace with get feed config, or pass it in/handle outside
       const config = await this.getConfig();
       const feed = config.feeds.find((f) => f.id === feedId);
       if (!feed?.outputs.stream?.enabled) {
@@ -124,7 +112,7 @@ export class DistributionService {
       }
 
       // Transform content if configured
-      let processedContent = submission.content;
+      let processedContent = submission;
       if (transform) {
         try {
           processedContent = await this.transformContent(
@@ -133,13 +121,13 @@ export class DistributionService {
             transform.config,
           );
         } catch (error) {
-          logger.error(`Error transforming content for feed ${feedId}:`, {
+          logger.error(`Error transforming content for feed ${feedId} with plugin ${transform.plugin}:`, {
             error,
             submissionId: submission.tweetId,
             plugin: transform.plugin,
           });
           // Continue with original content if transform fails
-          processedContent = submission.content;
+          processedContent = submission;
         }
       }
 
@@ -148,7 +136,7 @@ export class DistributionService {
         await this.distributeContent(
           feedId,
           dist.plugin,
-          { ...submission, content: processedContent },
+          processedContent,
           dist.config,
         );
       }
@@ -160,84 +148,12 @@ export class DistributionService {
     }
   }
 
-  // TODO: adjust recap, needs to be called from cron job.
-  // It should take feedId, grab all of the contents currently in queue,
-  // Transform & Distribute
-  // Then clear queue
-  async processRecapOutput(feedId: string): Promise<void> {
-    try {
-      const config = await this.getConfig();
-      const feed = config.feeds.find((f) => f.id === feedId);
-      if (!feed?.outputs.recap?.enabled) {
-        return;
-      }
-
-      const { transform, distribute } = feed.outputs.recap;
-
-      if (!distribute?.length) {
-        logger.error(
-          `Recap output for feed ${feedId} requires distribution configuration`,
-        );
-        return;
-      }
-
-      if (!transform) {
-        logger.error(
-          `Recap output for feed ${feedId} requires transform configuration`,
-        );
-        return;
-      }
-
-      // TODO: adjust recap, needs to be called from cron job.
-      // It should take feedId, grab all of the contents currently in queue,
-      // Transform & Distribute
-      // Then remove
-
-      // const content = "";
-
-      // // Transform content (required for recap)
-      // const processedContent = await this.transformContent(
-      //   transform.plugin,
-      //   content,
-      //   transform.config,
-      // );
-
-      // // Distribute to all configured outputs
-      // for (const dist of distribute) {
-      //   await this.distributeContent(
-      //     feedId,
-      //     dist.plugin,
-      //     processedContent,
-      //     dist.config,
-      //   );
-      // }
-
-      // Remove from submission feed after successful recap
-      // db.removeFromSubmissionFeed(submissionId, feedId);
-    } catch (error) {
-      logger.error(`Error processing recap output for feed ${feedId}:`, {
-        error,
-        feedId,
-      });
-    }
-  }
-
   private async getConfig(): Promise<AppConfig> {
     const { ConfigService } = await import("../config");
     return ConfigService.getInstance().getConfig();
   }
 
   async shutdown(): Promise<void> {
-    // Shutdown all plugins
-    for (const [name, plugin] of this.plugins.entries()) {
-      try {
-        if (plugin.shutdown) {
-          await plugin.shutdown();
-        }
-      } catch (error) {
-        logger.error(`Error shutting down plugin ${name}:`, error);
-      }
-    }
-    this.plugins.clear();
+    await this.pluginService.cleanup();
   }
 }

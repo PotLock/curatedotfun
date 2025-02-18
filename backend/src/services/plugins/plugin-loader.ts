@@ -6,7 +6,7 @@ import {
   PluginTypeMap,
   PluginConfig,
   PluginCache,
-} from "@curatedotfun/types";
+} from "../../types/plugins";
 
 /**
  * PluginLoader handles the dynamic loading and caching of bot plugins.
@@ -158,7 +158,7 @@ export class PluginLoader {
       // Create instance
       const plugin = new Plugin() as PluginTypeMap<TInput, TOutput, TConfig>[T];
 
-      // Initialize
+      // Initialize with config or empty object
       await plugin.initialize(pluginConfig.config);
 
       // Attach the config to the plugin instance for reloading
@@ -166,12 +166,9 @@ export class PluginLoader {
         __config: pluginConfig,
       });
 
-      // Store in cache with a more generic type to avoid type conflicts
-      // The specific types are restored when retrieving from cache
+      // Store in cache
       this.pluginCache.set(name, {
-        instance: pluginWithConfig as BotPlugin<Record<string, unknown>> & {
-          __config: PluginConfig<PluginType>;
-        },
+        instance: pluginWithConfig,
         lastLoaded: new Date(),
       });
 
