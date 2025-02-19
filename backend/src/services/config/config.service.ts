@@ -4,25 +4,27 @@ import { AppConfig, FeedConfig, PluginConfig, PluginsConfig } from "../../types/
 import { hydrateConfigValues } from "../../utils/config";
 import { logger } from "../../utils/logger";
 
+
+export const isProduction = process.env.NODE_ENV === "production";
 export class ConfigService {
   private static instance: ConfigService;
   private config: AppConfig | null = null;
   private configPath: string;
 
   private constructor() {
-    // Use test config in development mode
-    if (process.env.NODE_ENV === "development") {
-      this.configPath = path.resolve(
-        __dirname,
-        "../../curate.config.test.json",
-      );
-      logger.info("Using test configuration");
-    } else {
+    if (isProduction) {
       this.configPath = path.resolve(
         __dirname,
         "../../curate.config.json",
       );
       logger.info("Using production configuration");
+    } else {
+      // Use test config in development mode
+      this.configPath = path.resolve(
+        __dirname,
+        "../../curate.config.test.json",
+      );
+      logger.info("Using test configuration");
     }
   }
 

@@ -5,7 +5,7 @@ import { Elysia, t } from "elysia";
 import { helmet } from "elysia-helmet";
 import path from "path";
 import { mockTwitterService, testRoutes } from "./routes/test";
-import { ConfigService } from "./services/config/config.service";
+import { ConfigService, isProduction } from "./services/config/config.service";
 import { db } from "./services/db";
 import { DistributionService } from "./services/distribution/distribution.service";
 import { SubmissionService } from "./services/submissions/submission.service";
@@ -37,16 +37,17 @@ export async function createApp(): Promise<AppInstance> {
   const distributionService = new DistributionService();
 
   let twitterService: TwitterService | null = null;
-  if (process.env.NODE_ENV === "development") {
-    twitterService = mockTwitterService;
-    await twitterService.initialize();
-  } else if (process.env.TWITTER_USERNAME) {
+  if (isProduction) {
     twitterService = new TwitterService({
-      username: process.env.TWITTER_USERNAME,
+      username: process.env.TWITTER_USERNAME!,
       password: process.env.TWITTER_PASSWORD!,
       email: process.env.TWITTER_EMAIL!,
       twoFactorSecret: process.env.TWITTER_2FA_SECRET,
     });
+    await twitterService.initialize();
+  } else {
+    // use mock service
+    twitterService = mockTwitterService;
     await twitterService.initialize();
   }
 
@@ -93,7 +94,7 @@ export async function createApp(): Promise<AppInstance> {
       })
     )
     .use(swagger())
-    .use(process.env.NODE_ENV === "development" ? testRoutes : new Elysia())
+    .use(isProduction ? new Elysia() : testRoutes)
     .get("/health", () => new Response("OK", { status: 200 }))
     // API Routes
     .get("/api/twitter/last-tweet-id", ({ context }: { context: AppContext }) => {
@@ -260,7 +261,7 @@ export async function createApp(): Promise<AppInstance> {
     )
     // Serve frontend in production, proxy to dev server in development
     .use(
-      process.env.NODE_ENV === "production"
+      isProduction
         ? staticPlugin({
           assets: path.join(__dirname, "public"),
           prefix: "/",
@@ -268,8 +269,7 @@ export async function createApp(): Promise<AppInstance> {
         })
         : new Elysia()
     )
-    .get(
-      "/*",
+    .get("/*",
       () => {
         return Bun.file(path.join(__dirname, "public/index.html"));
       }

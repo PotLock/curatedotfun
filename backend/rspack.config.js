@@ -40,7 +40,7 @@ module.exports = {
         }
       ]
     }),
-      //   new rspack.container.ModuleFederationPlugin({
+  //   new rspack.container.ModuleFederationPlugin({
   //     name: "host",
   //     runtimePlugins: [
   //       require.resolve("@module-federation/node/runtimePlugin"),

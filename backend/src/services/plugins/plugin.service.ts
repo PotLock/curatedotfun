@@ -11,6 +11,7 @@ import {
 import { logger } from "../../utils/logger";
 import { createPluginInstanceKey } from "../../utils/plugin";
 import { ConfigService } from "../config";
+import { isProduction } from "services/config/config.service";
 
 export interface PluginEndpoint { // move to types
   path: string;
@@ -22,16 +23,30 @@ interface PluginWithEndpoints extends BotPlugin<Record<string, unknown>> { // mo
   getEndpoints?: () => PluginEndpoint[];
 }
 
-interface ModuleCache<T extends PluginType> {
-  module: new () => PluginTypeMap<unknown, unknown, Record<string, unknown>>[T];
-  loadedAt: Date;
+interface RemoteConfig {
+  name: string;
+  entry: string;
 }
 
-interface InstanceCache<T extends PluginType> {
+interface RemoteState {
+  config: RemoteConfig;
+  loadedAt?: Date;
+  module?: any;
+  status: 'active' | 'loading' | 'failed';
+  lastError?: Error;
+}
+
+interface InstanceState<T extends PluginType> {
   instance: PluginTypeMap<unknown, unknown, Record<string, unknown>>[T];
   config: PluginConfig<T, Record<string, unknown>>;
   loadedAt: Date;
+  authFailures: number;
+  remoteName: string;
 }
+
+type PluginContainer<T extends PluginType> = {
+  default?: new () => PluginTypeMap<unknown, unknown, Record<string, unknown>>[T];
+} | (new () => PluginTypeMap<unknown, unknown, Record<string, unknown>>[T]);
 
 /**
  * PluginService manages the complete lifecycle of plugins including loading,
@@ -39,16 +54,18 @@ interface InstanceCache<T extends PluginType> {
  */
 export class PluginService {
   private static instance: PluginService;
-  private moduleCache: Map<string, ModuleCache<PluginType>> = new Map();
-  private instanceCache: Map<string, InstanceCache<PluginType>> = new Map();
+  private remotes: Map<string, RemoteState> = new Map();
+  private instances: Map<string, InstanceState<PluginType>> = new Map();
   private endpoints: Map<string, PluginEndpoint[]> = new Map();
   private app: Elysia | null = null;
   private configService: ConfigService;
 
   // Time in milliseconds before cached items are considered stale
-  private readonly cacheTimeout: number = 5 * 60 * 1000; // 5 minutes
+  private readonly instanceCacheTimeout: number = 7 * 24 * 60 * 60 * 1000; // 7 days (instance of a plugin with config)
+  private readonly moduleCacheTimeout: number = isProduction ? 30 * 60 * 1000 : 10 * 1000; // 30 minutes in production (module loaded from remote), 10 seconds in development
+  private readonly maxAuthFailures: number = 2; // one less than 3 to avoid locking
+  private readonly retryDelays: number[] = [1000, 5000]; // Delays between retries in ms
 
-  // TODO: Module cache should be shorter than instance cache (instance cache may not even need to expire)
   private constructor() {
     this.configService = ConfigService.getInstance();
   }
@@ -107,46 +124,100 @@ export class PluginService {
 
       const normalizedName = this.packageToRemoteName(name);
       const instanceId = createPluginInstanceKey(normalizedName, config);
-      const cached = this.instanceCache.get(instanceId);
 
-      if (cached && !this.isStale(cached.loadedAt)) {
-        return cached.instance as PluginTypeMap<TInput, TOutput, TConfig>[T];
+      // Check existing instance
+      const instance = this.instances.get(instanceId);
+      if (instance) {
+        if (instance.authFailures >= this.maxAuthFailures) {
+          throw new PluginError(`Plugin ${name} disabled due to auth failures`);
+        }
+        
+        if (!this.isStale(instance.loadedAt, this.instanceCacheTimeout)) {
+          return instance.instance as PluginTypeMap<TInput, TOutput, TConfig>[T];
+        }
       }
 
-      // Load module with correct type
-      const module = await this.loadModule<T>(normalizedName, config.url);
-
-      // Create and initialize instance
-      let instance: PluginTypeMap<TInput, TOutput, TConfig>[T];
-      try {
-        instance = new module() as PluginTypeMap<TInput, TOutput, TConfig>[T];
-        await instance.initialize(config.config);
-      } catch (error) {
-        throw new PluginInitError(name, error as Error);
+      // Get or initialize remote
+      let remote = this.remotes.get(normalizedName);
+      if (!remote) {
+        remote = {
+          config: { name: normalizedName, entry: config.url },
+          status: 'active'
+        };
+        this.remotes.set(normalizedName, remote);
       }
 
-      // Validate instance implements required interface
-      if (!this.validatePluginInterface(instance, config.type)) {
-        throw new PluginInitError(
-          name,
-          new Error(`Plugin does not implement required ${config.type} interface`)
-        );
+      // Create and initialize instance with retries
+      let lastError: Error | null = null;
+      for (let attempt = 0; attempt <= this.retryDelays.length; attempt++) {
+        try {
+          // Load module if needed
+          if (!remote.module || !remote.loadedAt || this.isStale(remote.loadedAt, this.moduleCacheTimeout)) {
+            remote.status = 'loading';
+            await this.loadModule(remote);
+          }
+
+          if (remote.status === 'failed') {
+            throw remote.lastError || new Error('Module loading failed');
+          }
+
+          // Create and initialize instance
+          const newInstance = new remote.module() as PluginTypeMap<TInput, TOutput, TConfig>[T];
+          await newInstance.initialize(config.config);
+
+          // Validate instance implements required interface
+          if (!this.validatePluginInterface(newInstance, config.type)) {
+            throw new PluginInitError(
+              name,
+              new Error(`Plugin does not implement required ${config.type} interface`)
+            );
+          }
+
+          // Register endpoints if available
+          if (this.app && (newInstance as PluginWithEndpoints).getEndpoints) {
+            const endpoints = (newInstance as PluginWithEndpoints).getEndpoints!();
+            this.registerEndpoints(normalizedName, endpoints);
+          }
+
+          // Cache successful instance
+          const instanceState: InstanceState<T> = {
+            instance: newInstance as PluginTypeMap<unknown, unknown, Record<string, unknown>>[T],
+            config: config as PluginConfig<T, Record<string, unknown>>,
+            loadedAt: new Date(),
+            authFailures: 0,
+            remoteName: normalizedName
+          };
+          this.instances.set(instanceId, instanceState);
+
+          return newInstance;
+        } catch (error) {
+          lastError = error as Error;
+          
+          // Track auth failure
+          if (instance) {
+            instance.authFailures += 1;
+            
+            if (instance.authFailures >= this.maxAuthFailures) {
+              logger.error(`Plugin ${name} disabled due to auth failures`);
+              // Clean up endpoints before disabling
+              this.unregisterEndpoints(normalizedName);
+              throw new PluginError(`Plugin ${name} disabled after ${instance.authFailures} auth failures`);
+            }
+          }
+
+          // If we have more retries, wait and try again
+          if (attempt < this.retryDelays.length) {
+            logger.warn(`Plugin ${name} initialization failed, retrying in ${this.retryDelays[attempt]}ms`, { error });
+            await new Promise(resolve => setTimeout(resolve, this.retryDelays[attempt]));
+            continue;
+          }
+        }
       }
 
-      // Register endpoints if available
-      if (this.app && (instance as PluginWithEndpoints).getEndpoints) {
-        const endpoints = (instance as PluginWithEndpoints).getEndpoints!();
-        this.registerEndpoints(normalizedName, endpoints);
-      }
-
-      // Cache instance
-      this.instanceCache.set(instanceId, {
-        instance: instance as PluginTypeMap<unknown, unknown, Record<string, unknown>>[T],
-        config: config as PluginConfig<T, Record<string, unknown>>,
-        loadedAt: new Date()
-      });
-
-      return instance;
+      // If we get here, all retries failed
+      // Clean up failed remote
+      this.unregisterEndpoints(normalizedName);
+      throw lastError || new PluginError(`Failed to initialize plugin ${name}`);
     } catch (error) {
       logger.error(`Plugin error: ${name}`, { error });
       throw error instanceof PluginError ? error : new PluginError(
@@ -157,29 +228,81 @@ export class PluginService {
   }
 
   /**
+   * Loads a plugin module
+   */
+  private async loadModule(remote: RemoteState): Promise<void> {
+    try {
+      // Initialize Module Federation with all active remotes
+      await performReload(true);
+      init({
+        name: "host",
+        remotes: Array.from(this.remotes.values()).map(r => r.config)
+      });
+
+      const container = await loadRemote<PluginContainer<PluginType>>(`${remote.config.name}/plugin`);
+      if (!container) {
+        throw new PluginLoadError(
+          remote.config.name,
+          remote.config.entry,
+          new Error('Plugin module not found')
+        );
+      }
+
+      // Handle both default export and direct constructor
+      const module = typeof container === 'function' ? container : container.default;
+      
+      if (!module || typeof module !== 'function') {
+        throw new PluginLoadError(
+          remote.config.name,
+          remote.config.entry,
+          new Error('Invalid plugin format - no constructor found')
+        );
+      }
+
+      remote.module = module;
+      remote.loadedAt = new Date();
+      remote.status = 'active';
+      remote.lastError = undefined;
+
+      logger.info(`Loaded module for remote ${remote.config.name}`, {
+        activeRemotes: Array.from(this.remotes.keys())
+      });
+    } catch (error) {
+      remote.status = 'failed';
+      remote.lastError = error as Error;
+      // Clean up failed remote
+      this.unregisterEndpoints(remote.config.name);
+      throw error;
+    }
+  }
+
+  /**
    * Cleans up all plugin instances
    */
   public async cleanup(): Promise<void> {
     const errors: Error[] = [];
 
-    for (const [id, { instance, config }] of this.instanceCache) {
-      if ((instance as BotPlugin).shutdown) {
+    // Cleanup instances
+    for (const [id, state] of this.instances) {
+      if ((state.instance as BotPlugin).shutdown) {
         try {
-          await (instance as BotPlugin).shutdown!();
+          await (state.instance as BotPlugin).shutdown!();
         } catch (error) {
           const pluginError = new PluginError(
             `Failed to shutdown plugin instance ${id}`,
             error as Error
           );
           errors.push(pluginError);
-          logger.error(`Shutdown error`, { error: pluginError, config });
+          logger.error(`Shutdown error`, { error: pluginError, config: state.config });
         }
       }
+      // Clean up endpoints for each instance
+      this.unregisterEndpoints(state.remoteName);
     }
 
-    this.instanceCache.clear();
-    this.moduleCache.clear();
+    this.instances.clear();
     this.endpoints.clear();
+    this.remotes.clear();
 
     if (errors.length > 0) {
       throw new AggregateError(
@@ -190,71 +313,6 @@ export class PluginService {
   }
 
   /**
-   * Loads a plugin module, using cache if available
-   */
-  private async loadModule<T extends PluginType>(
-    name: string, 
-    url: string
-  ): Promise<new () => PluginTypeMap<unknown, unknown, Record<string, unknown>>[T]> {
-    try {
-      const cached = this.moduleCache.get(name);
-      if (cached && !this.isStale(cached.loadedAt)) {
-        return cached.module as new () => PluginTypeMap<unknown, unknown, Record<string, unknown>>[T];
-      }
-
-      await this.initModuleFederation(name, url);
-      const container = await loadRemote(`${name}/plugin`) as { 
-        default?: new () => PluginTypeMap<unknown, unknown, Record<string, unknown>>[T]
-      } | (new () => PluginTypeMap<unknown, unknown, Record<string, unknown>>[T]);
-
-      if (!container) {
-        throw new PluginLoadError(
-          name,
-          url,
-          new Error('Plugin module not found')
-        );
-      }
-
-      // Handle both default export and direct constructor
-      const module = typeof container === 'function' ? container : container.default;
-      
-      if (!module || typeof module !== 'function') {
-        throw new PluginLoadError(
-          name,
-          url,
-          new Error('Invalid plugin format - no constructor found')
-        );
-      }
-
-      this.moduleCache.set(name, {
-        module,
-        loadedAt: new Date()
-      } as ModuleCache<T>);
-
-      return module;
-    } catch (error) {
-      if (error instanceof PluginError) throw error;
-      throw new PluginLoadError(name, url, error as Error);
-    }
-  }
-
-  /**
-   * Initializes Module Federation for a plugin
-   */
-  private async initModuleFederation(name: string, url: string): Promise<void> {
-    await performReload(true);
-    await init({
-      name: "host",
-      remotes: [
-        {
-          name,
-          entry: url,
-        },
-      ],
-    });
-  }
-
-  /**
    * Registers plugin endpoints with the Elysia app
    */
   private registerEndpoints(name: string, endpoints: PluginEndpoint[]): void {
@@ -262,6 +320,9 @@ export class PluginService {
       this.endpoints.set(name, endpoints);
       return;
     }
+
+    // Remove any existing endpoints first
+    this.unregisterEndpoints(name);
 
     for (const endpoint of endpoints) {
       const path = `/plugin/${name}${endpoint.path}`;
@@ -282,6 +343,31 @@ export class PluginService {
           break;
       }
     }
+
+    // Store new endpoints
+    this.endpoints.set(name, endpoints);
+  }
+
+  /**
+   * Unregisters all endpoints for a plugin
+   */
+  private unregisterEndpoints(name: string): void {
+    if (!this.app) {
+      this.endpoints.delete(name);
+      return;
+    }
+
+    const endpoints = this.endpoints.get(name);
+    if (endpoints) {
+      for (const endpoint of endpoints) {
+        const path = `/plugin/${name}${endpoint.path}`;
+        logger.info(`Unregistering endpoint: ${endpoint.method} ${path}`);
+        // Note: Elysia doesn't provide a direct way to unregister routes
+        // The routes will be overwritten if registered again
+        // or cleared when the app is cleaned up
+      }
+    }
+    this.endpoints.delete(name);
   }
 
   /**
@@ -303,8 +389,9 @@ export class PluginService {
   /**
    * Checks if a cached item is stale
    */
-  private isStale(loadedAt: Date): boolean {
-    return Date.now() - loadedAt.getTime() > this.cacheTimeout;
+  private isStale(loadedAt: Date | undefined, timeout: number): boolean {
+    if (!loadedAt) return true;
+    return Date.now() - loadedAt.getTime() > timeout;
   }
 
   /**
