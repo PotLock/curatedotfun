@@ -1,4 +1,4 @@
-import { join } from 'path';
+import { join } from "path";
 import { LibSQLDatabase, drizzle } from "drizzle-orm/libsql";
 
 import { logger } from "../../utils/logger";
@@ -46,14 +46,13 @@ export class DatabaseService {
     status: SubmissionStatus,
     moderationResponseTweetId: string,
   ): void {
-    queries
-      .updateSubmissionFeedStatus(
-        this.db,
-        submissionId,
-        feedId,
-        status,
-        moderationResponseTweetId,
-      );
+    queries.updateSubmissionFeedStatus(
+      this.db,
+      submissionId,
+      feedId,
+      status,
+      moderationResponseTweetId,
+    );
   }
 
   async getSubmission(tweetId: string): Promise<TwitterSubmission | null> {

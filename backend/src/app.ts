@@ -53,10 +53,10 @@ export async function createApp(): Promise<AppInstance> {
 
   const submissionService = twitterService
     ? new SubmissionService(
-      twitterService,
-      distributionService,
-      configService.getConfig()
-    )
+        twitterService,
+        distributionService,
+        configService.getConfig(),
+      )
     : null;
 
   if (submissionService) {
@@ -67,12 +67,12 @@ export async function createApp(): Promise<AppInstance> {
     twitterService,
     submissionService,
     distributionService,
-    configService
+    configService,
   };
 
   // Create Elysia app with middleware and store
   const app = new Elysia()
-    .decorate('context', context)
+    .decorate("context", context)
     .use(
       helmet({
         contentSecurityPolicy: {
@@ -85,28 +85,37 @@ export async function createApp(): Promise<AppInstance> {
         crossOriginEmbedderPolicy: false,
         crossOriginResourcePolicy: { policy: "cross-origin" },
         xFrameOptions: { action: "sameorigin" },
-      })
+      }),
     )
     .use(
       cors({
         origin: ALLOWED_ORIGINS,
         methods: ["GET", "POST"],
-      })
+      }),
     )
     .use(swagger())
     .use(isProduction ? new Elysia() : testRoutes)
     .get("/health", () => new Response("OK", { status: 200 }))
     // API Routes
-    .get("/api/twitter/last-tweet-id", ({ context }: { context: AppContext }) => {
-      if (!context.twitterService) {
-        throw new Error("Twitter service not available");
-      }
-      const lastTweetId = context.twitterService.getLastCheckedTweetId();
-      return { lastTweetId };
-    })
+    .get(
+      "/api/twitter/last-tweet-id",
+      ({ context }: { context: AppContext }) => {
+        if (!context.twitterService) {
+          throw new Error("Twitter service not available");
+        }
+        const lastTweetId = context.twitterService.getLastCheckedTweetId();
+        return { lastTweetId };
+      },
+    )
     .post(
       "/api/twitter/last-tweet-id",
-      async ({ body, context }: { body: { tweetId: string }; context: AppContext }) => {
+      async ({
+        body,
+        context,
+      }: {
+        body: { tweetId: string };
+        context: AppContext;
+      }) => {
         if (!context.twitterService) {
           throw new Error("Twitter service not available");
         }
@@ -122,13 +131,17 @@ export async function createApp(): Promise<AppInstance> {
       },
       {
         body: t.Object({
-          tweetId: t.String()
-        })
-      }
+          tweetId: t.String(),
+        }),
+      },
     )
     .get(
       "/api/submission/:submissionId",
-      async ({ params: { submissionId } }: { params: { submissionId: string } }) => {
+      async ({
+        params: { submissionId },
+      }: {
+        params: { submissionId: string };
+      }) => {
         const content = await db.getSubmission(submissionId);
         if (!content) {
           throw new Error(`Content not found: ${submissionId}`);
@@ -137,9 +150,9 @@ export async function createApp(): Promise<AppInstance> {
       },
       {
         params: t.Object({
-          submissionId: t.String()
-        })
-      }
+          submissionId: t.String(),
+        }),
+      },
     )
     .get("/api/submissions", async () => {
       return await db.getAllSubmissions();
@@ -167,16 +180,22 @@ export async function createApp(): Promise<AppInstance> {
       },
       {
         params: t.Object({
-          feedId: t.String()
+          feedId: t.String(),
         }),
         query: t.Object({
-          status: t.Optional(t.String())
-        })
-      }
+          status: t.Optional(t.String()),
+        }),
+      },
     )
     .get(
       "/api/feed/:feedId",
-      ({ params: { feedId }, context }: { params: { feedId: string }; context: AppContext }) => {
+      ({
+        params: { feedId },
+        context,
+      }: {
+        params: { feedId: string };
+        context: AppContext;
+      }) => {
         const feed = context.configService.getFeedConfig(feedId);
         if (!feed) {
           throw new Error(`Feed not found: ${feedId}`);
@@ -186,9 +205,9 @@ export async function createApp(): Promise<AppInstance> {
       },
       {
         params: t.Object({
-          feedId: t.String()
-        })
-      }
+          feedId: t.String(),
+        }),
+      },
     )
     .get("/api/config", async ({ context }: { context: AppContext }) => {
       const rawConfig = await context.configService.getRawConfig();
@@ -200,7 +219,13 @@ export async function createApp(): Promise<AppInstance> {
     })
     .get(
       "/api/config/:feedId",
-      ({ params: { feedId }, context }: { params: { feedId: string }; context: AppContext }) => {
+      ({
+        params: { feedId },
+        context,
+      }: {
+        params: { feedId: string };
+        context: AppContext;
+      }) => {
         const feed = context.configService.getFeedConfig(feedId);
         if (!feed) {
           throw new Error(`Feed not found: ${feedId}`);
@@ -209,13 +234,19 @@ export async function createApp(): Promise<AppInstance> {
       },
       {
         params: t.Object({
-          feedId: t.String()
-        })
-      }
+          feedId: t.String(),
+        }),
+      },
     )
     .post(
       "/api/feeds/:feedId/process",
-      async ({ params: { feedId }, context }: { params: { feedId: string }; context: AppContext }) => {
+      async ({
+        params: { feedId },
+        context,
+      }: {
+        params: { feedId: string };
+        context: AppContext;
+      }) => {
         const feed = context.configService.getFeedConfig(feedId);
         if (!feed) {
           throw new Error(`Feed not found: ${feedId}`);
@@ -224,7 +255,7 @@ export async function createApp(): Promise<AppInstance> {
         // Get approved submissions for this feed
         const submissions = await db.getSubmissionsByFeed(feedId);
         const approvedSubmissions = submissions.filter(
-          (sub) => sub.status === "approved"
+          (sub) => sub.status === "approved",
         );
 
         if (approvedSubmissions.length === 0) {
@@ -240,13 +271,13 @@ export async function createApp(): Promise<AppInstance> {
           try {
             await context.distributionService.processStreamOutput(
               feedId,
-              submission
+              submission,
             );
             processed++;
           } catch (error) {
             console.error(
               `Error processing submission ${submission.tweetId}:`,
-              error
+              error,
             );
           }
         }
@@ -255,25 +286,23 @@ export async function createApp(): Promise<AppInstance> {
       },
       {
         params: t.Object({
-          feedId: t.String()
-        })
-      }
+          feedId: t.String(),
+        }),
+      },
     )
     // Serve frontend in production, proxy to dev server in development
     .use(
       isProduction
         ? staticPlugin({
-          assets: path.join(__dirname, "public"),
-          prefix: "/",
-          alwaysStatic: true,
-        })
-        : new Elysia()
+            assets: path.join(__dirname, "public"),
+            prefix: "/",
+            alwaysStatic: true,
+          })
+        : new Elysia(),
     )
-    .get("/*",
-      () => {
-        return Bun.file(path.join(__dirname, "public/index.html"));
-      }
-    );
+    .get("/*", () => {
+      return Bun.file(path.join(__dirname, "public/index.html"));
+    });
 
   return { app, context };
 }

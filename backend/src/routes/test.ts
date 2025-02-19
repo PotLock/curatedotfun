@@ -38,36 +38,48 @@ export const testRoutes = new Elysia({ prefix: "/api/test" })
       }
     },
   })
-  .post("/tweets", async ({ body }: {
-    body: {
-      id: string;
-      text: string;
-      username: string;
-      inReplyToStatusId?: string;
-      hashtags?: string[];
-    }
-  }) => {
-    const { id, text, username, inReplyToStatusId, hashtags } = body as {
-      id: string;
-      text: string;
-      username: string;
-      inReplyToStatusId?: string;
-      hashtags?: string[];
-    };
+  .post(
+    "/tweets",
+    async ({
+      body,
+    }: {
+      body: {
+        id: string;
+        text: string;
+        username: string;
+        inReplyToStatusId?: string;
+        hashtags?: string[];
+      };
+    }) => {
+      const { id, text, username, inReplyToStatusId, hashtags } = body as {
+        id: string;
+        text: string;
+        username: string;
+        inReplyToStatusId?: string;
+        hashtags?: string[];
+      };
 
-    const tweet = createTweet(id, text, username, inReplyToStatusId, hashtags);
-    mockTwitterService.addMockTweet(tweet);
-    return tweet;
-  }, {
-    body: t.Object({
-      id: t.String(),
-      tweetId: t.String(),
-      text: t.String(),
-      username: t.String(),
-      inReplyToStatusId: t.Optional(t.String()),
-      hashtags: t.Optional(t.Array(t.String()))
-    })
-  })
+      const tweet = createTweet(
+        id,
+        text,
+        username,
+        inReplyToStatusId,
+        hashtags,
+      );
+      mockTwitterService.addMockTweet(tweet);
+      return tweet;
+    },
+    {
+      body: t.Object({
+        id: t.String(),
+        tweetId: t.String(),
+        text: t.String(),
+        username: t.String(),
+        inReplyToStatusId: t.Optional(t.String()),
+        hashtags: t.Optional(t.Array(t.String())),
+      }),
+    },
+  )
   .post("/reset", () => {
     mockTwitterService.clearMockTweets();
     return { success: true };

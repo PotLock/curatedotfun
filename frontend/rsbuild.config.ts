@@ -35,6 +35,6 @@ export default defineConfig({
     },
   },
   dev: {
-    writeToDisk: true
-  }
+    writeToDisk: true,
+  },
 });

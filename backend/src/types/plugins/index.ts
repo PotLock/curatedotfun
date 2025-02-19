@@ -11,7 +11,9 @@ export type PluginType = "source" | "transform" | "distributor";
 /**
  * Base interface for all plugins
  */
-export interface BotPlugin<TConfig extends Record<string, unknown> = Record<string, unknown>> {
+export interface BotPlugin<
+  TConfig extends Record<string, unknown> = Record<string, unknown>,
+> {
   name: string;
   version: string;
   initialize(config?: TConfig): Promise<void>;
@@ -29,7 +31,10 @@ export interface ActionArgs<TInput = unknown, TConfig = unknown> {
 /**
  * Plugin configuration
  */
-export interface PluginConfig<T extends PluginType, TConfig = Record<string, unknown>> {
+export interface PluginConfig<
+  T extends PluginType,
+  TConfig = Record<string, unknown>,
+> {
   type: T;
   url: string;
   config?: TConfig;
@@ -40,7 +45,10 @@ export interface PluginConfig<T extends PluginType, TConfig = Record<string, unk
  */
 export interface PluginCache<T extends PluginType, P extends BotPlugin> {
   instance: P & {
-    __config: PluginConfig<T, P extends BotPlugin<infer C> ? C : Record<string, unknown>>;
+    __config: PluginConfig<
+      T,
+      P extends BotPlugin<infer C> ? C : Record<string, unknown>
+    >;
   };
   lastLoaded: Date;
 }
@@ -48,8 +56,9 @@ export interface PluginCache<T extends PluginType, P extends BotPlugin> {
 /**
  * Source plugin interface
  */
-export interface SourcePlugin<TConfig extends Record<string, unknown> = Record<string, unknown>>
-  extends BotPlugin<TConfig> {
+export interface SourcePlugin<
+  TConfig extends Record<string, unknown> = Record<string, unknown>,
+> extends BotPlugin<TConfig> {
   type: "source";
   startMonitoring(): Promise<void>;
   stopMonitoring(): Promise<void>;
@@ -63,7 +72,7 @@ export interface SourcePlugin<TConfig extends Record<string, unknown> = Record<s
 export interface TransformerPlugin<
   TInput = unknown,
   TOutput = unknown,
-  TConfig extends Record<string, unknown> = Record<string, unknown>
+  TConfig extends Record<string, unknown> = Record<string, unknown>,
 > extends BotPlugin<TConfig> {
   type: "transform";
   transform(args: ActionArgs<TInput, TConfig>): Promise<TOutput>;
@@ -74,7 +83,7 @@ export interface TransformerPlugin<
  */
 export interface DistributorPlugin<
   TInput = unknown,
-  TConfig extends Record<string, unknown> = Record<string, unknown>
+  TConfig extends Record<string, unknown> = Record<string, unknown>,
 > extends BotPlugin<TConfig> {
   type: "distributor";
   distribute(args: ActionArgs<TInput, TConfig>): Promise<void>;
@@ -83,7 +92,11 @@ export interface DistributorPlugin<
 /**
  * Plugin type mapping
  */
-export type PluginTypeMap<TInput, TOutput, TConfig extends Record<string, unknown>> = {
+export type PluginTypeMap<
+  TInput,
+  TOutput,
+  TConfig extends Record<string, unknown>,
+> = {
   source: SourcePlugin<TConfig>;
   transform: TransformerPlugin<TInput, TOutput, TConfig>;
   distributor: DistributorPlugin<TInput, TConfig>;
@@ -105,7 +118,9 @@ export function isSourcePlugin(plugin: unknown): plugin is SourcePlugin {
   );
 }
 
-export function isTransformerPlugin(plugin: unknown): plugin is TransformerPlugin {
+export function isTransformerPlugin(
+  plugin: unknown,
+): plugin is TransformerPlugin {
   return (
     typeof plugin === "object" &&
     plugin !== null &&
@@ -116,7 +131,9 @@ export function isTransformerPlugin(plugin: unknown): plugin is TransformerPlugi
   );
 }
 
-export function isDistributorPlugin(plugin: unknown): plugin is DistributorPlugin {
+export function isDistributorPlugin(
+  plugin: unknown,
+): plugin is DistributorPlugin {
   return (
     typeof plugin === "object" &&
     plugin !== null &&

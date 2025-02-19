@@ -22,13 +22,13 @@ async function getInstance(): Promise<AppInstance> {
 async function startServer() {
   try {
     startSpinner("server", "Starting server...");
-    
+
     const { app, context } = await getInstance();
-    
+
     Bun.serve({
       port: PORT,
       hostname: "0.0.0.0",
-      fetch: (request) => app.fetch(request)
+      fetch: (request) => app.fetch(request),
     });
     succeedSpinner("server", `Server running on port ${PORT}`);
 
@@ -44,9 +44,12 @@ async function startServer() {
       startSpinner("shutdown", "Shutting down gracefully...");
       try {
         const shutdownPromises = [];
-        if (context.twitterService) shutdownPromises.push(context.twitterService.stop());
-        if (context.submissionService) shutdownPromises.push(context.submissionService.stop());
-        if (context.distributionService) shutdownPromises.push(context.distributionService.shutdown());
+        if (context.twitterService)
+          shutdownPromises.push(context.twitterService.stop());
+        if (context.submissionService)
+          shutdownPromises.push(context.submissionService.stop());
+        if (context.distributionService)
+          shutdownPromises.push(context.distributionService.shutdown());
 
         await Promise.all(shutdownPromises);
         succeedSpinner("shutdown", "Shutdown complete");
@@ -61,10 +64,7 @@ async function startServer() {
     logger.info("🚀 Server is running and ready");
   } catch (error) {
     // Handle any initialization errors
-    [
-      "server",
-      "submission-monitor",
-    ].forEach((key) => {
+    ["server", "submission-monitor"].forEach((key) => {
       failSpinner(key, `Failed during ${key}`);
     });
     logger.error("Startup", error);

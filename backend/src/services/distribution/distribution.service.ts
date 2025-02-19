@@ -4,7 +4,7 @@ import { TwitterSubmission } from "../../types/twitter";
 import { logger } from "../../utils/logger";
 import { ConfigService } from "../config";
 import { PluginService } from "../plugins/plugin.service";
-import { DistributorConfig } from './../../types/config';
+import { DistributorConfig } from "./../../types/config";
 
 export class DistributionService {
   private pluginService: PluginService;
@@ -25,8 +25,8 @@ export class DistributionService {
         pluginName,
         {
           type: "transform",
-          config: config || {}
-        }
+          config: config || {},
+        },
       );
 
       try {
@@ -49,17 +49,16 @@ export class DistributionService {
 
   async distributeContent<T = TwitterSubmission>(
     distributor: DistributorConfig,
-    input: T
+    input: T,
   ): Promise<void> {
     const { plugin: pluginName, config: pluginConfig } = distributor;
     try {
-
       const plugin = await this.pluginService.getPlugin<"distributor", T>(
         pluginName,
         {
           type: "distributor",
-          config: pluginConfig || {}
-        }
+          config: pluginConfig || {},
+        },
       );
 
       try {
@@ -69,7 +68,11 @@ export class DistributionService {
         };
         await plugin.distribute(args);
       } catch (error) {
-        throw new PluginExecutionError(pluginName, "distribute", error as Error);
+        throw new PluginExecutionError(
+          pluginName,
+          "distribute",
+          error as Error,
+        );
       }
     } catch (error) {
       // Log but don't crash on plugin errors
@@ -117,11 +120,14 @@ export class DistributionService {
             transform.config,
           );
         } catch (error) {
-          logger.error(`Error transforming content for feed ${feedId} with plugin ${transform.plugin}:`, {
-            error,
-            submissionId: submissionId,
-            plugin: transform.plugin,
-          });
+          logger.error(
+            `Error transforming content for feed ${feedId} with plugin ${transform.plugin}:`,
+            {
+              error,
+              submissionId: submissionId,
+              plugin: transform.plugin,
+            },
+          );
           // Continue with original content if transform fails
           processedContent = content;
         }
@@ -129,10 +135,7 @@ export class DistributionService {
 
       // Distribute to all configured outputs
       for (const dist of distribute) {
-        await this.distributeContent(
-          dist,
-          processedContent
-        );
+        await this.distributeContent(dist, processedContent);
       }
     } catch (error) {
       logger.error(`Error processing stream output for feed ${feedId}:`, {

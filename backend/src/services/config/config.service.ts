@@ -1,9 +1,13 @@
 import fs from "fs/promises";
 import path from "path";
-import { AppConfig, FeedConfig, PluginConfig, PluginsConfig } from "../../types/config";
+import {
+  AppConfig,
+  FeedConfig,
+  PluginConfig,
+  PluginsConfig,
+} from "../../types/config";
 import { hydrateConfigValues } from "../../utils/config";
 import { logger } from "../../utils/logger";
-
 
 export const isProduction = process.env.NODE_ENV === "production";
 export class ConfigService {
@@ -13,10 +17,7 @@ export class ConfigService {
 
   private constructor() {
     if (isProduction) {
-      this.configPath = path.resolve(
-        __dirname,
-        "../../curate.config.json",
-      );
+      this.configPath = path.resolve(__dirname, "../../curate.config.json");
       logger.info("Using production configuration");
     } else {
       // Use test config in development mode
@@ -92,6 +93,8 @@ export class ConfigService {
 
   public getFeedConfig(feedId: string): FeedConfig | undefined {
     const config = this.getConfig();
-    return config.feeds.find((feed) => feed.id.toLowerCase() === feedId.toLowerCase());
+    return config.feeds.find(
+      (feed) => feed.id.toLowerCase() === feedId.toLowerCase(),
+    );
   }
 }

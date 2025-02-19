@@ -8,7 +8,8 @@ export function getTwitterCookies(db: LibSQLDatabase, username: string) {
     .select()
     .from(twitterCookies)
     .where(eq(twitterCookies.username, username))
-    .get().then();
+    .get()
+    .then();
 }
 
 export function setTwitterCookies(
@@ -37,7 +38,7 @@ export function deleteTwitterCookies(db: LibSQLDatabase, username: string) {
 
 // Twitter Cache Management
 export function getTwitterCacheValue(db: LibSQLDatabase, key: string) {
-  return db.select().from(twitterCache).where(eq(twitterCache.key, key)).get().then();
+  return db.select().from(twitterCache).where(eq(twitterCache.key, key)).get();
 }
 
 export function setTwitterCacheValue(

@@ -201,9 +201,9 @@ export class SubmissionService {
       // Check if this tweet was already submitted
       const existingSubmission = await db.getSubmission(originalTweet.id!);
       const existingFeeds = existingSubmission
-        ? (await db.getFeedsBySubmission(
+        ? ((await db.getFeedsBySubmission(
             existingSubmission.tweetId,
-          ) as SubmissionFeed[])
+          )) as SubmissionFeed[])
         : [];
 
       // Create new submission if it doesn't exist
@@ -401,9 +401,9 @@ export class SubmissionService {
     }
 
     // Get submission feeds to determine which feed is being moderated
-    const submissionFeeds = await db.getFeedsBySubmission(
+    const submissionFeeds = (await db.getFeedsBySubmission(
       submission.tweetId,
-    ) as SubmissionFeed[];
+    )) as SubmissionFeed[];
     const pendingFeeds = submissionFeeds
       .filter((feed) => feed.status === SubmissionStatus.PENDING)
       .filter((feed) => {

@@ -10,11 +10,7 @@ export interface RssItem {
   publishedAt: string;
 }
 
-export function saveRssItem(
-  db: LibSQLDatabase,
-  feedId: string,
-  item: RssItem,
-) {
+export function saveRssItem(db: LibSQLDatabase, feedId: string, item: RssItem) {
   return db.insert(rssItems).values({
     feedId,
     title: item.title,
@@ -36,7 +32,8 @@ export function getRssItems(
     .where(eq(rssItems.feedId, feedId))
     .orderBy(sql`${rssItems.publishedAt} DESC`)
     .limit(limit)
-    .all().then();
+    .all()
+    .then();
 
   return results.map((item) => ({
     title: item.title || undefined,

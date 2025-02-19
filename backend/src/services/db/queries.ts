@@ -23,7 +23,8 @@ export async function upsertFeeds(
 ) {
   return await db.transaction(async (tx) => {
     for (const feed of feedsToUpsert) {
-      await tx.insert(feeds)
+      await tx
+        .insert(feeds)
         .values({
           id: feed.id,
           name: feed.name,
@@ -173,7 +174,7 @@ export async function getSubmissionByCuratorTweetId(
   db: LibSQLDatabase,
   curatorTweetId: string,
 ): Promise<TwitterSubmission | null> {
-  const results = await db
+  const results = (await db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -211,7 +212,7 @@ export async function getSubmissionByCuratorTweetId(
     )
     .where(eq(submissions.curatorTweetId, curatorTweetId))
     .orderBy(moderationHistory.createdAt)
-    .all() as DbQueryResult[];
+    .all()) as DbQueryResult[];
 
   if (!results.length) return null;
 
@@ -247,7 +248,7 @@ export async function getSubmission(
   db: LibSQLDatabase,
   tweetId: string,
 ): Promise<TwitterSubmission | null> {
-  const results = await db
+  const results = (await db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -285,7 +286,7 @@ export async function getSubmission(
     )
     .where(eq(submissions.tweetId, tweetId))
     .orderBy(moderationHistory.createdAt)
-    .all() as DbQueryResult[];
+    .all()) as DbQueryResult[];
 
   if (!results.length) return null;
 
@@ -317,8 +318,10 @@ export async function getSubmission(
   };
 }
 
-export async function getAllSubmissions(db: LibSQLDatabase): Promise<TwitterSubmission[]> {
-  const results = await db
+export async function getAllSubmissions(
+  db: LibSQLDatabase,
+): Promise<TwitterSubmission[]> {
+  const results = (await db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -355,7 +358,7 @@ export async function getAllSubmissions(db: LibSQLDatabase): Promise<TwitterSubm
       ),
     )
     .orderBy(moderationHistory.createdAt)
-    .all() as DbQueryResult[];
+    .all()) as DbQueryResult[];
 
   // Group results by submission
   const submissionMap = new Map<string, TwitterSubmission>();
@@ -503,11 +506,13 @@ export async function upsertFeedPlugin(
 export async function getSubmissionsByFeed(
   db: LibSQLDatabase,
   feedId: string,
-): Promise<(TwitterSubmission & {
-  status: SubmissionStatus;
-  moderationResponseTweetId?: string;
-})[]> {
-  const results = await db
+): Promise<
+  (TwitterSubmission & {
+    status: SubmissionStatus;
+    moderationResponseTweetId?: string;
+  })[]
+> {
+  const results = (await db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -545,7 +550,7 @@ export async function getSubmissionsByFeed(
     )
     .where(eq(submissionFeeds.feedId, feedId))
     .orderBy(moderationHistory.createdAt)
-    .all() as DbFeedQueryResult[];
+    .all()) as DbFeedQueryResult[];
 
   // Group results by submission
   const submissionMap = new Map<string, TwitterSubmissionWithFeedData>();

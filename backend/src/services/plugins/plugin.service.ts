@@ -1,7 +1,11 @@
 import { performReload } from "@module-federation/node/utils";
 import { init, loadRemote } from "@module-federation/runtime";
 import { Elysia } from "elysia";
-import { PluginError, PluginInitError, PluginLoadError } from "../../types/errors";
+import {
+  PluginError,
+  PluginInitError,
+  PluginLoadError,
+} from "../../types/errors";
 import {
   BotPlugin,
   PluginConfig,
@@ -13,13 +17,15 @@ import { createPluginInstanceKey } from "../../utils/plugin";
 import { ConfigService } from "../config";
 import { isProduction } from "services/config/config.service";
 
-export interface PluginEndpoint { // move to types
+export interface PluginEndpoint {
+  // move to types
   path: string;
   method: "GET" | "POST" | "PUT" | "DELETE";
   handler: (ctx: any) => Promise<any>;
 }
 
-interface PluginWithEndpoints extends BotPlugin<Record<string, unknown>> { // move to types
+interface PluginWithEndpoints extends BotPlugin<Record<string, unknown>> {
+  // move to types
   getEndpoints?: () => PluginEndpoint[];
 }
 
@@ -32,7 +38,7 @@ interface RemoteState {
   config: RemoteConfig;
   loadedAt?: Date;
   module?: any;
-  status: 'active' | 'loading' | 'failed';
+  status: "active" | "loading" | "failed";
   lastError?: Error;
 }
 
@@ -44,9 +50,15 @@ interface InstanceState<T extends PluginType> {
   remoteName: string;
 }
 
-type PluginContainer<T extends PluginType> = {
-  default?: new () => PluginTypeMap<unknown, unknown, Record<string, unknown>>[T];
-} | (new () => PluginTypeMap<unknown, unknown, Record<string, unknown>>[T]);
+type PluginContainer<T extends PluginType> =
+  | {
+      default?: new () => PluginTypeMap<
+        unknown,
+        unknown,
+        Record<string, unknown>
+      >[T];
+    }
+  | (new () => PluginTypeMap<unknown, unknown, Record<string, unknown>>[T]);
 
 /**
  * PluginService manages the complete lifecycle of plugins including loading,
@@ -62,7 +74,9 @@ export class PluginService {
 
   // Time in milliseconds before cached items are considered stale
   private readonly instanceCacheTimeout: number = 7 * 24 * 60 * 60 * 1000; // 7 days (instance of a plugin with config)
-  private readonly moduleCacheTimeout: number = isProduction ? 30 * 60 * 1000 : 10 * 1000; // 30 minutes in production (module loaded from remote), 10 seconds in development
+  private readonly moduleCacheTimeout: number = isProduction
+    ? 30 * 60 * 1000
+    : 10 * 1000; // 30 minutes in production (module loaded from remote), 10 seconds in development
   private readonly maxAuthFailures: number = 2; // one less than 3 to avoid locking
   private readonly retryDelays: number[] = [1000, 5000]; // Delays between retries in ms
 
@@ -98,20 +112,20 @@ export class PluginService {
     T extends PluginType,
     TInput = unknown,
     TOutput = unknown,
-    TConfig extends Record<string, unknown> = Record<string, unknown>
+    TConfig extends Record<string, unknown> = Record<string, unknown>,
   >(
     name: string,
-    pluginConfig: { type: T; config: TConfig }
+    pluginConfig: { type: T; config: TConfig },
   ): Promise<PluginTypeMap<TInput, TOutput, TConfig>[T]> {
     try {
       // Get plugin metadata from app config
       const pluginMeta = this.configService.getPluginByName(name);
-      
+
       if (!pluginMeta) {
         throw new PluginLoadError(
           name,
           "",
-          new Error(`Plugin ${name} not found in app configuration`)
+          new Error(`Plugin ${name} not found in app configuration`),
         );
       }
 
@@ -119,7 +133,7 @@ export class PluginService {
       const config: PluginConfig<T, TConfig> = {
         type: pluginConfig.type,
         url: pluginMeta.url,
-        config: pluginConfig.config
+        config: pluginConfig.config,
       };
 
       const normalizedName = this.packageToRemoteName(name);
@@ -131,9 +145,13 @@ export class PluginService {
         if (instance.authFailures >= this.maxAuthFailures) {
           throw new PluginError(`Plugin ${name} disabled due to auth failures`);
         }
-        
+
         if (!this.isStale(instance.loadedAt, this.instanceCacheTimeout)) {
-          return instance.instance as PluginTypeMap<TInput, TOutput, TConfig>[T];
+          return instance.instance as PluginTypeMap<
+            TInput,
+            TOutput,
+            TConfig
+          >[T];
         }
       }
 
@@ -142,7 +160,7 @@ export class PluginService {
       if (!remote) {
         remote = {
           config: { name: normalizedName, entry: config.url },
-          status: 'active'
+          status: "active",
         };
         this.remotes.set(normalizedName, remote);
       }
@@ -152,63 +170,85 @@ export class PluginService {
       for (let attempt = 0; attempt <= this.retryDelays.length; attempt++) {
         try {
           // Load module if needed
-          if (!remote.module || !remote.loadedAt || this.isStale(remote.loadedAt, this.moduleCacheTimeout)) {
-            remote.status = 'loading';
+          if (
+            !remote.module ||
+            !remote.loadedAt ||
+            this.isStale(remote.loadedAt, this.moduleCacheTimeout)
+          ) {
+            remote.status = "loading";
             await this.loadModule(remote);
           }
 
-          if (remote.status === 'failed') {
-            throw remote.lastError || new Error('Module loading failed');
+          if (remote.status === "failed") {
+            throw remote.lastError || new Error("Module loading failed");
           }
 
           // Create and initialize instance
-          const newInstance = new remote.module() as PluginTypeMap<TInput, TOutput, TConfig>[T];
+          const newInstance = new remote.module() as PluginTypeMap<
+            TInput,
+            TOutput,
+            TConfig
+          >[T];
           await newInstance.initialize(config.config);
 
           // Validate instance implements required interface
           if (!this.validatePluginInterface(newInstance, config.type)) {
             throw new PluginInitError(
               name,
-              new Error(`Plugin does not implement required ${config.type} interface`)
+              new Error(
+                `Plugin does not implement required ${config.type} interface`,
+              ),
             );
           }
 
           // Register endpoints if available
           if (this.app && (newInstance as PluginWithEndpoints).getEndpoints) {
-            const endpoints = (newInstance as PluginWithEndpoints).getEndpoints!();
+            const endpoints = (newInstance as PluginWithEndpoints)
+              .getEndpoints!();
             this.registerEndpoints(normalizedName, endpoints);
           }
 
           // Cache successful instance
           const instanceState: InstanceState<T> = {
-            instance: newInstance as PluginTypeMap<unknown, unknown, Record<string, unknown>>[T],
+            instance: newInstance as PluginTypeMap<
+              unknown,
+              unknown,
+              Record<string, unknown>
+            >[T],
             config: config as PluginConfig<T, Record<string, unknown>>,
             loadedAt: new Date(),
             authFailures: 0,
-            remoteName: normalizedName
+            remoteName: normalizedName,
           };
           this.instances.set(instanceId, instanceState);
 
           return newInstance;
         } catch (error) {
           lastError = error as Error;
-          
+
           // Track auth failure
           if (instance) {
             instance.authFailures += 1;
-            
+
             if (instance.authFailures >= this.maxAuthFailures) {
               logger.error(`Plugin ${name} disabled due to auth failures`);
               // Clean up endpoints before disabling
               this.unregisterEndpoints(normalizedName);
-              throw new PluginError(`Plugin ${name} disabled after ${instance.authFailures} auth failures`);
+              throw new PluginError(
+                `Plugin ${name} disabled after ${instance.authFailures} auth failures`,
+              );
             }
           }
 
           // If we have more retries, wait and try again
           if (attempt < this.retryDelays.length) {
-            logger.warn(`Plugin ${name} initialization failed, retrying in ${this.retryDelays[attempt]}ms`, { error });
-            await new Promise(resolve => setTimeout(resolve, this.retryDelays[attempt]));
+            logger.warn(
+              `Plugin ${name} initialization failed, retrying in ${this.retryDelays[attempt]}ms`,
+              { error },
+            );
+            await new Promise((resolve) =>
+              setTimeout(resolve, this.retryDelays[attempt]),
+            );
             continue;
           }
         }
@@ -220,10 +260,12 @@ export class PluginService {
       throw lastError || new PluginError(`Failed to initialize plugin ${name}`);
     } catch (error) {
       logger.error(`Plugin error: ${name}`, { error });
-      throw error instanceof PluginError ? error : new PluginError(
-        `Unexpected error with plugin ${name}`,
-        error as Error
-      );
+      throw error instanceof PluginError
+        ? error
+        : new PluginError(
+            `Unexpected error with plugin ${name}`,
+            error as Error,
+          );
     }
   }
 
@@ -236,39 +278,42 @@ export class PluginService {
       await performReload(true);
       init({
         name: "host",
-        remotes: Array.from(this.remotes.values()).map(r => r.config)
+        remotes: Array.from(this.remotes.values()).map((r) => r.config),
       });
 
-      const container = await loadRemote<PluginContainer<PluginType>>(`${remote.config.name}/plugin`);
+      const container = await loadRemote<PluginContainer<PluginType>>(
+        `${remote.config.name}/plugin`,
+      );
       if (!container) {
         throw new PluginLoadError(
           remote.config.name,
           remote.config.entry,
-          new Error('Plugin module not found')
+          new Error("Plugin module not found"),
         );
       }
 
       // Handle both default export and direct constructor
-      const module = typeof container === 'function' ? container : container.default;
-      
-      if (!module || typeof module !== 'function') {
+      const module =
+        typeof container === "function" ? container : container.default;
+
+      if (!module || typeof module !== "function") {
         throw new PluginLoadError(
           remote.config.name,
           remote.config.entry,
-          new Error('Invalid plugin format - no constructor found')
+          new Error("Invalid plugin format - no constructor found"),
         );
       }
 
       remote.module = module;
       remote.loadedAt = new Date();
-      remote.status = 'active';
+      remote.status = "active";
       remote.lastError = undefined;
 
       logger.info(`Loaded module for remote ${remote.config.name}`, {
-        activeRemotes: Array.from(this.remotes.keys())
+        activeRemotes: Array.from(this.remotes.keys()),
       });
     } catch (error) {
-      remote.status = 'failed';
+      remote.status = "failed";
       remote.lastError = error as Error;
       // Clean up failed remote
       this.unregisterEndpoints(remote.config.name);
@@ -290,10 +335,13 @@ export class PluginService {
         } catch (error) {
           const pluginError = new PluginError(
             `Failed to shutdown plugin instance ${id}`,
-            error as Error
+            error as Error,
           );
           errors.push(pluginError);
-          logger.error(`Shutdown error`, { error: pluginError, config: state.config });
+          logger.error(`Shutdown error`, {
+            error: pluginError,
+            config: state.config,
+          });
         }
       }
       // Clean up endpoints for each instance
@@ -307,7 +355,7 @@ export class PluginService {
     if (errors.length > 0) {
       throw new AggregateError(
         errors,
-        `Some plugins failed to shutdown properly`
+        `Some plugins failed to shutdown properly`,
       );
     }
   }
@@ -374,13 +422,13 @@ export class PluginService {
    * Validates that a plugin instance implements the required interface
    */
   private validatePluginInterface(instance: any, type: PluginType): boolean {
-    if (!instance || typeof instance !== 'object') return false;
+    if (!instance || typeof instance !== "object") return false;
 
     switch (type) {
-      case 'distributor':
-        return typeof instance.distribute === 'function';
-      case 'transform':
-        return typeof instance.transform === 'function';
+      case "distributor":
+        return typeof instance.distribute === "function";
+      case "transform":
+        return typeof instance.transform === "function";
       default:
         return false;
     }
@@ -400,6 +448,6 @@ export class PluginService {
   private packageToRemoteName(packageName: string): string {
     // Remove @ symbol and convert / to underscore
     // e.g. "@curatedotfun/telegram" -> "curatedotfun_telegram"
-    return packageName.toLowerCase().replace('@', '').replace('/', '_');
+    return packageName.toLowerCase().replace("@", "").replace("/", "_");
   }
 }

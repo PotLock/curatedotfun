@@ -57,11 +57,14 @@ export class TwitterSourcePlugin implements SourcePlugin<TwitterConfig> {
     await this.checkMentions();
 
     // Check mentions every 5 minutes
-    this.monitoringInterval = setInterval(() => {
-      this.checkMentions().catch((error) => {
-        logger.error("Error checking mentions:", error);
-      });
-    }, 5 * 60 * 1000);
+    this.monitoringInterval = setInterval(
+      () => {
+        this.checkMentions().catch((error) => {
+          logger.error("Error checking mentions:", error);
+        });
+      },
+      5 * 60 * 1000,
+    );
   }
 
   async stopMonitoring(): Promise<void> {
