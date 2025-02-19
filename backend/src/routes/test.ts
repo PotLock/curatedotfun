@@ -1,5 +1,5 @@
 import { Tweet } from "agent-twitter-client";
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 import { MockTwitterService } from "../__tests__/mocks/twitter-service.mock";
 
 // Create a single mock instance to maintain state
@@ -31,14 +31,22 @@ const createTweet = (
 
 export const testRoutes = new Elysia({ prefix: "/api/test" })
   .guard({
-    beforeHandle: ({ request }) => {
+    beforeHandle: () => {
       // Only allow in development and test environments
       if (process.env.NODE_ENV === "production") {
         return new Response("Not found", { status: 404 });
       }
     },
   })
-  .post("/tweets", async ({ body }) => {
+  .post("/tweets", async ({ body }: {
+    body: {
+      id: string;
+      text: string;
+      username: string;
+      inReplyToStatusId?: string;
+      hashtags?: string[];
+    }
+  }) => {
     const { id, text, username, inReplyToStatusId, hashtags } = body as {
       id: string;
       text: string;
@@ -46,9 +54,19 @@ export const testRoutes = new Elysia({ prefix: "/api/test" })
       inReplyToStatusId?: string;
       hashtags?: string[];
     };
+
     const tweet = createTweet(id, text, username, inReplyToStatusId, hashtags);
     mockTwitterService.addMockTweet(tweet);
     return tweet;
+  }, {
+    body: t.Object({
+      id: t.String(),
+      tweetId: t.String(),
+      text: t.String(),
+      username: t.String(),
+      inReplyToStatusId: t.Optional(t.String()),
+      hashtags: t.Optional(t.Array(t.String()))
+    })
   })
   .post("/reset", () => {
     mockTwitterService.clearMockTweets();

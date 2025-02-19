@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import { AppConfig } from "../../types/config";
+import { AppConfig, FeedConfig, PluginConfig, PluginsConfig } from "../../types/config";
 import { hydrateConfigValues } from "../../utils/config";
 import { logger } from "../../utils/logger";
 
@@ -76,5 +76,20 @@ export class ConfigService {
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to update config: ${message}`);
     }
+  }
+
+  public getPluginRegistry(): PluginsConfig {
+    const config = this.getConfig();
+    return config.plugins;
+  }
+
+  public getPluginByName(pluginName: string): PluginConfig | undefined {
+    const plugins = this.getPluginRegistry();
+    return plugins[pluginName];
+  }
+
+  public getFeedConfig(feedId: string): FeedConfig | undefined {
+    const config = this.getConfig();
+    return config.feeds.find((feed) => feed.id.toLowerCase() === feedId.toLowerCase());
   }
 }

@@ -1,37 +1,18 @@
-import { TwitterSubmission } from "types/twitter";
-import { AppConfig, PluginsConfig } from "../../types/config";
-import {
-  ActionArgs,
-  PluginConfig,
-  PluginType
-} from "../../types/plugins";
-import { PluginError, PluginLoadError, PluginInitError, PluginExecutionError } from "../../types/errors";
+import { PluginError, PluginExecutionError } from "../../types/errors";
+import { ActionArgs } from "../../types/plugins";
+import { TwitterSubmission } from "../../types/twitter";
 import { logger } from "../../utils/logger";
+import { ConfigService } from "../config";
 import { PluginService } from "../plugins/plugin.service";
+import { DistributorConfig } from './../../types/config';
 
 export class DistributionService {
   private pluginService: PluginService;
+  private configService: ConfigService;
 
   constructor() {
     this.pluginService = PluginService.getInstance();
-  }
-
-  async initialize(pluginsConfig: PluginsConfig): Promise<void> {
-    const configs: Record<string, PluginConfig<"transform" | "distributor">> = {};
-
-    // Convert config to proper format
-    for (const [name, conf] of Object.entries(pluginsConfig)) {
-      if (conf.type === "distributor" || conf.type === "transform") {
-        const pluginConfig = typeof conf.config === 'string' ? JSON.parse(conf.config) : (conf.config || {});
-        configs[name] = {
-          type: conf.type,
-          url: conf.url,
-          config: pluginConfig,
-        };
-      }
-    }
-
-    await this.pluginService.initializePlugins(configs);
+    this.configService = ConfigService.getInstance();
   }
 
   async transformContent<T = TwitterSubmission, U = string>(
@@ -40,26 +21,13 @@ export class DistributionService {
     config: Record<string, unknown>,
   ): Promise<U> {
     try {
-      // Get original plugin config to maintain URL
-      const originalConfig = this.pluginService.getLoadedConfigs()[pluginName];
-      if (!originalConfig) {
-        throw new PluginLoadError(pluginName, "", new Error("Plugin not initialized"));
-      }
-
-      const pluginConfig: PluginConfig<"transform", Record<string, unknown>> = {
-        type: "transform",
-        url: originalConfig.url,
-        config
-      };
-
       const plugin = await this.pluginService.getPlugin<"transform", T, U>(
         pluginName,
-        pluginConfig
+        {
+          type: "transform",
+          config: config || {}
+        }
       );
-
-      if (!plugin) {
-        throw new PluginLoadError(pluginName, pluginConfig.url, new Error("Plugin not found"));
-      }
 
       try {
         const args: ActionArgs<T, Record<string, unknown>> = {
@@ -80,37 +48,24 @@ export class DistributionService {
   }
 
   async distributeContent<T = TwitterSubmission>(
-    feedId: string,
-    pluginName: string,
-    input: T,
-    config: Record<string, unknown>,
+    distributor: DistributorConfig,
+    input: T
   ): Promise<void> {
+    const { plugin: pluginName, config: pluginConfig } = distributor;
     try {
-      // Get original plugin config to maintain URL
-      const originalConfig = this.pluginService.getLoadedConfigs()[pluginName];
-      if (!originalConfig) {
-        throw new PluginLoadError(pluginName, "", new Error("Plugin not initialized"));
-      }
-
-      const pluginConfig: PluginConfig<"distributor", Record<string, unknown>> = {
-        type: "distributor",
-        url: originalConfig.url,
-        config
-      };
 
       const plugin = await this.pluginService.getPlugin<"distributor", T>(
         pluginName,
-        pluginConfig
+        {
+          type: "distributor",
+          config: pluginConfig || {}
+        }
       );
-
-      if (!plugin) {
-        throw new PluginLoadError(pluginName, pluginConfig.url, new Error("Plugin not found"));
-      }
 
       try {
         const args: ActionArgs<T, Record<string, unknown>> = {
           input,
-          config,
+          config: pluginConfig,
         };
         await plugin.distribute(args);
       } catch (error) {
@@ -120,7 +75,6 @@ export class DistributionService {
       // Log but don't crash on plugin errors
       logger.error(`Error distributing content with plugin ${pluginName}:`, {
         error,
-        feedId,
         pluginName,
       });
 
@@ -135,10 +89,11 @@ export class DistributionService {
     feedId: string,
     submission: TwitterSubmission,
   ): Promise<void> {
+    const submissionId = submission.tweetId;
+    const content = submission.content;
+
     try {
-      // TODO: Replace with get feed config, or pass it in/handle outside
-      const config = await this.getConfig();
-      const feed = config.feeds.find((f) => f.id === feedId);
+      const feed = this.configService.getFeedConfig(feedId);
       if (!feed?.outputs.stream?.enabled) {
         return;
       }
@@ -152,9 +107,8 @@ export class DistributionService {
         );
         return;
       }
-
+      let processedContent = content; // TODO: this isn't right, because something like Notion wants the submission object. But we don't want Telegram to send that object... although a transformation sohuld probably be required
       // Transform content if configured
-      let processedContent = submission;
       if (transform) {
         try {
           processedContent = await this.transformContent(
@@ -165,34 +119,27 @@ export class DistributionService {
         } catch (error) {
           logger.error(`Error transforming content for feed ${feedId} with plugin ${transform.plugin}:`, {
             error,
-            submissionId: submission.tweetId,
+            submissionId: submissionId,
             plugin: transform.plugin,
           });
           // Continue with original content if transform fails
-          processedContent = submission;
+          processedContent = content;
         }
       }
 
       // Distribute to all configured outputs
       for (const dist of distribute) {
         await this.distributeContent(
-          feedId,
-          dist.plugin,
-          processedContent,
-          dist.config,
+          dist,
+          processedContent
         );
       }
     } catch (error) {
       logger.error(`Error processing stream output for feed ${feedId}:`, {
         error,
-        submissionId: submission.tweetId,
+        submissionId: submissionId,
       });
     }
-  }
-
-  private async getConfig(): Promise<AppConfig> {
-    const { ConfigService } = await import("../config");
-    return ConfigService.getInstance().getConfig();
   }
 
   async shutdown(): Promise<void> {

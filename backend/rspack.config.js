@@ -30,8 +30,17 @@ module.exports = {
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
   },
-  // plugins: [
-  //   new rspack.container.ModuleFederationPlugin({
+  plugins: [
+    new rspack.CopyRspackPlugin({
+      patterns: [
+        {
+          from: "../frontend/dist",
+          to: "public",
+          noErrorOnMissing: true // Don't error in development when dist doesn't exist
+        }
+      ]
+    }),
+      //   new rspack.container.ModuleFederationPlugin({
   //     name: "host",
   //     runtimePlugins: [
   //       require.resolve("@module-federation/node/runtimePlugin"),
@@ -43,5 +52,5 @@ module.exports = {
   //       },
   //     }
   //   })
-  // ],
+  ],
 };

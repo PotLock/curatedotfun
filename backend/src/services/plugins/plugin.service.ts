@@ -10,6 +10,7 @@ import {
 } from "../../types/plugins";
 import { logger } from "../../utils/logger";
 import { createPluginInstanceKey } from "../../utils/plugin";
+import { ConfigService } from "../config";
 
 export interface PluginEndpoint { // move to types
   path: string;
@@ -41,14 +42,16 @@ export class PluginService {
   private moduleCache: Map<string, ModuleCache<PluginType>> = new Map();
   private instanceCache: Map<string, InstanceCache<PluginType>> = new Map();
   private endpoints: Map<string, PluginEndpoint[]> = new Map();
-  private loadedConfigs: Record<string, PluginConfig<PluginType, any>> = {};
   private app: Elysia | null = null;
+  private configService: ConfigService;
 
   // Time in milliseconds before cached items are considered stale
   private readonly cacheTimeout: number = 5 * 60 * 1000; // 5 minutes
 
   // TODO: Module cache should be shorter than instance cache (instance cache may not even need to expire)
-  private constructor() {}
+  private constructor() {
+    this.configService = ConfigService.getInstance();
+  }
 
   /**
    * Gets the singleton instance of PluginService
@@ -81,10 +84,29 @@ export class PluginService {
     TConfig extends Record<string, unknown> = Record<string, unknown>
   >(
     name: string,
-    config: PluginConfig<T, TConfig>
+    pluginConfig: { type: T; config: TConfig }
   ): Promise<PluginTypeMap<TInput, TOutput, TConfig>[T]> {
     try {
-      const instanceId = createPluginInstanceKey(name, config);
+      // Get plugin metadata from app config
+      const pluginMeta = this.configService.getPluginByName(name);
+      
+      if (!pluginMeta) {
+        throw new PluginLoadError(
+          name,
+          "",
+          new Error(`Plugin ${name} not found in app configuration`)
+        );
+      }
+
+      // Create full config with URL from app config
+      const config: PluginConfig<T, TConfig> = {
+        type: pluginConfig.type,
+        url: pluginMeta.url,
+        config: pluginConfig.config
+      };
+
+      const normalizedName = this.packageToRemoteName(name);
+      const instanceId = createPluginInstanceKey(normalizedName, config);
       const cached = this.instanceCache.get(instanceId);
 
       if (cached && !this.isStale(cached.loadedAt)) {
@@ -92,7 +114,7 @@ export class PluginService {
       }
 
       // Load module with correct type
-      const module = await this.loadModule<T>(name, config.url);
+      const module = await this.loadModule<T>(normalizedName, config.url);
 
       // Create and initialize instance
       let instance: PluginTypeMap<TInput, TOutput, TConfig>[T];
@@ -114,7 +136,7 @@ export class PluginService {
       // Register endpoints if available
       if (this.app && (instance as PluginWithEndpoints).getEndpoints) {
         const endpoints = (instance as PluginWithEndpoints).getEndpoints!();
-        this.registerEndpoints(name, endpoints);
+        this.registerEndpoints(normalizedName, endpoints);
       }
 
       // Cache instance
@@ -126,45 +148,10 @@ export class PluginService {
 
       return instance;
     } catch (error) {
-      logger.error(`Plugin error: ${name}`, { error, config });
+      logger.error(`Plugin error: ${name}`, { error });
       throw error instanceof PluginError ? error : new PluginError(
         `Unexpected error with plugin ${name}`,
         error as Error
-      );
-    }
-  }
-
-  /**
-   * Gets the configurations of all loaded plugins
-   */
-  public getLoadedConfigs(): Record<string, PluginConfig<PluginType, any>> {
-    return { ...this.loadedConfigs };
-  }
-
-  /**
-   * Initializes plugins from configuration
-   */
-  public async initializePlugins(
-    plugins: Record<string, PluginConfig<PluginType, any>>
-  ): Promise<void> {
-    // Store configs first so they're available during plugin loading
-    this.loadedConfigs = { ...plugins };
-    
-    const errors: Error[] = [];
-    for (const [name, config] of Object.entries(this.loadedConfigs)) {
-      try {
-        logger.info(`Loading plugin: ${name}`);
-        await this.getPlugin(name, config);
-      } catch (error) {
-        logger.error(`Failed to load plugin ${name}:`, error);
-        errors.push(error as Error);
-      }
-    }
-
-    if (errors.length > 0) {
-      throw new AggregateError(
-        errors,
-        `Failed to initialize ${errors.length} plugins`
       );
     }
   }
@@ -193,7 +180,6 @@ export class PluginService {
     this.instanceCache.clear();
     this.moduleCache.clear();
     this.endpoints.clear();
-    this.loadedConfigs = {};
 
     if (errors.length > 0) {
       throw new AggregateError(
@@ -319,5 +305,14 @@ export class PluginService {
    */
   private isStale(loadedAt: Date): boolean {
     return Date.now() - loadedAt.getTime() > this.cacheTimeout;
+  }
+
+  /**
+   * Converts a package name to a valid Module Federation remote name
+   */
+  private packageToRemoteName(packageName: string): string {
+    // Remove @ symbol and convert / to underscore
+    // e.g. "@curatedotfun/telegram" -> "curatedotfun_telegram"
+    return packageName.toLowerCase().replace('@', '').replace('/', '_');
   }
 }
