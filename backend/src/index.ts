@@ -28,7 +28,12 @@ async function startServer() {
     Bun.serve({
       port: PORT,
       hostname: "0.0.0.0",
-      fetch: (request) => app.fetch(request),
+      fetch: async (request) => {
+        if (request.url.endsWith("/health")) {
+          return new Response("OK", { status: 200 });
+        }
+        return app.fetch(request);
+      },
     });
     succeedSpinner("server", `Server running on port ${PORT}`);
 

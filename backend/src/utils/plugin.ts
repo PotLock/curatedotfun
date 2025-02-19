@@ -25,7 +25,7 @@ export function createPluginInstanceKey(
   hash.update(JSON.stringify(sortedData));
 
   // Return first 8 chars of hex digest for a reasonably short but unique key
-  return hash.digest("hex").slice(0, 8);
+  return hash.digest("hex").slice(0, 16);
 }
 
 /**
@@ -43,6 +43,13 @@ export function sortObjectKeys<T>(obj: T): T {
 
   if (Array.isArray(obj)) {
     return obj.map(sortObjectKeys) as unknown as T;
+  }
+
+  // Check for non-serializable properties
+  for (const value of Object.values(obj)) {
+    if (typeof value === "function" || value instanceof RegExp) {
+      throw new Error("Object contains non-serializable properties");
+    }
   }
 
   return Object.keys(obj)
@@ -73,6 +80,12 @@ export function validatePluginConfig(
 
   if (!config.url) {
     throw new Error("Plugin URL is required");
+  }
+
+  try {
+    new URL(config.url);
+  } catch (error) {
+    throw new Error("Plugin URL must be a valid URL");
   }
 
   // Config is optional but must be an object if present

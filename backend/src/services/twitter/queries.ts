@@ -8,8 +8,7 @@ export function getTwitterCookies(db: LibSQLDatabase, username: string) {
     .select()
     .from(twitterCookies)
     .where(eq(twitterCookies.username, username))
-    .get()
-    .then();
+    .get();
 }
 
 export function setTwitterCookies(

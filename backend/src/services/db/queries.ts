@@ -48,6 +48,28 @@ export async function saveSubmissionToFeed(
   feedId: string,
   status: SubmissionStatus = SubmissionStatus.PENDING,
 ) {
+  // Check if submission exists
+  const submission = await db
+    .select({ id: submissions.tweetId })
+    .from(submissions)
+    .where(eq(submissions.tweetId, submissionId))
+    .get();
+
+  if (!submission) {
+    throw new Error(`Submission with ID ${submissionId} does not exist`);
+  }
+
+  // Check if feed exists
+  const feed = await db
+    .select({ id: feeds.id })
+    .from(feeds)
+    .where(eq(feeds.id, feedId))
+    .get();
+
+  if (!feed) {
+    throw new Error(`Feed with ID ${feedId} does not exist`);
+  }
+
   return await db
     .insert(submissionFeeds)
     .values({
@@ -320,6 +342,8 @@ export async function getSubmission(
 
 export async function getAllSubmissions(
   db: LibSQLDatabase,
+  limit: number = 50,
+  offset: number = 0,
 ): Promise<TwitterSubmission[]> {
   const results = (await db
     .select({
@@ -358,6 +382,8 @@ export async function getAllSubmissions(
       ),
     )
     .orderBy(moderationHistory.createdAt)
+    .limit(limit)
+    .offset(offset)
     .all()) as DbQueryResult[];
 
   // Group results by submission

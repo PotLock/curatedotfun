@@ -111,6 +111,17 @@ export class DistributionService {
         return;
       }
       let processedContent = content; // TODO: this isn't right, because something like Notion wants the submission object. But we don't want Telegram to send that object... although a transformation sohuld probably be required
+
+      // interface TransformationPipeline<T, U> {
+      //   input: T;
+      //   transforms: Array<{
+      //     plugin: string;
+      //     outputType: 'raw' | 'structured';
+      //     config?: Record<string, unknown>;
+      //   }>;
+      //   output: U;
+      // }
+
       // Transform content if configured
       if (transform) {
         try {

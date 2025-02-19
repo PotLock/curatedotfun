@@ -72,7 +72,6 @@ export const testRoutes = new Elysia({ prefix: "/api/test" })
     {
       body: t.Object({
         id: t.String(),
-        tweetId: t.String(),
         text: t.String(),
         username: t.String(),
         inReplyToStatusId: t.Optional(t.String()),

@@ -1,5 +1,5 @@
-import { join } from "path";
 import { LibSQLDatabase, drizzle } from "drizzle-orm/libsql";
+import { join } from "path";
 
 import { logger } from "../../utils/logger";
 
@@ -8,23 +8,37 @@ import * as queries from "./queries";
 
 // Twitter & RSS
 import {
-  SubmissionFeed,
   Moderation,
+  SubmissionFeed,
+  SubmissionStatus,
   TwitterCookie,
   TwitterSubmission,
-  SubmissionStatus,
 } from "../../types/twitter";
 import * as rssQueries from "../rss/queries";
 import * as twitterQueries from "../twitter/queries";
 export class DatabaseService {
   private db: LibSQLDatabase;
   private operations: DBOperations;
-  private static readonly DB_PATH =
-    process.env.DATABASE_URL ||
-    `file:${join(process.cwd(), ".db", "submissions.sqlite")}`;
+  private static readonly DB_PATH = (() => {
+    const url = process.env.DATABASE_URL;
+    if (url) {
+      try {
+        new URL(url);
+        return url;
+      } catch (e) {
+        throw new Error(`Invalid DATABASE_URL: ${url}`);
+      }
+    }
+    return `file:${join(process.cwd(), ".db", "submissions.sqlite")}`;
+  })();
 
   constructor() {
-    this.db = drizzle(DatabaseService.DB_PATH);
+    try {
+      this.db = drizzle(DatabaseService.DB_PATH);
+    } catch (e) {
+      logger.error("Failed to initialize database:", e);
+      throw new Error("Database initialization failed");
+    }
     this.operations = new DBOperations(this.db);
   }
 
@@ -65,8 +79,11 @@ export class DatabaseService {
     return await queries.getSubmissionByCuratorTweetId(this.db, curatorTweetId);
   }
 
-  async getAllSubmissions(): Promise<TwitterSubmission[]> {
-    return await queries.getAllSubmissions(this.db);
+  async getAllSubmissions(
+    limit?: number,
+    offset?: number,
+  ): Promise<TwitterSubmission[]> {
+    return await queries.getAllSubmissions(this.db, limit, offset);
   }
 
   async getDailySubmissionCount(userId: string): Promise<number> {
@@ -77,7 +94,7 @@ export class DatabaseService {
   }
 
   async incrementDailySubmissionCount(userId: string): Promise<void> {
-    queries.incrementDailySubmissionCount(this.db, userId);
+    await queries.incrementDailySubmissionCount(this.db, userId);
   }
 
   upsertFeeds(

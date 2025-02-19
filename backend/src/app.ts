@@ -10,6 +10,7 @@ import { db } from "./services/db";
 import { DistributionService } from "./services/distribution/distribution.service";
 import { SubmissionService } from "./services/submissions/submission.service";
 import { TwitterService } from "./services/twitter/client";
+import { logger } from "./utils/logger";
 
 const ALLOWED_ORIGINS = [
   "http://localhost:3000",
@@ -95,7 +96,6 @@ export async function createApp(): Promise<AppInstance> {
     )
     .use(swagger())
     .use(isProduction ? new Elysia() : testRoutes)
-    .get("/health", () => new Response("OK", { status: 200 }))
     // API Routes
     .get(
       "/api/twitter/last-tweet-id",
@@ -154,9 +154,20 @@ export async function createApp(): Promise<AppInstance> {
         }),
       },
     )
-    .get("/api/submissions", async () => {
-      return await db.getAllSubmissions();
-    })
+    .get(
+      "/api/submissions",
+      async ({ query }: { query: { limit?: string; offset?: string } }) => {
+        const limit = query.limit ? parseInt(query.limit) : undefined;
+        const offset = query.offset ? parseInt(query.offset) : undefined;
+        return await db.getAllSubmissions(limit, offset);
+      },
+      {
+        query: t.Object({
+          limit: t.Optional(t.String()),
+          offset: t.Optional(t.String()),
+        }),
+      },
+    )
     .get(
       "/api/submissions/:feedId",
       async ({
@@ -275,7 +286,7 @@ export async function createApp(): Promise<AppInstance> {
             );
             processed++;
           } catch (error) {
-            console.error(
+            logger.error(
               `Error processing submission ${submission.tweetId}:`,
               error,
             );

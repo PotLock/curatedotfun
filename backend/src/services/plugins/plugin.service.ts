@@ -249,7 +249,6 @@ export class PluginService {
             await new Promise((resolve) =>
               setTimeout(resolve, this.retryDelays[attempt]),
             );
-            continue;
           }
         }
       }

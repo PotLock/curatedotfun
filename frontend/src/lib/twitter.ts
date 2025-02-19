@@ -22,7 +22,6 @@ export const handleApprove = async (
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         id: newTweetId,
-        tweetId: submission.tweetId,
         text: `!approve @${botId}`,
         username: "test_admin",
         userId: "mock-user-id-test_admin",

@@ -21,19 +21,18 @@ export function saveRssItem(db: LibSQLDatabase, feedId: string, item: RssItem) {
   });
 }
 
-export function getRssItems(
+export async function getRssItems(
   db: LibSQLDatabase,
   feedId: string,
   limit: number = 100,
-): RssItem[] {
-  const results = db
+): Promise<RssItem[]> {
+  const results = await db
     .select()
     .from(rssItems)
     .where(eq(rssItems.feedId, feedId))
     .orderBy(sql`${rssItems.publishedAt} DESC`)
     .limit(limit)
-    .all()
-    .then();
+    .all();
 
   return results.map((item) => ({
     title: item.title || undefined,
