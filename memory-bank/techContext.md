@@ -21,20 +21,37 @@
 ## Development Setup
 
 ### Core Dependencies
-- Bun (JavaScript runtime)
-- TypeScript
-- Elysia.js and plugins
-- React and related libraries
+- Bun (JavaScript runtime and package manager)
+- TypeScript (4.x+)
+- Elysia.js (latest)
+- React (18.x)
+- RSBuild
+- Tailwind CSS
+- Testing Libraries
+  * Vitest
+  * Testing Library
+  * Playwright
 
 ### Environment Configuration
-- NODE_ENV
-- PORT
-- TWITTER_USERNAME
-- TWITTER_PASSWORD
-- TWITTER_EMAIL
-- TWITTER_2FA_SECRET
-- TELEGRAM_BOT_TOKEN
-- FRONTEND_DIST_PATH
+- Core Settings
+  * NODE_ENV
+  * PORT
+  * FRONTEND_DIST_PATH
+  * LOG_LEVEL
+- Twitter Auth
+  * TWITTER_USERNAME
+  * TWITTER_PASSWORD
+  * TWITTER_EMAIL
+  * TWITTER_2FA_SECRET
+- Distribution Settings
+  * TELEGRAM_BOT_TOKEN
+  * NOTION_API_KEY
+  * SUPABASE_URL
+  * SUPABASE_KEY
+- Plugin Settings
+  * OPENAI_API_KEY
+  * PLUGIN_CACHE_TTL
+  * MAX_PLUGIN_MEMORY
 
 ## Plugin System
 
@@ -61,11 +78,21 @@
 - LinkedIn: Post monitoring (planned)
 
 ### Plugin Development
-- Standardized plugin interfaces
-- Mock system for testing
-- Development toolkit
-- Hot-reload support
-- Custom endpoint capabilities
+- Development Tools
+  * Plugin development kit
+  * Type generation utilities
+  * Testing helpers
+  * Documentation generators
+- Testing Infrastructure
+  * Mock system
+  * Test runners
+  * Fixture generators
+  * Performance testing tools
+- Development Features
+  * Hot-reload support
+  * Debug logging
+  * State inspection
+  * Performance profiling
 
 ## Task Scheduling
 
@@ -112,13 +139,40 @@
 ## Development Practices
 
 ### Code Organization
-- Service-based architecture
-- Plugin-based extensibility
-- TypeScript for type safety
-- Modular component design
+- Architecture
+  * Service-based design
+  * Plugin system
+  * Event-driven patterns
+  * Clean architecture principles
+- Standards
+  * TypeScript strict mode
+  * ESLint configuration
+  * Prettier formatting
+  * Import organization
+- Component Design
+  * Atomic design principles
+  * Reusable patterns
+  * Performance optimization
+  * Error boundaries
 
-### Testing
-- Unit tests for services
-- Mock implementations for external services
-- Test configuration files
-- Integration test support
+### Testing Strategy
+- Unit Testing
+  * Service tests
+  * Component tests
+  * Plugin tests
+  * Utility tests
+- Integration Testing
+  * API endpoints
+  * Plugin interactions
+  * Service integration
+  * Event handling
+- E2E Testing
+  * User flows
+  * Plugin workflows
+  * Distribution paths
+  * Error scenarios
+- Performance Testing
+  * Load testing
+  * Stress testing
+  * Memory profiling
+  * Bottleneck identification

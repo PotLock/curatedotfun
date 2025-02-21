@@ -4,7 +4,7 @@ sidebar_position: 0
 
 # 🔌 Plugins
 
-curate.fun supports various plugins that extend its functionality, particularly for content distribution. Each plugin enables you to distribute curated content to different platforms and channels.
+Curate.fun has a unique plugin pattern that uses [module federation](https://module-federation.io/), which allows the bot to load and use remote plugins without needing to install or redeploy. These plugins can extend its functionality, particularly for content ingestion, transformation, distribution.
 
 ## Plugin Structure
 
@@ -57,14 +57,29 @@ Select a plugin from the sidebar to view its detailed configuration and setup in
 
 ## Available Plugins
 
-### [📱 Telegram Plugin](./distributors/telegram.md)
+### Distributors
 
+#### [📱 Telegram Plugin](./distributors/telegram.md)
 Distribute curated content to Telegram channels and topics.
 
-### [🤖 GPT Transform](./transformers/gpt-transform.md)
+#### [📡 RSS Plugin](./distributors/rss.md)
+Generate RSS feeds for your curated content.
 
+#### [📝 Notion Plugin](./distributors/notion.md)
+Sync content to Notion databases with customizable properties.
+
+#### [💾 Supabase Plugin](./distributors/supabase.md)
+Store and manage content in your Supabase database.
+
+### Transformers
+
+#### [🤖 GPT Transform](./transformers/gpt-transform.md)
 Transform content using OpenRouter's GPT models for AI-powered content enhancement.
 
-### [📝 Simple Transform](./transformers/simple-transform.md)
-
+#### [📝 Simple Transform](./transformers/simple-transform.md)
 Format content using a template-based approach with customizable placeholders.
+
+### Source Plugins
+
+#### [🐦 Twitter Plugin](./sources/twitter.md)
+Monitor and collect content from Twitter.

@@ -19,13 +19,24 @@
    - PluginLoaderService: Dynamic plugin management
 
 3. **Plugin System**
-   - Source plugins (Twitter, Telegram, LinkedIn)
-   - Distributor plugins (Telegram, RSS, Notion)
-   - Transformer plugins (GPT, Simple Transform)
-   - Runtime module federation for dynamic loading
-   - Plugin development kit with mocks for testing
-   - Custom endpoint registration
-   - Scheduled task integration
+   - Source plugins
+     * Twitter (primary content source)
+     * Telegram (message monitoring)
+     * LinkedIn (planned integration)
+   - Distributor plugins
+     * Telegram (@curatedotfun/telegram)
+     * RSS (@curatedotfun/rss)
+     * Notion (@curatedotfun/notion)
+     * Supabase (@curatedotfun/supabase)
+   - Transformer plugins
+     * GPT Transform (AI-powered content enhancement)
+     * Simple Transform (Basic formatting)
+   - Plugin Features
+     * Runtime loading and hot-reloading
+     * Type-safe configuration
+     * Custom endpoint registration
+     * Scheduled task integration
+     * Development toolkit with mocks
 
 ### Design Patterns
 
@@ -34,11 +45,21 @@
    - Ensures consistent state across the application
 
 2. **Plugin Pattern**
-   - Module federation for runtime plugin loading
-   - Standardized plugin interfaces
-   - Type-safe plugin configuration
-   - Hot-reloading support
-   - Plugin caching and invalidation
+   - Standardized Plugin Architecture
+     * Consistent interface definitions
+     * Type-safe configuration handling
+     * Event-driven communication
+     * Error boundary implementation
+   - Runtime Management
+     * Dynamic loading and unloading
+     * Hot-reloading capabilities
+     * State persistence
+     * Resource cleanup
+   - Performance Optimization
+     * Plugin caching strategies
+     * Lazy loading implementation
+     * Memory management
+     * Resource pooling
 
 3. **Service Pattern**
    - Clear service boundaries and responsibilities
@@ -74,36 +95,59 @@ graph LR
 
 ## Key Technical Decisions
 
-1. **Elysia.js Framework**
-   - High performance
-   - Built-in TypeScript support
-   - Middleware ecosystem
-   - Optimized /process endpoint
-   - Dynamic endpoint registration
-
-5. **Task Scheduling**
-   - Configuration-driven cron jobs
-   - Recap generation scheduling
-   - Plugin-specific scheduled tasks
-   - Reliable execution tracking
+1. **Performance Optimization**
+   - Caching Strategy
+     * Plugin-level caching
+     * Response caching
+     * Configuration caching
+   - Load Management
+     * Request throttling
+     * Load balancing
+     * Resource pooling
+   - Error Handling
+     * Graceful degradation
+     * Automatic recovery
+     * Error boundaries
 
 2. **Plugin Architecture**
-   - Module federation for runtime loading
-   - Type-safe plugin interfaces
-   - Easy plugin development
-   - Comprehensive testing support
-   - Hot-reloading capability
+   - Development Experience
+     * Comprehensive toolkit
+     * Testing utilities
+     * Documentation generation
+   - Runtime Features
+     * Hot-reloading support
+     * State management
+     * Resource cleanup
+   - Integration Points
+     * Event system
+     * Custom endpoints
+     * Scheduled tasks
 
-3. **Configuration-Driven**
-   - JSON-based configuration
-   - Runtime configuration updates
-   - Environment variable support
-   - Extensible action handling
-   - Easy forking and customization
+3. **Testing Infrastructure**
+   - Test Categories
+     * Unit testing
+     * Integration testing
+     * E2E testing
+     * Performance testing
+   - Testing Tools
+     * Mock system
+     * Test runners
+     * CI integration
+   - Coverage Goals
+     * Code coverage
+     * Feature coverage
+     * Edge case handling
 
-4. **Service Architecture**
-   - Platform-agnostic services
-   - Clear service boundaries
-   - Optimized transformer-distributor flow
-   - Comprehensive e2e testing
-   - Mock system for plugin validation
+4. **Monitoring and Analytics**
+   - Performance Metrics
+     * Response times
+     * Resource usage
+     * Error rates
+   - Usage Analytics
+     * Plugin utilization
+     * Feature adoption
+     * User engagement
+   - System Health
+     * Service status
+     * Resource availability
+     * Error tracking
