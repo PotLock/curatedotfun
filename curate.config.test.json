@@ -10,7 +10,19 @@
   "plugins": {
     "@curatedotfun/telegram": {
       "type": "distributor",
-      "url": "http://localhost:3007/remoteEntry.js"
+      "url": "https://unpkg.com/@curatedotfun/telegram@latest/dist/remoteEntry.js"
+    },
+    "@curatedotfun/notion": {
+      "type": "distributor",
+      "url": "https://unpkg.com/@curatedotfun/notion@latest/dist/remoteEntry.js"
+    },
+    "@curatedotfun/simple-transform": {
+      "type": "transofrm",
+      "url": "https://unpkg.com/@curatedotfun/simple-transform@latest/dist/remoteEntry.js"
+    },
+    "@curatedotfun/ai-transform": {
+      "type": "transofrm",
+      "url": "https://unpkg.com/@curatedotfun/ai-transform@latest/dist/remoteEntry.js"
     }
   },
   "feeds": [
@@ -26,6 +38,12 @@
       "outputs": {
         "stream": {
           "enabled": true,
+          "transform": {
+            "plugin": "@curatedotfun/simple-transform",
+            "config": {
+              "format": "🇺🇸 {CONTENT}\n\n{CURATOR_NOTES}\n\n📌 Source: https://x.com/x/status/{SUBMISSION_ID}\n"
+            }
+          },
           "distribute": [
             {
               "plugin": "@curatedotfun/telegram",

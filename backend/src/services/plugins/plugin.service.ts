@@ -15,7 +15,7 @@ import {
 import { logger } from "../../utils/logger";
 import { createPluginInstanceKey } from "../../utils/plugin";
 import { ConfigService } from "../config";
-import { isProduction } from "services/config/config.service";
+import { isProduction } from "../config/config.service";
 
 export interface PluginEndpoint {
   // move to types
