@@ -27,19 +27,19 @@ export interface TransformConfig {
 export interface DistributorConfig {
   plugin: string;
   config: Record<string, string>;
-  transform?: TransformConfig[];  // Per-distributor transforms
+  transform?: TransformConfig[]; // Per-distributor transforms
 }
 
 export interface StreamConfig {
   enabled: boolean;
-  transform?: TransformConfig[];  // Global transforms
+  transform?: TransformConfig[]; // Global transforms
   distribute?: DistributorConfig[];
 }
 
 export interface RecapConfig {
   enabled: boolean;
   schedule: string;
-  transform?: TransformConfig[];  // Global transforms for recap
+  transform?: TransformConfig[]; // Global transforms for recap
   distribute: DistributorConfig[];
 }
 

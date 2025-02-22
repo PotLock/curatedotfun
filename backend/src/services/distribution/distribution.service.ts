@@ -6,7 +6,7 @@ import { PluginService } from "../plugins/plugin.service";
 import { DistributorConfig } from "./../../types/config";
 
 export class DistributionService {
-  constructor(private pluginService: PluginService) { }
+  constructor(private pluginService: PluginService) {}
 
   async distributeContent<T = TwitterSubmission>(
     distributor: DistributorConfig,

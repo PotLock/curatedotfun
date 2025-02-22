@@ -885,7 +885,7 @@
       "outputs": {
         "stream": {
           "enabled": true,
-"transform": [
+          "transform": [
             {
               "plugin": "@curatedotfun/object-transform",
               "config": {

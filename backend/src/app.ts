@@ -42,7 +42,10 @@ export async function createApp(): Promise<AppInstance> {
   const pluginService = PluginService.getInstance();
   const distributionService = new DistributionService(pluginService);
   const transformationService = new TransformationService(pluginService);
-  const processorService = new ProcessorService(transformationService, distributionService);
+  const processorService = new ProcessorService(
+    transformationService,
+    distributionService,
+  );
 
   let twitterService: TwitterService | null = null;
   if (isProduction) {
@@ -287,7 +290,7 @@ export async function createApp(): Promise<AppInstance> {
             if (feed.outputs.stream) {
               await context.processorService.process(
                 submission,
-                feed.outputs.stream
+                feed.outputs.stream,
               );
               processed++;
             }

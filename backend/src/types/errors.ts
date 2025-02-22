@@ -29,7 +29,7 @@ export class PluginExecutionError extends PluginError {
   }
 }
 
-export type TransformStage = 'global' | 'distributor' | 'batch';
+export type TransformStage = "global" | "distributor" | "batch";
 
 export class TransformError extends Error {
   constructor(
@@ -39,7 +39,9 @@ export class TransformError extends Error {
     message: string,
     public readonly cause?: Error,
   ) {
-    super(`Transform error in ${stage} transform #${index + 1} (${plugin}): ${message}`);
+    super(
+      `Transform error in ${stage} transform #${index + 1} (${plugin}): ${message}`,
+    );
     this.name = "TransformError";
   }
 }

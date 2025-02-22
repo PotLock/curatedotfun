@@ -19,7 +19,7 @@ export class SubmissionService {
     private readonly twitterService: TwitterService,
     private readonly processorService: ProcessorService,
     private readonly config: AppConfig,
-  ) { }
+  ) {}
 
   private async initializeAdminIds(): Promise<void> {
     // Try to load admin IDs from cache first
@@ -161,7 +161,7 @@ export class SubmissionService {
 
       if (
         curatorTweet.username.toLowerCase() ===
-        this.config.global.botId.toLowerCase() || // if self
+          this.config.global.botId.toLowerCase() || // if self
         this.config.global.blacklist["twitter"].some(
           (blacklisted) =>
             blacklisted.toLowerCase() === curatorTweet.username?.toLowerCase(),
@@ -202,8 +202,8 @@ export class SubmissionService {
       const existingSubmission = await db.getSubmission(originalTweet.id!);
       const existingFeeds = existingSubmission
         ? ((await db.getFeedsBySubmission(
-          existingSubmission.tweetId,
-        )) as SubmissionFeed[])
+            existingSubmission.tweetId,
+          )) as SubmissionFeed[])
         : [];
 
       // Create new submission if it doesn't exist
@@ -298,7 +298,7 @@ export class SubmissionService {
             if (feed.outputs.stream?.enabled) {
               await this.processorService.process(
                 existingSubmission || submission!,
-                feed.outputs.stream
+                feed.outputs.stream,
               );
             }
           }
@@ -336,7 +336,7 @@ export class SubmissionService {
             if (feed.outputs.stream?.enabled) {
               await this.processorService.process(
                 existingSubmission || submission!,
-                feed.outputs.stream
+                feed.outputs.stream,
               );
             }
           }
@@ -468,7 +468,7 @@ export class SubmissionService {
           if (feed.outputs.stream?.enabled) {
             await this.processorService.process(
               submission,
-              feed.outputs.stream
+              feed.outputs.stream,
             );
           }
         }
