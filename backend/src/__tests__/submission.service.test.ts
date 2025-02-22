@@ -3,14 +3,14 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { SubmissionService } from "../services/submissions/submission.service";
 import { AppConfig, PluginsConfig } from "../types/config";
 import { SubmissionStatus } from "../types/twitter";
-import { MockDistributionService } from "./mocks/distribution-service.mock";
+import { MockProcessorService } from "./mocks/processor-service.mock";
 import drizzleMock from "./mocks/drizzle.mock";
 import { MockTwitterService } from "./mocks/twitter-service.mock";
 
 describe("SubmissionService", () => {
   let submissionService: SubmissionService;
   let mockTwitterService: MockTwitterService;
-  let mockDistributionService: MockDistributionService;
+  let mockProcessorService: MockProcessorService;
 
   // Map readable IDs to realistic Twitter IDs
   const TWEET_IDS = {
@@ -111,10 +111,10 @@ describe("SubmissionService", () => {
 
     // Create fresh instances
     mockTwitterService = new MockTwitterService();
-    mockDistributionService = new MockDistributionService();
+    mockProcessorService = new MockProcessorService();
     submissionService = new SubmissionService(
       mockTwitterService as any,
-      mockDistributionService as any,
+      mockProcessorService as any,
       mockConfig,
     );
 
@@ -222,12 +222,19 @@ describe("SubmissionService", () => {
         }),
       );
 
-      // Verify distribution was triggered for auto-approved feed
-      expect(mockDistributionService.processedSubmissions).toHaveLength(1);
-      expect(mockDistributionService.processedSubmissions[0]).toEqual({
-        submissionId: TWEET_IDS.original1_tweet,
-        feedId: "test",
+      // Verify processor was triggered for auto-approved feed
+      expect(mockProcessorService.processedItems).toHaveLength(1);
+      expect(mockProcessorService.processedItems[0].content).toMatchObject({
+        tweetId: TWEET_IDS.original1_tweet,
+        userId: user1.id,
+        username: user1.username,
+        curatorId: curator1.id,
+        curatorUsername: curator1.username,
+        content: "Original content",
       });
+      expect(mockProcessorService.processedItems[0].config).toEqual(
+        mockConfig.feeds[0].outputs.stream,
+      );
     });
 
     it("should handle moderation responses for pending submissions", async () => {
@@ -291,12 +298,19 @@ describe("SubmissionService", () => {
         }),
       );
 
-      // Verify distribution was triggered
-      expect(mockDistributionService.processedSubmissions).toHaveLength(1);
-      expect(mockDistributionService.processedSubmissions[0]).toEqual({
-        submissionId: TWEET_IDS.original1_tweet,
-        feedId: "test2",
+      // Verify processor was triggered
+      expect(mockProcessorService.processedItems).toHaveLength(1);
+      expect(mockProcessorService.processedItems[0].content).toMatchObject({
+        tweetId: TWEET_IDS.original1_tweet,
+        userId: user1.id,
+        username: user1.username,
+        curatorId: curator1.id,
+        curatorUsername: curator1.username,
+        content: "Original content",
       });
+      expect(mockProcessorService.processedItems[0].config).toEqual(
+        mockConfig.feeds[1].outputs.stream,
+      );
     });
 
     it("should ignore moderation responses from non-moderators", async () => {
@@ -342,7 +356,7 @@ describe("SubmissionService", () => {
 
       // Verify no moderation changes occurred
       expect(drizzleMock.updateSubmissionFeedStatus).not.toHaveBeenCalled();
-      expect(mockDistributionService.processedSubmissions).toHaveLength(0);
+      expect(mockProcessorService.processedItems).toHaveLength(0);
     });
 
     it("should handle resubmission of a tweet to different feeds", async () => {
@@ -413,8 +427,8 @@ describe("SubmissionService", () => {
         SubmissionStatus.PENDING,
       ]);
 
-      // Verify no distribution occurred since the new submission is pending
-      expect(mockDistributionService.processedSubmissions).toHaveLength(0);
+      // Verify no processing occurred since the new submission is pending
+      expect(mockProcessorService.processedItems).toHaveLength(0);
     });
 
     it("should handle rejection responses", async () => {
@@ -478,8 +492,8 @@ describe("SubmissionService", () => {
         }),
       );
 
-      // Verify no distribution occurred for rejected submission
-      expect(mockDistributionService.processedSubmissions).toHaveLength(0);
+      // Verify no processing occurred for rejected submission
+      expect(mockProcessorService.processedItems).toHaveLength(0);
     });
 
     it("should auto-approve resubmission when curator is a moderator", async () => {
@@ -563,12 +577,19 @@ describe("SubmissionService", () => {
         }),
       );
 
-      // Verify distribution was triggered since it was approved
-      expect(mockDistributionService.processedSubmissions).toHaveLength(1);
-      expect(mockDistributionService.processedSubmissions[0]).toEqual({
-        submissionId: TWEET_IDS.original1_tweet,
-        feedId: "test",
+      // Verify processor was triggered since it was approved
+      expect(mockProcessorService.processedItems).toHaveLength(1);
+      expect(mockProcessorService.processedItems[0].content).toMatchObject({
+        tweetId: TWEET_IDS.original1_tweet,
+        userId: user1.id,
+        username: user1.username,
+        curatorId: curator2.id,
+        curatorUsername: curator2.username,
+        content: "Original content",
       });
+      expect(mockProcessorService.processedItems[0].config).toEqual(
+        mockConfig.feeds[0].outputs.stream,
+      );
     });
 
     it("should ignore submissions to non-existent feeds", async () => {
@@ -611,7 +632,7 @@ describe("SubmissionService", () => {
       // Verify no submission was created
       expect(drizzleMock.saveSubmission).not.toHaveBeenCalled();
       expect(drizzleMock.saveSubmissionToFeed).not.toHaveBeenCalled();
-      expect(mockDistributionService.processedSubmissions).toHaveLength(0);
+      expect(mockProcessorService.processedItems).toHaveLength(0);
     });
 
     it("should ignore moderation of already moderated submissions", async () => {
@@ -659,7 +680,7 @@ describe("SubmissionService", () => {
 
       // Verify no moderation changes occurred
       expect(drizzleMock.updateSubmissionFeedStatus).not.toHaveBeenCalled();
-      expect(mockDistributionService.processedSubmissions).toHaveLength(0);
+      expect(mockProcessorService.processedItems).toHaveLength(0);
     });
 
     it("should use first moderation response when multiple moderators respond", async () => {
@@ -744,12 +765,19 @@ describe("SubmissionService", () => {
         }),
       );
 
-      // Verify distribution occurred since first response was approval
-      expect(mockDistributionService.processedSubmissions).toHaveLength(1);
-      expect(mockDistributionService.processedSubmissions[0]).toEqual({
-        submissionId: TWEET_IDS.original1_tweet,
-        feedId: "test2",
+      // Verify processor was triggered since first response was approval
+      expect(mockProcessorService.processedItems).toHaveLength(1);
+      expect(mockProcessorService.processedItems[0].content).toMatchObject({
+        tweetId: TWEET_IDS.original1_tweet,
+        userId: user1.id,
+        username: user1.username,
+        curatorId: curator1.id,
+        curatorUsername: curator1.username,
+        content: "Original content",
       });
+      expect(mockProcessorService.processedItems[0].config).toEqual(
+        mockConfig.feeds[1].outputs.stream,
+      );
     });
 
     it("should handle hashtags and moderator names case-insensitively", async () => {
@@ -858,6 +886,31 @@ describe("SubmissionService", () => {
           timestamp: expect.any(Date),
         }),
       );
+
+      // Verify processor was triggered for both auto-approved feeds
+      expect(mockProcessorService.processedItems).toHaveLength(2);
+      expect(mockProcessorService.processedItems[0].content).toMatchObject({
+        tweetId: TWEET_IDS.original1_tweet,
+        userId: user1.id,
+        username: user1.username,
+        curatorId: curator1.id,
+        curatorUsername: "CURATOR1",
+        content: "Original content",
+      });
+      expect(mockProcessorService.processedItems[0].config).toEqual(
+        mockConfig.feeds[2].outputs.stream,
+      );
+      expect(mockProcessorService.processedItems[1].content).toMatchObject({
+        tweetId: TWEET_IDS.original1_tweet,
+        userId: user1.id,
+        username: user1.username,
+        curatorId: curator1.id,
+        curatorUsername: "CURATOR1",
+        content: "Original content",
+      });
+      expect(mockProcessorService.processedItems[1].config).toEqual(
+        mockConfig.feeds[3].outputs.stream,
+      );
     });
 
     it("should ignore submissions from blacklisted users", async () => {
@@ -900,7 +953,7 @@ describe("SubmissionService", () => {
       // Verify no submission was created for blacklisted user
       expect(drizzleMock.saveSubmission).not.toHaveBeenCalled();
       expect(drizzleMock.saveSubmissionToFeed).not.toHaveBeenCalled();
-      expect(mockDistributionService.processedSubmissions).toHaveLength(0);
+      expect(mockProcessorService.processedItems).toHaveLength(0);
     });
   });
 });

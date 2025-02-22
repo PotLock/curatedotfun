@@ -1,8 +1,8 @@
 import { TransformConfig } from "../../types/config";
 import { TransformError } from "../../types/errors";
 import { PluginService } from "../plugins/plugin.service";
-import { ActionArgs, isTransformerPlugin } from "../../types/plugins";
 import { logger } from "../../utils/logger";
+import { ActionArgs } from "@curatedotfun/types";
 
 export type TransformStage = "global" | "distributor" | "batch";
 
@@ -49,15 +49,6 @@ export class TransformationService {
           type: "transform",
           config: transform.config,
         });
-
-        if (!isTransformerPlugin(plugin)) {
-          throw new TransformError(
-            transform.plugin,
-            stage,
-            i,
-            "Plugin is not a transformer plugin",
-          );
-        }
 
         const args: ActionArgs<any, Record<string, unknown>> = {
           input: result,

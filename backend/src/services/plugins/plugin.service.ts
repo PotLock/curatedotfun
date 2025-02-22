@@ -6,16 +6,30 @@ import {
   PluginInitError,
   PluginLoadError,
 } from "../../types/errors";
+
 import {
   BotPlugin,
   PluginConfig,
   PluginType,
   PluginTypeMap,
-} from "../../types/plugins";
+} from "@curatedotfun/types";
 import { logger } from "../../utils/logger";
 import { createPluginInstanceKey } from "../../utils/plugin";
 import { ConfigService } from "../config";
 import { isProduction } from "../config/config.service";
+
+/**
+ * Cache entry for a loaded plugin
+ */
+export interface PluginCache<T extends PluginType, P extends BotPlugin> {
+  instance: P & {
+    __config: PluginConfig<
+      T,
+      P extends BotPlugin<infer C> ? C : Record<string, unknown>
+    >;
+  };
+  lastLoaded: Date;
+}
 
 export interface PluginEndpoint {
   // move to types
