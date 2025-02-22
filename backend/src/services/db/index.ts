@@ -183,8 +183,8 @@ export class DatabaseService {
     rssQueries.saveRssItem(this.db, feedId, item).execute();
   }
 
-  getRssItems(feedId: string, limit?: number): rssQueries.RssItem[] {
-    return rssQueries.getRssItems(this.db, feedId, limit);
+ async getRssItems(feedId: string, limit?: number): Promise<rssQueries.RssItem[]> {
+    return await rssQueries.getRssItems(this.db, feedId, limit);
   }
 
   deleteOldRssItems(feedId: string, limit: number): void {

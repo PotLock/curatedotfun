@@ -28,73 +28,81 @@ Active transformer plugins:
 - GPT Transform (@curatedotfun/gpt-transform)
 - Simple Transform (@curatedotfun/simple-transform)
 
+New transformation pipeline features:
+- Multiple transformations can be chained
+- Global transforms apply to all distributions
+- Per-distributor transforms for customization
+- Graceful error handling and recovery
+- Type-safe transformation flow
+
 ## Recent Changes
-1. Established core plugin system architecture
-2. Implemented initial distribution channels (Telegram, RSS, Notion, Supabase)
-3. Created transformer plugins (GPT, Simple Transform)
-4. Set up frontend with React and RSBuild
-5. Implemented basic feed management and settings
+1. Implemented new transformation pipeline
+   - Added ProcessorService for orchestration
+   - Enhanced TransformationService
+   - Added granular error handling
+   - Updated config structure for transform chains
+
+2. Enhanced Error Handling
+   - Added TransformError for transformation issues
+   - Added ProcessorError for pipeline issues
+   - Implemented graceful degradation
+   - Added error aggregation for multiple failures
+
+3. Updated Configuration Structure
+   - Support for transform arrays
+   - Global and per-distributor transforms
+   - Simplified plugin configuration
+   - Enhanced type safety
 
 ## Next Steps
-1. Performance Optimization
-   - Optimize /process endpoint
-   - Implement caching strategy
-   - Improve plugin loading efficiency
-   - Enhance error handling
+1. Testing Infrastructure
+   - Add unit tests for new services
+   - Add integration tests for pipeline
+   - Create test fixtures for transforms
+   - Document testing patterns
 
-2. Testing Enhancement
-   - Implement comprehensive e2e tests
-   - Create plugin testing toolkit
-   - Set up continuous integration
-   - Add performance benchmarks
+2. Plugin Development
+   - Create transform plugin templates
+   - Document new transform capabilities
+   - Add plugin validation tools
+   - Create example transformers
 
 3. Documentation
-   - Complete API documentation
-   - Create plugin development guides
-   - Add deployment documentation
-   - Document testing procedures
-
-4. Feature Development
-   - Implement LinkedIn source plugin
-   - Add analytics dashboard
-   - Enhance curator tools
-   - Create plugin marketplace
+   - Update plugin documentation
+   - Add transformation guides
+   - Document error handling
+   - Add configuration examples
 
 ## Active Decisions
 
 ### Architecture
-- Performance optimization strategy
-- Testing infrastructure improvements
-- Documentation standardization
-- Feature roadmap prioritization
+- Transformation pipeline with global and per-distributor transforms
+- Error handling with graceful degradation
+- Service-based architecture with clear boundaries
+- Type-safe plugin interfaces
 
 ### Technical
-- Caching implementation approach
-- Test automation framework
-- CI/CD pipeline setup
-- Analytics integration strategy
+- Bun as the runtime environment
+- File-based database with service abstraction
+- Multiple content source plugins
+- Configuration-driven scheduling
+- Plugin-extensible endpoints
 
 ## Current Focus
-1. Performance
-   - /process endpoint optimization
-   - Caching system implementation
-   - Error handling improvements
-   - Load testing and benchmarking
+1. Testing and Validation
+   - Comprehensive test coverage
+   - Error handling scenarios
+   - Performance testing
+   - Plugin validation
 
-2. Testing
-   - E2E test implementation
-   - Plugin testing framework
-   - CI pipeline setup
-   - Performance monitoring
-
-3. Documentation
-   - API documentation completion
+2. Documentation
    - Plugin development guides
-   - Deployment procedures
-   - Testing documentation
+   - Configuration examples
+   - Error handling patterns
+   - Testing guides
 
-4. Features
-   - LinkedIn plugin development
-   - Analytics dashboard design
-   - Curator tool enhancements
-   - Plugin marketplace planning
+3. Plugin Ecosystem
+   - Transform plugin templates
+   - Example implementations
+   - Validation tools
+   - Development toolkit

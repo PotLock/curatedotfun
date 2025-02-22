@@ -14,6 +14,8 @@
 2. **Service Layer**
    - ConfigService: Configuration management
    - SubmissionService: Platform-agnostic submission handling
+   - ProcessorService: Orchestrates transformation pipeline
+   - TransformationService: Handles content transformations
    - DistributionService: Content distribution
    - Database Service: Data persistence
    - PluginLoaderService: Dynamic plugin management
@@ -45,21 +47,11 @@
    - Ensures consistent state across the application
 
 2. **Plugin Pattern**
-   - Standardized Plugin Architecture
-     * Consistent interface definitions
-     * Type-safe configuration handling
-     * Event-driven communication
-     * Error boundary implementation
-   - Runtime Management
-     * Dynamic loading and unloading
-     * Hot-reloading capabilities
-     * State persistence
-     * Resource cleanup
-   - Performance Optimization
-     * Plugin caching strategies
-     * Lazy loading implementation
-     * Memory management
-     * Resource pooling
+   - Module federation for runtime plugin loading
+   - Standardized plugin interfaces
+   - Type-safe plugin configuration
+   - Hot-reloading support
+   - Plugin caching and invalidation
 
 3. **Service Pattern**
    - Clear service boundaries and responsibilities
@@ -72,6 +64,12 @@
    - Generic content source monitoring
    - Event-driven content processing
    - Configurable action handlers
+
+5. **Pipeline Pattern**
+   - Transformation pipeline with global and per-distributor transforms
+   - Graceful error handling and recovery
+   - Configurable transform chains
+   - Type-safe transformation flow
 
 ## Component Relationships
 
@@ -88,66 +86,66 @@ graph TD
 graph LR
     Sources[Source Plugins] --> Submission[SubmissionService]
     Submission --> Moderation[Moderation]
-    Moderation --> Distribution[DistributionService]
-    Distribution --> Transformers[Transformer Plugins]
-    Transformers --> Distributors[Distributor Plugins]
+    Moderation --> Processor[ProcessorService]
+    Processor --> GlobalTransform[Global Transforms]
+    GlobalTransform --> Distribution[DistributionService]
+    Distribution --> DistTransform[Distributor Transforms]
+    DistTransform --> Distributors[Distributor Plugins]
+```
+
+### Error Handling Flow
+```mermaid
+graph TD
+    Error[Error Occurs] --> Type{Error Type}
+    Type -->|Transform| TransformError[TransformError]
+    Type -->|Processor| ProcessorError[ProcessorError]
+    Type -->|Plugin| PluginError[PluginError]
+    TransformError --> Recovery[Error Recovery]
+    ProcessorError --> Recovery
+    PluginError --> Recovery
+    Recovery --> Continue[Continue Processing]
+    Recovery --> Fallback[Use Fallback]
 ```
 
 ## Key Technical Decisions
 
-1. **Performance Optimization**
-   - Caching Strategy
-     * Plugin-level caching
-     * Response caching
-     * Configuration caching
-   - Load Management
-     * Request throttling
-     * Load balancing
-     * Resource pooling
-   - Error Handling
-     * Graceful degradation
-     * Automatic recovery
-     * Error boundaries
+1. **Elysia.js Framework**
+   - High performance
+   - Built-in TypeScript support
+   - Middleware ecosystem
+   - Optimized /process endpoint
+   - Dynamic endpoint registration
 
 2. **Plugin Architecture**
-   - Development Experience
-     * Comprehensive toolkit
-     * Testing utilities
-     * Documentation generation
-   - Runtime Features
-     * Hot-reloading support
-     * State management
-     * Resource cleanup
-   - Integration Points
-     * Event system
-     * Custom endpoints
-     * Scheduled tasks
+   - Module federation for runtime loading
+   - Type-safe plugin interfaces
+   - Easy plugin development
+   - Comprehensive testing support
+   - Hot-reloading capability
 
-3. **Testing Infrastructure**
-   - Test Categories
-     * Unit testing
-     * Integration testing
-     * E2E testing
-     * Performance testing
-   - Testing Tools
-     * Mock system
-     * Test runners
-     * CI integration
-   - Coverage Goals
-     * Code coverage
-     * Feature coverage
-     * Edge case handling
+3. **Configuration-Driven**
+   - JSON-based configuration
+   - Runtime configuration updates
+   - Environment variable support
+   - Extensible action handling
+   - Easy forking and customization
 
-4. **Monitoring and Analytics**
-   - Performance Metrics
-     * Response times
-     * Resource usage
-     * Error rates
-   - Usage Analytics
-     * Plugin utilization
-     * Feature adoption
-     * User engagement
-   - System Health
-     * Service status
-     * Resource availability
-     * Error tracking
+4. **Service Architecture**
+   - Platform-agnostic services
+   - Clear service boundaries
+   - Optimized transformer-distributor flow
+   - Comprehensive e2e testing
+   - Mock system for plugin validation
+
+5. **Error Handling**
+   - Granular error types
+   - Graceful degradation
+   - Error recovery strategies
+   - Detailed error logging
+   - Error aggregation for multiple failures
+
+6. **Task Scheduling**
+   - Configuration-driven cron jobs
+   - Recap generation scheduling
+   - Plugin-specific scheduled tasks
+   - Reliable execution tracking

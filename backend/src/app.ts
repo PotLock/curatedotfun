@@ -8,6 +8,9 @@ import { mockTwitterService, testRoutes } from "./routes/test";
 import { ConfigService, isProduction } from "./services/config/config.service";
 import { db } from "./services/db";
 import { DistributionService } from "./services/distribution/distribution.service";
+import { ProcessorService } from "./services/processor/processor.service";
+import { PluginService } from "./services/plugins/plugin.service";
+import { TransformationService } from "./services/transformation/transformation.service";
 import { SubmissionService } from "./services/submissions/submission.service";
 import { TwitterService } from "./services/twitter/client";
 import { logger } from "./utils/logger";
@@ -22,6 +25,7 @@ export interface AppContext {
   twitterService: TwitterService | null;
   submissionService: SubmissionService | null;
   distributionService: DistributionService | null;
+  processorService: ProcessorService | null;
   configService: ConfigService;
 }
 
@@ -35,7 +39,10 @@ export async function createApp(): Promise<AppInstance> {
   const configService = ConfigService.getInstance();
   await configService.loadConfig();
 
-  const distributionService = new DistributionService();
+  const pluginService = PluginService.getInstance();
+  const distributionService = new DistributionService(pluginService);
+  const transformationService = new TransformationService(pluginService);
+  const processorService = new ProcessorService(transformationService, distributionService);
 
   let twitterService: TwitterService | null = null;
   if (isProduction) {
@@ -55,19 +62,16 @@ export async function createApp(): Promise<AppInstance> {
   const submissionService = twitterService
     ? new SubmissionService(
         twitterService,
-        distributionService,
+        processorService,
         configService.getConfig(),
       )
     : null;
-
-  if (submissionService) {
-    await submissionService.initialize();
-  }
 
   const context: AppContext = {
     twitterService,
     submissionService,
     distributionService,
+    processorService,
     configService,
   };
 
@@ -275,16 +279,18 @@ export async function createApp(): Promise<AppInstance> {
 
         // Process each submission through stream output
         let processed = 0;
-        if (!context.distributionService) {
-          throw new Error("Distribution service not available");
+        if (!context.processorService) {
+          throw new Error("Processor service not available");
         }
         for (const submission of approvedSubmissions) {
           try {
-            await context.distributionService.processStreamOutput(
-              feedId,
-              submission,
-            );
-            processed++;
+            if (feed.outputs.stream) {
+              await context.processorService.process(
+                submission,
+                feed.outputs.stream
+              );
+              processed++;
+            }
           } catch (error) {
             logger.error(
               `Error processing submission ${submission.tweetId}:`,

@@ -9,7 +9,7 @@ import {
 import { logger } from "../../utils/logger";
 import { db } from "../db";
 import { TwitterService } from "../twitter/client";
-import { DistributionService } from "./../distribution/distribution.service";
+import { ProcessorService } from "../processor/processor.service";
 
 export class SubmissionService {
   private checkInterval: NodeJS.Timer | null = null;
@@ -17,9 +17,9 @@ export class SubmissionService {
 
   constructor(
     private readonly twitterService: TwitterService,
-    private readonly DistributionService: DistributionService,
+    private readonly processorService: ProcessorService,
     private readonly config: AppConfig,
-  ) {}
+  ) { }
 
   private async initializeAdminIds(): Promise<void> {
     // Try to load admin IDs from cache first
@@ -161,7 +161,7 @@ export class SubmissionService {
 
       if (
         curatorTweet.username.toLowerCase() ===
-          this.config.global.botId.toLowerCase() || // if self
+        this.config.global.botId.toLowerCase() || // if self
         this.config.global.blacklist["twitter"].some(
           (blacklisted) =>
             blacklisted.toLowerCase() === curatorTweet.username?.toLowerCase(),
@@ -202,8 +202,8 @@ export class SubmissionService {
       const existingSubmission = await db.getSubmission(originalTweet.id!);
       const existingFeeds = existingSubmission
         ? ((await db.getFeedsBySubmission(
-            existingSubmission.tweetId,
-          )) as SubmissionFeed[])
+          existingSubmission.tweetId,
+        )) as SubmissionFeed[])
         : [];
 
       // Create new submission if it doesn't exist
@@ -296,9 +296,9 @@ export class SubmissionService {
             );
 
             if (feed.outputs.stream?.enabled) {
-              await this.DistributionService.processStreamOutput(
-                feed.id,
+              await this.processorService.process(
                 existingSubmission || submission!,
+                feed.outputs.stream
               );
             }
           }
@@ -334,9 +334,9 @@ export class SubmissionService {
             );
 
             if (feed.outputs.stream?.enabled) {
-              await this.DistributionService.processStreamOutput(
-                feed.id,
+              await this.processorService.process(
                 existingSubmission || submission!,
+                feed.outputs.stream
               );
             }
           }
@@ -466,9 +466,9 @@ export class SubmissionService {
           );
 
           if (feed.outputs.stream?.enabled) {
-            await this.DistributionService.processStreamOutput(
-              pendingFeed.feedId,
+            await this.processorService.process(
               submission,
+              feed.outputs.stream
             );
           }
         }

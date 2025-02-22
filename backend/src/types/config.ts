@@ -8,7 +8,7 @@ export interface GlobalConfig {
 }
 
 export interface PluginConfig {
-  type: "distributor" | "transform";
+  type: "distributor" | "transformer";
   url: string;
   config?: Record<string, unknown>;
 }
@@ -21,25 +21,25 @@ export interface ModerationConfig {
 
 export interface TransformConfig {
   plugin: string;
-  config: {
-    prompt: string;
-  };
+  config: Record<string, unknown>;
 }
 
 export interface DistributorConfig {
   plugin: string;
   config: Record<string, string>;
+  transform?: TransformConfig[];  // Per-distributor transforms
 }
+
 export interface StreamConfig {
   enabled: boolean;
-  transform?: TransformConfig;
+  transform?: TransformConfig[];  // Global transforms
   distribute?: DistributorConfig[];
 }
 
 export interface RecapConfig {
   enabled: boolean;
   schedule: string;
-  transform: TransformConfig;
+  transform?: TransformConfig[];  // Global transforms for recap
   distribute: DistributorConfig[];
 }
 

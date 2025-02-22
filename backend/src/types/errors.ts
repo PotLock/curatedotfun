@@ -28,3 +28,29 @@ export class PluginExecutionError extends PluginError {
     this.name = "PluginExecutionError";
   }
 }
+
+export type TransformStage = 'global' | 'distributor' | 'batch';
+
+export class TransformError extends Error {
+  constructor(
+    public readonly plugin: string,
+    public readonly stage: TransformStage,
+    public readonly index: number,
+    message: string,
+    public readonly cause?: Error,
+  ) {
+    super(`Transform error in ${stage} transform #${index + 1} (${plugin}): ${message}`);
+    this.name = "TransformError";
+  }
+}
+
+export class ProcessorError extends Error {
+  constructor(
+    public readonly feedId: string,
+    message: string,
+    public readonly cause?: Error,
+  ) {
+    super(`Processing error for feed ${feedId}: ${message}`);
+    this.name = "ProcessorError";
+  }
+}
