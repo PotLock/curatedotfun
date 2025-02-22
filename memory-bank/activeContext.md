@@ -15,18 +15,18 @@ Based on curate.config.json, the following feeds are actively enabled (stream.en
 - Shippost
 - Web3 Fundraising (cryptofundraise)
 - American Crypto (usa)
+- Sui (sui)
 
 ### Distribution Channels
 Currently configured distribution plugins:
 - Telegram (@curatedotfun/telegram)
-- RSS (@curatedotfun/rss)
 - Notion (@curatedotfun/notion)
-- Supabase (@curatedotfun/supabase)
 
 ### Content Transformation
 Active transformer plugins:
-- GPT Transform (@curatedotfun/gpt-transform)
 - Simple Transform (@curatedotfun/simple-transform)
+- Object Transform (@curatedotfun/object-transform)
+- AI Transform (@curatedotfun/ai-transform)
 
 New transformation pipeline features:
 - Multiple transformations can be chained

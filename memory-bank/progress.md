@@ -107,10 +107,10 @@
 - Distribution success rate: TBD
 
 ### Usage
-- Active feeds: 11
-- Active plugins: 6
+- Active feeds: 12 (grants, ethereum, near, ai3, ai, refi, DeSci, DAO, shippost, cryptofundraise, usa, sui)
+- Active plugins: 5 (2 distributors: telegram, notion; 3 transformers: simple-transform, object-transform, ai-transform)
 - Daily submissions: TBD
-- Distribution channels: 4
+- Distribution channels: 2 (Telegram, Notion)
 
 ### Reliability
 - System uptime: TBD
