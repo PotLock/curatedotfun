@@ -81,5 +81,5 @@ Format content using a template-based approach with customizable placeholders.
 
 ### Source Plugins
 
-#### [🐦 Twitter Plugin](./sources/twitter.md)
+#### [🐦 Twitter Plugin]()
 Monitor and collect content from Twitter.
