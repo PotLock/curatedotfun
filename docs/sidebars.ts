@@ -100,7 +100,7 @@ const sidebars: SidebarsConfig = {
               type: "doc",
               id: "plugins/transformers/ai-transform",
               label: "🤖 AI Transform",
-            }
+            },
           ],
         },
         {
