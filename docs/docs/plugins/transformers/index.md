@@ -49,95 +49,6 @@ Transforms can be configured in three locations in your `curate.config.json`:
 }
 ```
 
-## 💡 Example Configuration
-
-Here's a complete example showing different transform placements:
-
-```json
-{
-  "feeds": [{
-    "outputs": {
-      "stream": {
-        "transform": [
-          {
-            "plugin": "@curatedotfun/object-transform",
-            "config": {
-              "mappings": {
-                "source": "https://x.com/{{username}}/status/{{submissionId}}",
-                "text": "{{content}}",
-                "author": "{{firstName}} {{lastName}}",
-                "notes": "{{#curator.notes}}{{.}}{{/curator.notes}}"
-              }
-            }
-          }
-        ],
-        "distribute": [
-          {
-            "plugin": "@curatedotfun/telegram",
-            "config": {
-              "channelId": "@mychannel"
-            },
-            "transform": [
-              {
-                "plugin": "@curatedotfun/simple-transform",
-                "config": {
-                  "template": "🔥 {{text}}\n\n{{#notes}}📝 {{.}}{{/notes}}\n\n👤 {{author}}\n\n🔗 {{source}}"
-                }
-              }
-            ]
-          },
-          {
-            "plugin": "@curatedotfun/telegram",
-            "config": {
-              "channelId": "@mychannel_ai"
-            },
-            "transform": [
-              {
-                "plugin": "@curatedotfun/ai-transform",
-                "config": {
-                  "prompt": "Summarize this content with a title and key points",
-                  "schema": {
-                    "title": {
-                      "type": "string",
-                      "description": "A catchy headline summarizing the content"
-                    },
-                    "points": {
-                      "type": "string",
-                      "description": "3-5 key points from the content, one per line"
-                    },
-                    "category": {
-                      "type": "string",
-                      "description": "The inferred topic category (e.g., DeFi, NFTs, Layer2)"
-                    },
-                    "sentiment": {
-                      "type": "string",
-                      "description": "The overall sentiment (positive, neutral, or negative)"
-                    }
-                  },
-                  "outputFormat": "json"
-                }
-              },
-              {
-                "plugin": "@curatedotfun/simple-transform",
-                "config": {
-                  "template": "📢 {{title}}\n\n{{points}}\n\n🏷️ {{category}} ({{sentiment}})\n\n🔗 {{source}}"
-                }
-              }
-            ]
-          }
-        ]
-      }
-    }
-  }]
-}
-```
-
-In this example:
-
-1. The global transform creates a standardized object with source URL, text, author, and notes
-2. One distributor formats this directly into a Telegram message
-3. Another distributor first uses AI to generate a structured summary (with a defined schema), then formats that into a message
-
 ## 🔌 Available Transformers
 
 - [Simple Transform](./simple-transform.md) - String-based formatting using templates
@@ -167,3 +78,70 @@ When chaining transforms, ensure the output type of one transform matches the in
 :::tip
 Start with a global transform to create a consistent data structure, then use per-distributor transforms to format that data for specific outputs.
 :::
+
+## 🔄 Transform Flow
+
+```mermaid
+graph TD
+    Input[Content Input] --> Global[Global Transform]
+    Global --> Distributor[Per-Distributor Transform]
+    Distributor --> Output[Final Output]
+```
+
+## 📚 Example Transform Chain
+
+Here's an example of chaining transforms to process content:
+
+1. First, use Object Transform to standardize the data structure:
+
+```json
+{
+  "plugin": "@curatedotfun/object-transform",
+  "config": {
+    "mappings": {
+      "title": "{{content|truncate:100}}",
+      "text": "{{content}}",
+      "author": "{{firstName}} {{lastName}}",
+      "source": "https://x.com/{{username}}/status/{{submissionId}}"
+    }
+  }
+}
+```
+
+2. Then, use AI Transform to enhance the content:
+
+```json
+{
+  "plugin": "@curatedotfun/ai-transform",
+  "config": {
+    "prompt": "Analyze and enhance the content...",
+    "schema": {
+      "title": {
+        "type": "string",
+        "description": "An engaging title"
+      },
+      "summary": {
+        "type": "string",
+        "description": "A concise summary"
+      }
+    }
+  }
+}
+```
+
+3. Finally, use Simple Transform to format for distribution:
+
+```json
+{
+  "plugin": "@curatedotfun/simple-transform",
+  "config": {
+    "template": "📢 {{title}}\n\n{{summary}}\n\n👤 {{author}}\n🔗 {{source}}"
+  }
+}
+```
+
+This chain:
+
+1. Standardizes the data structure
+2. Enhances the content with AI
+3. Formats it for final distribution
