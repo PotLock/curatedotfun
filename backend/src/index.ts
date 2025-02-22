@@ -14,7 +14,12 @@ let instance: AppInstance | null = null;
 
 async function getInstance(): Promise<AppInstance> {
   if (!instance) {
-    instance = await createApp();
+    try {
+      instance = await createApp();
+    } catch (error) {
+      logger.error("Failed to create app instance:", error);
+      throw new Error("Failed to initialize application");
+    }
   }
   return instance;
 }
@@ -30,7 +35,19 @@ async function startServer() {
       hostname: "0.0.0.0",
       fetch: async (request) => {
         if (request.url.endsWith("/health")) {
-          return new Response("OK", { status: 200 });
+          const health = {
+            status: "OK",
+            timestamp: new Date().toISOString(),
+            services: {
+              twitter: context.twitterService ? "up" : "down",
+              submission: context.submissionService ? "up" : "down",
+              distribution: context.distributionService ? "up" : "down",
+            },
+          };
+          return new Response(JSON.stringify(health), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
         }
         return app.fetch(request);
       },
