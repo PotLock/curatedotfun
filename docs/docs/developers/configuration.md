@@ -34,15 +34,15 @@ Plugins extend functionality with transformations and distribution capabilities.
   "plugins": {
     "@curatedotfun/telegram": {
       "type": "distributor",
-      "url": "./external/telegram"
+      "url": "https://unpkg.com/@curatedotfun/telegram@latest/dist/remoteEntry.js"
     },
     "@curatedotfun/rss": {
       "type": "distributor",
-      "url": "./external/rss"
+      "url": "https://unpkg.com/@curatedotfun/rss@latest/dist/remoteEntry.js"
     },
-    "@curatedotfun/gpt-transform": {
+    "@curatedotfun/ai-transform": {
       "type": "transformer",
-      "url": "./external/gpt-transform"
+      "url": "https://unpkg.com/@curatedotfun/ai-transform@latest/dist/remoteEntry.js"
     }
   }
 }
@@ -68,7 +68,7 @@ Each feed represents a distinct content stream:
         "stream": {
           "enabled": true, // if enabled but no distribute, then will sit in queue
           "transform": {  // Optional
-            "plugin": "@curatedotfun/gpt-transform",
+            "plugin": "@curatedotfun/ai-transform",
             "config": {
               "prompt": "Format this update..."
             }
@@ -94,7 +94,7 @@ Each feed represents a distinct content stream:
           "enabled": false,
           "schedule": "0 0 * * *",
           "transform": { // Required to summarize
-            "plugin": "@curatedotfun/gpt-transform",
+            "plugin": "@curatedotfun/ai-transform",
             "config": {
               "prompt": "./prompts/recap.txt"
             }

@@ -31,7 +31,7 @@
      * Notion (@curatedotfun/notion)
      * Supabase (@curatedotfun/supabase)
    - Transformer plugins
-     * GPT Transform (AI-powered content enhancement)
+     * AI Transform (AI-powered content enhancement)
      * Simple Transform (Basic formatting)
    - Plugin Features
      * Runtime loading and hot-reloading

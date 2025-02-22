@@ -62,8 +62,8 @@ const sidebars: SidebarsConfig = {
           items: [
             {
               type: "doc",
-              id: "plugins/transformers/gpt-transform",
-              label: "🤖 GPT Transform",
+              id: "plugins/transformers/ai-transform",
+              label: "🤖 AI Transform",
             },
             {
               type: "doc",

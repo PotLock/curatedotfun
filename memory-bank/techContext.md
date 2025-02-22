@@ -69,7 +69,7 @@
 - Supabase: Data storage
 
 ### Transformer Plugins
-- GPT Transform: AI-powered content transformation
+- AI Transform: AI-powered content transformation
 - Simple Transform: Basic content formatting
 
 ### Source Plugins

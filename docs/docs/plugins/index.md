@@ -17,11 +17,11 @@ Plugins are defined in two parts in your `curate.config.json`:
   "plugins": {
     "@curatedotfun/telegram": {
       "type": "distributor",
-      "url": "./external/telegram"
+      "url": "https://unpkg.com/@curatedotfun/telegram@latest/dist/remoteEntry.js"
     },
-    "@curatedotfun/gpt-transform": {
+    "@curatedotfun/ai-transform": {
       "type": "transformer",
-      "url": "./external/gpt-transform"
+      "url": "https://unpkg.com/@curatedotfun/ai-transform@latest/dist/remoteEntry.js"
     }
   }
 }
@@ -35,7 +35,7 @@ Plugins are defined in two parts in your `curate.config.json`:
     "stream": {
       "enabled": true,
       "transform": {
-        "plugin": "@curatedotfun/gpt-transform",
+        "plugin": "@curatedotfun/ai-transform",
         "config": {
           // Transformer-specific configuration
         }
@@ -73,7 +73,7 @@ Store and manage content in your Supabase database.
 
 ### Transformers
 
-#### [🤖 GPT Transform](./transformers/gpt-transform.md)
+#### [🤖 AI Transform](./transformers/ai-transform.md)
 Transform content using OpenRouter's GPT models for AI-powered content enhancement.
 
 #### [📝 Simple Transform](./transformers/simple-transform.md)
