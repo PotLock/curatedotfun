@@ -1,5 +1,5 @@
 import { and, eq, sql } from "drizzle-orm";
-import { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { LibSQLDatabase } from "drizzle-orm/libsql";
 import { rssItems } from "./schema";
 
 export interface RssItem {
@@ -10,11 +10,7 @@ export interface RssItem {
   publishedAt: string;
 }
 
-export function saveRssItem(
-  db: BunSQLiteDatabase,
-  feedId: string,
-  item: RssItem,
-) {
+export function saveRssItem(db: LibSQLDatabase, feedId: string, item: RssItem) {
   return db.insert(rssItems).values({
     feedId,
     title: item.title,
@@ -25,12 +21,12 @@ export function saveRssItem(
   });
 }
 
-export function getRssItems(
-  db: BunSQLiteDatabase,
+export async function getRssItems(
+  db: LibSQLDatabase,
   feedId: string,
   limit: number = 100,
-): RssItem[] {
-  const results = db
+): Promise<RssItem[]> {
+  const results = await db
     .select()
     .from(rssItems)
     .where(eq(rssItems.feedId, feedId))
@@ -48,7 +44,7 @@ export function getRssItems(
 }
 
 export function deleteOldRssItems(
-  db: BunSQLiteDatabase,
+  db: LibSQLDatabase,
   feedId: string,
   limit: number = 100,
 ) {

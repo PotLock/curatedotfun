@@ -42,8 +42,29 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: "category",
+          label: "📥 Sources",
+          items: [
+            {
+              type: "doc",
+              id: "plugins/sources/index",
+              label: "📖 Overview",
+            },
+            {
+              type: "doc",
+              id: "plugins/sources/twitter",
+              label: "🐦 Twitter",
+            },
+          ],
+        },
+        {
+          type: "category",
           label: "📡 Distributors",
           items: [
+            {
+              type: "doc",
+              id: "plugins/distributors/index",
+              label: "📖 Overview",
+            },
             {
               type: "doc",
               id: "plugins/distributors/telegram",
@@ -62,13 +83,23 @@ const sidebars: SidebarsConfig = {
           items: [
             {
               type: "doc",
-              id: "plugins/transformers/gpt-transform",
-              label: "🤖 GPT Transform",
+              id: "plugins/transformers/index",
+              label: "📖 Overview",
             },
             {
               type: "doc",
               id: "plugins/transformers/simple-transform",
               label: "📝 Simple Transform",
+            },
+            {
+              type: "doc",
+              id: "plugins/transformers/object-transform",
+              label: "🔄 Object Transform",
+            },
+            {
+              type: "doc",
+              id: "plugins/transformers/ai-transform",
+              label: "🤖 AI Transform",
             },
           ],
         },

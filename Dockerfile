@@ -55,15 +55,12 @@ RUN mkdir -p /litefs /var/lib/litefs && \
     chown -R bun:bun /litefs /var/lib/litefs
 
 # Create volume mount points
-# Set environment variables first
 ENV DATABASE_URL="file:/litefs/db"
-ENV FRONTEND_DIST_PATH="/app/frontend/dist"
 
 # Copy only necessary files from builders
 COPY --from=backend-builder --chown=bun:bun /app/package.json ./
 COPY --chown=bun:bun curate.config.json ./
 
-COPY --from=frontend-builder --chown=bun:bun /app/frontend/dist ./frontend/dist
 COPY --from=backend-builder --chown=bun:bun /app/backend ./backend
 
 RUN cd backend && bun install

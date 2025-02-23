@@ -1,12 +1,12 @@
 import { and, eq, sql } from "drizzle-orm";
-import { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { LibSQLDatabase } from "drizzle-orm/libsql";
 import {
   SubmissionFeed,
   Moderation,
   TwitterSubmission,
   SubmissionStatus,
   TwitterSubmissionWithFeedData,
-} from "types/twitter";
+} from "../../types/twitter";
 import {
   feedPlugins,
   feeds,
@@ -17,13 +17,14 @@ import {
 } from "./schema";
 import { DbQueryResult, DbFeedQueryResult } from "./types";
 
-export function upsertFeeds(
-  db: BunSQLiteDatabase,
+export async function upsertFeeds(
+  db: LibSQLDatabase,
   feedsToUpsert: { id: string; name: string; description?: string }[],
 ) {
-  return db.transaction(() => {
+  return await db.transaction(async (tx) => {
     for (const feed of feedsToUpsert) {
-      db.insert(feeds)
+      await tx
+        .insert(feeds)
         .values({
           id: feed.id,
           name: feed.name,
@@ -36,19 +37,40 @@ export function upsertFeeds(
             name: feed.name,
             description: feed.description,
           },
-        })
-        .run();
+        });
     }
   });
 }
 
-export function saveSubmissionToFeed(
-  db: BunSQLiteDatabase,
+export async function saveSubmissionToFeed(
+  db: LibSQLDatabase,
   submissionId: string,
   feedId: string,
   status: SubmissionStatus = SubmissionStatus.PENDING,
 ) {
-  return db
+  // Check if submission exists
+  const submission = await db
+    .select({ id: submissions.tweetId })
+    .from(submissions)
+    .where(eq(submissions.tweetId, submissionId))
+    .get();
+
+  if (!submission) {
+    throw new Error(`Submission with ID ${submissionId} does not exist`);
+  }
+
+  // Check if feed exists
+  const feed = await db
+    .select({ id: feeds.id })
+    .from(feeds)
+    .where(eq(feeds.id, feedId))
+    .get();
+
+  if (!feed) {
+    throw new Error(`Feed with ID ${feedId} does not exist`);
+  }
+
+  return await db
     .insert(submissionFeeds)
     .values({
       submissionId,
@@ -58,11 +80,11 @@ export function saveSubmissionToFeed(
     .onConflictDoNothing();
 }
 
-export function getFeedsBySubmission(
-  db: BunSQLiteDatabase,
+export async function getFeedsBySubmission(
+  db: LibSQLDatabase,
   submissionId: string,
-): SubmissionFeed[] {
-  const results = db
+): Promise<SubmissionFeed[]> {
+  const results = await db
     .select({
       submissionId: submissionFeeds.submissionId,
       feedId: submissionFeeds.feedId,
@@ -79,8 +101,8 @@ export function getFeedsBySubmission(
   }));
 }
 
-export function saveSubmission(
-  db: BunSQLiteDatabase,
+export async function saveSubmission(
+  db: LibSQLDatabase,
   submission: TwitterSubmission,
 ) {
   return db.insert(submissions).values({
@@ -97,8 +119,8 @@ export function saveSubmission(
   });
 }
 
-export function saveModerationAction(
-  db: BunSQLiteDatabase,
+export async function saveModerationAction(
+  db: LibSQLDatabase,
   moderation: Moderation,
 ) {
   return db.insert(moderationHistory).values({
@@ -111,11 +133,11 @@ export function saveModerationAction(
   });
 }
 
-export function getModerationHistory(
-  db: BunSQLiteDatabase,
+export async function getModerationHistory(
+  db: LibSQLDatabase,
   tweetId: string,
-): Moderation[] {
-  const results = db
+): Promise<Moderation[]> {
+  const results = await db
     .select({
       tweetId: moderationHistory.tweetId,
       feedId: moderationHistory.feedId,
@@ -148,8 +170,8 @@ export function getModerationHistory(
   }));
 }
 
-export function updateSubmissionFeedStatus(
-  db: BunSQLiteDatabase,
+export async function updateSubmissionFeedStatus(
+  db: LibSQLDatabase,
   submissionId: string,
   feedId: string,
   status: SubmissionStatus,
@@ -170,11 +192,11 @@ export function updateSubmissionFeedStatus(
     );
 }
 
-export function getSubmissionByCuratorTweetId(
-  db: BunSQLiteDatabase,
+export async function getSubmissionByCuratorTweetId(
+  db: LibSQLDatabase,
   curatorTweetId: string,
-): TwitterSubmission | null {
-  const results = db
+): Promise<TwitterSubmission | null> {
+  const results = (await db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -212,7 +234,7 @@ export function getSubmissionByCuratorTweetId(
     )
     .where(eq(submissions.curatorTweetId, curatorTweetId))
     .orderBy(moderationHistory.createdAt)
-    .all() as DbQueryResult[];
+    .all()) as DbQueryResult[];
 
   if (!results.length) return null;
 
@@ -244,11 +266,11 @@ export function getSubmissionByCuratorTweetId(
   };
 }
 
-export function getSubmission(
-  db: BunSQLiteDatabase,
+export async function getSubmission(
+  db: LibSQLDatabase,
   tweetId: string,
-): TwitterSubmission | null {
-  const results = db
+): Promise<TwitterSubmission | null> {
+  const results = (await db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -286,7 +308,7 @@ export function getSubmission(
     )
     .where(eq(submissions.tweetId, tweetId))
     .orderBy(moderationHistory.createdAt)
-    .all() as DbQueryResult[];
+    .all()) as DbQueryResult[];
 
   if (!results.length) return null;
 
@@ -318,8 +340,12 @@ export function getSubmission(
   };
 }
 
-export function getAllSubmissions(db: BunSQLiteDatabase): TwitterSubmission[] {
-  const results = db
+export async function getAllSubmissions(
+  db: LibSQLDatabase,
+  limit: number = 50,
+  offset: number = 0,
+): Promise<TwitterSubmission[]> {
+  const results = (await db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -356,7 +382,9 @@ export function getAllSubmissions(db: BunSQLiteDatabase): TwitterSubmission[] {
       ),
     )
     .orderBy(moderationHistory.createdAt)
-    .all() as DbQueryResult[];
+    .limit(limit)
+    .offset(offset)
+    .all()) as DbQueryResult[];
 
   // Group results by submission
   const submissionMap = new Map<string, TwitterSubmission>();
@@ -396,8 +424,8 @@ export function getAllSubmissions(db: BunSQLiteDatabase): TwitterSubmission[] {
   return Array.from(submissionMap.values());
 }
 
-export function cleanupOldSubmissionCounts(
-  db: BunSQLiteDatabase,
+export async function cleanupOldSubmissionCounts(
+  db: LibSQLDatabase,
   date: string,
 ) {
   return db
@@ -405,12 +433,12 @@ export function cleanupOldSubmissionCounts(
     .where(sql`${submissionCounts.lastResetDate} < ${date}`);
 }
 
-export function getDailySubmissionCount(
-  db: BunSQLiteDatabase,
+export async function getDailySubmissionCount(
+  db: LibSQLDatabase,
   userId: string,
   date: string,
-): number {
-  const result = db
+): Promise<number> {
+  const result = await db
     .select({ count: submissionCounts.count })
     .from(submissionCounts)
     .where(
@@ -424,13 +452,13 @@ export function getDailySubmissionCount(
   return result?.count ?? 0;
 }
 
-export function incrementDailySubmissionCount(
-  db: BunSQLiteDatabase,
+export async function incrementDailySubmissionCount(
+  db: LibSQLDatabase,
   userId: string,
 ) {
   const today = new Date().toISOString().split("T")[0];
 
-  return db
+  return await db
     .insert(submissionCounts)
     .values({
       userId,
@@ -449,12 +477,12 @@ export function incrementDailySubmissionCount(
     });
 }
 
-export function removeFromSubmissionFeed(
-  db: BunSQLiteDatabase,
+export async function removeFromSubmissionFeed(
+  db: LibSQLDatabase,
   submissionId: string,
   feedId: string,
 ) {
-  return db
+  return await db
     .delete(submissionFeeds)
     .where(
       and(
@@ -465,12 +493,12 @@ export function removeFromSubmissionFeed(
 }
 
 // Feed Plugin queries
-export function getFeedPlugin(
-  db: BunSQLiteDatabase,
+export async function getFeedPlugin(
+  db: LibSQLDatabase,
   feedId: string,
   pluginId: string,
 ) {
-  return db
+  return await db
     .select()
     .from(feedPlugins)
     .where(
@@ -479,13 +507,13 @@ export function getFeedPlugin(
     .get();
 }
 
-export function upsertFeedPlugin(
-  db: BunSQLiteDatabase,
+export async function upsertFeedPlugin(
+  db: LibSQLDatabase,
   feedId: string,
   pluginId: string,
   config: Record<string, any>,
 ) {
-  return db
+  return await db
     .insert(feedPlugins)
     .values({
       feedId,
@@ -501,14 +529,16 @@ export function upsertFeedPlugin(
     });
 }
 
-export function getSubmissionsByFeed(
-  db: BunSQLiteDatabase,
+export async function getSubmissionsByFeed(
+  db: LibSQLDatabase,
   feedId: string,
-): (TwitterSubmission & {
-  status: SubmissionStatus;
-  moderationResponseTweetId?: string;
-})[] {
-  const results = db
+): Promise<
+  (TwitterSubmission & {
+    status: SubmissionStatus;
+    moderationResponseTweetId?: string;
+  })[]
+> {
+  const results = (await db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -546,7 +576,7 @@ export function getSubmissionsByFeed(
     )
     .where(eq(submissionFeeds.feedId, feedId))
     .orderBy(moderationHistory.createdAt)
-    .all() as DbFeedQueryResult[];
+    .all()) as DbFeedQueryResult[];
 
   // Group results by submission
   const submissionMap = new Map<string, TwitterSubmissionWithFeedData>();

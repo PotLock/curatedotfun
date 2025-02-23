@@ -10,27 +10,23 @@
   "plugins": {
     "@curatedotfun/telegram": {
       "type": "distributor",
-      "url": "./external/telegram"
-    },
-    "@curatedotfun/rss": {
-      "type": "distributor",
-      "url": "./external/rss"
-    },
-    "@curatedotfun/gpt-transform": {
-      "type": "transformer",
-      "url": "./external/gpt-transform"
-    },
-    "@curatedotfun/simple-transform": {
-      "type": "transformer",
-      "url": "./external/simple-transform"
-    },
-    "@curatedotfun/supabase": {
-      "type": "distributor",
-      "url": "@curatedotfun/supabase"
+      "url": "https://unpkg.com/@curatedotfun/telegram@latest/dist/remoteEntry.js"
     },
     "@curatedotfun/notion": {
       "type": "distributor",
-      "url": "./external/notion"
+      "url": "https://unpkg.com/@curatedotfun/notion@latest/dist/remoteEntry.js"
+    },
+    "@curatedotfun/simple-transform": {
+      "type": "transformer",
+      "url": "https://unpkg.com/@curatedotfun/simple-transform@latest/dist/remoteEntry.js"
+    },
+    "@curatedotfun/object-transform": {
+      "type": "transformer",
+      "url": "https://unpkg.com/@curatedotfun/object-transform@latest/dist/remoteEntry.js"
+    },
+    "@curatedotfun/ai-transform": {
+      "type": "transformer",
+      "url": "https://unpkg.com/@curatedotfun/ai-transform@latest/dist/remoteEntry.js"
     }
   },
   "feeds": [
@@ -58,16 +54,51 @@
       "outputs": {
         "stream": {
           "enabled": true,
-          "distribute": [
+          "transform": [
             {
-              "plugin": "@curatedotfun/telegram",
+              "plugin": "@curatedotfun/object-transform",
               "config": {
-                "botToken": "{TELEGRAM_BOT_TOKEN}",
-                "channelId": "-1002472938420",
-                "messageThreadId": "11"
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "content": "{{content}}",
+                  "author": "{{username}}",
+                  "notes": "{{curator.notes}}",
+                  "submittedAt": "{{submittedAt}}"
+                }
               }
             },
             {
+              "plugin": "@curatedotfun/ai-transform",
+              "config": {
+                "prompt": "Summarize the content into a concise news flash, incorporating relevant details from the curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information.",
+                "apiKey": "{OPENROUTER_API_KEY}",
+                "schema": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title derived from summary of content"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Summary of content influenced by curator notes"
+                  }
+                }
+              }
+            }
+          ],
+          "distribute": [
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "tweetId": "{{title}}",
+                      "userId": "{{source}}",
+                      "submittedAt": "{{submittedAt}}"
+                    }
+                  }
+                }
+              ],
               "plugin": "@curatedotfun/notion",
               "config": {
                 "token": "{CRYPTOGRANTWIRE_NOTION_TOKEN}",
@@ -78,23 +109,7 @@
           ]
         },
         "recap": {
-          "enabled": false,
-          "schedule": "0 0 * * *",
-          "transform": {
-            "plugin": "@curatedotfun/gpt-transform",
-            "config": {
-              "prompt": "./prompts/grants_recap.txt"
-            }
-          },
-          "distribute": [
-            {
-              "plugin": "@curatedotfun/telegram",
-              "config": {
-                "botToken": "{TELEGRAM_BOT_TOKEN}",
-                "channelId": "{TELEGRAM_CHANNEL_ID}"
-              }
-            }
-          ]
+          "enabled": false
         }
       }
     },
@@ -120,12 +135,51 @@
       "outputs": {
         "stream": {
           "enabled": true,
+          "transform": [
+            {
+              "plugin": "@curatedotfun/object-transform",
+              "config": {
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "content": "{{content}}",
+                  "author": "{{username}}",
+                  "notes": "{{curator.notes}}",
+                  "submittedAt": "{{submittedAt}}"
+                }
+              }
+            },
+            {
+              "plugin": "@curatedotfun/ai-transform",
+              "config": {
+                "prompt": "Summarize the content into a concise news flash, incorporating relevant details from the curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information.",
+                "apiKey": "{OPENROUTER_API_KEY}",
+                "schema": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title derived from summary of content"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Summary of content influenced by curator notes"
+                  }
+                }
+              }
+            }
+          ],
           "distribute": [
             {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "🔷 Ethereum: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})_\n🔗 [Read More](<{{source}}>)"
+                  }
+                }
+              ],
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
-                "channelId": "@EthAgain"
+                "channelId": "@ethagain"
               }
             }
           ]
@@ -162,14 +216,47 @@
       "outputs": {
         "stream": {
           "enabled": true,
-          "transform": {
-            "plugin": "@curatedotfun/simple-transform",
-            "config": {
-              "format": "NEAR: {CONTENT}\n\n{CURATOR_NOTES}\n\n🔗 Source: https://x.com/x/status/{SUBMISSION_ID}\n"
+          "transform": [
+            {
+              "plugin": "@curatedotfun/object-transform",
+              "config": {
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "content": "{{content}}",
+                  "author": "{{username}}",
+                  "notes": "{{curator.notes}}",
+                  "submittedAt": "{{submittedAt}}"
+                }
+              }
+            },
+            {
+              "plugin": "@curatedotfun/ai-transform",
+              "config": {
+                "prompt": "Summarize the content into a concise news flash, incorporating relevant details from the curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information.",
+                "apiKey": "{OPENROUTER_API_KEY}",
+                "schema": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title derived from summary of content"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Summary of content influenced by curator notes"
+                  }
+                }
+              }
             }
-          },
+          ],
           "distribute": [
             {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "🔥 NEAR: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})_\n🔗 [Read More](<{{source}}>)"
+                  }
+                }
+              ],
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
@@ -222,8 +309,47 @@
       "outputs": {
         "stream": {
           "enabled": true,
+          "transform": [
+            {
+              "plugin": "@curatedotfun/object-transform",
+              "config": {
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "content": "{{content}}",
+                  "author": "{{username}}",
+                  "notes": "{{curator.notes}}",
+                  "submittedAt": "{{submittedAt}}"
+                }
+              }
+            },
+            {
+              "plugin": "@curatedotfun/ai-transform",
+              "config": {
+                "prompt": "Summarize the content into a concise news flash, incorporating relevant details from the curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information.",
+                "apiKey": "{OPENROUTER_API_KEY}",
+                "schema": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title derived from summary of content"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Summary of content influenced by curator notes"
+                  }
+                }
+              }
+            }
+          ],
           "distribute": [
             {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "🧠 AI3: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})_\n🔗 [Read More](<{{source}}>)"
+                  }
+                }
+              ],
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
@@ -247,8 +373,47 @@
       "outputs": {
         "stream": {
           "enabled": true,
+          "transform": [
+            {
+              "plugin": "@curatedotfun/object-transform",
+              "config": {
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "content": "{{content}}",
+                  "author": "{{username}}",
+                  "notes": "{{curator.notes}}",
+                  "submittedAt": "{{submittedAt}}"
+                }
+              }
+            },
+            {
+              "plugin": "@curatedotfun/ai-transform",
+              "config": {
+                "prompt": "Summarize the content into a concise news flash, incorporating relevant details from the curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information.",
+                "apiKey": "{OPENROUTER_API_KEY}",
+                "schema": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title derived from summary of content"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Summary of content influenced by curator notes"
+                  }
+                }
+              }
+            }
+          ],
           "distribute": [
             {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "🤖 AI: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})_\n🔗 [Read More](<{{source}}>)"
+                  }
+                }
+              ],
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
@@ -417,18 +582,51 @@
       "outputs": {
         "stream": {
           "enabled": true,
-          "transform": {
-            "plugin": "@curatedotfun/simple-transform",
-            "config": {
-              "format": "⚡ Solana Spotlight: {CONTENT}\n\n{CURATOR_NOTES}\n\n🔗 Source: https://x.com/x/status/{SUBMISSION_ID}\n"
+          "transform": [
+            {
+              "plugin": "@curatedotfun/object-transform",
+              "config": {
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "content": "{{content}}",
+                  "author": "{{username}}",
+                  "notes": "{{curator.notes}}",
+                  "submittedAt": "{{submittedAt}}"
+                }
+              }
+            },
+            {
+              "plugin": "@curatedotfun/ai-transform",
+              "config": {
+                "prompt": "Summarize the content into a concise news flash, incorporating relevant details from the curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information.",
+                "apiKey": "{OPENROUTER_API_KEY}",
+                "schema": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title derived from summary of content"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Summary of content influenced by curator notes"
+                  }
+                }
+              }
             }
-          },
+          ],
           "distribute": [
             {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "⚡ Solana: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})_\n🔗 [Read More](<{{source}}>)"
+                  }
+                }
+              ],
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
-                "channelId": "@Solana_Digest"
+                "channelId": "@solana_digest"
               }
             }
           ]
@@ -640,18 +838,51 @@
       "outputs": {
         "stream": {
           "enabled": true,
-          "transform": {
-            "plugin": "@curatedotfun/simple-transform",
-            "config": {
-              "format": "💰 FUNDRAISE: {CONTENT}\n\n{CURATOR_NOTES}\n\n📌 source: https://x.com/x/status/{SUBMISSION_ID}\n"
+          "transform": [
+            {
+              "plugin": "@curatedotfun/object-transform",
+              "config": {
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "content": "{{content}}",
+                  "author": "{{username}}",
+                  "notes": "{{curator.notes}}",
+                  "submittedAt": "{{submittedAt}}"
+                }
+              }
+            },
+            {
+              "plugin": "@curatedotfun/ai-transform",
+              "config": {
+                "prompt": "Summarize the content into a concise news flash, incorporating relevant details from the curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information.",
+                "apiKey": "{OPENROUTER_API_KEY}",
+                "schema": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title derived from summary of content"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Summary of content influenced by curator notes"
+                  }
+                }
+              }
             }
-          },
+          ],
           "distribute": [
             {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "💰 New Crypto Fundraise 💸: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})_\n🔗 [Read More](<{{source}}>)"
+                  }
+                }
+              ],
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
-                "channelId": "@CryptoFundraises"
+                "channelId": "@cryptofundraises"
               }
             }
           ]
@@ -670,14 +901,47 @@
       "outputs": {
         "stream": {
           "enabled": true,
-          "transform": {
-            "plugin": "@curatedotfun/simple-transform",
-            "config": {
-              "format": "🇺🇸 {CONTENT}\n\n{CURATOR_NOTES}\n\n📌 Source: https://x.com/x/status/{SUBMISSION_ID}\n"
+          "transform": [
+            {
+              "plugin": "@curatedotfun/object-transform",
+              "config": {
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "content": "{{content}}",
+                  "author": "{{username}}",
+                  "notes": "{{curator.notes}}",
+                  "submittedAt": "{{submittedAt}}"
+                }
+              }
+            },
+            {
+              "plugin": "@curatedotfun/ai-transform",
+              "config": {
+                "prompt": "Summarize the content into a concise news flash, incorporating relevant details from the curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information.",
+                "apiKey": "{OPENROUTER_API_KEY}",
+                "schema": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title derived from summary of content"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Summary of content influenced by curator notes"
+                  }
+                }
+              }
             }
-          },
+          ],
           "distribute": [
             {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "🇺🇸 USA: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})_\n🔗 [Read More](<{{source}}>)"
+                  }
+                }
+              ],
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
@@ -742,14 +1006,47 @@
       "outputs": {
         "stream": {
           "enabled": true,
-          "transform": {
-            "plugin": "@curatedotfun/simple-transform",
-            "config": {
-              "format": "🚢 ShippostL {CONTENT}\n\n{CURATOR_NOTES}\n\n📌 source: https://x.com/x/status/{SUBMISSION_ID}\n"
+          "transform": [
+            {
+              "plugin": "@curatedotfun/object-transform",
+              "config": {
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "content": "{{content}}",
+                  "author": "{{username}}",
+                  "notes": "{{curator.notes}}",
+                  "submittedAt": "{{submittedAt}}"
+                }
+              }
+            },
+            {
+              "plugin": "@curatedotfun/ai-transform",
+              "config": {
+                "prompt": "Summarize the content into a concise news flash, incorporating relevant details from the curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information.",
+                "apiKey": "{OPENROUTER_API_KEY}",
+                "schema": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title derived from summary of content"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Summary of content influenced by curator notes"
+                  }
+                }
+              }
             }
-          },
+          ],
           "distribute": [
             {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "🚢 Shippost: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})_\n🔗 [Read More](<{{source}}>)"
+                  }
+                }
+              ],
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
@@ -823,18 +1120,51 @@
       "outputs": {
         "stream": {
           "enabled": true,
-          "transform": {
-            "plugin": "@curatedotfun/simple-transform",
-            "config": {
-              "format": "⚡ Daily Sui: {CONTENT}\n\n{CURATOR_NOTES}\n\n🔗 Source: https://x.com/x/status/{SUBMISSION_ID}\n"
+          "transform": [
+            {
+              "plugin": "@curatedotfun/object-transform",
+              "config": {
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "content": "{{content}}",
+                  "author": "{{username}}",
+                  "notes": "{{curator.notes}}",
+                  "submittedAt": "{{submittedAt}}"
+                }
+              }
+            },
+            {
+              "plugin": "@curatedotfun/ai-transform",
+              "config": {
+                "prompt": "Summarize the content into a concise news flash, incorporating relevant details from the curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information.",
+                "apiKey": "{OPENROUTER_API_KEY}",
+                "schema": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title derived from summary of content"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Summary of content influenced by curator notes"
+                  }
+                }
+              }
             }
-          },
+          ],
           "distribute": [
             {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "🌊 Sui: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})_\n🔗 [Read More](<{{source}}>)"
+                  }
+                }
+              ],
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
-                "channelId": "@Daily_Sui"
+                "channelId": "@daily_sui"
               }
             }
           ]
@@ -965,7 +1295,7 @@
         }
       }
     },
-     {
+    {
       "id": "monad",
       "name": "Monad",
       "description": "News about Monad Ecoystem",
@@ -980,7 +1310,7 @@
         }
       }
     },
-         {
+    {
       "id": "story",
       "name": "Story",
       "description": "News about Story Protocol Ecoystem",
@@ -995,7 +1325,7 @@
         }
       }
     },
-         {
+    {
       "id": "arbitrum",
       "name": "arbitrum",
       "description": "News about Atrbitrum Ecoystem",
@@ -1010,7 +1340,7 @@
         }
       }
     },
-   {
+    {
       "id": "stablecoins",
       "name": "Stablecoins",
       "description": "News about the Stablecoins Ecoystem",
@@ -1025,7 +1355,7 @@
         }
       }
     },
-   {
+    {
       "id": "polkadot",
       "name": "polkadot",
       "description": "News about Polkadot Ecoystem",
@@ -1040,7 +1370,7 @@
         }
       }
     },
-     {
+    {
       "id": "cardano",
       "name": "cardano",
       "description": "News about Cardano Ecoystem",
@@ -1055,7 +1385,7 @@
         }
       }
     },
-             {
+    {
       "id": "arbitrum",
       "name": "arbitrum",
       "description": "News about Arbitrum Ecoystem",
@@ -1070,7 +1400,7 @@
         }
       }
     },
-   {
+    {
       "id": "polygon",
       "name": "Polygon",
       "description": "News about Polygon Ecoystem",
@@ -1085,7 +1415,7 @@
         }
       }
     },
-   {
+    {
       "id": "unc",
       "name": "Unc",
       "description": "Unc.fun meme curation mechanisms for the YNs",
@@ -1100,7 +1430,7 @@
         }
       }
     },
-    
+
     {
       "id": "bitcoin",
       "name": "Bitcoin News",
