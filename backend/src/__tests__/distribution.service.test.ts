@@ -48,7 +48,7 @@ describe("DistributionService", () => {
       createdAt: new Date().toISOString(),
       submittedAt: new Date().toISOString(),
       moderationHistory: [],
-      status: "approved"
+      status: "approved",
     };
 
     it("should distribute content through plugin", async () => {
@@ -59,7 +59,10 @@ describe("DistributionService", () => {
 
       let distributedContent: any;
       mockPluginService.setMockPlugin("test", {
-        distribute: async ({ input, config }: DistributeArgs<TwitterSubmission>) => {
+        distribute: async ({
+          input,
+          config,
+        }: DistributeArgs<TwitterSubmission>) => {
           distributedContent = { input, config };
         },
       });
@@ -102,7 +105,7 @@ describe("DistributionService", () => {
 
       // Should throw system errors directly
       await expect(
-        distributionService.distributeContent(distributor, mockSubmission)
+        distributionService.distributeContent(distributor, mockSubmission),
       ).rejects.toBeInstanceOf(TypeError);
     });
 

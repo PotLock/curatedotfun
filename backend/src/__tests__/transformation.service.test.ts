@@ -33,33 +33,43 @@ describe("TransformationService", () => {
     it("should apply transforms in sequence", async () => {
       const transforms = [
         { plugin: "transform1", config: {} },
-        { plugin: "transform2", config: {} }
+        { plugin: "transform2", config: {} },
       ];
 
       // Mock transform plugins
       mockPluginService.setMockPlugin("transform1", {
-        transform: async ({ input }: TransformArgs) => ({ ...input as object, key1: "value1" })
+        transform: async ({ input }: TransformArgs) => ({
+          ...(input as object),
+          key1: "value1",
+        }),
       });
       mockPluginService.setMockPlugin("transform2", {
-        transform: async ({ input }: TransformArgs) => ({ ...input as object, key2: "value2" })
+        transform: async ({ input }: TransformArgs) => ({
+          ...(input as object),
+          key2: "value2",
+        }),
       });
 
       const result = await transformationService.applyTransforms(
         { initial: "content" },
         transforms,
-        "global"
+        "global",
       );
 
       expect(result).toEqual({
         initial: "content",
         key1: "value1",
-        key2: "value2"
+        key2: "value2",
       });
     });
 
     it("should handle empty transform array", async () => {
       const content = { test: "content" };
-      const result = await transformationService.applyTransforms(content, [], "global");
+      const result = await transformationService.applyTransforms(
+        content,
+        [],
+        "global",
+      );
       expect(result).toEqual(content);
     });
 
@@ -67,57 +77,73 @@ describe("TransformationService", () => {
       const transforms = [{ plugin: "invalid", config: {} }];
 
       mockPluginService.setMockPlugin("invalid", {
-        transform: async () => null
+        transform: async () => null,
       });
 
       await expect(
-        transformationService.applyTransforms({ test: "content" }, transforms, "global")
+        transformationService.applyTransforms(
+          { test: "content" },
+          transforms,
+          "global",
+        ),
       ).rejects.toThrow(TransformError);
     });
 
     it("should handle different transform stages", async () => {
       const globalTransforms = [
         { plugin: "global1", config: {} },
-        { plugin: "global2", config: {} }
+        { plugin: "global2", config: {} },
       ];
 
       const distributorTransforms = [
         { plugin: "dist1", config: {} },
-        { plugin: "dist2", config: {} }
+        { plugin: "dist2", config: {} },
       ];
 
       // Mock transform plugins
       mockPluginService.setMockPlugin("global1", {
-        transform: async ({ input }: TransformArgs) => ({ ...input as object, global1: true })
+        transform: async ({ input }: TransformArgs) => ({
+          ...(input as object),
+          global1: true,
+        }),
       });
       mockPluginService.setMockPlugin("global2", {
-        transform: async ({ input }: TransformArgs) => ({ ...input as object, global2: true })
+        transform: async ({ input }: TransformArgs) => ({
+          ...(input as object),
+          global2: true,
+        }),
       });
       mockPluginService.setMockPlugin("dist1", {
-        transform: async ({ input }: TransformArgs) => ({ ...input as object, dist1: true })
+        transform: async ({ input }: TransformArgs) => ({
+          ...(input as object),
+          dist1: true,
+        }),
       });
       mockPluginService.setMockPlugin("dist2", {
-        transform: async ({ input }: TransformArgs) => ({ ...input as object, dist2: true })
+        transform: async ({ input }: TransformArgs) => ({
+          ...(input as object),
+          dist2: true,
+        }),
       });
 
       // Apply global transforms
       const globalResult = await transformationService.applyTransforms(
         { initial: "content" },
         globalTransforms,
-        "global"
+        "global",
       );
 
       expect(globalResult).toEqual({
         initial: "content",
         global1: true,
-        global2: true
+        global2: true,
       });
 
       // Apply distributor transforms
       const distributorResult = await transformationService.applyTransforms(
         globalResult,
         distributorTransforms,
-        "distributor"
+        "distributor",
       );
 
       expect(distributorResult).toEqual({
@@ -125,7 +151,7 @@ describe("TransformationService", () => {
         global1: true,
         global2: true,
         dist1: true,
-        dist2: true
+        dist2: true,
       });
     });
 
@@ -135,31 +161,38 @@ describe("TransformationService", () => {
       mockPluginService.setMockPlugin("error", {
         transform: async () => {
           throw new Error("Plugin error");
-        }
+        },
       });
 
       await expect(
-        transformationService.applyTransforms({ test: "content" }, transforms, "global")
+        transformationService.applyTransforms(
+          { test: "content" },
+          transforms,
+          "global",
+        ),
       ).rejects.toThrow(TransformError);
     });
 
     it("should merge array results correctly", async () => {
       const transforms = [
         { plugin: "array1", config: {} },
-        { plugin: "array2", config: {} }
+        { plugin: "array2", config: {} },
       ];
 
       mockPluginService.setMockPlugin("array1", {
-        transform: async () => ["item1", "item2"]
+        transform: async () => ["item1", "item2"],
       });
       mockPluginService.setMockPlugin("array2", {
-        transform: async ({ input }: TransformArgs) => [...input as string[], "item3"]
+        transform: async ({ input }: TransformArgs) => [
+          ...(input as string[]),
+          "item3",
+        ],
       });
 
       const result = await transformationService.applyTransforms(
         [],
         transforms,
-        "global"
+        "global",
       );
 
       expect(result).toEqual(["item1", "item2", "item3"]);
@@ -169,8 +202,8 @@ describe("TransformationService", () => {
       const transforms = [
         {
           plugin: "configTest",
-          config: { key: "value" }
-        }
+          config: { key: "value" },
+        },
       ];
 
       let capturedConfig: any;
@@ -178,13 +211,13 @@ describe("TransformationService", () => {
         transform: async ({ input, config }: TransformArgs) => {
           capturedConfig = config;
           return input;
-        }
+        },
       });
 
       await transformationService.applyTransforms(
         { test: "content" },
         transforms,
-        "global"
+        "global",
       );
 
       expect(capturedConfig).toEqual({ key: "value" });
@@ -193,27 +226,27 @@ describe("TransformationService", () => {
     it("should preserve non-object transform results", async () => {
       const transforms = [
         { plugin: "string", config: {} },
-        { plugin: "number", config: {} }
+        { plugin: "number", config: {} },
       ];
 
       mockPluginService.setMockPlugin("string", {
-        transform: async () => "string result"
+        transform: async () => "string result",
       });
       mockPluginService.setMockPlugin("number", {
-        transform: async () => 42
+        transform: async () => 42,
       });
 
       const stringResult = await transformationService.applyTransforms(
         "initial",
         [transforms[0]],
-        "global"
+        "global",
       );
       expect(stringResult).toBe("string result");
 
       const numberResult = await transformationService.applyTransforms(
         0,
         [transforms[1]],
-        "global"
+        "global",
       );
       expect(numberResult).toBe(42);
     });
