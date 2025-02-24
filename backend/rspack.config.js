@@ -10,9 +10,9 @@ module.exports = {
   target: "async-node",
   devtool: "source-map",
   externals: {
-    '@neon-rs/load': 'commonjs @neon-rs/load',
-    '@libsql/linux-x64-musl': 'commonjs @libsql/linux-x64-musl',
-    'bufferutil': 'commonjs bufferutil'
+    "@neon-rs/load": "commonjs @neon-rs/load",
+    "@libsql/linux-x64-musl": "commonjs @libsql/linux-x64-musl",
+    bufferutil: "commonjs bufferutil",
   },
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -27,7 +27,7 @@ module.exports = {
       },
       {
         test: /\.md$/,
-        type: 'asset/source',
+        type: "asset/source",
       },
     ],
   },
