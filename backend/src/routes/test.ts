@@ -1,5 +1,5 @@
 import { Tweet } from "agent-twitter-client";
-import { Elysia, t } from "elysia";
+import { Elysia } from "elysia";
 import { MockTwitterService } from "../__tests__/mocks/twitter-service.mock";
 
 // Create a single mock instance to maintain state
@@ -31,54 +31,25 @@ const createTweet = (
 
 export const testRoutes = new Elysia({ prefix: "/api/test" })
   .guard({
-    beforeHandle: () => {
+    beforeHandle: ({ request }) => {
       // Only allow in development and test environments
       if (process.env.NODE_ENV === "production") {
         return new Response("Not found", { status: 404 });
       }
     },
   })
-  .post(
-    "/tweets",
-    async ({
-      body,
-    }: {
-      body: {
-        id: string;
-        text: string;
-        username: string;
-        inReplyToStatusId?: string;
-        hashtags?: string[];
-      };
-    }) => {
-      const { id, text, username, inReplyToStatusId, hashtags } = body as {
-        id: string;
-        text: string;
-        username: string;
-        inReplyToStatusId?: string;
-        hashtags?: string[];
-      };
-
-      const tweet = createTweet(
-        id,
-        text,
-        username,
-        inReplyToStatusId,
-        hashtags,
-      );
-      mockTwitterService.addMockTweet(tweet);
-      return tweet;
-    },
-    {
-      body: t.Object({
-        id: t.String(),
-        text: t.String(),
-        username: t.String(),
-        inReplyToStatusId: t.Optional(t.String()),
-        hashtags: t.Optional(t.Array(t.String())),
-      }),
-    },
-  )
+  .post("/tweets", async ({ body }) => {
+    const { id, text, username, inReplyToStatusId, hashtags } = body as {
+      id: string;
+      text: string;
+      username: string;
+      inReplyToStatusId?: string;
+      hashtags?: string[];
+    };
+    const tweet = createTweet(id, text, username, inReplyToStatusId, hashtags);
+    mockTwitterService.addMockTweet(tweet);
+    return tweet;
+  })
   .post("/reset", () => {
     mockTwitterService.clearMockTweets();
     return { success: true };

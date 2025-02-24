@@ -1,4 +1,4 @@
-import { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+import { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import {
   RssItem,
   saveRssItem,
@@ -8,15 +8,15 @@ import {
 
 // These are made available for plugins
 export class DBOperations {
-  constructor(private db: BetterSQLite3Database) {}
+  constructor(private db: BunSQLiteDatabase) {}
 
   // RSS Operations
   saveRssItem(feedId: string, item: RssItem): void {
     saveRssItem(this.db, feedId, item);
   }
 
-  async getRssItems(feedId: string, limit: number): Promise<RssItem[]> {
-    return await getRssItems(this.db, feedId, limit);
+  getRssItems(feedId: string, limit: number): RssItem[] {
+    return getRssItems(this.db, feedId, limit);
   }
 
   deleteOldRssItems(feedId: string, limit: number): void {

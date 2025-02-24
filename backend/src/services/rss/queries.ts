@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
+import { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import { rssItems } from "./schema";
-import { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 
 export interface RssItem {
   title?: string;
@@ -11,7 +11,7 @@ export interface RssItem {
 }
 
 export function saveRssItem(
-  db: BetterSQLite3Database,
+  db: BunSQLiteDatabase,
   feedId: string,
   item: RssItem,
 ) {
@@ -25,12 +25,12 @@ export function saveRssItem(
   });
 }
 
-export async function getRssItems(
-  db: BetterSQLite3Database,
+export function getRssItems(
+  db: BunSQLiteDatabase,
   feedId: string,
   limit: number = 100,
-): Promise<RssItem[]> {
-  const results = await db
+): RssItem[] {
+  const results = db
     .select()
     .from(rssItems)
     .where(eq(rssItems.feedId, feedId))
@@ -48,7 +48,7 @@ export async function getRssItems(
 }
 
 export function deleteOldRssItems(
-  db: BetterSQLite3Database,
+  db: BunSQLiteDatabase,
   feedId: string,
   limit: number = 100,
 ) {

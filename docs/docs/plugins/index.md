@@ -4,7 +4,7 @@ sidebar_position: 0
 
 # 🔌 Plugins
 
-Curate.fun has a unique plugin pattern that uses [module federation](https://module-federation.io/), which allows the bot to load and use remote plugins without needing to install or redeploy. These plugins can extend its functionality, particularly for content ingestion, transformation, distribution.
+curate.fun supports various plugins that extend its functionality, particularly for content distribution. Each plugin enables you to distribute curated content to different platforms and channels.
 
 ## Plugin Structure
 
@@ -17,11 +17,11 @@ Plugins are defined in two parts in your `curate.config.json`:
   "plugins": {
     "@curatedotfun/telegram": {
       "type": "distributor",
-      "url": "https://unpkg.com/@curatedotfun/telegram@latest/dist/remoteEntry.js"
+      "url": "./external/telegram"
     },
-    "@curatedotfun/ai-transform": {
+    "@curatedotfun/gpt-transform": {
       "type": "transformer",
-      "url": "https://unpkg.com/@curatedotfun/ai-transform@latest/dist/remoteEntry.js"
+      "url": "./external/gpt-transform"
     }
   }
 }
@@ -35,7 +35,7 @@ Plugins are defined in two parts in your `curate.config.json`:
     "stream": {
       "enabled": true,
       "transform": {
-        "plugin": "@curatedotfun/ai-transform",
+        "plugin": "@curatedotfun/gpt-transform",
         "config": {
           // Transformer-specific configuration
         }
@@ -57,29 +57,14 @@ Select a plugin from the sidebar to view its detailed configuration and setup in
 
 ## Available Plugins
 
-### Distributors
+### [📱 Telegram Plugin](./distributors/telegram.md)
 
-#### [📱 Telegram Plugin](./distributors/telegram.md)
 Distribute curated content to Telegram channels and topics.
 
-#### [📡 RSS Plugin](./distributors/rss.md)
-Generate RSS feeds for your curated content.
+### [🤖 GPT Transform](./transformers/gpt-transform.md)
 
-#### [📝 Notion Plugin](./distributors/notion.md)
-Sync content to Notion databases with customizable properties.
-
-#### [💾 Supabase Plugin](./distributors/supabase.md)
-Store and manage content in your Supabase database.
-
-### Transformers
-
-#### [🤖 AI Transform](./transformers/ai-transform.md)
 Transform content using OpenRouter's GPT models for AI-powered content enhancement.
 
-#### [📝 Simple Transform](./transformers/simple-transform.md)
+### [📝 Simple Transform](./transformers/simple-transform.md)
+
 Format content using a template-based approach with customizable placeholders.
-
-### Source Plugins
-
-#### [🐦 Twitter Plugin](index.md)
-Monitor and collect content from Twitter.

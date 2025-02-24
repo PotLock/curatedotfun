@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
 import { twitterCache, twitterCookies } from "./schema";
-import { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+import { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 
 // Twitter Cookie Management
-export function getTwitterCookies(db: BetterSQLite3Database, username: string) {
+export function getTwitterCookies(db: BunSQLiteDatabase, username: string) {
   return db
     .select()
     .from(twitterCookies)
@@ -12,7 +12,7 @@ export function getTwitterCookies(db: BetterSQLite3Database, username: string) {
 }
 
 export function setTwitterCookies(
-  db: BetterSQLite3Database,
+  db: BunSQLiteDatabase,
   username: string,
   cookiesJson: string,
 ) {
@@ -31,20 +31,17 @@ export function setTwitterCookies(
     });
 }
 
-export function deleteTwitterCookies(
-  db: BetterSQLite3Database,
-  username: string,
-) {
+export function deleteTwitterCookies(db: BunSQLiteDatabase, username: string) {
   return db.delete(twitterCookies).where(eq(twitterCookies.username, username));
 }
 
 // Twitter Cache Management
-export function getTwitterCacheValue(db: BetterSQLite3Database, key: string) {
+export function getTwitterCacheValue(db: BunSQLiteDatabase, key: string) {
   return db.select().from(twitterCache).where(eq(twitterCache.key, key)).get();
 }
 
 export function setTwitterCacheValue(
-  db: BetterSQLite3Database,
+  db: BunSQLiteDatabase,
   key: string,
   value: string,
 ) {
@@ -63,13 +60,10 @@ export function setTwitterCacheValue(
     });
 }
 
-export function deleteTwitterCacheValue(
-  db: BetterSQLite3Database,
-  key: string,
-) {
+export function deleteTwitterCacheValue(db: BunSQLiteDatabase, key: string) {
   return db.delete(twitterCache).where(eq(twitterCache.key, key));
 }
 
-export function clearTwitterCache(db: BetterSQLite3Database) {
+export function clearTwitterCache(db: BunSQLiteDatabase) {
   return db.delete(twitterCache);
 }

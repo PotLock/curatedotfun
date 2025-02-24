@@ -2,16 +2,15 @@
   "name": "curatedotfun",
   "version": "1.0.0",
   "devDependencies": {
-    "@curatedotfun/types": "^0.0.2",
-    "prettier": "^3.3.3",
-    "turbo": "latest"
+    "turbo": "latest",
+    "prettier": "^3.3.3"
   },
   "packageManager": "bun@1.0.27",
   "private": true,
   "scripts": {
     "dev": "bunx turbo run dev",
     "build": "bunx turbo run build",
-    "start": "cd backend && NODE_ENV=production bun run dist/main.js",
+    "start": "cd backend && NODE_ENV=production bun run dist/index.js",
     "db:up": "cd backend && bun run db:up",
     "db:push": "cd backend && bun run db:push",
     "db:migrate": "cd backend && bun run db:migrate",
