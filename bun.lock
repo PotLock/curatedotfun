@@ -773,7 +773,7 @@
 
     "@rspack/binding-win32-x64-msvc": ["@rspack/binding-win32-x64-msvc@1.1.8", "", { "os": "win32", "cpu": "x64" }, "sha512-SBzIcND4qpDt71jlu1MCDxt335tqInT3YID9V4DoQ4t8wgM/uad7EgKOWKTK6vc2RRaOIShfS2XzqjNUxPXh4w=="],
 
-    "@rspack/cli": ["@rspack/cli@1.2.4", "", { "dependencies": { "@discoveryjs/json-ext": "^0.5.7", "@rspack/dev-server": "1.0.10", "colorette": "2.0.19", "exit-hook": "^4.0.0", "interpret": "^3.1.1", "rechoir": "^0.8.0", "webpack-bundle-analyzer": "4.6.1", "yargs": "17.7.2" }, "peerDependencies": { "@rspack/core": "^1.0.0-alpha || ^1.x", "@rspack/tracing": "^1.x" }, "optionalPeers": ["@rspack/tracing"], "bin": { "rspack": "bin/rspack.js" } }, "sha512-hd6cw4Y43O+RNfs7lFuGk3RzX5bzGtfBD7oxIgQ5liADgHgcpF1kBFA1UjY+mvlSr5IEFe1lmAdS/KoDA0sWSw=="],
+    "@rspack/cli": ["@rspack/cli@1.2.5", "", { "dependencies": { "@discoveryjs/json-ext": "^0.5.7", "@rspack/dev-server": "1.0.10", "colorette": "2.0.19", "exit-hook": "^4.0.0", "interpret": "^3.1.1", "rechoir": "^0.8.0", "webpack-bundle-analyzer": "4.6.1", "yargs": "17.7.2" }, "peerDependencies": { "@rspack/core": "^1.0.0-alpha || ^1.x", "@rspack/tracing": "^1.x" }, "optionalPeers": ["@rspack/tracing"], "bin": { "rspack": "bin/rspack.js" } }, "sha512-xgFjlFAIpAOG7PbSkxFPOUDrYVGhCngtGYWe4RqujsdwEBhDq9bBD+Wn+vd5tCq02df4Rpc25UidmznxwhUCgw=="],
 
     "@rspack/core": ["@rspack/core@1.1.8", "", { "dependencies": { "@module-federation/runtime-tools": "0.5.1", "@rspack/binding": "1.1.8", "@rspack/lite-tapable": "1.0.1", "caniuse-lite": "^1.0.30001616" }, "peerDependencies": { "@swc/helpers": ">=0.5.1" }, "optionalPeers": ["@swc/helpers"] }, "sha512-pcZtcj5iXLCuw9oElTYC47bp/RQADm/MMEb3djHdwJuSlFWfWPQi5QFgJ/lJAxIW9UNHnTFrYtytycfjpuoEcA=="],
 

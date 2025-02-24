@@ -13,9 +13,6 @@ module.exports = {
     path: path.resolve(__dirname, "dist"),
     clean: true,
   },
-  externals: {
-    "@libsql/client": "commonjs @libsql/client",
-  },
   module: {
     rules: [
       {

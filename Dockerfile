@@ -68,6 +68,7 @@ ENV DATABASE_URL="file:/litefs/db"
 COPY --from=backend-builder --chown=bun:bun /app/package.json ./
 COPY --chown=bun:bun curate.config.json ./
 
+COPY --from=frontend-builder --chown=bun:bun /app/frontend/dist ./frontend/dist
 COPY --from=backend-builder --chown=bun:bun /app/backend ./backend
 
 RUN cd backend && bun install
