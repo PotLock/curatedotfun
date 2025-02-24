@@ -24,6 +24,13 @@ RUN cd frontend && npm run build
 FROM oven/bun as backend-builder
 WORKDIR /app
 
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy backend package files
 COPY package.json ./
 COPY backend/package.json ./backend/
