@@ -10,7 +10,11 @@ export interface RssItem {
   publishedAt: string;
 }
 
-export function saveRssItem(db: BetterSQLite3Database, feedId: string, item: RssItem) {
+export function saveRssItem(
+  db: BetterSQLite3Database,
+  feedId: string,
+  item: RssItem,
+) {
   return db.insert(rssItems).values({
     feedId,
     title: item.title,

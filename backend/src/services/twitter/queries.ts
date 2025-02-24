@@ -31,7 +31,10 @@ export function setTwitterCookies(
     });
 }
 
-export function deleteTwitterCookies(db: BetterSQLite3Database, username: string) {
+export function deleteTwitterCookies(
+  db: BetterSQLite3Database,
+  username: string,
+) {
   return db.delete(twitterCookies).where(eq(twitterCookies.username, username));
 }
 
@@ -60,7 +63,10 @@ export function setTwitterCacheValue(
     });
 }
 
-export function deleteTwitterCacheValue(db: BetterSQLite3Database, key: string) {
+export function deleteTwitterCacheValue(
+  db: BetterSQLite3Database,
+  key: string,
+) {
   return db.delete(twitterCache).where(eq(twitterCache.key, key));
 }
 

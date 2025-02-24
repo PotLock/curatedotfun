@@ -37,7 +37,9 @@ export class DatabaseService {
     try {
       const dbPath = DatabaseService.DB_PATH.replace("file:", "");
       const sqlite = new Database(dbPath);
-      this.db = drizzle(sqlite, { logger: process.env.NODE_ENV === "development" });
+      this.db = drizzle(sqlite, {
+        logger: process.env.NODE_ENV === "development",
+      });
     } catch (e) {
       logger.error("Failed to initialize database:", e);
       throw new Error("Database initialization failed");
