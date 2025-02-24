@@ -21,7 +21,7 @@ COPY frontend ./frontend
 RUN cd frontend && npm run build
 
 # Backend deps & build stage
-FROM oven/bun as backend-builder
+FROM node:20 as backend-builder
 WORKDIR /app
 
 # Install build dependencies
@@ -37,7 +37,7 @@ COPY backend/package.json ./backend/
 COPY backend/drizzle.config.ts ./backend/
 
 # Install backend dependencies
-RUN cd backend && bun install
+RUN cd backend && npm install
 
 # Copy backend source code
 COPY backend ./backend
@@ -45,7 +45,7 @@ COPY backend ./backend
 ENV NODE_ENV="production"
 
 # Build backend
-RUN cd backend && bun run build
+RUN cd backend && npm run build
 
 # Production stage
 FROM oven/bun as production
