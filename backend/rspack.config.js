@@ -9,6 +9,11 @@ module.exports = {
   mode: isProduction ? "production" : "development",
   target: "async-node",
   devtool: "source-map",
+  externals: {
+    '@neon-rs/load': 'commonjs @neon-rs/load',
+    '@libsql/linux-x64-musl': 'commonjs @libsql/linux-x64-musl',
+    'bufferutil': 'commonjs bufferutil'
+  },
   output: {
     path: path.resolve(__dirname, "dist"),
     clean: true,
@@ -19,6 +24,10 @@ module.exports = {
         test: /\.tsx?$/,
         use: "builtin:swc-loader",
         exclude: /node_modules/,
+      },
+      {
+        test: /\.md$/,
+        type: 'asset/source',
       },
     ],
   },
