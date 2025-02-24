@@ -1,5 +1,5 @@
 import { and, eq, sql } from "drizzle-orm";
-import { LibSQLDatabase } from "drizzle-orm/libsql";
+import { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import {
   SubmissionFeed,
   Moderation,
@@ -18,7 +18,7 @@ import {
 import { DbQueryResult, DbFeedQueryResult } from "./types";
 
 export async function upsertFeeds(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   feedsToUpsert: { id: string; name: string; description?: string }[],
 ) {
   return await db.transaction(async (tx) => {
@@ -43,7 +43,7 @@ export async function upsertFeeds(
 }
 
 export async function saveSubmissionToFeed(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   submissionId: string,
   feedId: string,
   status: SubmissionStatus = SubmissionStatus.PENDING,
@@ -81,7 +81,7 @@ export async function saveSubmissionToFeed(
 }
 
 export async function getFeedsBySubmission(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   submissionId: string,
 ): Promise<SubmissionFeed[]> {
   const results = await db
@@ -102,7 +102,7 @@ export async function getFeedsBySubmission(
 }
 
 export async function saveSubmission(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   submission: TwitterSubmission,
 ) {
   return db.insert(submissions).values({
@@ -120,7 +120,7 @@ export async function saveSubmission(
 }
 
 export async function saveModerationAction(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   moderation: Moderation,
 ) {
   return db.insert(moderationHistory).values({
@@ -134,7 +134,7 @@ export async function saveModerationAction(
 }
 
 export async function getModerationHistory(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   tweetId: string,
 ): Promise<Moderation[]> {
   const results = await db
@@ -171,7 +171,7 @@ export async function getModerationHistory(
 }
 
 export async function updateSubmissionFeedStatus(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   submissionId: string,
   feedId: string,
   status: SubmissionStatus,
@@ -193,7 +193,7 @@ export async function updateSubmissionFeedStatus(
 }
 
 export async function getSubmissionByCuratorTweetId(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   curatorTweetId: string,
 ): Promise<TwitterSubmission | null> {
   const results = (await db
@@ -267,7 +267,7 @@ export async function getSubmissionByCuratorTweetId(
 }
 
 export async function getSubmission(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   tweetId: string,
 ): Promise<TwitterSubmission | null> {
   const results = (await db
@@ -341,7 +341,7 @@ export async function getSubmission(
 }
 
 export async function getAllSubmissions(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   limit: number = 50,
   offset: number = 0,
 ): Promise<TwitterSubmission[]> {
@@ -425,7 +425,7 @@ export async function getAllSubmissions(
 }
 
 export async function cleanupOldSubmissionCounts(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   date: string,
 ) {
   return db
@@ -434,7 +434,7 @@ export async function cleanupOldSubmissionCounts(
 }
 
 export async function getDailySubmissionCount(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   userId: string,
   date: string,
 ): Promise<number> {
@@ -453,7 +453,7 @@ export async function getDailySubmissionCount(
 }
 
 export async function incrementDailySubmissionCount(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   userId: string,
 ) {
   const today = new Date().toISOString().split("T")[0];
@@ -478,7 +478,7 @@ export async function incrementDailySubmissionCount(
 }
 
 export async function removeFromSubmissionFeed(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   submissionId: string,
   feedId: string,
 ) {
@@ -494,7 +494,7 @@ export async function removeFromSubmissionFeed(
 
 // Feed Plugin queries
 export async function getFeedPlugin(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   feedId: string,
   pluginId: string,
 ) {
@@ -508,7 +508,7 @@ export async function getFeedPlugin(
 }
 
 export async function upsertFeedPlugin(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   feedId: string,
   pluginId: string,
   config: Record<string, any>,
@@ -530,7 +530,7 @@ export async function upsertFeedPlugin(
 }
 
 export async function getSubmissionsByFeed(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   feedId: string,
 ): Promise<
   (TwitterSubmission & {

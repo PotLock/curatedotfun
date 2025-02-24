@@ -1,4 +1,5 @@
-import { LibSQLDatabase, drizzle } from "drizzle-orm/libsql";
+import { BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3";
+import Database from "better-sqlite3";
 import { join } from "path";
 
 import { logger } from "../../utils/logger";
@@ -17,7 +18,7 @@ import {
 import * as rssQueries from "../rss/queries";
 import * as twitterQueries from "../twitter/queries";
 export class DatabaseService {
-  private db: LibSQLDatabase;
+  private db: BetterSQLite3Database;
   private operations: DBOperations;
   private static readonly DB_PATH = (() => {
     const url = process.env.DATABASE_URL;
@@ -34,7 +35,9 @@ export class DatabaseService {
 
   constructor() {
     try {
-      this.db = drizzle(DatabaseService.DB_PATH);
+      const dbPath = DatabaseService.DB_PATH.replace("file:", "");
+      const sqlite = new Database(dbPath);
+      this.db = drizzle(sqlite, { logger: process.env.NODE_ENV === "development" });
     } catch (e) {
       logger.error("Failed to initialize database:", e);
       throw new Error("Database initialization failed");

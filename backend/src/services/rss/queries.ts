@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
-import { LibSQLDatabase } from "drizzle-orm/libsql";
 import { rssItems } from "./schema";
+import { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 
 export interface RssItem {
   title?: string;
@@ -10,7 +10,7 @@ export interface RssItem {
   publishedAt: string;
 }
 
-export function saveRssItem(db: LibSQLDatabase, feedId: string, item: RssItem) {
+export function saveRssItem(db: BetterSQLite3Database, feedId: string, item: RssItem) {
   return db.insert(rssItems).values({
     feedId,
     title: item.title,
@@ -22,7 +22,7 @@ export function saveRssItem(db: LibSQLDatabase, feedId: string, item: RssItem) {
 }
 
 export async function getRssItems(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   feedId: string,
   limit: number = 100,
 ): Promise<RssItem[]> {
@@ -44,7 +44,7 @@ export async function getRssItems(
 }
 
 export function deleteOldRssItems(
-  db: LibSQLDatabase,
+  db: BetterSQLite3Database,
   feedId: string,
   limit: number = 100,
 ) {

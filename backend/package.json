@@ -46,7 +46,6 @@
     "@elysiajs/cors": "^1.2.0",
     "@elysiajs/static": "^1.2.0",
     "@elysiajs/swagger": "^1.2.0",
-    "@libsql/client": "^0.14.0",
     "@notionhq/client": "^2.2.15",
     "@types/cors": "^2.8.17",
     "agent-twitter-client": "^0.0.16",

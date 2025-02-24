@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "bunx turbo run dev",
     "build": "bunx turbo run build",
-    "start": "cd backend && NODE_ENV=production bun run dist/index.js",
+    "start": "cd backend && NODE_ENV=production bun run dist/main.js",
     "db:up": "cd backend && bun run db:up",
     "db:push": "cd backend && bun run db:push",
     "db:migrate": "cd backend && bun run db:migrate",
