@@ -25,14 +25,16 @@ FROM oven/bun AS backend-builder
 WORKDIR /app
 
 # Install build dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     python3 \
     make \
     g++ \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
 
 # Copy backend package files
-COPY package.json ./
+COPY package.json bun.lock ./
 COPY backend/package.json ./backend/
 COPY backend/drizzle.config.ts ./backend/
 
@@ -51,18 +53,21 @@ ENV NODE_ENV="production"
 RUN cd backend && bun run build
 
 # Production stage
-FROM oven/bun AS production
+FROM oven/bun:1.0.35-slim AS production
 WORKDIR /app
 
-# Install LiteFS and better-sqlite3 runtime dependencies
-RUN apt-get update -y && apt-get install -y \
+# Install LiteFS and runtime dependencies
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
     ca-certificates \
+    curl \
     fuse3 \
     sqlite3 \
     python3 \
     make \
     g++ \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
 
 # Copy LiteFS binary
 COPY --from=flyio/litefs:0.5 /usr/local/bin/litefs /usr/local/bin/litefs
@@ -87,6 +92,11 @@ EXPOSE 3000
 
 # Copy LiteFS configuration
 COPY --chown=bun:bun litefs.yml /etc/litefs.yml
+
+# Set secure environment defaults
+ENV NODE_ENV=production \
+    NPM_CONFIG_LOGLEVEL=warn \
+    BUN_RUNTIME=production
 
 # Start LiteFS (runs app with distributed file system for SQLite)
 ENTRYPOINT ["litefs", "mount"]
