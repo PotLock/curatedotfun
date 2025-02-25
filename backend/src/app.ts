@@ -1,8 +1,10 @@
-import { cors } from "@elysiajs/cors";
-import { staticPlugin } from "@elysiajs/static";
-import { swagger } from "@elysiajs/swagger";
-import { Elysia, t } from "elysia";
-import { helmet } from "elysia-helmet";
+import { Hono } from "hono";
+import { Context, Next } from "hono";
+import { cors } from "hono/cors";
+import { secureHeaders } from "hono/secure-headers";
+import { serveStatic } from "@hono/node-server/serve-static";
+import { z } from "zod";
+import { readFile } from "fs/promises";
 import path from "path";
 import { mockTwitterService, testRoutes } from "./routes/test";
 import { ConfigService, isProduction } from "./services/config/config.service";
@@ -14,6 +16,7 @@ import { TransformationService } from "./services/transformation/transformation.
 import { SubmissionService } from "./services/submissions/submission.service";
 import { TwitterService } from "./services/twitter/client";
 import { logger } from "./utils/logger";
+import { zValidator } from "@hono/zod-validator";
 
 const ALLOWED_ORIGINS = [
   "http://localhost:3000",
@@ -29,8 +32,23 @@ export interface AppContext {
   configService: ConfigService;
 }
 
+type ValidatedRequest = {
+  json: {
+    tweetId: string;
+  };
+  query: {
+    limit?: string;
+    offset?: string;
+  };
+};
+
 export interface AppInstance {
-  app: Elysia;
+  app: Hono<{
+    Variables: {
+      context: AppContext;
+    };
+    Validators: ValidatedRequest;
+  }>;
   context: AppContext;
 }
 
@@ -78,251 +96,186 @@ export async function createApp(): Promise<AppInstance> {
     configService,
   };
 
-  // Create Elysia app with middleware and store
-  const app = new Elysia()
-    .decorate("context", context)
-    .use(
-      helmet({
-        contentSecurityPolicy: {
-          directives: {
-            defaultSrc: ["'self'"],
-            imgSrc: ["'self'", "data:", "https:"],
-            fontSrc: ["'self'", "data:", "https:"],
-          },
-        },
-        crossOriginEmbedderPolicy: false,
-        crossOriginResourcePolicy: { policy: "cross-origin" },
-        xFrameOptions: { action: "sameorigin" },
-      }),
-    )
-    .use(
-      cors({
-        origin: ALLOWED_ORIGINS,
-        methods: ["GET", "POST"],
-      }),
-    )
-    .use(swagger())
-    .use(isProduction ? new Elysia() : testRoutes)
-    // API Routes
-    .get(
-      "/api/twitter/last-tweet-id",
-      ({ context }: { context: AppContext }) => {
-        if (!context.twitterService) {
-          throw new Error("Twitter service not available");
-        }
-        const lastTweetId = context.twitterService.getLastCheckedTweetId();
-        return { lastTweetId };
-      },
-    )
-    .post(
-      "/api/twitter/last-tweet-id",
-      async ({
-        body,
-        context,
-      }: {
-        body: { tweetId: string };
-        context: AppContext;
-      }) => {
-        if (!context.twitterService) {
-          throw new Error("Twitter service not available");
-        }
-        if (
-          !body?.tweetId ||
-          typeof body.tweetId !== "string" ||
-          !body.tweetId.match(/^\d+$/)
-        ) {
-          throw new Error("Invalid tweetId format");
-        }
-        await context.twitterService.setLastCheckedTweetId(body.tweetId);
-        return { success: true };
-      },
-      {
-        body: t.Object({
-          tweetId: t.String(),
-        }),
-      },
-    )
-    .get(
-      "/api/submission/:submissionId",
-      async ({
-        params: { submissionId },
-      }: {
-        params: { submissionId: string };
-      }) => {
-        const content = await db.getSubmission(submissionId);
-        if (!content) {
-          throw new Error(`Content not found: ${submissionId}`);
-        }
-        return content;
-      },
-      {
-        params: t.Object({
-          submissionId: t.String(),
-        }),
-      },
-    )
-    .get(
-      "/api/submissions",
-      async ({ query }: { query: { limit?: string; offset?: string } }) => {
-        const limit = query.limit ? parseInt(query.limit) : undefined;
-        const offset = query.offset ? parseInt(query.offset) : undefined;
-        return await db.getAllSubmissions(limit, offset);
-      },
-      {
-        query: t.Object({
-          limit: t.Optional(t.String()),
-          offset: t.Optional(t.String()),
-        }),
-      },
-    )
-    .get(
-      "/api/submissions/:feedId",
-      async ({
-        params: { feedId },
-        query: { status },
-        context,
-      }: {
-        params: { feedId: string };
-        query: { status?: string };
-        context: AppContext;
-      }) => {
-        const feed = context.configService.getFeedConfig(feedId);
-        if (!feed) {
-          throw new Error(`Feed not found: ${feedId}`);
-        }
-        let submissions = await db.getSubmissionsByFeed(feedId);
-        if (status) {
-          submissions = submissions.filter((sub) => sub.status === status);
-        }
-        return submissions;
-      },
-      {
-        params: t.Object({
-          feedId: t.String(),
-        }),
-        query: t.Object({
-          status: t.Optional(t.String()),
-        }),
-      },
-    )
-    .get(
-      "/api/feed/:feedId",
-      ({
-        params: { feedId },
-        context,
-      }: {
-        params: { feedId: string };
-        context: AppContext;
-      }) => {
-        const feed = context.configService.getFeedConfig(feedId);
-        if (!feed) {
-          throw new Error(`Feed not found: ${feedId}`);
-        }
+  // Create Hono app with middleware
+  const app = new Hono<{
+    Variables: {
+      context: AppContext;
+    };
+    Validators: ValidatedRequest;
+  }>();
 
-        return db.getSubmissionsByFeed(feedId);
-      },
-      {
-        params: t.Object({
-          feedId: t.String(),
-        }),
-      },
-    )
-    .get("/api/config", async ({ context }: { context: AppContext }) => {
-      const rawConfig = await context.configService.getRawConfig();
-      return rawConfig;
-    })
-    .get("/api/feeds", async ({ context }: { context: AppContext }) => {
-      const rawConfig = await context.configService.getRawConfig();
-      return rawConfig.feeds;
-    })
-    .get(
-      "/api/config/:feedId",
-      ({
-        params: { feedId },
-        context,
-      }: {
-        params: { feedId: string };
-        context: AppContext;
-      }) => {
-        const feed = context.configService.getFeedConfig(feedId);
-        if (!feed) {
-          throw new Error(`Feed not found: ${feedId}`);
-        }
-        return feed;
-      },
-      {
-        params: t.Object({
-          feedId: t.String(),
-        }),
-      },
-    )
-    .post(
-      "/api/feeds/:feedId/process",
-      async ({
-        params: { feedId },
-        context,
-      }: {
-        params: { feedId: string };
-        context: AppContext;
-      }) => {
-        const feed = context.configService.getFeedConfig(feedId);
-        if (!feed) {
-          throw new Error(`Feed not found: ${feedId}`);
-        }
+  // Add context to app
+  app.use("*", async (c, next) => {
+    c.set("context", context);
+    await next();
+  });
 
-        // Get approved submissions for this feed
-        const submissions = await db.getSubmissionsByFeed(feedId);
-        const approvedSubmissions = submissions.filter(
-          (sub) => sub.status === "approved",
+  // Middleware
+  app.use("*", secureHeaders());
+  app.use("*", cors({
+    origin: ALLOWED_ORIGINS,
+    allowMethods: ["GET", "POST"],
+  }));
+
+  // Test routes in development
+  if (!isProduction) {
+    app.route("/api/test", testRoutes);
+  }
+
+  // API Routes
+  app.get("/api/twitter/last-tweet-id", (c) => {
+    const context = c.get("context") as AppContext;
+    if (!context.twitterService) {
+      throw new Error("Twitter service not available");
+    }
+    const lastTweetId = context.twitterService.getLastCheckedTweetId();
+    return c.json({ lastTweetId });
+  });
+
+  app.post(
+    "/api/twitter/last-tweet-id",
+    zValidator("json", z.object({
+      tweetId: z.string().regex(/^\d+$/),
+    })),
+    async (c) => {
+      const context = c.get("context") as AppContext;
+      if (!context.twitterService) {
+        throw new Error("Twitter service not available");
+      }
+      const { tweetId } = c.req.valid("json");
+      await context.twitterService.setLastCheckedTweetId(tweetId);
+      return c.json({ success: true });
+    }
+  );
+
+  app.get("/api/submission/:submissionId", async (c) => {
+    const submissionId = c.req.param("submissionId");
+    const content = await db.getSubmission(submissionId);
+    if (!content) {
+      throw new Error(`Content not found: ${submissionId}`);
+    }
+    return c.json(content);
+  });
+
+  app.get(
+    "/api/submissions",
+    zValidator("query", z.object({
+      limit: z.string().regex(/^\d+$/).optional(),
+      offset: z.string().regex(/^\d+$/).optional(),
+    })),
+    async (c) => {
+      const { limit, offset } = c.req.valid("query");
+      return c.json(await db.getAllSubmissions(
+        limit ? parseInt(limit) : undefined,
+        offset ? parseInt(offset) : undefined
+      ));
+    }
+  );
+
+  app.get("/api/submissions/:feedId", async (c) => {
+    const context = c.get("context") as AppContext;
+    const feedId = c.req.param("feedId");
+    const status = c.req.query("status");
+
+    const feed = context.configService.getFeedConfig(feedId);
+    if (!feed) {
+      throw new Error(`Feed not found: ${feedId}`);
+    }
+    let submissions = await db.getSubmissionsByFeed(feedId);
+    if (status) {
+      submissions = submissions.filter((sub) => sub.status === status);
+    }
+    return c.json(submissions);
+  });
+
+  app.get("/api/feed/:feedId", async (c) => {
+    const context = c.get("context") as AppContext;
+    const feedId = c.req.param("feedId");
+    
+    const feed = context.configService.getFeedConfig(feedId);
+    if (!feed) {
+      throw new Error(`Feed not found: ${feedId}`);
+    }
+
+    return c.json(await db.getSubmissionsByFeed(feedId));
+  });
+
+  app.get("/api/config", async (c) => {
+    const context = c.get("context") as AppContext;
+    const rawConfig = await context.configService.getRawConfig();
+    return c.json(rawConfig);
+  });
+
+  app.get("/api/feeds", async (c) => {
+    const context = c.get("context") as AppContext;
+    const rawConfig = await context.configService.getRawConfig();
+    return c.json(rawConfig.feeds);
+  });
+
+  app.get("/api/config/:feedId", (c) => {
+    const context = c.get("context") as AppContext;
+    const feedId = c.req.param("feedId");
+    
+    const feed = context.configService.getFeedConfig(feedId);
+    if (!feed) {
+      throw new Error(`Feed not found: ${feedId}`);
+    }
+    return c.json(feed);
+  });
+
+  app.post("/api/feeds/:feedId/process", async (c) => {
+    const context = c.get("context") as AppContext;
+    const feedId = c.req.param("feedId");
+    
+    const feed = context.configService.getFeedConfig(feedId);
+    if (!feed) {
+      throw new Error(`Feed not found: ${feedId}`);
+    }
+
+    // Get approved submissions for this feed
+    const submissions = await db.getSubmissionsByFeed(feedId);
+    const approvedSubmissions = submissions.filter(
+      (sub) => sub.status === "approved",
+    );
+
+    if (approvedSubmissions.length === 0) {
+      return c.json({ processed: 0 });
+    }
+
+    // Process each submission through stream output
+    let processed = 0;
+    if (!context.processorService) {
+      throw new Error("Processor service not available");
+    }
+    for (const submission of approvedSubmissions) {
+      try {
+        if (feed.outputs.stream) {
+          await context.processorService.process(
+            submission,
+            feed.outputs.stream,
+          );
+          processed++;
+        }
+      } catch (error) {
+        logger.error(
+          `Error processing submission ${submission.tweetId}:`,
+          error,
         );
+      }
+    }
 
-        if (approvedSubmissions.length === 0) {
-          return { processed: 0 };
-        }
+    return c.json({ processed });
+  });
 
-        // Process each submission through stream output
-        let processed = 0;
-        if (!context.processorService) {
-          throw new Error("Processor service not available");
-        }
-        for (const submission of approvedSubmissions) {
-          try {
-            if (feed.outputs.stream) {
-              await context.processorService.process(
-                submission,
-                feed.outputs.stream,
-              );
-              processed++;
-            }
-          } catch (error) {
-            logger.error(
-              `Error processing submission ${submission.tweetId}:`,
-              error,
-            );
-          }
-        }
-
-        return { processed };
-      },
-      {
-        params: t.Object({
-          feedId: t.String(),
-        }),
-      },
-    )
-    // Serve frontend in production, proxy to dev server in development
-    .use(
-      isProduction
-        ? staticPlugin({
-            assets: path.join(__dirname, "public"),
-            prefix: "/",
-            alwaysStatic: true,
-          })
-        : new Elysia(),
-    )
-    .get("/*", () => {
-      return Bun.file(path.join(__dirname, "public/index.html"));
+  // Serve frontend in production, proxy to dev server in development
+  if (isProduction) {
+    app.use("/*", serveStatic({ root: path.join(__dirname, "public") }));
+    app.get("/*", async (c) => {
+      const filePath = path.join(__dirname, "public/index.html");
+      const content = await readFile(filePath, 'utf-8');
+      return c.html(content);
     });
+  }
 
   return { app, context };
 }

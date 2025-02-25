@@ -1,6 +1,7 @@
 import { BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import { join } from "path";
+import { existsSync, mkdirSync } from "fs";
 
 import { logger } from "../../utils/logger";
 
@@ -26,7 +27,7 @@ export class DatabaseService {
       try {
         new URL(url);
         return url;
-      } catch (e) {
+      } catch (e: any) {
         throw new Error(`Invalid DATABASE_URL: ${url}`);
       }
     }
@@ -37,12 +38,15 @@ export class DatabaseService {
     try {
       const dbPath = DatabaseService.DB_PATH.replace("file:", "");
       const sqlite = new Database(dbPath);
-      this.db = drizzle(sqlite, {
-        logger: process.env.NODE_ENV === "development",
+      this.db = drizzle(sqlite);
+    } catch (e: any) {
+      logger.error("Failed to initialize database:", {
+        error: e,
+        path: DatabaseService.DB_PATH,
+        dirname: __dirname,
+        cwd: process.cwd()
       });
-    } catch (e) {
-      logger.error("Failed to initialize database:", e);
-      throw new Error("Database initialization failed");
+      throw new Error(`Database initialization failed: ${e.message}`);
     }
     this.operations = new DBOperations(this.db);
   }

@@ -9,10 +9,10 @@ module.exports = {
   mode: isProduction ? "production" : "development",
   target: "async-node",
   devtool: "source-map",
-  // externals: {
-  //   "@neon-rs/load": "commonjs @neon-rs/load",
-  //   bufferutil: "commonjs bufferutil",
-  // },
+  externals: {
+    "better-sqlite3": "commonjs better-sqlite3",
+    bufferutil: "commonjs bufferutil",
+  },
   output: {
     path: path.resolve(__dirname, "dist"),
     clean: true,

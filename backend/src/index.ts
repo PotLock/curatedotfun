@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { serve } from "@hono/node-server";
 import { AppInstance, createApp } from "./app";
 import {
   cleanup,
@@ -30,28 +31,26 @@ async function startServer() {
 
     const { app, context } = await getInstance();
 
-    Bun.serve({
-      port: PORT,
-      hostname: "0.0.0.0",
-      fetch: async (request) => {
-        if (request.url.endsWith("/health")) {
-          const health = {
-            status: "OK",
-            timestamp: new Date().toISOString(),
-            services: {
-              twitter: context.twitterService ? "up" : "down",
-              submission: context.submissionService ? "up" : "down",
-              distribution: context.distributionService ? "up" : "down",
-            },
-          };
-          return new Response(JSON.stringify(health), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          });
-        }
-        return app.fetch(request);
-      },
+    // Add health check route
+    app.get("/health", (c) => {
+      const health = {
+        status: "OK",
+        timestamp: new Date().toISOString(),
+        services: {
+          twitter: context.twitterService ? "up" : "down",
+          submission: context.submissionService ? "up" : "down",
+          distribution: context.distributionService ? "up" : "down",
+        },
+      };
+      return c.json(health);
     });
+
+    // Start the server
+    serve({
+      fetch: app.fetch,
+      port: PORT,
+    });
+
     succeedSpinner("server", `Server running on port ${PORT}`);
 
     // Start checking for mentions only if Twitter service is available

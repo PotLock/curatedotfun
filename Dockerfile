@@ -1,27 +1,5 @@
-## NOTE
-# This Dockerfile builds the frontend and backend separately,
-# frontend uses npm and backend requires bun.
-# This separation is a temporary solution for a Bun issue with rsbuild,
-# see: https://github.com/oven-sh/bun/issues/11628 
-
-# Frontend deps & build stage
-FROM node:20 AS frontend-builder
-WORKDIR /app
-
-# Copy frontend package files
-COPY frontend/package.json ./frontend/
-
-# Install frontend dependencies
-RUN cd frontend && npm install
-
-# Copy frontend source code
-COPY frontend ./frontend
-
-# Build frontend
-RUN cd frontend && npm run build
-
-# Backend deps & build stage
-FROM oven/bun AS backend-builder
+# Build stage
+FROM node:20 AS builder
 WORKDIR /app
 
 # Install build dependencies
@@ -33,27 +11,29 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
-# Copy backend package files
-COPY package.json bun.lock ./
+# Copy package files
+COPY package.json ./
+COPY frontend/package.json ./frontend/
 COPY backend/package.json ./backend/
 COPY backend/drizzle.config.ts ./backend/
 
-# Install backend dependencies and build better-sqlite3
-RUN cd backend && bun install
+# Install dependencies
+RUN cd frontend && npm install
+RUN cd backend && npm install
 
-# Copy backend source code
+# Copy source code
+COPY frontend ./frontend
 COPY backend ./backend
 
-# Copy frontend dist so rspack can find it during build
-COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
-
-ENV NODE_ENV="production"
+# Build frontend
+RUN cd frontend && npm run build
 
 # Build backend (rspack will copy frontend dist to backend/dist/public)
-RUN cd backend && bun run build
+ENV NODE_ENV="production"
+RUN cd backend && npm run build
 
 # Production stage
-FROM oven/bun:1.0.35-slim AS production
+FROM node:20-slim AS production
 WORKDIR /app
 
 # Install LiteFS and runtime dependencies
@@ -74,29 +54,30 @@ COPY --from=flyio/litefs:0.5 /usr/local/bin/litefs /usr/local/bin/litefs
 
 # Create directories for mounts with correct permissions
 RUN mkdir -p /litefs /var/lib/litefs && \
-    chown -R bun:bun /litefs /var/lib/litefs
+    chown -R node:node /litefs /var/lib/litefs
 
 # Create volume mount points
 ENV DATABASE_URL="file:/litefs/db"
 
-# Copy only necessary files from builders
-COPY --from=backend-builder --chown=bun:bun /app/package.json ./
-COPY --chown=bun:bun curate.config.json ./
+# Copy application files
+COPY --from=builder --chown=node:node /app/package.json ./
+COPY --chown=node:node curate.config.json ./
+COPY --from=builder --chown=node:node /app/backend ./backend
 
-# Copy the backend dist which includes the frontend files in public/
-COPY --from=backend-builder --chown=bun:bun /app/backend/dist ./backend/dist
-COPY --from=backend-builder --chown=bun:bun /app/backend/node_modules ./backend/node_modules
+# Install production dependencies and rebuild better-sqlite3
+RUN cd backend && \
+    npm install && \
+    npm rebuild better-sqlite3
+
+# Copy LiteFS configuration
+COPY --chown=node:node litefs.yml /etc/litefs.yml
 
 # Expose the port
 EXPOSE 3000
 
-# Copy LiteFS configuration
-COPY --chown=bun:bun litefs.yml /etc/litefs.yml
-
 # Set secure environment defaults
 ENV NODE_ENV=production \
-    NPM_CONFIG_LOGLEVEL=warn \
-    BUN_RUNTIME=production
+    NPM_CONFIG_LOGLEVEL=warn
 
 # Start LiteFS (runs app with distributed file system for SQLite)
 ENTRYPOINT ["litefs", "mount"]
