@@ -1,3 +1,5 @@
+import { logger } from "./logger";
+
 /**
  * Recursively processes a config object, replacing environment variable placeholders
  * with their actual values.
@@ -15,7 +17,7 @@ export function hydrateConfigValues<T extends Record<string, any>>(
         const envVar = match[1];
         const envValue = process.env[envVar];
         if (!envValue) {
-          throw new Error(`Required environment variable ${envVar} is not set`);
+          logger.error(`Required environment variable ${envVar} is not set`);
         }
         return envValue;
       }

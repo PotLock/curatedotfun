@@ -1,6 +1,5 @@
 import { performReload } from "@module-federation/node/utils";
 import { init, loadRemote } from "@module-federation/runtime";
-import { Elysia } from "elysia";
 import {
   PluginError,
   PluginInitError,
@@ -15,8 +14,8 @@ import {
 } from "@curatedotfun/types";
 import { logger } from "../../utils/logger";
 import { createPluginInstanceKey } from "../../utils/plugin";
-import { ConfigService } from "../config";
-import { isProduction } from "../config/config.service";
+import { ConfigService, isProduction } from "../config/config.service";
+import { Hono } from "hono";
 
 /**
  * Cache entry for a loaded plugin
@@ -83,7 +82,7 @@ export class PluginService {
   private remotes: Map<string, RemoteState> = new Map();
   private instances: Map<string, InstanceState<PluginType>> = new Map();
   private endpoints: Map<string, PluginEndpoint[]> = new Map();
-  private app: Elysia | null = null;
+  private app: Hono | null = null;
   private configService: ConfigService;
 
   // Time in milliseconds before cached items are considered stale
@@ -111,7 +110,7 @@ export class PluginService {
   /**
    * Sets the Elysia app instance for endpoint registration
    */
-  public setApp(app: Elysia) {
+  public setApp(app: Hono) {
     this.app = app;
     // Register any pending endpoints
     for (const [name, endpoints] of this.endpoints) {
