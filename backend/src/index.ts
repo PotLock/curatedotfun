@@ -46,7 +46,7 @@ async function startServer() {
     });
 
     // Start the server
-    serve({
+    const server = serve({
       fetch: app.fetch,
       port: PORT,
     });
@@ -60,10 +60,15 @@ async function startServer() {
       succeedSpinner("submission-monitor", "Submission monitoring started");
     }
 
-    // Handle graceful shutdown
-    process.on("SIGINT", async () => {
-      startSpinner("shutdown", "Shutting down gracefully...");
+    // Graceful shutdown handler
+    const gracefulShutdown = async (signal: string) => {
+      startSpinner("shutdown", `Shutting down gracefully (${signal})...`);
       try {
+        // Wait for server to close
+        await new Promise<void>((resolve, reject) => {
+          server.close((err) => err ? reject(err) : resolve());
+        });
+
         const shutdownPromises = [];
         if (context.twitterService)
           shutdownPromises.push(context.twitterService.stop());
@@ -74,13 +79,20 @@ async function startServer() {
 
         await Promise.all(shutdownPromises);
         succeedSpinner("shutdown", "Shutdown complete");
+        
+        // Reset instance for clean restart
+        instance = null;
+
         process.exit(0);
       } catch (error) {
         failSpinner("shutdown", "Error during shutdown");
         logger.error("Shutdown", error);
         process.exit(1);
       }
-    });
+    };
+
+    // Handle manual shutdown (Ctrl+C)
+    process.once("SIGINT", () => gracefulShutdown('SIGINT'));
 
     logger.info("🚀 Server is running and ready");
   } catch (error) {

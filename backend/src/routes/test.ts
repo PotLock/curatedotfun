@@ -36,7 +36,6 @@ const testRoutes = new Hono();
 
 // Guard middleware for development only
 testRoutes.use("*", async (c, next) => {
-  console.log("env", process.env.NODE_ENV);
   if (process.env.NODE_ENV === "production") {
     return c.notFound();
   }
