@@ -112,10 +112,13 @@ export async function createApp(): Promise<AppInstance> {
 
   // Middleware
   app.use("*", secureHeaders());
-  app.use("*", cors({
-    origin: ALLOWED_ORIGINS,
-    allowMethods: ["GET", "POST"],
-  }));
+  app.use(
+    "*",
+    cors({
+      origin: ALLOWED_ORIGINS,
+      allowMethods: ["GET", "POST"],
+    }),
+  );
 
   // Test routes in development
   if (!isProduction) {
@@ -134,9 +137,12 @@ export async function createApp(): Promise<AppInstance> {
 
   app.post(
     "/api/twitter/last-tweet-id",
-    zValidator("json", z.object({
-      tweetId: z.string().regex(/^\d+$/),
-    })),
+    zValidator(
+      "json",
+      z.object({
+        tweetId: z.string().regex(/^\d+$/),
+      }),
+    ),
     async (c) => {
       const context = c.get("context") as AppContext;
       if (!context.twitterService) {
@@ -145,7 +151,7 @@ export async function createApp(): Promise<AppInstance> {
       const { tweetId } = c.req.valid("json");
       await context.twitterService.setLastCheckedTweetId(tweetId);
       return c.json({ success: true });
-    }
+    },
   );
 
   app.get("/api/submission/:submissionId", async (c) => {
@@ -159,17 +165,22 @@ export async function createApp(): Promise<AppInstance> {
 
   app.get(
     "/api/submissions",
-    zValidator("query", z.object({
-      limit: z.string().regex(/^\d+$/).optional(),
-      offset: z.string().regex(/^\d+$/).optional(),
-    })),
+    zValidator(
+      "query",
+      z.object({
+        limit: z.string().regex(/^\d+$/).optional(),
+        offset: z.string().regex(/^\d+$/).optional(),
+      }),
+    ),
     async (c) => {
       const { limit, offset } = c.req.valid("query");
-      return c.json(await db.getAllSubmissions(
-        limit ? parseInt(limit) : undefined,
-        offset ? parseInt(offset) : undefined
-      ));
-    }
+      return c.json(
+        await db.getAllSubmissions(
+          limit ? parseInt(limit) : undefined,
+          offset ? parseInt(offset) : undefined,
+        ),
+      );
+    },
   );
 
   app.get("/api/submissions/:feedId", async (c) => {
@@ -191,7 +202,7 @@ export async function createApp(): Promise<AppInstance> {
   app.get("/api/feed/:feedId", async (c) => {
     const context = c.get("context") as AppContext;
     const feedId = c.req.param("feedId");
-    
+
     const feed = context.configService.getFeedConfig(feedId);
     if (!feed) {
       throw new Error(`Feed not found: ${feedId}`);
@@ -215,7 +226,7 @@ export async function createApp(): Promise<AppInstance> {
   app.get("/api/config/:feedId", (c) => {
     const context = c.get("context") as AppContext;
     const feedId = c.req.param("feedId");
-    
+
     const feed = context.configService.getFeedConfig(feedId);
     if (!feed) {
       throw new Error(`Feed not found: ${feedId}`);
@@ -226,7 +237,7 @@ export async function createApp(): Promise<AppInstance> {
   app.post("/api/feeds/:feedId/process", async (c) => {
     const context = c.get("context") as AppContext;
     const feedId = c.req.param("feedId");
-    
+
     const feed = context.configService.getFeedConfig(feedId);
     if (!feed) {
       throw new Error(`Feed not found: ${feedId}`);
@@ -272,7 +283,7 @@ export async function createApp(): Promise<AppInstance> {
     app.use("/*", serveStatic({ root: path.join(__dirname, "public") }));
     app.get("/*", async (c) => {
       const filePath = path.join(__dirname, "public/index.html");
-      const content = await readFile(filePath, 'utf-8');
+      const content = await readFile(filePath, "utf-8");
       return c.html(content);
     });
   }

@@ -45,28 +45,26 @@ testRoutes.use("*", async (c, next) => {
 // POST /api/test/tweets
 testRoutes.post(
   "/tweets",
-  zValidator("json", z.object({
-    id: z.string(),
-    inReplyToStatusId: z.string().optional(),
-    text: z.string(),
-    username: z.string(),
-    timeParsed: z.string().optional(),
-    userId: z.string().optional(),
-    hashtags: z.array(z.string()).optional(),
-  })),
+  zValidator(
+    "json",
+    z.object({
+      id: z.string(),
+      inReplyToStatusId: z.string().optional(),
+      text: z.string(),
+      username: z.string(),
+      timeParsed: z.string().optional(),
+      userId: z.string().optional(),
+      hashtags: z.array(z.string()).optional(),
+    }),
+  ),
   async (c) => {
-    const { id, text, username, inReplyToStatusId, hashtags } = c.req.valid("json");
+    const { id, text, username, inReplyToStatusId, hashtags } =
+      c.req.valid("json");
 
-    const tweet = createTweet(
-      id,
-      text,
-      username,
-      inReplyToStatusId,
-      hashtags,
-    );
+    const tweet = createTweet(id, text, username, inReplyToStatusId, hashtags);
     mockTwitterService.addMockTweet(tweet);
     return c.json(tweet);
-  }
+  },
 );
 
 // POST /api/test/reset

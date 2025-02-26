@@ -66,7 +66,7 @@ async function startServer() {
       try {
         // Wait for server to close
         await new Promise<void>((resolve, reject) => {
-          server.close((err) => err ? reject(err) : resolve());
+          server.close((err) => (err ? reject(err) : resolve()));
         });
 
         const shutdownPromises = [];
@@ -79,7 +79,7 @@ async function startServer() {
 
         await Promise.all(shutdownPromises);
         succeedSpinner("shutdown", "Shutdown complete");
-        
+
         // Reset instance for clean restart
         instance = null;
 
@@ -92,7 +92,7 @@ async function startServer() {
     };
 
     // Handle manual shutdown (Ctrl+C)
-    process.once("SIGINT", () => gracefulShutdown('SIGINT'));
+    process.once("SIGINT", () => gracefulShutdown("SIGINT"));
 
     logger.info("🚀 Server is running and ready");
   } catch (error) {

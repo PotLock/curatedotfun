@@ -44,7 +44,7 @@ export class DatabaseService {
         error: e,
         path: DatabaseService.DB_PATH,
         dirname: __dirname,
-        cwd: process.cwd()
+        cwd: process.cwd(),
       });
       throw new Error(`Database initialization failed: ${e.message}`);
     }
