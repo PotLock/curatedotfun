@@ -22,54 +22,64 @@ export class SubmissionService {
   ) {}
 
   private async initializeAdminIds(): Promise<void> {
-    // Try to load admin IDs from cache first
-    const cachedAdminIds = await db.getTwitterCacheValue("admin_ids");
-    if (cachedAdminIds) {
-      try {
-        const adminMap = JSON.parse(cachedAdminIds);
-        for (const [userId, handle] of Object.entries(adminMap)) {
-          this.adminIdCache.set(userId, handle as string);
+    try {
+      // Try to load admin IDs from cache first
+      const cachedAdminIds = db.getTwitterCacheValue("admin_ids");
+      if (cachedAdminIds) {
+        try {
+          const adminMap = JSON.parse(cachedAdminIds);
+          for (const [userId, handle] of Object.entries(adminMap)) {
+            this.adminIdCache.set(userId, handle as string);
+          }
+          logger.info("Loaded admin IDs from cache");
+          return;
+        } catch (error) {
+          logger.error("Failed to parse cached admin IDs:", error);
         }
-        logger.info("Loaded admin IDs from cache");
-        return;
-      } catch (error) {
-        logger.error("Failed to parse cached admin IDs:", error);
       }
-    }
 
-    // If no cache or parse error, fetch and cache admin IDs
-    const adminHandles = new Set<string>();
-    for (const feed of this.config.feeds) {
-      for (const handle of feed.moderation.approvers.twitter) {
-        adminHandles.add(handle);
+      // If no cache or parse error, fetch and cache admin IDs
+      const adminHandles = new Set<string>();
+      for (const feed of this.config.feeds) {
+        for (const handle of feed.moderation.approvers.twitter) {
+          adminHandles.add(handle);
+        }
       }
-    }
 
-    logger.info("Fetching admin IDs for the first time...");
-    const adminMap: Record<string, string> = {};
+      logger.info("Fetching admin IDs for the first time...");
+      const adminMap: Record<string, string> = {};
 
-    for (const handle of adminHandles) {
-      try {
-        const userId = await this.twitterService.getUserIdByScreenName(handle);
-        this.adminIdCache.set(userId, handle);
-        adminMap[userId] = handle;
-      } catch (error) {
-        logger.error(`Failed to fetch ID for admin handle @${handle}:`, error);
+      for (const handle of adminHandles) {
+        try {
+          const userId = await this.twitterService.getUserIdByScreenName(handle);
+          this.adminIdCache.set(userId, handle);
+          adminMap[userId] = handle;
+        } catch (error) {
+          logger.error(`Failed to fetch ID for admin handle @${handle}:`, error);
+        }
       }
-    }
 
-    // Cache the admin IDs
-    db.setTwitterCacheValue("admin_ids", JSON.stringify(adminMap));
-    logger.info("Cached admin IDs for future use");
+      // Cache the admin IDs
+      db.setTwitterCacheValue("admin_ids", JSON.stringify(adminMap));
+      logger.info("Cached admin IDs for future use");
+    } catch (error) {
+      logger.error("Failed to initialize admin IDs:", error);
+      throw error;
+    }
   }
 
   private initializeFeeds(): void {
-    const feedsToUpsert = this.config.feeds.map((feed) => ({
-      id: feed.id,
-      name: feed.name,
-      description: feed.description,
-    }));
-    db.upsertFeeds(feedsToUpsert);
+    try {
+      const feedsToUpsert = this.config.feeds.map((feed) => ({
+        id: feed.id,
+        name: feed.name,
+        description: feed.description,
+      }));
+      db.upsertFeeds(feedsToUpsert);
+    } catch (error) {
+      logger.error("Failed to initialize feeds:", error);
+      throw error;
+    }
   }
 
   async initialize(): Promise<void> {
@@ -199,17 +209,15 @@ export class SubmissionService {
       }
 
       // Check if this tweet was already submitted
-      const existingSubmission = await db.getSubmission(originalTweet.id!);
+      const existingSubmission = db.getSubmission(originalTweet.id!);
       const existingFeeds = existingSubmission
-        ? ((await db.getFeedsBySubmission(
-            existingSubmission.tweetId,
-          )) as SubmissionFeed[])
+        ? db.getFeedsBySubmission(existingSubmission.tweetId)
         : [];
 
       // Create new submission if it doesn't exist
       let submission: TwitterSubmission | undefined;
       if (!existingSubmission) {
-        const dailyCount = await db.getDailySubmissionCount(userId);
+        const dailyCount = db.getDailySubmissionCount(userId);
         const maxSubmissions = this.config.global.maxDailySubmissionsPerUser;
 
         if (dailyCount >= maxSubmissions) {
@@ -380,7 +388,7 @@ export class SubmissionService {
     const curatorTweetId = tweet.inReplyToStatusId;
     if (!curatorTweetId) return;
 
-    const submission = await db.getSubmissionByCuratorTweetId(curatorTweetId);
+    const submission = db.getSubmissionByCuratorTweetId(curatorTweetId);
     if (!submission) {
       logger.error(`${tweet.id}: Received moderation for unsaved submission`);
       return;
@@ -401,9 +409,7 @@ export class SubmissionService {
     }
 
     // Get submission feeds to determine which feed is being moderated
-    const submissionFeeds = (await db.getFeedsBySubmission(
-      submission.tweetId,
-    )) as SubmissionFeed[];
+    const submissionFeeds = db.getFeedsBySubmission(submission.tweetId);
     const pendingFeeds = submissionFeeds
       .filter((feed) => feed.status === SubmissionStatus.PENDING)
       .filter((feed) => {
@@ -512,7 +518,6 @@ export class SubmissionService {
   }
 
   private getModerationAction(tweet: Tweet): "approve" | "reject" | null {
-    const hashtags = tweet.hashtags?.map((tag) => tag.toLowerCase()) || [];
     const text = tweet.text?.toLowerCase() || "";
     if (text.includes("!approve")) return "approve";
     if (text.includes("!reject")) return "reject";

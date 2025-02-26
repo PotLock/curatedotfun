@@ -105,8 +105,8 @@ export class TwitterService {
     }
   }
 
-  async getCookies() {
-    return await db.getTwitterCookies(this.twitterUsername);
+  getCookies() {
+    return db.getTwitterCookies(this.twitterUsername);
   }
 
   async initialize() {
@@ -125,16 +125,14 @@ export class TwitterService {
       // First try to use cached cookies
       if (await this.loadCachedCookies()) {
         logger.info("Successfully initialized using cached cookies");
-        this.lastCheckedTweetId =
-          await db.getTwitterCacheValue("last_tweet_id");
+        this.lastCheckedTweetId = db.getTwitterCacheValue("last_tweet_id");
         return;
       }
 
       // If cached cookies failed or don't exist, try fresh login with retries
       for (let attempt = 0; attempt < 3; attempt++) {
         if (await this.performLogin()) {
-          this.lastCheckedTweetId =
-            await db.getTwitterCacheValue("last_tweet_id");
+          this.lastCheckedTweetId = db.getTwitterCacheValue("last_tweet_id");
           return;
         }
 
@@ -233,7 +231,7 @@ export class TwitterService {
     }
   }
 
-  async setLastCheckedTweetId(tweetId: string) {
+  setLastCheckedTweetId(tweetId: string) {
     this.lastCheckedTweetId = tweetId;
     db.setTwitterCacheValue("last_tweet_id", tweetId);
     logger.info(`Last checked tweet ID updated to: ${tweetId}`);

@@ -3,16 +3,15 @@ import { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { twitterCache, twitterCookies } from "./schema";
 
 // Twitter Cookie Management
-export async function getTwitterCookies(
+export function getTwitterCookies(
   db: BetterSQLite3Database,
   username: string,
-): Promise<any> {
-  return await db.transaction(async (tx) => {
-    tx.select()
-      .from(twitterCookies)
-      .where(eq(twitterCookies.username, username))
-      .get();
-  });
+) {
+  return db
+    .select()
+    .from(twitterCookies)
+    .where(eq(twitterCookies.username, username))
+    .get();
 }
 
 export function setTwitterCookies(
@@ -32,24 +31,30 @@ export function setTwitterCookies(
         cookies: cookiesJson,
         updatedAt: new Date().toISOString(),
       },
-    });
+    })
+    .run();
 }
 
 export function deleteTwitterCookies(
   db: BetterSQLite3Database,
   username: string,
 ) {
-  return db.delete(twitterCookies).where(eq(twitterCookies.username, username));
+  return db
+    .delete(twitterCookies)
+    .where(eq(twitterCookies.username, username))
+    .run();
 }
 
 // Twitter Cache Management
-export async function getTwitterCacheValue(
+export function getTwitterCacheValue(
   db: BetterSQLite3Database,
   key: string,
-): Promise<any> {
-  return await db.transaction(async (tx) => {
-    tx.select().from(twitterCache).where(eq(twitterCache.key, key)).get();
-  });
+) {
+  return db
+    .select()
+    .from(twitterCache)
+    .where(eq(twitterCache.key, key))
+    .get();
 }
 
 export function setTwitterCacheValue(
@@ -69,16 +74,20 @@ export function setTwitterCacheValue(
         value,
         updatedAt: new Date().toISOString(),
       },
-    });
+    })
+    .run();
 }
 
 export function deleteTwitterCacheValue(
   db: BetterSQLite3Database,
   key: string,
 ) {
-  return db.delete(twitterCache).where(eq(twitterCache.key, key));
+  return db
+    .delete(twitterCache)
+    .where(eq(twitterCache.key, key))
+    .run();
 }
 
 export function clearTwitterCache(db: BetterSQLite3Database) {
-  return db.delete(twitterCache);
+  return db.delete(twitterCache).run();
 }

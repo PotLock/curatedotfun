@@ -12,14 +12,26 @@ export class DBOperations {
 
   // RSS Operations
   saveRssItem(feedId: string, item: RssItem): void {
-    saveRssItem(this.db, feedId, item);
+    try {
+      saveRssItem(this.db, feedId, item);
+    } catch (error: any) {
+      throw new Error(`Failed to save RSS item: ${error.message}`);
+    }
   }
 
-  async getRssItems(feedId: string, limit: number): Promise<RssItem[]> {
-    return await getRssItems(this.db, feedId, limit);
+  getRssItems(feedId: string, limit: number): RssItem[] {
+    try {
+      return getRssItems(this.db, feedId, limit);
+    } catch (error: any) {
+      throw new Error(`Failed to get RSS items: ${error.message}`);
+    }
   }
 
   deleteOldRssItems(feedId: string, limit: number): void {
-    deleteOldRssItems(this.db, feedId, limit);
+    try {
+      deleteOldRssItems(this.db, feedId, limit);
+    } catch (error: any) {
+      throw new Error(`Failed to delete old RSS items: ${error.message}`);
+    }
   }
 }

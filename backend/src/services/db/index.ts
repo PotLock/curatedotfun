@@ -1,7 +1,6 @@
-import { BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
+import { BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3";
 import { join } from "path";
-import { existsSync, mkdirSync } from "fs";
 
 import { logger } from "../../utils/logger";
 
@@ -78,32 +77,32 @@ export class DatabaseService {
     );
   }
 
-  async getSubmission(tweetId: string): Promise<TwitterSubmission | null> {
-    return await queries.getSubmission(this.db, tweetId);
+  getSubmission(tweetId: string): TwitterSubmission | null {
+    return queries.getSubmission(this.db, tweetId);
   }
 
-  async getSubmissionByCuratorTweetId(
+  getSubmissionByCuratorTweetId(
     curatorTweetId: string,
-  ): Promise<TwitterSubmission | null> {
-    return await queries.getSubmissionByCuratorTweetId(this.db, curatorTweetId);
+  ): TwitterSubmission | null {
+    return queries.getSubmissionByCuratorTweetId(this.db, curatorTweetId);
   }
 
-  async getAllSubmissions(
+  getAllSubmissions(
     limit?: number,
     offset?: number,
-  ): Promise<TwitterSubmission[]> {
-    return await queries.getAllSubmissions(this.db, limit, offset);
+  ): TwitterSubmission[] {
+    return queries.getAllSubmissions(this.db, limit, offset);
   }
 
-  async getDailySubmissionCount(userId: string): Promise<number> {
+  getDailySubmissionCount(userId: string): number {
     const today = new Date().toISOString().split("T")[0];
     // Clean up old entries first
-    await queries.cleanupOldSubmissionCounts(this.db, today);
+    queries.cleanupOldSubmissionCounts(this.db, today);
     return queries.getDailySubmissionCount(this.db, userId, today);
   }
 
-  async incrementDailySubmissionCount(userId: string): Promise<void> {
-    await queries.incrementDailySubmissionCount(this.db, userId);
+  incrementDailySubmissionCount(userId: string): void {
+    queries.incrementDailySubmissionCount(this.db, userId);
   }
 
   upsertFeeds(
@@ -120,87 +119,132 @@ export class DatabaseService {
     queries.saveSubmissionToFeed(this.db, submissionId, feedId, status);
   }
 
-  async getFeedsBySubmission(submissionId: string): Promise<SubmissionFeed[]> {
-    return await queries.getFeedsBySubmission(this.db, submissionId);
+  getFeedsBySubmission(submissionId: string): SubmissionFeed[] {
+    return queries.getFeedsBySubmission(this.db, submissionId);
   }
 
   removeFromSubmissionFeed(submissionId: string, feedId: string): void {
     queries.removeFromSubmissionFeed(this.db, submissionId, feedId);
   }
 
-  async getSubmissionsByFeed(
+  getSubmissionsByFeed(
     feedId: string,
-  ): Promise<(TwitterSubmission & { status: SubmissionStatus })[]> {
-    return await queries.getSubmissionsByFeed(this.db, feedId);
+  ): (TwitterSubmission & { status: SubmissionStatus })[] {
+    return queries.getSubmissionsByFeed(this.db, feedId);
   }
 
   // Feed Plugin Management
-  async getFeedPlugin(feedId: string, pluginId: string) {
-    return await queries.getFeedPlugin(this.db, feedId, pluginId);
+  getFeedPlugin(feedId: string, pluginId: string) {
+    return queries.getFeedPlugin(this.db, feedId, pluginId);
   }
 
-  async upsertFeedPlugin(
+  upsertFeedPlugin(
     feedId: string,
     pluginId: string,
     config: Record<string, any>,
   ) {
-    return await queries.upsertFeedPlugin(this.db, feedId, pluginId, config);
+    return queries.upsertFeedPlugin(this.db, feedId, pluginId, config);
   }
 
   // Twitter Cookie Management
   setTwitterCookies(username: string, cookies: TwitterCookie[] | null): void {
-    const cookiesJson = JSON.stringify(cookies);
-    twitterQueries.setTwitterCookies(this.db, username, cookiesJson).execute();
+    try {
+      const cookiesJson = JSON.stringify(cookies);
+      twitterQueries.setTwitterCookies(this.db, username, cookiesJson);
+    } catch (error: any) {
+      logger.error("Failed to set Twitter cookies:", { error, username });
+      throw new Error(`Failed to set Twitter cookies: ${error.message}`);
+    }
   }
 
-  async getTwitterCookies(username: string): Promise<TwitterCookie[] | null> {
-    const result = await twitterQueries.getTwitterCookies(this.db, username);
-    if (!result) return null;
-
+  getTwitterCookies(username: string): TwitterCookie[] | null {
     try {
+      const result = twitterQueries.getTwitterCookies(this.db, username);
+      if (!result) return null;
+
       return JSON.parse(result.cookies) as TwitterCookie[];
-    } catch (e) {
-      logger.error("Error parsing Twitter cookies:", e);
-      return null;
+    } catch (error: any) {
+      logger.error("Error getting Twitter cookies:", { error, username });
+      throw new Error(`Failed to get Twitter cookies: ${error.message}`);
     }
   }
 
   deleteTwitterCookies(username: string): void {
-    twitterQueries.deleteTwitterCookies(this.db, username).execute();
+    try {
+      twitterQueries.deleteTwitterCookies(this.db, username);
+    } catch (error: any) {
+      logger.error("Failed to delete Twitter cookies:", { error, username });
+      throw new Error(`Failed to delete Twitter cookies: ${error.message}`);
+    }
   }
 
   // Twitter Cache Management
   setTwitterCacheValue(key: string, value: string): void {
-    twitterQueries.setTwitterCacheValue(this.db, key, value).execute();
+    try {
+      twitterQueries.setTwitterCacheValue(this.db, key, value);
+    } catch (error: any) {
+      logger.error("Failed to set Twitter cache value:", { error, key });
+      throw new Error(`Failed to set Twitter cache value: ${error.message}`);
+    }
   }
 
-  async getTwitterCacheValue(key: string): Promise<string | null> {
-    const result = await twitterQueries.getTwitterCacheValue(this.db, key);
-    return result?.value ?? null;
+  getTwitterCacheValue(key: string): string | null {
+    try {
+      const result = twitterQueries.getTwitterCacheValue(this.db, key);
+      return result?.value ?? null;
+    } catch (error: any) {
+      logger.error("Failed to get Twitter cache value:", { error, key });
+      throw new Error(`Failed to get Twitter cache value: ${error.message}`);
+    }
   }
 
   deleteTwitterCacheValue(key: string): void {
-    twitterQueries.deleteTwitterCacheValue(this.db, key).execute();
+    try {
+      twitterQueries.deleteTwitterCacheValue(this.db, key);
+    } catch (error: any) {
+      logger.error("Failed to delete Twitter cache value:", { error, key });
+      throw new Error(`Failed to delete Twitter cache value: ${error.message}`);
+    }
   }
 
   clearTwitterCache(): void {
-    twitterQueries.clearTwitterCache(this.db).execute();
+    try {
+      twitterQueries.clearTwitterCache(this.db);
+    } catch (error: any) {
+      logger.error("Failed to clear Twitter cache:", { error });
+      throw new Error(`Failed to clear Twitter cache: ${error.message}`);
+    }
   }
 
   // RSS Management
   saveRssItem(feedId: string, item: rssQueries.RssItem): void {
-    rssQueries.saveRssItem(this.db, feedId, item).execute();
+    try {
+      rssQueries.saveRssItem(this.db, feedId, item);
+    } catch (error: any) {
+      logger.error("Failed to save RSS item:", { error, feedId });
+      throw new Error(`Failed to save RSS item: ${error.message}`);
+    }
   }
 
-  async getRssItems(
+  getRssItems(
     feedId: string,
     limit?: number,
-  ): Promise<rssQueries.RssItem[]> {
-    return await rssQueries.getRssItems(this.db, feedId, limit);
+  ): rssQueries.RssItem[] {
+    try {
+      return rssQueries.getRssItems(this.db, feedId, limit);
+    } catch (error: any) {
+      logger.error("Failed to get RSS items:", { error, feedId });
+      throw new Error(`Failed to get RSS items: ${error.message}`);
+    }
   }
 
   deleteOldRssItems(feedId: string, limit: number): void {
-    rssQueries.deleteOldRssItems(this.db, feedId, limit).execute();
+    try {
+      rssQueries.deleteOldRssItems(this.db, feedId, limit);
+    } catch (error: any) {
+      logger.error("Failed to delete old RSS items:", { error, feedId });
+      throw new Error(`Failed to delete old RSS items: ${error.message}`);
+    }
   }
 }
 

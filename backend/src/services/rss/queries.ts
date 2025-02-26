@@ -22,15 +22,15 @@ export function saveRssItem(
     link: item.link,
     guid: item.guid,
     publishedAt: item.publishedAt,
-  });
+  }).run();
 }
 
-export async function getRssItems(
+export function getRssItems(
   db: BetterSQLite3Database,
   feedId: string,
   limit: number = 100,
-): Promise<RssItem[]> {
-  const results = await db
+): RssItem[] {
+  const results = db
     .select()
     .from(rssItems)
     .where(eq(rssItems.feedId, feedId))
@@ -52,17 +52,26 @@ export function deleteOldRssItems(
   feedId: string,
   limit: number = 100,
 ) {
-  // Keep only the most recent items up to the limit
-  const keepIds = db
-    .select({ id: rssItems.id })
+  // First get the cutoff date from the nth most recent item
+  const cutoffItem = db
+    .select({ publishedAt: rssItems.publishedAt })
     .from(rssItems)
     .where(eq(rssItems.feedId, feedId))
     .orderBy(sql`${rssItems.publishedAt} DESC`)
-    .limit(limit);
+    .limit(1)
+    .offset(limit - 1)
+    .get();
 
+  if (!cutoffItem) return; // Nothing to delete if we have fewer items than the limit
+
+  // Delete items older than the cutoff date
   return db
     .delete(rssItems)
     .where(
-      and(eq(rssItems.feedId, feedId), sql`${rssItems.id} NOT IN (${keepIds})`),
-    );
+      and(
+        eq(rssItems.feedId, feedId),
+        sql`${rssItems.publishedAt} < ${cutoffItem.publishedAt}`
+      )
+    )
+    .run();
 }

@@ -17,14 +17,13 @@ import {
 } from "./schema";
 import { DbQueryResult, DbFeedQueryResult } from "./types";
 
-export async function upsertFeeds(
+export function upsertFeeds(
   db: BetterSQLite3Database,
   feedsToUpsert: { id: string; name: string; description?: string }[],
 ) {
-  return await db.transaction(async (tx) => {
+  db.transaction(() => {
     for (const feed of feedsToUpsert) {
-      await tx
-        .insert(feeds)
+      db.insert(feeds)
         .values({
           id: feed.id,
           name: feed.name,
@@ -37,12 +36,13 @@ export async function upsertFeeds(
             name: feed.name,
             description: feed.description,
           },
-        });
+        })
+        .run();
     }
   });
 }
 
-export async function saveSubmissionToFeed(
+export function saveSubmissionToFeed(
   db: BetterSQLite3Database,
   submissionId: string,
   feedId: string,
@@ -60,7 +60,7 @@ export async function saveSubmissionToFeed(
   }
 
   // Check if feed exists
-  const feed = await db
+  const feed = db
     .select({ id: feeds.id })
     .from(feeds)
     .where(eq(feeds.id, feedId))
@@ -70,21 +70,22 @@ export async function saveSubmissionToFeed(
     throw new Error(`Feed with ID ${feedId} does not exist`);
   }
 
-  return await db
+  return db
     .insert(submissionFeeds)
     .values({
       submissionId,
       feedId,
       status,
     })
-    .onConflictDoNothing();
+    .onConflictDoNothing()
+    .run();
 }
 
-export async function getFeedsBySubmission(
+export function getFeedsBySubmission(
   db: BetterSQLite3Database,
   submissionId: string,
-): Promise<SubmissionFeed[]> {
-  const results = await db
+): SubmissionFeed[] {
+  const results = db
     .select({
       submissionId: submissionFeeds.submissionId,
       feedId: submissionFeeds.feedId,
@@ -101,7 +102,7 @@ export async function getFeedsBySubmission(
   }));
 }
 
-export async function saveSubmission(
+export function saveSubmission(
   db: BetterSQLite3Database,
   submission: TwitterSubmission,
 ) {
@@ -116,10 +117,10 @@ export async function saveSubmission(
     curatorTweetId: submission.curatorTweetId,
     createdAt: submission.createdAt,
     submittedAt: submission.submittedAt,
-  });
+  }).run();
 }
 
-export async function saveModerationAction(
+export function saveModerationAction(
   db: BetterSQLite3Database,
   moderation: Moderation,
 ) {
@@ -130,14 +131,14 @@ export async function saveModerationAction(
     action: moderation.action,
     note: moderation.note,
     createdAt: moderation.timestamp.toISOString(),
-  });
+  }).run();
 }
 
-export async function getModerationHistory(
+export function getModerationHistory(
   db: BetterSQLite3Database,
   tweetId: string,
-): Promise<Moderation[]> {
-  const results = await db
+): Moderation[] {
+  const results = db
     .select({
       tweetId: moderationHistory.tweetId,
       feedId: moderationHistory.feedId,
@@ -170,7 +171,7 @@ export async function getModerationHistory(
   }));
 }
 
-export async function updateSubmissionFeedStatus(
+export function updateSubmissionFeedStatus(
   db: BetterSQLite3Database,
   submissionId: string,
   feedId: string,
@@ -189,14 +190,15 @@ export async function updateSubmissionFeedStatus(
         eq(submissionFeeds.submissionId, submissionId),
         eq(submissionFeeds.feedId, feedId),
       ),
-    );
+    )
+    .run();
 }
 
-export async function getSubmissionByCuratorTweetId(
+export function getSubmissionByCuratorTweetId(
   db: BetterSQLite3Database,
   curatorTweetId: string,
-): Promise<TwitterSubmission | null> {
-  const results = (await db
+): TwitterSubmission | null {
+  const results = (db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -266,11 +268,11 @@ export async function getSubmissionByCuratorTweetId(
   };
 }
 
-export async function getSubmission(
+export function getSubmission(
   db: BetterSQLite3Database,
   tweetId: string,
-): Promise<TwitterSubmission | null> {
-  const results = (await db
+): TwitterSubmission | null {
+  const results = (db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -340,12 +342,12 @@ export async function getSubmission(
   };
 }
 
-export async function getAllSubmissions(
+export function getAllSubmissions(
   db: BetterSQLite3Database,
   limit: number = 50,
   offset: number = 0,
-): Promise<TwitterSubmission[]> {
-  const results = (await db
+): TwitterSubmission[] {
+  const results = (db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -424,21 +426,22 @@ export async function getAllSubmissions(
   return Array.from(submissionMap.values());
 }
 
-export async function cleanupOldSubmissionCounts(
+export function cleanupOldSubmissionCounts(
   db: BetterSQLite3Database,
   date: string,
 ) {
   return db
     .delete(submissionCounts)
-    .where(sql`${submissionCounts.lastResetDate} < ${date}`);
+    .where(sql`${submissionCounts.lastResetDate} < ${date}`)
+    .run();
 }
 
-export async function getDailySubmissionCount(
+export function getDailySubmissionCount(
   db: BetterSQLite3Database,
   userId: string,
   date: string,
-): Promise<number> {
-  const result = await db
+): number {
+  const result = db
     .select({ count: submissionCounts.count })
     .from(submissionCounts)
     .where(
@@ -452,13 +455,13 @@ export async function getDailySubmissionCount(
   return result?.count ?? 0;
 }
 
-export async function incrementDailySubmissionCount(
+export function incrementDailySubmissionCount(
   db: BetterSQLite3Database,
   userId: string,
 ) {
   const today = new Date().toISOString().split("T")[0];
 
-  return await db
+  return db
     .insert(submissionCounts)
     .values({
       userId,
@@ -474,31 +477,33 @@ export async function incrementDailySubmissionCount(
         END`,
         lastResetDate: today,
       },
-    });
+    })
+    .run();
 }
 
-export async function removeFromSubmissionFeed(
+export function removeFromSubmissionFeed(
   db: BetterSQLite3Database,
   submissionId: string,
   feedId: string,
 ) {
-  return await db
+  return db
     .delete(submissionFeeds)
     .where(
       and(
         eq(submissionFeeds.submissionId, submissionId),
         eq(submissionFeeds.feedId, feedId),
       ),
-    );
+    )
+    .run();
 }
 
 // Feed Plugin queries
-export async function getFeedPlugin(
+export function getFeedPlugin(
   db: BetterSQLite3Database,
   feedId: string,
   pluginId: string,
 ) {
-  return await db
+  return db
     .select()
     .from(feedPlugins)
     .where(
@@ -507,13 +512,13 @@ export async function getFeedPlugin(
     .get();
 }
 
-export async function upsertFeedPlugin(
+export function upsertFeedPlugin(
   db: BetterSQLite3Database,
   feedId: string,
   pluginId: string,
   config: Record<string, any>,
 ) {
-  return await db
+  return db
     .insert(feedPlugins)
     .values({
       feedId,
@@ -526,19 +531,18 @@ export async function upsertFeedPlugin(
         config: JSON.stringify(config),
         updatedAt: new Date().toISOString(),
       },
-    });
+    })
+    .run();
 }
 
-export async function getSubmissionsByFeed(
+export function getSubmissionsByFeed(
   db: BetterSQLite3Database,
   feedId: string,
-): Promise<
-  (TwitterSubmission & {
+): (TwitterSubmission & {
     status: SubmissionStatus;
     moderationResponseTweetId?: string;
-  })[]
-> {
-  const results = (await db
+  })[] {
+  const results = (db
     .select({
       s: {
         tweetId: submissions.tweetId,
