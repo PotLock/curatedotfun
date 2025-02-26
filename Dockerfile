@@ -61,7 +61,9 @@ RUN mkdir -p /litefs /var/lib/litefs && \
 ENV DATABASE_URL="file:/litefs/db"
 
 # Copy application files
-COPY --from=builder --chown=node:node /app/backend ./backend
+COPY --from=builder --chown=node:node /app/backend/dist ./backend/dist
+COPY --from=builder --chown=node:node /app/backend/package.json ./backend/package.json
+COPY --from=builder --chown=node:node /app/backend/drizzle.config.ts ./backend/drizzle.config.ts
 COPY --chown=node:node curate.config.json ./
 COPY --chown=node:node package.json ./
 
