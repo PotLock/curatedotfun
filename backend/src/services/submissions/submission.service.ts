@@ -51,11 +51,15 @@ export class SubmissionService {
 
       for (const handle of adminHandles) {
         try {
-          const userId = await this.twitterService.getUserIdByScreenName(handle);
+          const userId =
+            await this.twitterService.getUserIdByScreenName(handle);
           this.adminIdCache.set(userId, handle);
           adminMap[userId] = handle;
         } catch (error) {
-          logger.error(`Failed to fetch ID for admin handle @${handle}:`, error);
+          logger.error(
+            `Failed to fetch ID for admin handle @${handle}:`,
+            error,
+          );
         }
       }
 

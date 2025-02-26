@@ -3,10 +3,7 @@ import { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { twitterCache, twitterCookies } from "./schema";
 
 // Twitter Cookie Management
-export function getTwitterCookies(
-  db: BetterSQLite3Database,
-  username: string,
-) {
+export function getTwitterCookies(db: BetterSQLite3Database, username: string) {
   return db
     .select()
     .from(twitterCookies)
@@ -46,15 +43,8 @@ export function deleteTwitterCookies(
 }
 
 // Twitter Cache Management
-export function getTwitterCacheValue(
-  db: BetterSQLite3Database,
-  key: string,
-) {
-  return db
-    .select()
-    .from(twitterCache)
-    .where(eq(twitterCache.key, key))
-    .get();
+export function getTwitterCacheValue(db: BetterSQLite3Database, key: string) {
+  return db.select().from(twitterCache).where(eq(twitterCache.key, key)).get();
 }
 
 export function setTwitterCacheValue(
@@ -82,10 +72,7 @@ export function deleteTwitterCacheValue(
   db: BetterSQLite3Database,
   key: string,
 ) {
-  return db
-    .delete(twitterCache)
-    .where(eq(twitterCache.key, key))
-    .run();
+  return db.delete(twitterCache).where(eq(twitterCache.key, key)).run();
 }
 
 export function clearTwitterCache(db: BetterSQLite3Database) {

@@ -15,14 +15,17 @@ export function saveRssItem(
   feedId: string,
   item: RssItem,
 ) {
-  return db.insert(rssItems).values({
-    feedId,
-    title: item.title,
-    content: item.content,
-    link: item.link,
-    guid: item.guid,
-    publishedAt: item.publishedAt,
-  }).run();
+  return db
+    .insert(rssItems)
+    .values({
+      feedId,
+      title: item.title,
+      content: item.content,
+      link: item.link,
+      guid: item.guid,
+      publishedAt: item.publishedAt,
+    })
+    .run();
 }
 
 export function getRssItems(
@@ -70,8 +73,8 @@ export function deleteOldRssItems(
     .where(
       and(
         eq(rssItems.feedId, feedId),
-        sql`${rssItems.publishedAt} < ${cutoffItem.publishedAt}`
-      )
+        sql`${rssItems.publishedAt} < ${cutoffItem.publishedAt}`,
+      ),
     )
     .run();
 }

@@ -120,8 +120,8 @@ bun run dev
 
 This will launch:
 
-- Frontend at http://localhost:5173
-- Backend at http://localhost:3000
+- Frontend at <http://localhost:5173>
+- Backend at <http://localhost:3000>
 
 ### Building for production
 

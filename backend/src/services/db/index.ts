@@ -87,10 +87,7 @@ export class DatabaseService {
     return queries.getSubmissionByCuratorTweetId(this.db, curatorTweetId);
   }
 
-  getAllSubmissions(
-    limit?: number,
-    offset?: number,
-  ): TwitterSubmission[] {
+  getAllSubmissions(limit?: number, offset?: number): TwitterSubmission[] {
     return queries.getAllSubmissions(this.db, limit, offset);
   }
 
@@ -226,10 +223,7 @@ export class DatabaseService {
     }
   }
 
-  getRssItems(
-    feedId: string,
-    limit?: number,
-  ): rssQueries.RssItem[] {
+  getRssItems(feedId: string, limit?: number): rssQueries.RssItem[] {
     try {
       return rssQueries.getRssItems(this.db, feedId, limit);
     } catch (error: any) {

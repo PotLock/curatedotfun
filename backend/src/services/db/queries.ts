@@ -106,32 +106,38 @@ export function saveSubmission(
   db: BetterSQLite3Database,
   submission: TwitterSubmission,
 ) {
-  return db.insert(submissions).values({
-    tweetId: submission.tweetId,
-    userId: submission.userId,
-    username: submission.username,
-    content: submission.content,
-    curatorNotes: submission.curatorNotes,
-    curatorId: submission.curatorId,
-    curatorUsername: submission.curatorUsername,
-    curatorTweetId: submission.curatorTweetId,
-    createdAt: submission.createdAt,
-    submittedAt: submission.submittedAt,
-  }).run();
+  return db
+    .insert(submissions)
+    .values({
+      tweetId: submission.tweetId,
+      userId: submission.userId,
+      username: submission.username,
+      content: submission.content,
+      curatorNotes: submission.curatorNotes,
+      curatorId: submission.curatorId,
+      curatorUsername: submission.curatorUsername,
+      curatorTweetId: submission.curatorTweetId,
+      createdAt: submission.createdAt,
+      submittedAt: submission.submittedAt,
+    })
+    .run();
 }
 
 export function saveModerationAction(
   db: BetterSQLite3Database,
   moderation: Moderation,
 ) {
-  return db.insert(moderationHistory).values({
-    tweetId: moderation.tweetId,
-    feedId: moderation.feedId,
-    adminId: moderation.adminId,
-    action: moderation.action,
-    note: moderation.note,
-    createdAt: moderation.timestamp.toISOString(),
-  }).run();
+  return db
+    .insert(moderationHistory)
+    .values({
+      tweetId: moderation.tweetId,
+      feedId: moderation.feedId,
+      adminId: moderation.adminId,
+      action: moderation.action,
+      note: moderation.note,
+      createdAt: moderation.timestamp.toISOString(),
+    })
+    .run();
 }
 
 export function getModerationHistory(
@@ -198,7 +204,7 @@ export function getSubmissionByCuratorTweetId(
   db: BetterSQLite3Database,
   curatorTweetId: string,
 ): TwitterSubmission | null {
-  const results = (db
+  const results = db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -236,7 +242,7 @@ export function getSubmissionByCuratorTweetId(
     )
     .where(eq(submissions.curatorTweetId, curatorTweetId))
     .orderBy(moderationHistory.createdAt)
-    .all()) as DbQueryResult[];
+    .all() as DbQueryResult[];
 
   if (!results.length) return null;
 
@@ -272,7 +278,7 @@ export function getSubmission(
   db: BetterSQLite3Database,
   tweetId: string,
 ): TwitterSubmission | null {
-  const results = (db
+  const results = db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -310,7 +316,7 @@ export function getSubmission(
     )
     .where(eq(submissions.tweetId, tweetId))
     .orderBy(moderationHistory.createdAt)
-    .all()) as DbQueryResult[];
+    .all() as DbQueryResult[];
 
   if (!results.length) return null;
 
@@ -347,7 +353,7 @@ export function getAllSubmissions(
   limit: number = 50,
   offset: number = 0,
 ): TwitterSubmission[] {
-  const results = (db
+  const results = db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -386,7 +392,7 @@ export function getAllSubmissions(
     .orderBy(moderationHistory.createdAt)
     .limit(limit)
     .offset(offset)
-    .all()) as DbQueryResult[];
+    .all() as DbQueryResult[];
 
   // Group results by submission
   const submissionMap = new Map<string, TwitterSubmission>();
@@ -539,10 +545,10 @@ export function getSubmissionsByFeed(
   db: BetterSQLite3Database,
   feedId: string,
 ): (TwitterSubmission & {
-    status: SubmissionStatus;
-    moderationResponseTweetId?: string;
-  })[] {
-  const results = (db
+  status: SubmissionStatus;
+  moderationResponseTweetId?: string;
+})[] {
+  const results = db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -580,7 +586,7 @@ export function getSubmissionsByFeed(
     )
     .where(eq(submissionFeeds.feedId, feedId))
     .orderBy(moderationHistory.createdAt)
-    .all()) as DbFeedQueryResult[];
+    .all() as DbFeedQueryResult[];
 
   // Group results by submission
   const submissionMap = new Map<string, TwitterSubmissionWithFeedData>();
