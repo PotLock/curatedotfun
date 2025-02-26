@@ -125,14 +125,16 @@ export class TwitterService {
       // First try to use cached cookies
       if (await this.loadCachedCookies()) {
         logger.info("Successfully initialized using cached cookies");
-        this.lastCheckedTweetId = await db.getTwitterCacheValue("last_tweet_id");
+        this.lastCheckedTweetId =
+          await db.getTwitterCacheValue("last_tweet_id");
         return;
       }
 
       // If cached cookies failed or don't exist, try fresh login with retries
       for (let attempt = 0; attempt < 3; attempt++) {
         if (await this.performLogin()) {
-          this.lastCheckedTweetId = await db.getTwitterCacheValue("last_tweet_id");
+          this.lastCheckedTweetId =
+            await db.getTwitterCacheValue("last_tweet_id");
           return;
         }
 
