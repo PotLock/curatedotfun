@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { Context, Next } from "hono";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import { serveStatic } from "@hono/node-server/serve-static";
@@ -221,6 +220,12 @@ export async function createApp(): Promise<AppInstance> {
     const context = c.get("context") as AppContext;
     const rawConfig = await context.configService.getRawConfig();
     return c.json(rawConfig.feeds);
+  });
+
+  app.post("/api/plugins/reload", async (c) => {
+    const pluginService = PluginService.getInstance();
+    await pluginService.reloadAllPlugins();
+    return c.json({ success: true });
   });
 
   app.get("/api/config/:feedId", (c) => {

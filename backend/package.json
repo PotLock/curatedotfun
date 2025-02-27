@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "build": "rspack build",
-    "start": "rspack build && node dist/main.js",
+    "start": "node dist/main.js",
     "dev": "NODE_ENV=development nodemon --exec \"rspack build && node dist/main.js\" --watch src",
     "test": "bun test",
     "test:watch": "npm test --watch",
@@ -28,6 +28,7 @@
     ]
   },
   "devDependencies": {
+    "@curatedotfun/types": "^0.0.5",
     "@module-federation/node": "^2.6.22",
     "@rspack/cli": "latest",
     "@types/better-sqlite3": "^7.6.9",

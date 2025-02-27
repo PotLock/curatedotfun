@@ -64,6 +64,7 @@ ENV DATABASE_URL="file:/litefs/db"
 COPY --from=builder --chown=node:node /app/backend/dist ./backend/dist
 COPY --from=builder --chown=node:node /app/backend/package.json ./backend/package.json
 COPY --from=builder --chown=node:node /app/backend/drizzle.config.ts ./backend/drizzle.config.ts
+COPY --from=builder --chown=node:node /app/backend/src ./backend/src
 COPY --chown=node:node curate.config.json ./
 COPY --chown=node:node package.json ./
 
