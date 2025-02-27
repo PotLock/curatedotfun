@@ -36,7 +36,7 @@ export interface PluginEndpoint {
   // move to types
   path: string;
   method: "GET" | "POST" | "PUT" | "DELETE";
-  handler: (ctx: import('hono').Context) => Promise<Response>;
+  handler: (ctx: import("hono").Context) => Promise<Response>;
 }
 
 interface PluginWithEndpoints extends BotPlugin<Record<string, unknown>> {
@@ -52,7 +52,11 @@ interface RemoteConfig {
 interface RemoteState<T extends PluginType = PluginType> {
   config: RemoteConfig;
   loadedAt?: Date;
-  module?: new () => PluginTypeMap<unknown, unknown, Record<string, unknown>>[T];
+  module?: new () => PluginTypeMap<
+    unknown,
+    unknown,
+    Record<string, unknown>
+  >[T];
   status: "active" | "loading" | "failed";
   lastError?: Error;
 }
@@ -65,7 +69,12 @@ interface InstanceState<T extends PluginType> {
   remoteName: string;
 }
 
-type PluginContainer<T extends PluginType, TInput = unknown, TOutput = unknown, TConfig extends Record<string, unknown> = Record<string, unknown>> =
+type PluginContainer<
+  T extends PluginType,
+  TInput = unknown,
+  TOutput = unknown,
+  TConfig extends Record<string, unknown> = Record<string, unknown>,
+> =
   | {
       default?: new () => PluginTypeMap<TInput, TOutput, TConfig>[T];
     }
@@ -282,7 +291,9 @@ export class PluginService {
   /**
    * Loads a plugin module
    */
-  private async loadModule<T extends PluginType>(remote: RemoteState<T>): Promise<void> {
+  private async loadModule<T extends PluginType>(
+    remote: RemoteState<T>,
+  ): Promise<void> {
     try {
       // Initialize Module Federation with all active remotes
       await performReload(true);
@@ -435,10 +446,10 @@ export class PluginService {
     T extends PluginType,
     TInput = unknown,
     TOutput = unknown,
-    TConfig extends Record<string, unknown> = Record<string, unknown>
+    TConfig extends Record<string, unknown> = Record<string, unknown>,
   >(
     instance: BotPlugin<TConfig>,
-    type: T
+    type: T,
   ): instance is PluginTypeMap<TInput, TOutput, TConfig>[T] {
     if (!instance || typeof instance !== "object") return false;
     if (typeof instance.initialize !== "function") return false;
@@ -446,10 +457,20 @@ export class PluginService {
 
     switch (type) {
       case "distributor":
-        return typeof (instance as DistributorPlugin<TInput, TConfig>).distribute === "function";
+        return (
+          typeof (instance as DistributorPlugin<TInput, TConfig>).distribute ===
+          "function"
+        );
       case "transformer": {
-        const transformer = instance as TransformerPlugin<TInput, TOutput, TConfig>;
-        return typeof transformer.transform === "function" && transformer.type === "transformer";
+        const transformer = instance as TransformerPlugin<
+          TInput,
+          TOutput,
+          TConfig
+        >;
+        return (
+          typeof transformer.transform === "function" &&
+          transformer.type === "transformer"
+        );
       }
       default:
         return false;
