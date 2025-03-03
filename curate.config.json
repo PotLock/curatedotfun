@@ -12,6 +12,10 @@
       "type": "distributor",
       "url": "https://unpkg.com/@curatedotfun/telegram@latest/dist/remoteEntry.js"
     },
+    "@curatedotfun/near-social": {
+      "type": "distributor",
+      "url": "https://unpkg.com/@curatedotfun/near-social@latest/dist/remoteEntry.js"
+    },
     "@curatedotfun/notion": {
       "type": "distributor",
       "url": "https://unpkg.com/@curatedotfun/notion@latest/dist/remoteEntry.js"
@@ -1052,6 +1056,22 @@
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "-1001941128087",
                 "messageThreadId": "11535"
+              }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "🚢 Shippost: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})_\n🔗 [Read More](<{{source}}>)"
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/near-social",
+              "config": {
+                "accountId": "shippost.near",
+                "privateKey": "{SHIPPOST_NEAR_SOCIAL_KEY}",
+                "networkId": "mainnet"
               }
             }
           ]
