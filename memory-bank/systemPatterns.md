@@ -4,12 +4,12 @@
 
 ### Core Components
 
-1. **Server Layer (Elysia.js)**
+1. **Server Layer (Hono)**
    - REST API endpoints
    - Static file serving
    - CORS and security middleware
    - Health monitoring
-   - High-performance /process endpoint
+   - Process endpoint for content processing
 
 2. **Service Layer**
    - ConfigService: Configuration management
@@ -18,21 +18,23 @@
    - TransformationService: Handles content transformations
    - DistributionService: Content distribution
    - Database Service: Data persistence
-   - PluginLoaderService: Dynamic plugin management
+   - PluginService: Dynamic plugin management
+   - TwitterService: Twitter API interaction
 
 3. **Plugin System**
    - Source plugins
      * Twitter (primary content source)
-     * Telegram (message monitoring)
+     * Telegram (message monitoring - planned)
      * LinkedIn (planned integration)
    - Distributor plugins
      * Telegram (@curatedotfun/telegram)
      * RSS (@curatedotfun/rss)
      * Notion (@curatedotfun/notion)
-     * Supabase (@curatedotfun/supabase)
+     * NEAR Social (@curatedotfun/near-social)
    - Transformer plugins
      * AI Transform (AI-powered content enhancement)
      * Simple Transform (Basic formatting)
+     * Object Transform (Data mapping and transformation)
    - Plugin Features
      * Runtime loading and hot-reloading
      * Type-safe configuration
@@ -43,7 +45,7 @@
 ### Design Patterns
 
 1. **Singleton Pattern**
-   - Used in ConfigService for global configuration
+   - Used in ConfigService and PluginService for global configuration
    - Ensures consistent state across the application
 
 2. **Plugin Pattern**
@@ -79,18 +81,37 @@ graph TD
     Config[ConfigService] --> Twitter[TwitterService]
     Config --> Distribution[DistributionService]
     Config --> Submission[SubmissionService]
+    Config --> Plugin[PluginService]
 ```
 
 ### Content Flow
 ```mermaid
 graph LR
-    Sources[Source Plugins] --> Submission[SubmissionService]
+    Twitter[TwitterService] --> Submission[SubmissionService]
     Submission --> Moderation[Moderation]
     Moderation --> Processor[ProcessorService]
     Processor --> GlobalTransform[Global Transforms]
     GlobalTransform --> Distribution[DistributionService]
     Distribution --> DistTransform[Distributor Transforms]
     DistTransform --> Distributors[Distributor Plugins]
+```
+
+### Plugin System
+```mermaid
+graph TD
+    PluginService[PluginService] --> Load[Load Plugins]
+    Load --> Register[Register Plugin Types]
+    Register --> Source[Source Plugins]
+    Register --> Transformer[Transformer Plugins]
+    Register --> Distributor[Distributor Plugins]
+    Source --> Twitter[Twitter]
+    Transformer --> SimpleTransform[Simple Transform]
+    Transformer --> AITransform[AI Transform]
+    Transformer --> ObjectTransform[Object Transform]
+    Distributor --> Telegram[Telegram]
+    Distributor --> RSS[RSS]
+    Distributor --> Notion[Notion]
+    Distributor --> NEARSocial[NEAR Social]
 ```
 
 ### Error Handling Flow
@@ -109,11 +130,11 @@ graph TD
 
 ## Key Technical Decisions
 
-1. **Elysia.js Framework**
+1. **Hono Framework**
    - High performance
    - Built-in TypeScript support
    - Middleware ecosystem
-   - Optimized /process endpoint
+   - Process endpoint for content handling
    - Dynamic endpoint registration
 
 2. **Plugin Architecture**
@@ -134,7 +155,7 @@ graph TD
    - Platform-agnostic services
    - Clear service boundaries
    - Optimized transformer-distributor flow
-   - Comprehensive e2e testing
+   - Comprehensive testing
    - Mock system for plugin validation
 
 5. **Error Handling**
@@ -149,3 +170,9 @@ graph TD
    - Recap generation scheduling
    - Plugin-specific scheduled tasks
    - Reliable execution tracking
+
+7. **Hybrid Runtime Approach**
+   - Node.js for production stability
+   - Bun for development speed
+   - Consistent package management
+   - Optimized build process

@@ -80,6 +80,11 @@ const sidebars: SidebarsConfig = {
               id: "plugins/distributors/near-social",
               label: "🌐 NEAR Social",
             },
+            {
+              type: "doc",
+              id: "plugins/distributors/rss",
+              label: "📰 RSS",
+            },
           ],
         },
         {
