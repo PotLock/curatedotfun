@@ -4,10 +4,9 @@ import { join } from "path";
 
 import { logger } from "../../utils/logger";
 
-import { DBOperations } from "./operations";
 import * as queries from "./queries";
 
-// Twitter & RSS
+// Twitter
 import {
   Moderation,
   SubmissionFeed,
@@ -15,11 +14,9 @@ import {
   TwitterCookie,
   TwitterSubmission,
 } from "../../types/twitter";
-import * as rssQueries from "../rss/queries";
 import * as twitterQueries from "../twitter/queries";
 export class DatabaseService {
   private db: BetterSQLite3Database;
-  private operations: DBOperations;
   private static readonly DB_PATH = (() => {
     const url = process.env.DATABASE_URL;
     if (url) {
@@ -47,11 +44,6 @@ export class DatabaseService {
       });
       throw new Error(`Database initialization failed: ${e.message}`);
     }
-    this.operations = new DBOperations(this.db);
-  }
-
-  getOperations(): DBOperations {
-    return this.operations;
   }
 
   saveSubmission(submission: TwitterSubmission): void {
@@ -210,34 +202,6 @@ export class DatabaseService {
     } catch (error: any) {
       logger.error("Failed to clear Twitter cache:", { error });
       throw new Error(`Failed to clear Twitter cache: ${error.message}`);
-    }
-  }
-
-  // RSS Management
-  saveRssItem(feedId: string, item: rssQueries.RssItem): void {
-    try {
-      rssQueries.saveRssItem(this.db, feedId, item);
-    } catch (error: any) {
-      logger.error("Failed to save RSS item:", { error, feedId });
-      throw new Error(`Failed to save RSS item: ${error.message}`);
-    }
-  }
-
-  getRssItems(feedId: string, limit?: number): rssQueries.RssItem[] {
-    try {
-      return rssQueries.getRssItems(this.db, feedId, limit);
-    } catch (error: any) {
-      logger.error("Failed to get RSS items:", { error, feedId });
-      throw new Error(`Failed to get RSS items: ${error.message}`);
-    }
-  }
-
-  deleteOldRssItems(feedId: string, limit: number): void {
-    try {
-      rssQueries.deleteOldRssItems(this.db, feedId, limit);
-    } catch (error: any) {
-      logger.error("Failed to delete old RSS items:", { error, feedId });
-      throw new Error(`Failed to delete old RSS items: ${error.message}`);
     }
   }
 }

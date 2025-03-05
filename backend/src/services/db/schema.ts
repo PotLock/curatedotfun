@@ -8,7 +8,6 @@ import {
 
 // From exports/plugins
 export * from "../twitter/schema";
-export * from "../rss/schema";
 
 // Reusable timestamp columns
 const timestamps = {
