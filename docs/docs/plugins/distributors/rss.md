@@ -250,9 +250,22 @@ For a simpler implementation, you can use just the essential fields:
       "enabled": true,
       "transform": [
         {
+          "plugin": "@curatedotfun/object-transform",
+          "config": {
+            "mappings": {
+              "source": "https://x.com/{{username}}/status/{{tweetId}}",
+              "content": "{{content}}",
+              "author": "{{username}}",
+              "notes": "{{curator.notes}}",
+              "submittedAt": "{{submittedAt}}",
+              "createdAt": "{{createdAt}}"
+            }
+          }
+        },
+        {
           "plugin": "@curatedotfun/ai-transform",
           "config": {
-            "prompt": "Transform this into an engaging news article with a title and content.",
+            "prompt": "Transform this into an engaging news article with a title and content",
             "apiKey": "{OPENROUTER_API_KEY}",
             "schema": {
               "title": {
@@ -272,9 +285,9 @@ For a simpler implementation, you can use just the essential fields:
             "mappings": {
               "title": "{{title}}",
               "content": "{{content}}",
-              "link": "https://example.com/posts/{{id}}",
-              "publishedAt": "{{timestamp}}",
-              "guid": "post-{{id}}"
+              "link": "{{source}}",
+              "author": [{ "name": "{{author}}", "link": "https://x.com/{{author}}" }],
+              "published": "{{createdAt}}"
             }
           }
         }

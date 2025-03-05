@@ -3,13 +3,16 @@
 ## Technology Stack
 
 ### Backend
-- **Runtime**: Bun
-- **Framework**: Elysia.js
+- **Runtime**: Node.js (production), Bun (development)
+- **Framework**: Hono
 - **Language**: TypeScript
-- **Database**: File-based (with DB service abstraction)
+- **Database**: SQLite with better-sqlite3 (with DB service abstraction)
+- **Build Tool**: RSPack
 
 ### Frontend
-- **Framework**: React
+- **Framework**: React 18
+- **Router**: TanStack Router
+- **State Management**: TanStack Query
 - **Build Tool**: RSBuild
 - **Styling**: Tailwind CSS
 
@@ -17,18 +20,22 @@
 - **Twitter API**: Content source and moderation
 - **Telegram API**: Content distribution
 - **Notion API**: Content distribution
+- **NEAR Social**: Content distribution
+- **OpenRouter API**: AI transformations
 
 ## Development Setup
 
 ### Core Dependencies
-- Bun (JavaScript runtime and package manager)
-- TypeScript (4.x+)
-- Elysia.js (latest)
+- Node.js (runtime in production)
+- Bun (package manager and development runtime)
+- TypeScript (5.x+)
+- Hono (latest)
 - React (18.x)
-- RSBuild
+- TanStack Router & Query
+- RSBuild & RSPack
 - Tailwind CSS
 - Testing Libraries
-  * Vitest
+  * Jest
   * Testing Library
   * Playwright
 
@@ -36,7 +43,6 @@
 - Core Settings
   * NODE_ENV
   * PORT
-  * FRONTEND_DIST_PATH
   * LOG_LEVEL
 - Twitter Auth
   * TWITTER_USERNAME
@@ -46,10 +52,9 @@
 - Distribution Settings
   * TELEGRAM_BOT_TOKEN
   * NOTION_API_KEY
-  * SUPABASE_URL
-  * SUPABASE_KEY
+  * OPENROUTER_API_KEY
+  * SHIPPOST_NEAR_SOCIAL_KEY
 - Plugin Settings
-  * OPENAI_API_KEY
   * PLUGIN_CACHE_TTL
   * MAX_PLUGIN_MEMORY
 
@@ -66,15 +71,16 @@
 - Telegram: Real-time message distribution
 - RSS: Feed generation
 - Notion: Database integration
-- Supabase: Data storage
+- NEAR Social: Content posting
 
 ### Transformer Plugins
 - AI Transform: AI-powered content transformation
 - Simple Transform: Basic content formatting
+- Object Transform: Data mapping and transformation
 
 ### Source Plugins
 - Twitter: Tweet monitoring and interaction
-- Telegram: Message monitoring
+- Telegram: Message monitoring (planned)
 - LinkedIn: Post monitoring (planned)
 
 ### Plugin Development
@@ -113,7 +119,7 @@
 
 ### API Security
 - CORS with allowed origins configuration
-- Helmet middleware for HTTP security headers
+- Secure headers middleware
 - Cross-Origin policies
 - Content Security Policy
 
@@ -129,6 +135,12 @@
 - Environment variables configuration
 - Plugin dependencies
 - Frontend build artifacts
+
+### Infrastructure
+- Fly.io deployment
+- LiteFS for SQLite replication
+- Health check endpoint
+- Graceful shutdown handling
 
 ### Monitoring
 - Health check endpoint
@@ -176,3 +188,9 @@
   * Stress testing
   * Memory profiling
   * Bottleneck identification
+
+### Project Structure
+- Monorepo with Turborepo
+- Backend, Frontend, and Landing Page packages
+- Shared types and utilities
+- Documentation as a separate package
