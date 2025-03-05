@@ -18,7 +18,7 @@ The RSS plugin enables distribution of curated content to RSS feeds, allowing yo
 
 ## 🔧 Setup Guide
 
-1. Deploy the RSS service to your preferred hosting platform (see the [RSS Service README](https://github.com/PotLock/curatedotfun-plugins/tree/main/packages/rss/server/README.md) for deployment options).
+1. Deploy the RSS service to your preferred hosting platform. You can use the [RSS Service Template repository](https://github.com/PotLock/rss-service-template) which provides a ready-to-deploy RSS service with multiple deployment options.
 
 2. Generate a secure random string to use as your API secret. This will be shared between your application and the RSS service.
 
