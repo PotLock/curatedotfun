@@ -11,6 +11,7 @@ The Object Transform plugin enables object-to-object mapping using [Mustache](ht
 - **Object-to-Object Transformation**: Create new objects with transformed fields
 - **Template-based Field Values**: Use Mustache templates to format each field's value
 - **Flexible Output Structure**: Define any number of output fields with custom names
+- **Array Support**: Handle array fields with direct mapping and array combinations
 
 ## 📝 Usage
 
@@ -51,6 +52,44 @@ If input has `firstName: "John"`, `lastName: "Doe"`, `username: "johnd"`, output
 {
   "author": "John Doe",
   "handle": "@johnd"
+}
+```
+
+### Array Fields
+
+The plugin provides special handling for array fields:
+
+```json
+{
+  "mappings": {
+    // Direct array mapping - preserves the array structure
+    "categories": "{{tags}}",
+    
+    // Combine static values with arrays
+    "mixedCategories": ["near", "{{tags}}"],
+    
+    // Multiple arrays
+    "allCategories": ["web", "{{tags}}", "{{moreTags}}"]
+  }
+}
+```
+
+Given this input:
+
+```json
+{
+  "tags": ["javascript", "typescript"],
+  "moreTags": ["react", "node"]
+}
+```
+
+Outputs:
+
+```json
+{
+  "categories": ["javascript", "typescript"],
+  "mixedCategories": ["near", "javascript", "typescript"],
+  "allCategories": ["web", "javascript", "typescript", "react", "node"]
 }
 ```
 
@@ -103,7 +142,8 @@ Transform a tweet into a database-compatible format:
         "content": "{{content}}",
         "category": "{{#category}}{{.}}{{/category}}{{^category}}Uncategorized{{/category}}",
         "engagement": "{{#metrics}}{{likes}} likes, {{retweets}} RTs{{/metrics}}",
-        "notes": "{{#curator.notes}}{{.}}{{/curator.notes}}"
+        "notes": "{{#curator.notes}}{{.}}{{/curator.notes}}",
+        "tags": ["social", "{{category}}", "{{tags}}"]
       }
     }
   }
@@ -120,6 +160,7 @@ Given this input:
   "lastName": "Doe",
   "content": "Just launched our new DeFi protocol!",
   "category": "DeFi",
+  "tags": ["blockchain", "crypto"],
   "metrics": {
     "likes": 1500,
     "retweets": 500
@@ -142,7 +183,8 @@ Outputs:
   "content": "Just launched our new DeFi protocol!",
   "category": "DeFi",
   "engagement": "1500 likes, 500 RTs",
-  "notes": "Interesting launch with novel tokenomics"
+  "notes": "Interesting launch with novel tokenomics",
+  "tags": ["social", "DeFi", "blockchain", "crypto"]
 }
 ```
 
@@ -174,7 +216,8 @@ Transform data into a complex nested structure:
                 "likes": "{{metrics.likes}}",
                 "shares": "{{metrics.retweets}}"
               }
-            }
+            },
+            "categories": ["{{primaryCategory}}", "{{tags}}"]
           }
         }
       }
@@ -190,6 +233,7 @@ This example demonstrates:
 - Setting default values
 - Transforming boolean flags
 - Mapping nested input fields to different output structures
+- Handling arrays and combining them with static values
 
 :::tip
 Use this plugin when you need to transform data structures between plugins. If you just need to format text into a string, use the Simple Transform plugin instead.

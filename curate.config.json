@@ -12,6 +12,10 @@
       "type": "distributor",
       "url": "https://unpkg.com/@curatedotfun/telegram@latest/dist/remoteEntry.js"
     },
+    "@curatedotfun/rss": {
+      "type": "distributor",
+      "url": "https://unpkg.com/@curatedotfun/rss@latest/dist/remoteEntry.js"
+    },
     "@curatedotfun/near-social": {
       "type": "distributor",
       "url": "https://unpkg.com/@curatedotfun/near-social@latest/dist/remoteEntry.js"
@@ -1019,7 +1023,8 @@
                   "content": "{{content}}",
                   "author": "{{username}}",
                   "notes": "{{curator.notes}}",
-                  "submittedAt": "{{submittedAt}}"
+                  "submittedAt": "{{submittedAt}}",
+                  "createdAt": "{{createdAt}}"
                 }
               }
             },
@@ -1036,6 +1041,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -1072,6 +1084,36 @@
                 "accountId": "shippost.near",
                 "privateKey": "{SHIPPOST_NEAR_SOCIAL_KEY}",
                 "networkId": "mainnet"
+              }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "title": "{{title}}",
+                      "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
+                      "description": "{{summary}}",
+                      "link": "{{source}}",
+                      "publishedAt": "{{createdAt}}",
+                      "author": {
+                        "name": "{{username}}",
+                        "link": "https://x.com/{{author}}"
+                      },
+                      "categories": ["near", "{{tags}}"],
+                      "source": {
+                        "url": "{{source}}",
+                        "title": "twitter"
+                      }
+                    }
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/rss",
+              "config": {
+                "serviceUrl": "http://localhost:4001",
+                "apiSecret": "{API_SECRET}"
               }
             }
           ]
