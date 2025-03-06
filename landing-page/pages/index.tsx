@@ -485,14 +485,8 @@ export default function Home() {
           name="twitter:description"
           content="Curate news directly on socials and turn feeds into regular content."
         />
-        <meta
-          property="og:image"
-          content="https://curate.fun/meta.png"
-        />
-        <meta
-          property="twitter:image"
-          content="https://curate.fun/meta.png"
-        />
+        <meta property="og:image" content="https://curate.fun/meta.png" />
+        <meta property="twitter:image" content="https://curate.fun/meta.png" />
         <meta name="theme-color" content="#ffffff" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />

@@ -60,14 +60,13 @@ const config: Config = {
       } satisfies Preset.Options,
     ],
   ],
-  
 
   themeConfig: {
     // Replace with your project's social card
     image: "img/meta.png",
     // Configure color mode
     colorMode: {
-      defaultMode: 'light',
+      defaultMode: "light",
       disableSwitch: false,
       respectPrefersColorScheme: false,
     },
