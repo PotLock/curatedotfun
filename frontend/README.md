@@ -5,10 +5,10 @@
 
 <div align="center">
 
-<h1 style="font-size: 2.5rem; font-weight: bold;">Curation Bot Frontend</h1>
+<h1 style="font-size: 2.5rem; font-weight: bold;">curate.fun frontend</h1>
 
   <p>
-    <strong>React-based frontend application for the Curation Bot platform</strong>
+    <strong>React-based frontend application for the curate.fun platform</strong>
   </p>
 
 </div>
@@ -20,8 +20,8 @@
   - [Tech Stack](#tech-stack)
   - [Application Structure](#application-structure)
 - [Key Features](#key-features)
-  - [Submission Interface](#submission-interface)
-  - [Real-time Updates](#real-time-updates)
+  - [Content Display](#content-display)
+  - [User Settings](#user-settings)
   - [Responsive Design](#responsive-design)
 - [Development](#development)
   - [Prerequisites](#prerequisites)
@@ -41,8 +41,8 @@ The frontend leverages modern web technologies for optimal performance and devel
   - Strong type safety
   - Excellent ecosystem support
 
-- **Build Tool**: [Vite](https://vitejs.dev)
-  - Lightning-fast development server
+- **Build Tool**: [RSBuild](https://rsbuild.dev/)
+  - High-performance build system
   - Optimized production builds
   - Modern development experience
 
@@ -51,38 +51,61 @@ The frontend leverages modern web technologies for optimal performance and devel
   - Highly customizable
   - Zero runtime overhead
 
+- **Routing**: [TanStack Router](https://tanstack.com/router)
+  - Type-safe routing
+  - Efficient navigation
+  - Data-driven route handling
+
 ### Application Structure
 
 ```bash
 src/
-├── assets/     # Static assets
-├── components/ # React components
-├── types/      # TypeScript definitions
-└── App.tsx     # Root component
+├── components/     # React components
+│   ├── FeedItem.tsx
+│   ├── FeedList.tsx
+│   ├── Header.tsx
+│   ├── HowItWorks.tsx
+│   ├── Layout.tsx
+│   ├── Modal.tsx
+│   └── Settings.tsx
+├── lib/           # Utility functions and API clients
+│   ├── api.ts
+│   ├── config.ts
+│   └── twitter.ts
+├── routes/        # Application routes
+│   ├── __root.tsx
+│   ├── feed.$feedId.tsx
+│   ├── index.tsx
+│   └── settings.tsx
+├── types/         # TypeScript definitions
+├── App.tsx        # Root component
+└── index.tsx      # Application entry point
 ```
 
 ## Key Features
 
-### Submission Interface
+### Content Display
 
-The submission system provides:
+The frontend provides a rich content viewing experience:
 
-- Intuitive submission form
-- Real-time validation
-- Status tracking
-- Moderation feedback
+- Feed-based content organization
+- Customizable content views
+- Content filtering and sorting
+- Responsive content cards
 
-### Real-time Updates
+### User Settings
 
-- Live submission status updates
-- Dynamic content loading
-- Optimistic UI updates
+- Customizable feed preferences
+- Theme selection
+- Notification settings
+- Distribution channel configuration
 
 ### Responsive Design
 
 - Mobile-first approach
 - Adaptive layouts
 - Cross-browser compatibility
+- Accessible UI components
 
 ## Development
 
@@ -90,7 +113,7 @@ The submission system provides:
 
 - Node.js 18+
 - Bun (recommended) or npm
-- Backend service running
+- Backend service running locally (for full functionality)
 
 ### Local Setup
 
@@ -112,10 +135,12 @@ The app will be available at `http://localhost:5173`
 
 The frontend communicates with the [backend service](../backend/README.md) through a RESTful API:
 
-- Submission handling via `/submit` endpoint
-- Content retrieval through `/submissions`
+- Content retrieval via `/api/feeds` endpoints
+- Settings management through `/api/settings`
+- Plugin configuration via `/api/plugins`
+- Content submission through Twitter integration
 
-See the [Backend README](../backend/README.md) for detailed API documentation.
+See the [Backend README](../backend/README.md) for detailed API documentation and service architecture.
 
 <div align="right">
 <a href="https://nearbuilders.org" target="_blank">
