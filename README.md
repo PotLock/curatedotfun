@@ -25,13 +25,13 @@
 <details>
   <summary>Table of Contents</summary>
 
-- [System Architecture](#system-architecture)
-  - [Monorepo Overview](#monorepo-overview)
-  - [Key Components](#key-components)
-  - [Content Flow Architecture](#content-flow-architecture)
 - [Getting Started](#getting-started)
   - [For Curators](#for-curators)
   - [For Developers](#for-developers)
+- [System Architecture](#system-architecture)
+  - [Content Flow Architecture](#content-flow-architecture)
+  - [Key Components](#key-components)
+  - [Monorepo Overview](#monorepo-overview)
 - [Development](#development)
   - [Installing dependencies](#installing-dependencies)
   - [Running the app](#running-the-app)
@@ -43,35 +43,27 @@
 
 </details>
 
+## Getting Started
+
+Choose your path to get started with curate.fun ⚡
+
+### For Curators
+
+If you want to submit and curate content:
+
+1. 🎯 Head to the [User Guide](https://docs.curate.fun/docs/user-guides/curation)
+2. 🔗 Learn how to submit content and moderate feeds
+3. 🌟 Apply to become a curator for specific feeds
+
+### For Developers
+
+If you want to build and customize feeds:
+
+1. 📖 Start with the [Configuration Guide](https://docs.curate.fun/docs/developers/configuration)
+2. 🚀 Learn about [Deployment](https://docs.curate.fun/docs/developers/deployment)
+3. 🔌 Explore [Plugin Development](https://docs.curate.fun/docs/developers/plugins)
+
 ## System Architecture
-
-### Monorepo Overview
-
-This project uses a monorepo structure managed with [Turborepo](https://turbo.build/repo) for efficient build orchestration:
-
-```bash
-curatedotfun/
-├── frontend/          # React frontend application (app.curate.fun)
-├── backend/           # Node.js backend service (app.curate.fun)
-├── docs/              # Documentation website (docs.curate.fun)
-├── landing/           # Landing page website (curate.fun)
-├── package.json       # Root package.json for shared dependencies
-└── turbo.json         # Turborepo configuration
-```
-
-### Key Components
-
-- **Frontend**
-  - React-based web interface
-  - Built with RSBuild and Tailwind CSS
-  - Handles user interactions and submissions
-
-- **Backend**
-  - Node.js runtime with Hono.js framework
-  - Plugin-based architecture with module federation
-  - Service-oriented design with clear boundaries
-  - Twitter bot functionality
-  - API endpoints for frontend
 
 ### Content Flow Architecture
 
@@ -142,25 +134,33 @@ graph TD
     class Moderation,GlobalTransform,DistTransform process
 ```
 
-## Getting Started
+### Key Components
 
-Choose your path to get started with curate.fun ⚡
+- **Frontend**
+  - React-based web interface
+  - Built with RSBuild and Tailwind CSS
+  - Handles user interactions and submissions
 
-### For Curators
+- **Backend**
+  - Node.js runtime with Hono.js framework
+  - Plugin-based architecture with module federation
+  - Service-oriented design with clear boundaries
+  - Twitter bot functionality
+  - API endpoints for frontend
 
-If you want to submit and curate content:
+### Monorepo Overview
 
-1. 🎯 Head to the [User Guide](https://docs.curate.fun/docs/user-guides/curation)
-2. 🔗 Learn how to submit content and moderate feeds
-3. 🌟 Apply to become a curator for specific feeds
+This project uses a monorepo structure managed with [Turborepo](https://turbo.build/repo) for efficient build orchestration:
 
-### For Developers
-
-If you want to build and customize feeds:
-
-1. 📖 Start with the [Configuration Guide](https://docs.curate.fun/docs/developers/configuration)
-2. 🚀 Learn about [Deployment](https://docs.curate.fun/docs/developers/deployment)
-3. 🔌 Explore [Plugin Development](https://docs.curate.fun/docs/developers/plugins)
+```bash
+curatedotfun/
+├── frontend/          # React frontend application (app.curate.fun)
+├── backend/           # Node.js backend service (app.curate.fun)
+├── docs/              # Documentation website (docs.curate.fun)
+├── landing/           # Landing page website (curate.fun)
+├── package.json       # Root package.json for shared dependencies
+└── turbo.json         # Turborepo configuration
+```
 
 ## Development
 
