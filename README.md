@@ -27,12 +27,12 @@
 
 - [System Architecture](#system-architecture)
   - [Monorepo Overview](#monorepo-overview)
-  - [Content Flow Architecture](#content-flow-architecture)
-  - [Plugin System Architecture](#plugin-system-architecture)
   - [Key Components](#key-components)
+  - [Content Flow Architecture](#content-flow-architecture)
 - [Getting Started](#getting-started)
   - [For Curators](#for-curators)
   - [For Developers](#for-developers)
+- [Development](#development)
   - [Installing dependencies](#installing-dependencies)
   - [Running the app](#running-the-app)
   - [Building for production](#building-for-production)
@@ -59,146 +59,6 @@ curatedotfun/
 └── turbo.json         # Turborepo configuration
 ```
 
-### Content Flow Architecture
-
-```mermaid
-graph TD
-    %% Content Sources
-    subgraph Sources["Content Sources"]
-        Twitter["Twitter Source Plugin"]
-        Telegram["Telegram Source Plugin"]
-        LinkedIn["LinkedIn Source Plugin (Planned)"]
-    end
-    
-    %% Submission Processing
-    subgraph Submission["Submission Processing"]
-        SubmissionService["Submission Service"]
-        Moderation["Curator Moderation"]
-    end
-    
-    %% Content Processing
-    subgraph Processing["Content Processing"]
-        ProcessorService["Processor Service"]
-        GlobalTransform["Global Transformations"]
-    end
-    
-    %% Distribution
-    subgraph Distribution["Distribution"]
-        DistributionService["Distribution Service"]
-        DistTransform["Distributor-specific Transforms"]
-    end
-    
-    %% Distributor Plugins
-    subgraph Distributors["Distributor Plugins"]
-        TelegramDist["Telegram"]
-        RSS["RSS"]
-        Notion["Notion"]
-        Supabase["Supabase"]
-    end
-    
-    %% Flow connections
-    Sources --> SubmissionService
-    SubmissionService --> Moderation
-    Moderation --> ProcessorService
-    ProcessorService --> GlobalTransform
-    GlobalTransform --> DistributionService
-    DistributionService --> DistTransform
-    DistTransform --> Distributors
-    
-    %% Configuration
-    Config["Configuration Service"] --> Sources
-    Config --> SubmissionService
-    Config --> ProcessorService
-    Config --> DistributionService
-    
-    %% Plugin System
-    PluginLoader["Plugin Loader Service"] --> Sources
-    PluginLoader --> GlobalTransform
-    PluginLoader --> DistTransform
-    PluginLoader --> Distributors
-    
-    %% Error Handling
-    ErrorHandling["Error Handling"] -.-> Sources
-    ErrorHandling -.-> Processing
-    ErrorHandling -.-> Distribution
-    ErrorHandling -.-> Distributors
-    
-    %% Styling
-    classDef service fill:#f9f,stroke:#333,stroke-width:2px
-    classDef plugin fill:#bbf,stroke:#333,stroke-width:1px
-    classDef process fill:#bfb,stroke:#333,stroke-width:1px
-    
-    class SubmissionService,ProcessorService,DistributionService,Config,PluginLoader service
-    class Twitter,Telegram,LinkedIn,TelegramDist,RSS,Notion,Supabase plugin
-    class Moderation,GlobalTransform,DistTransform process
-```
-
-### Plugin System Architecture
-
-```mermaid
-graph TD
-    %% Core System
-    subgraph Core["Core System"]
-        Server["Server Layer (Hono.js)"]
-        Services["Service Layer"]
-        PluginSystem["Plugin System"]
-    end
-    
-    %% Plugin Types
-    subgraph Plugins["Plugin Types"]
-        SourcePlugins["Source Plugins"]
-        TransformerPlugins["Transformer Plugins"]
-        DistributorPlugins["Distributor Plugins"]
-    end
-    
-    %% Plugin Features
-    subgraph Features["Plugin Features"]
-        RuntimeLoading["Runtime Module Federation"]
-        HotReloading["Hot-Reloading"]
-        CustomEndpoints["Custom Endpoint Registration"]
-        ScheduledTasks["Scheduled Task Integration"]
-        TypeSafeConfig["Type-Safe Configuration"]
-    end
-    
-    %% Plugin Development
-    subgraph Development["Plugin Development"]
-        DevTools["Development Tools"]
-        TestingInfra["Testing Infrastructure"]
-        DevFeatures["Development Features"]
-    end
-    
-    %% Connections
-    Core --> Plugins
-    PluginSystem --> Features
-    Plugins --> Development
-    
-    %% Source Plugins
-    SourcePlugins --> Twitter["Twitter"]
-    SourcePlugins --> TelegramSource["Telegram"]
-    SourcePlugins --> LinkedIn["LinkedIn (Planned)"]
-    
-    %% Transformer Plugins
-    TransformerPlugins --> AITransform["AI Transform"]
-    TransformerPlugins --> SimpleTransform["Simple Transform"]
-    
-    %% Distributor Plugins
-    DistributorPlugins --> TelegramDist["Telegram"]
-    DistributorPlugins --> RSS["RSS"]
-    DistributorPlugins --> Notion["Notion"]
-    DistributorPlugins --> Supabase["Supabase"]
-    
-    %% Styling
-    classDef core fill:#f9f,stroke:#333,stroke-width:2px
-    classDef pluginType fill:#bbf,stroke:#333,stroke-width:1px
-    classDef feature fill:#bfb,stroke:#333,stroke-width:1px
-    classDef plugin fill:#fbb,stroke:#333,stroke-width:1px
-    
-    class Server,Services,PluginSystem core
-    class SourcePlugins,TransformerPlugins,DistributorPlugins pluginType
-    class RuntimeLoading,HotReloading,CustomEndpoints,ScheduledTasks,TypeSafeConfig feature
-    class Twitter,TelegramSource,LinkedIn,AITransform,SimpleTransform,TelegramDist,RSS,Notion,Supabase plugin
-```
-
 ### Key Components
 
 - **Frontend**
@@ -212,6 +72,75 @@ graph TD
   - Service-oriented design with clear boundaries
   - Twitter bot functionality
   - API endpoints for frontend
+
+### Content Flow Architecture
+
+```mermaid
+graph TD
+    %% Content Sources
+    subgraph Sources["Content Sources"]
+        Twitter["Twitter Source Plugin"]
+        Telegram["Telegram Source Plugin"]
+        LinkedIn["LinkedIn Source Plugin (Planned)"]
+        style Twitter color:black
+        style Telegram color:black
+        style LinkedIn color:black
+    end
+    
+    %% Submission Processing
+    subgraph Submission["Submission Processing"]
+        SubmissionService["Submission Service"]
+        Moderation["Curator Moderation"]
+        style SubmissionService color:black
+        style Moderation color:black
+    end
+    
+    %% Content Processing
+    subgraph Processing["Content Processing"]
+        ProcessorService["Processor Service"]
+        GlobalTransform["Global Transformations"]
+        style ProcessorService color:black
+        style GlobalTransform color:black
+    end
+    
+    %% Distribution
+    subgraph Distribution["Distribution"]
+        DistributionService["Distribution Service"]
+        DistTransform["Distributor-specific Transforms"]
+        style DistributionService color:black
+        style DistTransform color:black
+    end
+    
+    %% Distributor Plugins
+    subgraph Distributors["Distributor Plugins"]
+        TelegramDist["Telegram"]
+        RSS["RSS"]
+        Notion["Notion"]
+        Supabase["Supabase"]
+        style TelegramDist color:black
+        style RSS color:black
+        style Notion color:black
+        style Supabase color:black
+    end
+    
+    %% Flow connections
+    Sources --> SubmissionService
+    SubmissionService --> Moderation
+    Moderation --> ProcessorService
+    ProcessorService --> GlobalTransform
+    GlobalTransform --> DistributionService
+    DistributionService --> DistTransform
+    DistTransform --> Distributors
+    
+    %% Styling
+    classDef service fill:#f9f,stroke:#333,stroke-width:2px
+    classDef plugin fill:#bbf,stroke:#333,stroke-width:1px
+    classDef process fill:#bfb,stroke:#333,stroke-width:1px
+    
+    class SubmissionService,ProcessorService,DistributionService service
+    class Twitter,Telegram,LinkedIn,TelegramDist,RSS,Notion,Supabase plugin
+    class Moderation,GlobalTransform,DistTransform process
+```
 
 ## Getting Started
 
@@ -232,6 +161,8 @@ If you want to build and customize feeds:
 1. 📖 Start with the [Configuration Guide](https://docs.curate.fun/docs/developers/configuration)
 2. 🚀 Learn about [Deployment](https://docs.curate.fun/docs/developers/deployment)
 3. 🔌 Explore [Plugin Development](https://docs.curate.fun/docs/developers/plugins)
+
+## Development
 
 ### Installing dependencies
 
