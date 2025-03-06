@@ -51,14 +51,14 @@ graph TD
     Services --> ConfigService["Configuration Service"]
     Services --> PluginLoader["Plugin Loader Service"]
     
-    style Server color:black
-    style Services color:black
-    style SubmissionService color:black
-    style ProcessorService color:black
-    style TransformationService color:black
-    style DistributionService color:black
-    style ConfigService color:black
-    style PluginLoader color:black
+    style Server color:white
+    style Services color:white
+    style SubmissionService color:white
+    style ProcessorService color:white
+    style TransformationService color:white
+    style DistributionService color:white
+    style ConfigService color:white
+    style PluginLoader color:white
 ```
 
 ### Plugin System
