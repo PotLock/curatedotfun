@@ -149,59 +149,109 @@ Then configure each feed with its own workflow:
 
 ## 🚀 Popular Plugin Combinations
 
-### Content Repurposing Workflow
+### AI-Enhanced News Flash
 
-Transform tweets into longer-form content for different platforms:
+Transform tweets into professional news flashes with AI-generated titles and summaries:
 
 ```json
-{
-  "transform": {
-    "plugin": "@curatedotfun/ai-transform",
+"transform": [
+  {
+    "plugin": "@curatedotfun/object-transform",
     "config": {
-      "prompt": "Expand this tweet into a detailed paragraph",
-      "model": "gpt-4"
+      "mappings": {
+        "source": "https://x.com/{{username}}/status/{{tweetId}}",
+        "content": "{{content}}",
+        "author": "{{username}}",
+        "notes": "{{curator.notes}}",
+        "submittedAt": "{{submittedAt}}"
+      }
     }
   },
-  "distribute": [
-    {
-      "plugin": "@curatedotfun/notion",
-      "config": {
-        "databaseId": "your-database-id",
-        "properties": {
-          "Name": "title",
-          "Content": "content",
-          "Source": "url"
+  {
+    "plugin": "@curatedotfun/ai-transform",
+    "config": {
+      "prompt": "Summarize the content into a concise news flash",
+      "apiKey": "{OPENROUTER_API_KEY}",
+      "schema": {
+        "title": {
+          "type": "string",
+          "description": "Title derived from summary of content"
+        },
+        "summary": {
+          "type": "string",
+          "description": "Summary of content influenced by curator notes"
         }
       }
     }
-  ]
-}
+  }
+],
+"distribute": [
+  {
+    "transform": [
+      {
+        "plugin": "@curatedotfun/simple-transform",
+        "config": {
+          "template": "🔷 {{feedName}}: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})_\n🔗 [Read More](<{{source}}>)"
+        }
+      }
+    ],
+    "plugin": "@curatedotfun/telegram",
+    "config": {
+      "botToken": "{TELEGRAM_BOT_TOKEN}",
+      "channelId": "@your_channel"
+    }
+  }
+]
 ```
 
-### Multi-Channel Distribution
+### Multi-Platform Distribution
 
-Send the same content to multiple platforms with different formatting:
+Send the same content to multiple platforms with platform-specific formatting:
 
 ```json
-{
-  "distribute": [
-    {
-      "plugin": "@curatedotfun/telegram",
-      "config": {
-        "botToken": "{TELEGRAM_BOT_TOKEN}",
-        "chatId": "-1001234567890",
-        "format": "markdown"
+"distribute": [
+  {
+    "transform": [
+      {
+        "plugin": "@curatedotfun/simple-transform",
+        "config": {
+          "template": "🚢 {{feedName}}: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})_\n🔗 [Read More](<{{source}}>)"
+        }
       }
-    },
-    {
-      "plugin": "@curatedotfun/near-social",
-      "config": {
-        "accountId": "your-near-account.near",
-        "privateKey": "{NEAR_PRIVATE_KEY}"
-      }
+    ],
+    "plugin": "@curatedotfun/telegram",
+    "config": {
+      "botToken": "{TELEGRAM_BOT_TOKEN}",
+      "channelId": "-1001941128087"
     }
-  ]
-}
+  },
+  {
+    "transform": [
+      {
+        "plugin": "@curatedotfun/object-transform",
+        "config": {
+          "mappings": {
+            "title": "{{title}}",
+            "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
+            "description": "{{summary}}",
+            "link": "{{source}}",
+            "publishedAt": "{{createdAt}}",
+            "author": {
+              "name": "{{username}}",
+              "link": "https://x.com/{{author}}"
+            },
+            "categories": ["{{feedName}}", "{{tags}}"]
+          }
+        }
+      }
+    ],
+    "plugin": "@curatedotfun/rss",
+    "config": {
+      "serviceUrl": "http://localhost:4001",
+      "apiSecret": "{API_SECRET}"
+    }
+  }
+]
 ```
 
 ### Daily Recap Generation
@@ -209,28 +259,46 @@ Send the same content to multiple platforms with different formatting:
 Create daily summaries of curated content:
 
 ```json
-{
-  "outputs": {
-    "recap": {
-      "enabled": true,
-      "schedule": "0 18 * * *", // Daily at 6 PM
-      "transform": {
+"outputs": {
+  "recap": {
+    "enabled": true,
+    "schedule": "0 18 * * *", // Daily at 6 PM
+    "transform": [
+      {
         "plugin": "@curatedotfun/ai-transform",
         "config": {
-          "prompt": "Create a summary of today's top content",
-          "model": "gpt-4"
-        }
-      },
-      "distribute": [
-        {
-          "plugin": "@curatedotfun/telegram",
-          "config": {
-            "botToken": "{TELEGRAM_BOT_TOKEN}",
-            "chatId": "-1001234567890"
+          "prompt": "Create a summary of today's top content, organizing it by topic and highlighting the most important developments.",
+          "apiKey": "{OPENROUTER_API_KEY}",
+          "schema": {
+            "title": {
+              "type": "string",
+              "description": "Recap title"
+            },
+            "summary": {
+              "type": "string",
+              "description": "Full recap text"
+            }
           }
         }
-      ]
-    }
+      }
+    ],
+    "distribute": [
+      {
+        "transform": [
+          {
+            "plugin": "@curatedotfun/simple-transform",
+            "config": {
+              "template": "📅 Daily Recap: *{{title}}*\n\n{{summary}}"
+            }
+          }
+        ],
+        "plugin": "@curatedotfun/telegram",
+        "config": {
+          "botToken": "{TELEGRAM_BOT_TOKEN}",
+          "channelId": "@your_channel"
+        }
+      }
+    ]
   }
 }
 ```
