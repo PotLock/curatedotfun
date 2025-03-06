@@ -5,6 +5,8 @@
 
 <div align="center">
 
+<img src="landing-page/public/meta.png" alt="curate.fun banner" width="100%" />
+
 <h1 style="font-size: 2.5rem; font-weight: bold;">curate.fun</h1>
 
   <p>
