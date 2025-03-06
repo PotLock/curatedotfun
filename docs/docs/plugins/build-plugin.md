@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # 🛠️ Building Custom Plugins
 
-Want to build your own plugin? Follow this guide to create and publish your custom plugin that can be loaded remotely using [module federation](https://module-federation.io/).
+Want to build your own plugin? Follow this guide to create and publish your custom plugin that can be loaded remotely using [module federation](https://module-federation.io/). This guide focuses on the technical aspects of plugin development.
 
 ## Plugin Types
 
@@ -33,7 +33,6 @@ We provide a [Plugin Manager](https://github.com/PotLock/curatedotfun-plugins/tr
 git clone https://github.com/PotLock/curatedotfun-plugin-template.git your-plugin-name
 cd your-plugin-name
 ```
-
 
 2. Start the Plugin Manager:
 ```bash

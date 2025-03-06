@@ -84,5 +84,10 @@ Format content using a template-based approach with customizable placeholders.
 
 ### Source Plugins
 
-#### [🐦 Twitter Plugin](index.md)
+#### [🐦 Twitter Plugin](./sources/twitter.md)
 Monitor and collect content from Twitter.
+
+### Object Transform
+
+#### [🔄 Object Transform](./transformers/object-transform.md)
+Transform data structures using a flexible mapping system.

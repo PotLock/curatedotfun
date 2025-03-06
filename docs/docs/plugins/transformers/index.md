@@ -81,12 +81,14 @@ Start with a global transform to create a consistent data structure, then use pe
 
 ## 🔄 Transform Flow
 
-```mermaid
-graph TD
-    Input[Content Input] --> Global[Global Transform]
-    Global --> Distributor[Per-Distributor Transform]
-    Distributor --> Output[Final Output]
-```
+The transformation process follows a sequential flow:
+
+1. **Content Input**: The original content enters the transformation system
+2. **Global Transform**: Content passes through global transforms that apply to all content in a feed
+3. **Per-Distributor Transform**: Content is then processed by distributor-specific transforms
+4. **Final Output**: The fully transformed content is ready for distribution
+
+This sequential approach allows for both general standardization and platform-specific formatting.
 
 ## 📚 Example Transform Chain
 

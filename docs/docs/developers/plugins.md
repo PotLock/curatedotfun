@@ -2,70 +2,101 @@
 sidebar_position: 3
 ---
 
-# 🎨 Content Generation
+# 🔌 Plugin Development
 
-Learn how to extend curate.fun with custom plugins ⚡
+Learn how to extend curate.fun by developing custom plugins ⚡
 
-## 🔌 Custom Feed Integration
+## 🏗️ Plugin Architecture
 
-Create your own custom feed by implementing the feed interface:
+The curate.fun plugin system is built on a modular architecture that supports three main types of plugins:
 
-```typescript
-// Coming soon...
-```
+1. **Source Plugins**: Monitor and collect content from platforms
+2. **Transformer Plugins**: Convert content from one format to another
+3. **Distributor Plugins**: Send content to external platforms or services
 
-## 🎙️ Podcast Generation
+All plugins follow standardized interfaces and are loaded dynamically using [module federation](https://module-federation.io/).
 
-Configure autonomous podcast generation with Eleven Labs:
+## 🧩 Plugin Interfaces
 
-1. 🔑 Set up Eleven Labs API credentials
-2. 🎯 Configure voice and style settings
-3. 🔄 Connect to your content feed
-4. 📢 Set up distribution channels
+### Core Plugin Interface
 
-```typescript
-// Coming soon...
-```
-
-## 📝 Blog Generation
-
-Create an autonomous blog that generates content from your feeds:
-
-1. 🤖 Configure AI writing parameters
-2. 📊 Set up content structure
-3. 🎯 Define publishing rules
-4. 🌐 Configure hosting and distribution
+All plugins implement a base interface:
 
 ```typescript
-// Coming soon...
+interface Plugin<TConfig extends PluginConfig> {
+  initialize(config: TConfig): Promise<void>;
+  shutdown?(): Promise<void>;
+}
 ```
 
-## 🎥 Video Generation
-
-Set up autonomous video content generation:
-
-1. 🎬 Configure video style and format
-2. 🗣️ Set up voice-over integration
-3. 🎨 Define visual templates
-4. 📺 Configure publishing channels
+### Transformer Plugin Interface
 
 ```typescript
-// Coming soon...
+interface TransformerPlugin<TInput, TOutput, TConfig extends PluginConfig> extends Plugin<TConfig> {
+  transform(args: { input: TInput; config: TConfig }): Promise<TOutput>;
+}
 ```
 
-## 🔄 Custom Transformers
-
-Build your own content transformers:
-
-1. 🛠️ Implement the transformer interface
-2. 🔌 Configure input/output formats
-3. 🎯 Define transformation rules
-4. 📦 Package and distribute
+### Distributor Plugin Interface
 
 ```typescript
-// Coming soon...
+interface DistributorPlugin<TInput, TConfig extends PluginConfig> extends Plugin<TConfig> {
+  distribute(args: { input: TInput; config: TConfig }): Promise<void>;
+}
 ```
 
-:::note
-This section is under active development. Check back soon for detailed implementation guides and examples!
-:::
+### Source Plugin Interface
+
+```typescript
+interface SourcePlugin<TConfig extends PluginConfig> extends Plugin<TConfig> {
+  startMonitoring(): Promise<void>;
+  stopMonitoring(): Promise<void>;
+}
+```
+
+## 🚀 Development Workflow
+
+1. **Setup Development Environment**:
+   - Clone the plugin template or create a new package
+   - Install dependencies with `bun install`
+   - Configure module federation
+
+2. **Implement Plugin Interface**:
+   - Choose the appropriate interface (transformer, distributor, or source)
+   - Implement required methods
+   - Add proper error handling
+
+3. **Test Your Plugin**:
+   - Use the Plugin Manager for local testing
+   - Verify functionality with sample data
+   - Test error scenarios
+
+4. **Package and Publish**:
+   - Build your plugin with `bun run build`
+   - Publish to npm or host the built files
+   - Update documentation
+
+## 🛠️ Development Tools
+
+The curate.fun ecosystem provides several tools to help with plugin development:
+
+- **Plugin Manager**: A UI tool for testing plugins during development
+- **Plugin Template**: A starter template for creating new plugins
+- **Type Definitions**: TypeScript interfaces for plugin development
+
+## 📚 Best Practices
+
+1. **Type Safety**: Use TypeScript interfaces and generics for type safety
+2. **Error Handling**: Implement proper error handling and reporting
+3. **Resource Management**: Clean up resources in the shutdown method
+4. **Configuration Validation**: Validate plugin configuration during initialization
+5. **Documentation**: Document your plugin's functionality and configuration options
+
+## 🔗 Next Steps
+
+For detailed implementation guides and examples, check out:
+
+- [Build a Custom Plugin](../plugins/build-plugin.md) - Step-by-step guide
+- [Transformer Plugins](../plugins/transformers/index.md) - Transform content
+- [Distributor Plugins](../plugins/distributors/index.md) - Distribute content
+- [Source Plugins](../plugins/sources/index.md) - Collect content

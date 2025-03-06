@@ -6,16 +6,6 @@ sidebar_position: 3
 
 The RSS plugin enables distribution of curated content to RSS feeds, allowing you to publish content to your own RSS feed that can be consumed by RSS readers and other applications. This extends the reach of your curated content beyond the curate.fun platform itself.
 
-## 🚀 Features
-
-- **Multiple Feed Formats**: Generate RSS 2.0, Atom, and JSON Feed formats
-- **Standard-Compliant URLs**: Access feeds via standard paths (`/rss.xml`, `/atom.xml`, `/feed.json`) or API route `/api/items`
-- **Raw Data Option**: Get content without HTML via `/raw.json` for frontend customization
-- **HTML Sanitization**: Secure content handling with sanitize-html
-- **Flexible Deployment**: Deploy the RSS service to various platforms (Vercel, Netlify, Heroku, Cloudflare)
-- **Secure Authentication**: Simple API secret authentication for feed management
-- **Redis Storage**: Efficient storage with Upstash Redis (production) or Redis mock (development)
-
 ## 🔧 Setup Guide
 
 1. Deploy the RSS service to your preferred hosting platform. You can use the [RSS Service Template repository](https://github.com/PotLock/rss-service-template) which provides a ready-to-deploy RSS service with multiple deployment options.

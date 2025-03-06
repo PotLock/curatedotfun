@@ -38,6 +38,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl: "https://github.com/potlock/curatedotfun",
+          // No remark plugins
         },
         blog: {
           showReadingTime: true,
@@ -59,10 +60,17 @@ const config: Config = {
       } satisfies Preset.Options,
     ],
   ],
+  
 
   themeConfig: {
     // Replace with your project's social card
     image: "img/meta.png",
+    // Configure color mode
+    colorMode: {
+      defaultMode: 'light',
+      disableSwitch: false,
+      respectPrefersColorScheme: false,
+    },
     navbar: {
       title: "curate.fun",
       logo: {

@@ -19,6 +19,16 @@ const sidebars: SidebarsConfig = {
       id: "user-guides/curation",
       label: "📚 Curation",
     },
+    {
+      type: "doc",
+      id: "user-guides/using-plugins",
+      label: "🔌 Using Plugins",
+    },
+    {
+      type: "doc",
+      id: "user-guides/content-cookbook",
+      label: "👨‍🍳 Content Cookbook",
+    },
   ],
   developerGuideSidebar: [
     {
@@ -26,14 +36,25 @@ const sidebars: SidebarsConfig = {
       label: "🔨 Setup",
       items: ["developers/configuration", "developers/deployment"],
     },
-    // {
-    //   type: "category",
-    //   label: "🔌 Integration",
-    //   items: ["developers/plugins"],
-    // },
     {
       type: "category",
-      label: "🔌 Plugins",
+      label: "🔌 Plugin Development",
+      items: [
+        {
+          type: "doc",
+          id: "developers/plugins",
+          label: "🧩 Plugin Architecture",
+        },
+        {
+          type: "doc",
+          id: "plugins/build-plugin",
+          label: "🛠️ Building Custom Plugins",
+        },
+      ],
+    },
+    {
+      type: "category",
+      label: "📚 Plugin Reference",
       items: [
         {
           type: "doc",
@@ -77,6 +98,16 @@ const sidebars: SidebarsConfig = {
             },
             {
               type: "doc",
+              id: "plugins/distributors/rss",
+              label: "📰 RSS",
+            },
+            {
+              type: "doc",
+              id: "plugins/distributors/supabase",
+              label: "💾 Supabase",
+            },
+            {
+              type: "doc",
               id: "plugins/distributors/near-social",
               label: "🌐 NEAR Social",
             },
@@ -107,10 +138,6 @@ const sidebars: SidebarsConfig = {
               label: "🤖 AI Transform",
             },
           ],
-        },
-        {
-          type: "doc",
-          id: "plugins/build-plugin",
         },
       ],
     },

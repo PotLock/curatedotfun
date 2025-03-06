@@ -80,13 +80,16 @@ Configure error handling and retries appropriately for each distributor to ensur
 
 ## 🔄 Distribution Flow
 
-```mermaid
-graph TD
-    Input[Content Input] --> Transform[Per-Distributor Transform]
-    Transform --> Format[Platform Format]
-    Format --> Deliver[Content Delivery]
-    Deliver --> Status{Success?}
-    Status -->|Yes| Done[Complete]
-    Status -->|No| Retry[Retry Logic]
-    Retry --> Format
-```
+The distribution process follows these steps:
+
+1. **Content Input**: The content to be distributed enters the system
+2. **Per-Distributor Transform**: Content is transformed specifically for the target platform
+3. **Platform Format**: Content is formatted according to platform requirements
+4. **Content Delivery**: Content is sent to the target platform
+5. **Status Check**: The system checks if distribution was successful
+   - If successful: The distribution process is complete
+   - If failed: The retry logic is triggered
+6. **Retry Logic**: Failed distributions are retried with appropriate backoff
+7. **Return to Format**: The retry process starts again from the formatting step
+
+This flow ensures reliable content delivery with appropriate error handling and retry mechanisms.
