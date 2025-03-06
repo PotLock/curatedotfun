@@ -10,7 +10,7 @@
 <h1 style="font-size: 2.5rem; font-weight: bold;">curate.fun</h1>
 
   <p>
-    <strong>Bot to curate and to streamline to different news feeds</strong>
+    <strong>curate news on socials & build community-owned autonomous brands</strong>
   </p>
 
 </div>
