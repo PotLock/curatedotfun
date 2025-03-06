@@ -61,6 +61,14 @@ export default function Home(): JSX.Element {
           content="curate.fun lets you curate news directly on socials and turn feeds into regular content."
         />
         <meta
+          property="og:image"
+          content="/img/meta.png"
+        />
+        <meta
+          property="twitter:image"
+          content="/img/meta.png"
+        />
+        <meta
           name="keywords"
           content="curate, news, socials, content, feeds, curate.fun, AI, curation, social media, content creation"
         />

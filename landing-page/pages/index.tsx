@@ -487,11 +487,11 @@ export default function Home() {
         />
         <meta
           property="og:image"
-          content="https://curate.fun/curatedotfunbannernew.png"
+          content="https://curate.fun/meta.png"
         />
         <meta
           property="twitter:image"
-          content="https://curate.fun/curatedotfunbannernew.png"
+          content="https://curate.fun/meta.png"
         />
         <meta name="theme-color" content="#ffffff" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
