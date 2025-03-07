@@ -554,9 +554,7 @@ export interface LeaderboardEntry {
   feedSubmissions: FeedSubmissionCount[];
 }
 
-export function getLeaderboard(
-  db: BetterSQLite3Database
-): LeaderboardEntry[] {
+export function getLeaderboard(db: BetterSQLite3Database): LeaderboardEntry[] {
   // Step 1: Get all curators with their total submission counts
   interface CuratorRow {
     curatorId: string;
@@ -623,10 +621,10 @@ export function getLeaderboard(
     `) as unknown as CuratorFeedRow[];
 
     // Convert to FeedSubmissionCount array with total counts
-    const feedSubmissions: FeedSubmissionCount[] = curatorFeeds.map(feed => ({
+    const feedSubmissions: FeedSubmissionCount[] = curatorFeeds.map((feed) => ({
       feedId: feed.feedId,
       count: feed.count,
-      totalInFeed: feedTotalsMap.get(feed.feedId) || 0
+      totalInFeed: feedTotalsMap.get(feed.feedId) || 0,
     }));
 
     // Sort by count (highest first)
@@ -636,7 +634,7 @@ export function getLeaderboard(
       curatorId: curator.curatorId,
       curatorUsername: curator.curatorUsername,
       submissionCount: curator.submissionCount,
-      feedSubmissions
+      feedSubmissions,
     });
   }
 

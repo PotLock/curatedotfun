@@ -1,4 +1,10 @@
-import { FaTwitter, FaBook, FaGithub, FaTelegram, FaTrophy } from "react-icons/fa";
+import {
+  FaTwitter,
+  FaBook,
+  FaGithub,
+  FaTelegram,
+  FaTrophy,
+} from "react-icons/fa";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Modal } from "./Modal";
@@ -86,8 +92,11 @@ const Header = () => {
       <Modal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)}>
         <HowItWorks />
       </Modal>
-      
-      <LeaderboardModal isOpen={showLeaderboard} onClose={() => setShowLeaderboard(false)} />
+
+      <LeaderboardModal
+        isOpen={showLeaderboard}
+        onClose={() => setShowLeaderboard(false)}
+      />
     </>
   );
 };
