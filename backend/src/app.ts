@@ -222,6 +222,11 @@ export async function createApp(): Promise<AppInstance> {
     return c.json(rawConfig.feeds);
   });
 
+  app.get("/api/leaderboard", async (c) => {
+    const leaderboard = db.getLeaderboard();
+    return c.json(leaderboard);
+  });
+
   app.post("/api/plugins/reload", async (c) => {
     const pluginService = PluginService.getInstance();
     await pluginService.reloadAllPlugins();

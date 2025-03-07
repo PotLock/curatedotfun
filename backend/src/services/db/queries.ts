@@ -541,6 +541,108 @@ export function upsertFeedPlugin(
     .run();
 }
 
+export interface FeedSubmissionCount {
+  feedId: string;
+  count: number;
+  totalInFeed: number;
+}
+
+export interface LeaderboardEntry {
+  curatorId: string;
+  curatorUsername: string;
+  submissionCount: number;
+  feedSubmissions: FeedSubmissionCount[];
+}
+
+export function getLeaderboard(
+  db: BetterSQLite3Database
+): LeaderboardEntry[] {
+  // Step 1: Get all curators with their total submission counts
+  interface CuratorRow {
+    curatorId: string;
+    curatorUsername: string;
+    submissionCount: number;
+  }
+
+  const curators = db.all(sql`
+    SELECT 
+      s.curator_id AS curatorId,
+      s.curator_username AS curatorUsername,
+      COUNT(DISTINCT s.tweet_id) AS submissionCount
+    FROM 
+      submissions s
+    GROUP BY 
+      s.curator_id, s.curator_username
+    ORDER BY 
+      submissionCount DESC
+  `) as unknown as CuratorRow[];
+
+  // Step 2: Get total submissions per feed
+  interface FeedTotalRow {
+    feedId: string;
+    totalCount: number;
+  }
+
+  const feedTotals = db.all(sql`
+    SELECT 
+      feed_id AS feedId,
+      COUNT(DISTINCT submission_id) AS totalCount
+    FROM 
+      submission_feeds
+    GROUP BY 
+      feed_id
+  `) as unknown as FeedTotalRow[];
+
+  // Create a map for quick lookup of feed totals
+  const feedTotalsMap = new Map<string, number>();
+  for (const feed of feedTotals) {
+    feedTotalsMap.set(feed.feedId, feed.totalCount);
+  }
+
+  // Step 3: For each curator, get their submissions per feed
+  const result: LeaderboardEntry[] = [];
+
+  for (const curator of curators) {
+    interface CuratorFeedRow {
+      feedId: string;
+      count: number;
+    }
+
+    const curatorFeeds = db.all(sql`
+      SELECT 
+        sf.feed_id AS feedId,
+        COUNT(DISTINCT sf.submission_id) AS count
+      FROM 
+        submission_feeds sf
+      JOIN 
+        submissions s ON sf.submission_id = s.tweet_id
+      WHERE 
+        s.curator_id = ${curator.curatorId}
+      GROUP BY 
+        sf.feed_id
+    `) as unknown as CuratorFeedRow[];
+
+    // Convert to FeedSubmissionCount array with total counts
+    const feedSubmissions: FeedSubmissionCount[] = curatorFeeds.map(feed => ({
+      feedId: feed.feedId,
+      count: feed.count,
+      totalInFeed: feedTotalsMap.get(feed.feedId) || 0
+    }));
+
+    // Sort by count (highest first)
+    feedSubmissions.sort((a, b) => b.count - a.count);
+
+    result.push({
+      curatorId: curator.curatorId,
+      curatorUsername: curator.curatorUsername,
+      submissionCount: curator.submissionCount,
+      feedSubmissions
+    });
+  }
+
+  return result;
+}
+
 export function getSubmissionsByFeed(
   db: BetterSQLite3Database,
   feedId: string,

@@ -1,11 +1,13 @@
-import { FaTwitter, FaBook, FaGithub, FaTelegram } from "react-icons/fa";
+import { FaTwitter, FaBook, FaGithub, FaTelegram, FaTrophy } from "react-icons/fa";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Modal } from "./Modal";
 import { HowItWorks } from "./HowItWorks";
+import { LeaderboardModal } from "./LeaderboardModal";
 
 const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   return (
     <>
@@ -29,6 +31,12 @@ const Header = () => {
             className="text-gray-600 hover:text-black transition-colors"
           >
             How It Works
+          </button>
+          <button
+            onClick={() => setShowLeaderboard(true)}
+            className="text-gray-600 hover:text-black transition-colors flex items-center"
+          >
+            <FaTrophy className="mr-1" /> Leaderboard
           </button>
           {process.env.NODE_ENV === "development" && (
             <Link
@@ -78,6 +86,8 @@ const Header = () => {
       <Modal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)}>
         <HowItWorks />
       </Modal>
+      
+      <LeaderboardModal isOpen={showLeaderboard} onClose={() => setShowLeaderboard(false)} />
     </>
   );
 };

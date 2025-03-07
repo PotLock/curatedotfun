@@ -2,13 +2,14 @@
   "name": "curatedotfun",
   "version": "1.0.0",
   "devDependencies": {
+    "concurrently": "^9.1.2",
     "prettier": "^3.3.3",
     "turbo": "latest"
   },
   "packageManager": "bun@1.0.27",
   "private": true,
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "concurrently \"cd backend && bun run dev\" \"cd frontend && bun run dev\"",
     "build": "turbo run build",
     "start": "cd backend && npm run start",
     "db:up": "cd backend && npm run db:up",

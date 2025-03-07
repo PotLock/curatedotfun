@@ -204,6 +204,15 @@ export class DatabaseService {
       throw new Error(`Failed to clear Twitter cache: ${error.message}`);
     }
   }
+
+  getLeaderboard(): queries.LeaderboardEntry[] {
+    try {
+      return queries.getLeaderboard(this.db);
+    } catch (error: any) {
+      logger.error("Failed to get leaderboard:", { error });
+      throw new Error(`Failed to get leaderboard: ${error.message}`);
+    }
+  }
 }
 
 // Export a singleton instance

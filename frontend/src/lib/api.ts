@@ -80,3 +80,29 @@ export function useUpdateLastTweetId() {
     },
   });
 }
+
+export interface FeedSubmissionCount {
+  feedId: string;
+  count: number;
+  totalInFeed: number;
+}
+
+export interface LeaderboardEntry {
+  curatorId: string;
+  curatorUsername: string;
+  submissionCount: number;
+  feedSubmissions: FeedSubmissionCount[];
+}
+
+export function useLeaderboard() {
+  return useQuery<LeaderboardEntry[]>({
+    queryKey: ["leaderboard"],
+    queryFn: async () => {
+      const response = await fetch("/api/leaderboard");
+      if (!response.ok) {
+        throw new Error("Failed to fetch leaderboard");
+      }
+      return response.json();
+    },
+  });
+}
