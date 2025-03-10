@@ -1,7 +1,0 @@
-* Increase time
-* Write README
-* Test with a new submission and approval
-* Test with reject
-* Integrate NEAR contract
-* Build a small dashboard to see what there is to be approved and rejected?
-* Tag all of the admins in the "Received" reply

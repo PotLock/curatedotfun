@@ -2,7 +2,7 @@ import { Tweet } from "agent-twitter-client";
 import { Hono } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
-import { MockTwitterService } from "../__tests__/mocks/twitter-service.mock";
+import { MockTwitterService } from "../../__tests__/mocks/twitter-service.mock";
 
 // Create a single mock instance to maintain state
 const mockTwitterService = new MockTwitterService();

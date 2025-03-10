@@ -1,55 +1,25 @@
-import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
-import { serveStatic } from "@hono/node-server/serve-static";
-import { z } from "zod";
-import { readFile } from "fs/promises";
 import path from "path";
-import { mockTwitterService, testRoutes } from "./routes/test";
+import { apiRoutes } from "./routes/api";
+import { configureStaticRoutes, staticRoutes } from "./routes/static";
+import { mockTwitterService } from "./routes/api/test";
 import { ConfigService, isProduction } from "./services/config/config.service";
-import { db } from "./services/db";
 import { DistributionService } from "./services/distribution/distribution.service";
-import { ProcessorService } from "./services/processor/processor.service";
 import { PluginService } from "./services/plugins/plugin.service";
-import { TransformationService } from "./services/transformation/transformation.service";
+import { ProcessorService } from "./services/processor/processor.service";
 import { SubmissionService } from "./services/submissions/submission.service";
+import { TransformationService } from "./services/transformation/transformation.service";
 import { TwitterService } from "./services/twitter/client";
-import { logger } from "./utils/logger";
-import { zValidator } from "@hono/zod-validator";
+import { AppContext, AppInstance, HonoApp } from "./types/app";
+import { errorHandler } from "./utils/error";
 
 const ALLOWED_ORIGINS = [
   "http://localhost:3000",
   "http://localhost:5173", // Dev server
   "https://curatedotfun-floral-sun-1539.fly.dev",
 ];
-
-export interface AppContext {
-  twitterService: TwitterService | null;
-  submissionService: SubmissionService | null;
-  distributionService: DistributionService | null;
-  processorService: ProcessorService | null;
-  configService: ConfigService;
-}
-
-type ValidatedRequest = {
-  json: {
-    tweetId: string;
-  };
-  query: {
-    limit?: string;
-    offset?: string;
-  };
-};
-
-export interface AppInstance {
-  app: Hono<{
-    Variables: {
-      context: AppContext;
-    };
-    Validators: ValidatedRequest;
-  }>;
-  context: AppContext;
-}
 
 export async function createApp(): Promise<AppInstance> {
   // Initialize services
@@ -95,21 +65,20 @@ export async function createApp(): Promise<AppInstance> {
     configService,
   };
 
-  // Create Hono app with middleware
-  const app = new Hono<{
-    Variables: {
-      context: AppContext;
-    };
-    Validators: ValidatedRequest;
-  }>();
+  // Create Hono app
+  const app = HonoApp();
 
-  // Add context to app
+  // Set context (make services accessible to routes)
   app.use("*", async (c, next) => {
     c.set("context", context);
     await next();
   });
 
-  // Middleware
+  // Handle errors
+  app.onError((err, c) => {
+    return errorHandler(err, c);
+  });
+
   app.use("*", secureHeaders());
   app.use(
     "*",
@@ -118,232 +87,16 @@ export async function createApp(): Promise<AppInstance> {
       allowMethods: ["GET", "POST"],
     }),
   );
+  app.use("*", logger());
 
-  // Test routes in development
-  if (!isProduction) {
-    app.route("/api/test", testRoutes);
-  }
+  // Mount API routes
+  app.route("/api", apiRoutes);
 
-  // API Routes
-  app.get("/api/twitter/last-tweet-id", (c) => {
-    const context = c.get("context") as AppContext;
-    if (!context.twitterService) {
-      throw new Error("Twitter service not available");
-    }
-    const lastTweetId = context.twitterService.getLastCheckedTweetId();
-    return c.json({ lastTweetId });
-  });
-
-  app.post(
-    "/api/twitter/last-tweet-id",
-    zValidator(
-      "json",
-      z.object({
-        tweetId: z.string().regex(/^\d+$/),
-      }),
-    ),
-    async (c) => {
-      const context = c.get("context") as AppContext;
-      if (!context.twitterService) {
-        throw new Error("Twitter service not available");
-      }
-      const { tweetId } = c.req.valid("json");
-      await context.twitterService.setLastCheckedTweetId(tweetId);
-      return c.json({ success: true });
-    },
-  );
-
-  app.get("/api/submission/:submissionId", async (c) => {
-    const submissionId = c.req.param("submissionId");
-    const content = await db.getSubmission(submissionId);
-    if (!content) {
-      throw new Error(`Content not found: ${submissionId}`);
-    }
-    return c.json(content);
-  });
-
-  app.get(
-    "/api/submissions",
-    zValidator(
-      "query",
-      z.object({
-        limit: z.string().regex(/^\d+$/).optional(),
-        offset: z.string().regex(/^\d+$/).optional(),
-      }),
-    ),
-    async (c) => {
-      const { limit, offset } = c.req.valid("query");
-      return c.json(
-        await db.getAllSubmissions(
-          limit ? parseInt(limit) : undefined,
-          offset ? parseInt(offset) : undefined,
-        ),
-      );
-    },
-  );
-
-  app.get("/api/submissions/:feedId", async (c) => {
-    const context = c.get("context") as AppContext;
-    const feedId = c.req.param("feedId");
-    const status = c.req.query("status");
-
-    const feed = context.configService.getFeedConfig(feedId);
-    if (!feed) {
-      throw new Error(`Feed not found: ${feedId}`);
-    }
-    let submissions = await db.getSubmissionsByFeed(feedId);
-    if (status) {
-      submissions = submissions.filter((sub) => sub.status === status);
-    }
-    return c.json(submissions);
-  });
-
-  app.get("/api/feed/:feedId", async (c) => {
-    const context = c.get("context") as AppContext;
-    const feedId = c.req.param("feedId");
-
-    const feed = context.configService.getFeedConfig(feedId);
-    if (!feed) {
-      throw new Error(`Feed not found: ${feedId}`);
-    }
-
-    return c.json(await db.getSubmissionsByFeed(feedId));
-  });
-
-  app.get("/api/config", async (c) => {
-    const context = c.get("context") as AppContext;
-    const rawConfig = await context.configService.getRawConfig();
-    return c.json(rawConfig);
-  });
-
-  app.get("/api/feeds", async (c) => {
-    const context = c.get("context") as AppContext;
-    const rawConfig = await context.configService.getRawConfig();
-    return c.json(rawConfig.feeds);
-  });
-
-  app.get("/api/leaderboard", async (c) => {
-    const leaderboard = db.getLeaderboard();
-    return c.json(leaderboard);
-  });
-
-  app.post("/api/plugins/reload", async (c) => {
-    const pluginService = PluginService.getInstance();
-    await pluginService.reloadAllPlugins();
-    return c.json({ success: true });
-  });
-
-  app.get("/api/config/:feedId", (c) => {
-    const context = c.get("context") as AppContext;
-    const feedId = c.req.param("feedId");
-
-    const feed = context.configService.getFeedConfig(feedId);
-    if (!feed) {
-      throw new Error(`Feed not found: ${feedId}`);
-    }
-    return c.json(feed);
-  });
-
-  app.post("/api/feeds/:feedId/process", async (c) => {
-    const context = c.get("context") as AppContext;
-    const feedId = c.req.param("feedId");
-
-    const feed = context.configService.getFeedConfig(feedId);
-    if (!feed) {
-      throw new Error(`Feed not found: ${feedId}`);
-    }
-
-    // Get approved submissions for this feed
-    const submissions = await db.getSubmissionsByFeed(feedId);
-    const approvedSubmissions = submissions.filter(
-      (sub) => sub.status === "approved",
-    );
-
-    if (approvedSubmissions.length === 0) {
-      return c.json({ processed: 0 });
-    }
-
-    // Process each submission through stream output
-    let processed = 0;
-    if (!context.processorService) {
-      throw new Error("Processor service not available");
-    }
-    for (const submission of approvedSubmissions) {
-      try {
-        if (feed.outputs.stream) {
-          await context.processorService.process(
-            submission,
-            feed.outputs.stream,
-          );
-          processed++;
-        }
-      } catch (error) {
-        logger.error(
-          `Error processing submission ${submission.tweetId}:`,
-          error,
-        );
-      }
-    }
-
-    return c.json({ processed });
-  });
-
-  // Serve frontend in production, proxy to dev server in development
+  // Configure static routes for production
   if (isProduction) {
-    // Set up static file serving with correct MIME types
-    const staticOptions = { root: path.join(__dirname, "public") };
-
-    // Explicitly handle JS files with correct MIME type
-    app.get("/static/js/*", async (c) => {
-      const filename = c.req.path.replace("/static/js/", "");
-      const filePath = path.join(__dirname, "public/static/js", filename);
-
-      try {
-        const content = await readFile(filePath);
-        return c.newResponse(content, {
-          headers: {
-            "Content-Type": "application/javascript",
-          },
-        });
-      } catch (error) {
-        return c.notFound();
-      }
-    });
-
-    // Explicitly handle CSS files with correct MIME type
-    app.get("/static/css/*", async (c) => {
-      const filename = c.req.path.replace("/static/css/", "");
-      const filePath = path.join(__dirname, "public/static/css", filename);
-
-      try {
-        const content = await readFile(filePath);
-        return c.newResponse(content, {
-          headers: {
-            "Content-Type": "text/css",
-          },
-        });
-      } catch (error) {
-        return c.notFound();
-      }
-    });
-
-    // Serve other static files
-    app.use("/static/*", serveStatic(staticOptions));
-    app.use("/assets/*", serveStatic(staticOptions));
-
-    // API routes are handled above
-
-    // For all other routes, serve the index.html file (SPA routing)
-    app.get("*", async (c) => {
-      try {
-        const filePath = path.join(__dirname, "public/index.html");
-        const content = await readFile(filePath, "utf-8");
-        return c.html(content);
-      } catch (error) {
-        logger.error(`Failed to read index.html: ${error}`);
-        return c.text("Failed to load application", 500);
-      }
-    });
+    const publicDir = path.join(__dirname, "public");
+    configureStaticRoutes(publicDir);
+    app.route("", staticRoutes);
   }
 
   return { app, context };
