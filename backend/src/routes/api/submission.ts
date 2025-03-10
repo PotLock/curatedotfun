@@ -12,12 +12,7 @@ const router = HonoApp();
 router.get("/", zValidator("query", schemas.pagination), async (c) => {
   const { limit, offset } = c.req.valid("query");
 
-  return c.json(
-    await db.getAllSubmissions(
-      limit ? parseInt(limit) : undefined,
-      offset ? parseInt(offset) : undefined,
-    ),
-  );
+  return c.json(db.getAllSubmissions(limit, offset));
 });
 
 /**
@@ -25,7 +20,7 @@ router.get("/", zValidator("query", schemas.pagination), async (c) => {
  */
 router.get("/single/:submissionId", async (c) => {
   const submissionId = c.req.param("submissionId");
-  const content = await db.getSubmission(submissionId);
+  const content = db.getSubmission(submissionId);
 
   if (!content) {
     return c.notFound();
@@ -37,23 +32,35 @@ router.get("/single/:submissionId", async (c) => {
 /**
  * Get submissions for a specific feed
  */
-router.get("/feed/:feedId", async (c) => {
-  const context = c.get("context");
-  const feedId = c.req.param("feedId");
-  const status = c.req.query("status");
+router.get(
+  "/feed/:feedId",
+  zValidator("query", schemas.pagination),
+  async (c) => {
+    const context = c.get("context");
+    const feedId = c.req.param("feedId");
+    const status = c.req.query("status");
+    const { limit, offset } = c.req.valid("query");
 
-  const feed = context.configService.getFeedConfig(feedId);
-  if (!feed) {
-    return c.notFound();
-  }
+    const feed = context.configService.getFeedConfig(feedId);
+    if (!feed) {
+      return c.notFound();
+    }
 
-  let submissions = await db.getSubmissionsByFeed(feedId);
+    let submissions = await db.getSubmissionsByFeed(feedId);
 
-  if (status) {
-    submissions = submissions.filter((sub) => sub.status === status);
-  }
+    if (status) {
+      submissions = submissions.filter((sub) => sub.status === status);
+    }
 
-  return c.json(submissions);
-});
+    // Apply pagination if provided
+    if (limit || offset) {
+      const startIndex = offset || 0;
+      const endIndex = limit ? startIndex + limit : undefined;
+      submissions = submissions.slice(startIndex, endIndex);
+    }
+
+    return c.json(submissions);
+  },
+);
 
 export default router;
