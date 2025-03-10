@@ -290,9 +290,47 @@ export async function createApp(): Promise<AppInstance> {
 
   // Serve frontend in production, proxy to dev server in development
   if (isProduction) {
-    // Serve all static files from the public directory
-    app.use("/*", serveStatic({ root: path.join(__dirname, "public") }));
-
+    // Set up static file serving with correct MIME types
+    const staticOptions = { root: path.join(__dirname, "public") };
+    
+    // Explicitly handle JS files with correct MIME type
+    app.get("/static/js/*", async (c) => {
+      const filename = c.req.path.replace("/static/js/", "");
+      const filePath = path.join(__dirname, "public/static/js", filename);
+      
+      try {
+        const content = await readFile(filePath);
+        return c.newResponse(content, {
+          headers: {
+            "Content-Type": "application/javascript"
+          }
+        });
+      } catch (error) {
+        return c.notFound();
+      }
+    });
+    
+    // Explicitly handle CSS files with correct MIME type
+    app.get("/static/css/*", async (c) => {
+      const filename = c.req.path.replace("/static/css/", "");
+      const filePath = path.join(__dirname, "public/static/css", filename);
+      
+      try {
+        const content = await readFile(filePath);
+        return c.newResponse(content, {
+          headers: {
+            "Content-Type": "text/css"
+          }
+        });
+      } catch (error) {
+        return c.notFound();
+      }
+    });
+    
+    // Serve other static files
+    app.use("/static/*", serveStatic(staticOptions));
+    app.use("/assets/*", serveStatic(staticOptions));
+    
     // API routes are handled above
 
     // For all other routes, serve the index.html file (SPA routing)

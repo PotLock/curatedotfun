@@ -8,7 +8,7 @@
       "persistent": true
     },
     "build": {
-      "dependsOn": ["^build", "db:push"],
+      "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
     "lint": {
