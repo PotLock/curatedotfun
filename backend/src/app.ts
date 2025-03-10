@@ -290,16 +290,21 @@ export async function createApp(): Promise<AppInstance> {
 
   // Serve frontend in production, proxy to dev server in development
   if (isProduction) {
-    // Serve static files with proper MIME types
-    app.use("/static/*", serveStatic({ root: path.join(__dirname, "public") }));
+    // Serve all static files from the public directory
+    app.use("/*", serveStatic({ root: path.join(__dirname, "public") }));
 
     // API routes are handled above
 
     // For all other routes, serve the index.html file (SPA routing)
     app.get("*", async (c) => {
-      const filePath = path.join(__dirname, "public/index.html");
-      const content = await readFile(filePath, "utf-8");
-      return c.html(content);
+      try {
+        const filePath = path.join(__dirname, "public/index.html");
+        const content = await readFile(filePath, "utf-8");
+        return c.html(content);
+      } catch (error) {
+        logger.error(`Failed to read index.html: ${error}`);
+        return c.text("Failed to load application", 500);
+      }
     });
   }
 
