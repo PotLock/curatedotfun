@@ -7,6 +7,14 @@ import { logger } from "../../utils/logger";
 const router = HonoApp();
 
 /**
+ * Get all feeds
+ */
+router.get("/", async (c) => {
+  const context = c.get("context");
+  return c.json(context.configService.getConfig().feeds);
+});
+
+/**
  * Get submissions for a specific feed
  */
 router.get("/:feedId", async (c) => {
