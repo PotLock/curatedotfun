@@ -554,12 +554,12 @@ export interface LeaderboardEntry {
   feedSubmissions: FeedSubmissionCount[];
 }
 
+export interface CountResult {
+  count: number;
+}
+
 export function getPostsCount(db: BetterSQLite3Database): number {
   // Count approved submissions
-  interface CountResult {
-    count: number;
-  }
-
   const result = db.get(sql`
     SELECT COUNT(DISTINCT submission_id) as count
     FROM submission_feeds
@@ -571,10 +571,6 @@ export function getPostsCount(db: BetterSQLite3Database): number {
 
 export function getCuratorsCount(db: BetterSQLite3Database): number {
   // Count unique curator IDs
-  interface CountResult {
-    count: number;
-  }
-
   const result = db.get(sql`
     SELECT COUNT(DISTINCT curator_id) as count
     FROM submissions
