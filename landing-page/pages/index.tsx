@@ -1,3 +1,6 @@
+import FAQ from "@/components/FAQ";
+import Footer from "@/components/Footer";
+import PopularFeeds from "@/components/PopularFeeds";
 import Stats from "@/components/Stats";
 import TweetWall from "@/components/TweetWall";
 import {
@@ -5,9 +8,7 @@ import {
   CalendarRange,
   ExternalLink,
   Gift,
-  Minus,
   Newspaper,
-  Plus,
   Podcast,
   SatelliteDish,
   Workflow,
@@ -15,18 +16,7 @@ import {
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import {
-  FaBook,
-  FaCheck,
-  FaCopy,
-  FaGithub,
-  FaGlobeAmericas,
-  FaTelegram,
-  FaTwitter,
-} from "react-icons/fa";
-import hashtagData from "../../curate.config.json";
-
+import { FaGlobeAmericas } from "react-icons/fa";
 const PARTNERS = [
   {
     href: "https://www.elizaos.ai/",
@@ -161,300 +151,7 @@ const PARTNERS = [
   },
 ];
 
-// First, update the HashtagButton type
-type HashtagButton = {
-  tag: string;
-  isActive?: boolean;
-  command?: string;
-  onClick?: () => void;
-};
-
-const HashtagButton = ({ tag, isActive, onClick }: HashtagButton) => {
-  const [copied, setCopied] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  // Only show client-side features after mounting
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const handleCopy = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigator.clipboard
-      .writeText(`!submit @curatedotfun #${tag}`)
-      .then(
-        () => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        },
-        () => {
-          console.error("Failed to copy text to clipboard");
-        },
-      )
-      .catch((error) => {
-        console.error("Failed to copy text to clipboard", error);
-      });
-  };
-
-  return (
-    <button className="relative" onClick={onClick}>
-      <div
-        className={`
-          px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2
-          ${
-            isActive
-              ? "bg-gray-500 text-white"
-              : "bg-white hover:bg-gray-100 border border-gray-200"
-          }
-        `}
-      >
-        <span>#{tag}</span>
-        {isActive && <span className="text-gray-300">▼</span>}
-      </div>
-      {/* Only render dropdown after component is mounted */}
-      {mounted && isActive && (
-        <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg p-3 shadow-lg z-50 whitespace-nowrap">
-          <div className="flex items-center gap-2">
-            <p className="text-sm text-gray-600">
-              !submit @curatedotfun #{tag}
-            </p>
-            <button
-              className="flex items-center gap-1 px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 rounded transition-colors"
-              onClick={handleCopy}
-            >
-              {copied ? (
-                <FaCheck className="text-green-500" />
-              ) : (
-                <FaCopy className="text-gray-400 hover:text-gray-600" />
-              )}
-            </button>
-          </div>
-          <button
-            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            onClick={() =>
-              window.open(`https://app.curate.fun/feed/${tag}`, "_blank")
-            }
-          >
-            Open Feed
-          </button>
-        </div>
-      )}
-    </button>
-  );
-};
-
-const FAQs = () => {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-
-  const faqs = [
-    {
-      question: "What is curate.fun?",
-      answer:
-        "curate.fun is a platform designed to streamline community crowsourced news to build autonomous content.",
-    },
-    {
-      question: "How do I get a feed?",
-      answer: "Hop on our telegram and let us know what you want.",
-    },
-    {
-      question: "Wen token?",
-      answer: "Soon. TG for alpha",
-    },
-    {
-      question: "What is platforms are currently supported?",
-      answer:
-        "Currently twitter for curation, headlines + threads + blogs for content, and telegram + twitter crosspost. Will be adding more soon.",
-    },
-    {
-      question: "How can you add support?",
-      answer:
-        "You can add support by contributing to our <a class='hyperlink' href='https://github.com/potlock/curatedotfun' target='_blank' rel='noopener noreferrer'>GitHub repository</a> or joining our community.",
-    },
-    {
-      question: "How does it work?",
-      answer:
-        "curate.fun uses AI to  summarize content from the approved community curated news from socials.",
-    },
-  ];
-
-  const toggleFAQ = (index: number) => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
-
-  return (
-    <section className="w-full bg-white mb-20">
-      <div className="w-full flex md:flex-row flex-col mx-auto py-6 md:py-8">
-        <div className="max-w-[1200px] mx-auto px-4">
-          <div className="flex flex-col md:items-start items-center mb-6 md:mb-8">
-            <span className="inline-block px-4 py-2 rounded-full border border-black text-sm">
-              FAQs
-            </span>
-          </div>
-
-          <h2 className="text-3xl md:text-5xl font-bold mb-8 md:mb-12 text-center md:text-left">
-            Frequently asked questions
-          </h2>
-          <p className="md:text-left text-center mb-8">
-            CONTACT US <span className="text-blue-500">→</span>
-          </p>
-        </div>
-        <div className="md:max-w-[820px] max-w-[1200px] flex-1 w-full mx-auto px-6">
-          <div className="space-y-4">
-            {faqs.map((faq, index) => (
-              <div key={index} className="p-4 bg-gray-100 rounded-md">
-                <div
-                  className="flex justify-between items-center flex-1 cursor-pointer"
-                  onClick={() => toggleFAQ(index)}
-                >
-                  <p className="font-semibold">{faq.question}</p>
-                  <div className="flex items-center">
-                    {openIndex === index ? (
-                      <Minus
-                        className="text-gray-500 cursor-pointer"
-                        onClick={() => toggleFAQ(index)}
-                      />
-                    ) : (
-                      <Plus
-                        className="text-gray-500 cursor-pointer"
-                        onClick={() => toggleFAQ(index)}
-                      />
-                    )}
-                  </div>
-                </div>
-                {openIndex === index && (
-                  <p
-                    className="mt-2 text-gray-600 flex-1"
-                    dangerouslySetInnerHTML={{ __html: faq.answer }}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
 export default function Home() {
-  const soon = true;
-
-  // Define the case studies JSON object
-  const caseStudies = [
-    {
-      name: "Crypto Grant Wire",
-      hashtag: "#grant",
-      Description: "Feed for Web3 grant +  DAO Governance",
-      logo: "📡",
-      link: "https://t.me/cryptograntwire",
-      soon: true,
-      hide: false,
-    },
-    {
-      name: "This Week in Ethereum",
-      hashtag: "#ethereum",
-      description: "Comprehensive Ethereum ecosystem updates",
-      logo: "🌐",
-      link: "https://x.com/curatedotfun",
-      soon: true,
-      hide: true,
-    },
-    {
-      name: "NEARWEEK",
-      hashtag: "#near",
-      description: "NEAR Protocol's community digest",
-      logo: "📅",
-      link: "https://x.com/nearweekbot",
-      soon: true,
-      hide: false,
-    },
-    {
-      name: "AI x Crypto News",
-      hashtag: "#ai3",
-      description: "Intersection of AI and blockchain",
-      logo: "🤖",
-      link: "https://t.me/curatedotfun",
-      soon: true,
-      hide: true,
-    },
-    {
-      name: "AI News",
-      hashtag: "#ai",
-      description: "Latest updates in AI",
-      logo: "📰",
-      link: "https://near.ai",
-      soon: true,
-      hide: true,
-    },
-    {
-      name: "Crypto News",
-      hashtag: "#crypto",
-      description: "Latest updates in cryptocurrency",
-      logo: "💰",
-      link: "https://t.me/curatedotfun",
-      soon: true,
-      hide: true,
-    },
-    {
-      name: "Public Goods FM",
-      hashtag: "#publicgoods",
-      description: "Public goods focused podcast and newsletter",
-      logo: "🎙️",
-      link: "https:/publicgoods.fm",
-      soon: true,
-      hide: false,
-    },
-    {
-      name: "Morph L2",
-      hashtag: "#morph",
-      description: "Updates on Morph L2",
-      logo: "🔄",
-      link: "https://x.com/morph-news",
-      soon: true,
-      hide: true,
-    },
-  ];
-
-  const features = [
-    {
-      emoji: "📰",
-      title: "Smart Feed Creation",
-      description:
-        "Build intelligent content feeds that automatically collect and filter posts using advanced AI (powered by ChatGPT, Claude, and Llama).",
-      soon: false,
-    },
-    {
-      emoji: "👍",
-      title: "Streamlined Approval Workflow",
-      description:
-        "Designated approvers review submissions through an intuitive interface, ensuring quality while maintaining efficiency.",
-      soon: false,
-    },
-    {
-      emoji: "🔄",
-      title: "AI-Powered Content Summaries",
-      description:
-        "Our AI creates engaging recaps and transforms content into multiple formats - from newsletters to podcasts.",
-      soon: false,
-    },
-    {
-      emoji: "🎙️",
-      title: "Multi-Format Publishing",
-      description:
-        "One-click conversion into professional blog posts, curated newsletters, AI-voiced podcasts, and real-time news feeds.",
-      soon: true,
-    },
-    {
-      emoji: "🚀",
-      title: "Incentivized Curation",
-      description:
-        "Coming Soon: Earn tokens for quality content curation, creating a sustainable ecosystem for content creators and curators.",
-      soon: true,
-    },
-  ];
-
-  const [activeHashtag, setActiveHashtag] = useState("");
-
   return (
     <main className="flex flex-col min-h-screen bg-white w-[100vw]">
       <Head>
@@ -593,32 +290,7 @@ export default function Home() {
         <div className="w-full border-t border-black"></div>
       </header>
 
-      <section className="w-full bg-white6">
-        <div className="w-full max-w-7xl mx-auto py-8 md:py-12">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-center">
-            Popular Feeds
-          </h2>
-
-          <div className="flex flex-wrap gap-3 md:gap-4 justify-center">
-            {hashtagData.feeds.map((feed) => (
-              <HashtagButton
-                key={feed.id}
-                tag={feed.id.replace("#", "")}
-                isActive={activeHashtag === feed.id.replace("#", "")}
-                onClick={() =>
-                  setActiveHashtag(
-                    activeHashtag === feed.id.replace("#", "")
-                      ? ""
-                      : feed.id.replace("#", ""),
-                  )
-                }
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="w-full border-t border-black"></div>
-      </section>
+      <PopularFeeds />
 
       <section className="w-full bg-white">
         <div className="w-full mx-auto pt-6 md:pt-8">
@@ -1166,65 +838,8 @@ export default function Home() {
         <div className="w-full border-t border-black"></div>
       </section>
 
-      <FAQs />
-
-      <footer className="w-full py-8 bg-[#F9F9F9] border-t border-black flex flex-col sm:flex-row justify-between items-center px-6 gap-6">
-        <div className="flex items-center">
-          <Image
-            src="/curatedotfuntransparenticon.png"
-            alt="curate.fun Logo"
-            width={32}
-            height={32}
-            className="h-8 w-8 mr-2"
-            priority
-          />
-          <h1 className="text-2xl font-bold">curate.fun</h1>
-        </div>
-        <div className="text-sm sm:text-base text-right mt-2 sm:mt-0">
-          <Link
-            href="https://potlock.org"
-            className="hover:text-gray-800"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Curated with ❤️ by 🫕 POTLOCK
-          </Link>
-        </div>
-        <div className="flex space-x-6">
-          <Link
-            href="https://twitter.com/curatedotfun"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xl hover:text-blue-500"
-          >
-            <FaTwitter />
-          </Link>
-          <Link
-            href="https://docs.curate.fun"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xl hover:text-blue-500"
-          >
-            <FaBook />
-          </Link>
-          <Link
-            href="https://github.com/potlock/curatedotfun"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xl hover:text-blue-500"
-          >
-            <FaGithub />
-          </Link>
-          <Link
-            href="https://t.me/+UM70lvMnofk3YTVh"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xl hover:text-blue-500"
-          >
-            <FaTelegram />
-          </Link>
-        </div>
-      </footer>
+      <FAQ />
+      <Footer />
     </main>
   );
 }
