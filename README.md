@@ -158,7 +158,6 @@ This project uses a monorepo structure managed with [Turborepo](https://turbo.bu
 curatedotfun/
 ├── frontend/          # React frontend application (app.curate.fun)
 ├── backend/           # Node.js backend service (app.curate.fun)
-├── docs/              # Documentation website (docs.curate.fun)
 ├── package.json       # Root package.json for shared dependencies
 └── turbo.json         # Turborepo configuration
 ```
@@ -198,7 +197,7 @@ npm run build
 
 ### Deploying
 
-For deployment instructions, see our [Deployment Guide](./docs/docs/developers/deployment.md).
+For deployment instructions, see our [Deployment Guide](https://docs.curate.fun/docs/developers/deployment).
 
 ### Running tests
 

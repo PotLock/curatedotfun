@@ -123,7 +123,7 @@ API documentation is available at `/swagger` when running the development server
 
 ## Plugin Development
 
-To develop new plugins for curate.fun, see the [Plugin Development Guide](../docs/docs/plugins/build-plugin.md).
+To develop new plugins for curate.fun, see the [Plugin Development Guide](https://docs.curate.fun/docs/plugins/build-plugin).
 
 Plugins can extend the platform in various ways:
 
