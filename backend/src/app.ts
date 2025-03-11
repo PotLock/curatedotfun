@@ -18,7 +18,9 @@ import { errorHandler } from "./utils/error";
 const ALLOWED_ORIGINS = [
   "http://localhost:3000",
   "http://localhost:5173", // Dev server
+  "http://localhost:3001", // Landing page
   "https://curatedotfun-floral-sun-1539.fly.dev",
+  "https://curate.fun",
 ];
 
 export async function createApp(): Promise<AppInstance> {

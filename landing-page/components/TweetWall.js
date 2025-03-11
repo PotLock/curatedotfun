@@ -19,22 +19,24 @@ const TweetWall = () => {
         {tweetData.tweetIds.map((tweetId, index) => (
           <div
             key={index}
-            className={`p-8 ${index < 6 ? "border-b" : ""} ${
+            className={`p-4 ${index < 6 ? "border-b" : ""} ${
               index % 3 !== 2 ? "border-r" : ""
             } border-[#57606A] `}
             style={{
               height: "500px",
-              overflowY: "scroll",
+              overflowY: "auto",
               scrollbarWidth: "none",
             }}
           >
-            <ErrorBoundary
-              fallback={
-                <div className="p-4 text-gray-500">Failed to load tweet</div>
-              }
-            >
-              <Tweet id={tweetId} />
-            </ErrorBoundary>
+            <div className="flex justify-center h-full">
+              <ErrorBoundary
+                fallback={
+                  <div className="p-4 text-gray-500">Failed to load tweet</div>
+                }
+              >
+                <Tweet id={tweetId} />
+              </ErrorBoundary>
+            </div>
           </div>
         ))}
       </div>
@@ -46,15 +48,24 @@ const TweetWall = () => {
           {tweetData.tweetIds.map((tweetId, index) => (
             <div
               key={index}
-              className="mb-4 min-w-full flex-shrink-0 snap-center mx-auto p-4 md:p-8 border-b border-[#57606A] flex justify-center"
+              className="mb-4 min-w-full flex-shrink-0 snap-center mx-auto p-4 border-b border-[#57606A]"
+              style={{
+                height: "500px",
+                overflowY: "auto",
+                scrollbarWidth: "none",
+              }}
             >
-              <ErrorBoundary
-                fallback={
-                  <div className="p-4 text-gray-500">Failed to load tweet</div>
-                }
-              >
-                <Tweet id={tweetId} className="mx-auto" />
-              </ErrorBoundary>
+              <div className="flex justify-center h-full">
+                <ErrorBoundary
+                  fallback={
+                    <div className="p-4 text-gray-500">
+                      Failed to load tweet
+                    </div>
+                  }
+                >
+                  <Tweet id={tweetId} className="mx-auto" />
+                </ErrorBoundary>
+              </div>
             </div>
           ))}
         </div>

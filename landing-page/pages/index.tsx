@@ -1,3 +1,4 @@
+import Stats from "@/components/Stats";
 import TweetWall from "@/components/TweetWall";
 import {
   Bot,
@@ -700,40 +701,7 @@ export default function Home() {
               </div>
             </div>
             <div className="hidden md:block absolute left-0 w-screen border-t border-black mb-8"></div>
-            <div className="grid grid-cols-2 md:grid-cols-4">
-              <div className="p-6 md:p-8 border-r border-b md:border-b-0 border-black">
-                <h4 className="text-3xl md:text-4xl font-bold mb-2 text-center md:text-left">
-                  500
-                </h4>
-                <p className="text-gray-500 uppercase text-xs md:text-sm text-center md:text-left">
-                  POSTS CURATED
-                </p>
-              </div>
-              <div className="p-6 md:p-8 border-b md:border-r md:border-b-0 border-black">
-                <h4 className="text-3xl md:text-4xl font-bold mb-2 text-center md:text-left">
-                  3
-                </h4>
-                <p className="text-gray-500 uppercase text-xs md:text-sm text-center md:text-left">
-                  MEDIA PARTNERS
-                </p>
-              </div>
-              <div className="p-6 md:p-8 border-r border-black">
-                <h4 className="text-3xl md:text-4xl font-bold mb-2 text-center md:text-left">
-                  +30
-                </h4>
-                <p className="text-gray-500 uppercase text-xs md:text-sm text-center md:text-left">
-                  CURATORS
-                </p>
-              </div>
-              <div className="p-6 md:p-8">
-                <h4 className="text-3xl md:text-4xl font-bold mb-2 text-center md:text-left">
-                  21
-                </h4>
-                <p className="text-gray-500 uppercase text-xs md:text-sm text-center md:text-left">
-                  FEEDS
-                </p>
-              </div>
-            </div>
+            <Stats />
           </div>
         </div>
         <div className="w-full border-t border-black"></div>
@@ -1104,7 +1072,7 @@ export default function Home() {
                 >
                   <div className="flex items-start gap-2 mb-4">
                     <Image
-                      src="https://cdn1.cdn-telegram.org/file/Y0NDaS421SdueeYpg8Ae7aSVkh027ugUcj3iMpyuEtWoCoMa3QyQ_QWmMuq4DXd7qt4sLn4J0wlNQZmBZePFhzmfpvoKms3UZwONx4fSWnORLxtBmDbDdUofQwBaDNx4G6QK9687OzdP_5wK8S7DU2cnjY4zQSoCnDEtv-hyGf1qRQLYrdYhvq8DLWTUKg3LT_thSw-iddrtX8G5SBFo4BkyVezj2OMY42VFlu-efKASJAZ_D-oerem1U9q5G6buzGcAqSCL8DfpBXqEG30HEbk1rYcyn3L81Hn30qABujOjpAPUfrdg-F19OsiT6K8AeykaZgwJfkkLODAfzh-gDQ.jpg"
+                      src="/assets/images/communities/cryptofundraises.jpg"
                       alt="Crypto Fundraising"
                       width={32}
                       height={32}
