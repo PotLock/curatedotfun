@@ -133,6 +133,31 @@ Plugins can extend the platform in various ways:
 
 The plugin system provides a standardized interface with type safety and comprehensive testing support.
 
+## Database Backup (Temporary)
+
+AWS has been configured inside of the container, in order to take manual back-ups to Tigris object storage. These backups can be installed and replace .db/submissions.sqlite for local development, or for testing migration scripts.
+
+1. SSH into container
+
+```bash
+fly ssh console
+```
+
+2. Export a backup, and then gzip it
+
+```bash
+litefs export -name db ./backups/MONTH-DAY
+gzip ./backups MONTH-DAY
+```
+
+3. Save to S3 bucket (environment is preconfigured with S3 secrets)
+
+```bash
+aws s3 cp ./MONTH-DAY.gz s3://curatedotfun-backups/MONTH-DAY.gz --endpoint-url https://fly.storage.tigris.dev
+```
+
+4. Download from Tigris, unzip, and replace .db/submissions.sqlite
+
 <div align="right">
 <a href="https://nearbuilders.org" target="_blank">
 <img

@@ -47,6 +47,7 @@ RUN apt-get update -y && \
     python3 \
     make \
     g++ \
+    awscli \
     && rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
