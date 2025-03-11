@@ -5,6 +5,7 @@ import feedRoutes from "./feed";
 import leaderboardRoutes from "./leaderboard";
 import pluginRoutes from "./plugin";
 import submissionRoutes from "./submission";
+import { statsRoutes } from "./stats";
 import { testRoutes } from "./test";
 import twitterRoutes from "./twitter";
 
@@ -24,3 +25,4 @@ apiRoutes.route("/feeds", feedRoutes); // Alias for compatibility (TODO: Fix, co
 apiRoutes.route("/config", configRoutes);
 apiRoutes.route("/plugins", pluginRoutes);
 apiRoutes.route("/leaderboard", leaderboardRoutes);
+apiRoutes.route("/stats", statsRoutes);

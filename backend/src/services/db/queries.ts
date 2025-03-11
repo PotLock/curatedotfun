@@ -554,6 +554,36 @@ export interface LeaderboardEntry {
   feedSubmissions: FeedSubmissionCount[];
 }
 
+export function getPostsCount(db: BetterSQLite3Database): number {
+  // Count approved submissions
+  interface CountResult {
+    count: number;
+  }
+
+  const result = db.get(sql`
+    SELECT COUNT(DISTINCT submission_id) as count
+    FROM submission_feeds
+    WHERE status = 'approved'
+  `) as CountResult | undefined;
+
+  return result?.count || 0;
+}
+
+export function getCuratorsCount(db: BetterSQLite3Database): number {
+  // Count unique curator IDs
+  interface CountResult {
+    count: number;
+  }
+
+  const result = db.get(sql`
+    SELECT COUNT(DISTINCT curator_id) as count
+    FROM submissions
+    WHERE curator_id IS NOT NULL
+  `) as CountResult | undefined;
+
+  return result?.count || 0;
+}
+
 export function getLeaderboard(db: BetterSQLite3Database): LeaderboardEntry[] {
   // Step 1: Get all curators with their total submission counts
   interface CuratorRow {

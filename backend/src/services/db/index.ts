@@ -213,6 +213,24 @@ export class DatabaseService {
       throw new Error(`Failed to get leaderboard: ${error.message}`);
     }
   }
+
+  getPostsCount(): number {
+    try {
+      return queries.getPostsCount(this.db);
+    } catch (error: any) {
+      logger.error("Failed to get posts count:", { error });
+      return 0;
+    }
+  }
+
+  getCuratorsCount(): number {
+    try {
+      return queries.getCuratorsCount(this.db);
+    } catch (error: any) {
+      logger.error("Failed to get curators count:", { error });
+      return 0;
+    }
+  }
 }
 
 // Export a singleton instance
