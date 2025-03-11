@@ -191,6 +191,6 @@
 
 ### Project Structure
 - Monorepo with Turborepo
-- Backend, Frontend, and Landing Page packages
+- Backend and Frontend
 - Shared types and utilities
 - Documentation as a separate package

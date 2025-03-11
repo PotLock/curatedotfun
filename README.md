@@ -5,7 +5,7 @@
 
 <div align="center">
 
-<img src="landing-page/public/meta.png" alt="curate.fun banner" width="100%" />
+<img src="https://www.curate.fun/meta.png" alt="curate.fun banner" width="100%" />
 
 <h1 style="font-size: 2.5rem; font-weight: bold;">curate.fun</h1>
 
@@ -159,7 +159,6 @@ curatedotfun/
 ├── frontend/          # React frontend application (app.curate.fun)
 ├── backend/           # Node.js backend service (app.curate.fun)
 ├── docs/              # Documentation website (docs.curate.fun)
-├── landing/           # Landing page website (curate.fun)
 ├── package.json       # Root package.json for shared dependencies
 └── turbo.json         # Turborepo configuration
 ```

@@ -45,7 +45,5 @@ next-env.d.ts
 .cache
 .db
 .turbo
-landing-page/yarn.lock
 package-lock.json
-landing-page/bun.lockb
 bun.lockb
