@@ -56,14 +56,14 @@ describe("sanitizeJson", () => {
         array: [1, 2, { stringified: JSON.stringify({ value: "nested" }) }],
       },
     };
-    
+
     const expected = {
       name: "test",
       nested: {
         array: [1, 2, { stringified: { value: "nested" } }],
       },
     };
-    
+
     const result = sanitizeJson(input);
     expect(result).toEqual(expected);
   });

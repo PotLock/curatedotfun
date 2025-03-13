@@ -32,7 +32,7 @@ export class ProcessorService {
             config.transform,
             "global",
           );
-          
+
           processed = sanitizeJson(processed);
         } catch (error) {
           if (error instanceof TransformError) {
@@ -142,7 +142,7 @@ export class ProcessorService {
                 config.transform,
                 "global",
               );
-              
+
               processed = sanitizeJson(processed);
             }
             return processed;
@@ -163,7 +163,7 @@ export class ProcessorService {
             config.batchTransform,
             "batch",
           );
-          
+
           batchResult = sanitizeJson(batchResult);
         } catch (error) {
           if (error instanceof TransformError) {
@@ -192,7 +192,7 @@ export class ProcessorService {
                 distributor.transform,
                 "distributor",
               );
-            
+
             distributorContent = sanitizeJson(distributorContent);
           }
 
