@@ -53,14 +53,6 @@ function InfiniteFeed<T>({
     };
   }, [handleObserver]);
 
-  // Debug log to help diagnose the issue
-  console.log("InfiniteFeed debug:", {
-    itemsLength: items.length,
-    hasNextPage,
-    isFetchingNextPage,
-    status,
-  });
-
   return (
     <div className="space-y-4">
       {renderItems(items)}

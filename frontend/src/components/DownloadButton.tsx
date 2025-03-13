@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Modal } from "./Modal";
 import {
   TwitterSubmission,
   TwitterSubmissionWithFeedData,
 } from "../types/twitter";
+import { Modal } from "./Modal";
 
 interface DownloadButtonProps {
   items: TwitterSubmissionWithFeedData[];
@@ -23,13 +23,18 @@ const DownloadButton = ({ items, feedName = "all" }: DownloadButtonProps) => {
     const blob = new Blob([jsonContent], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = `${feedName}_${selectedStatus}_submissions.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setIsDownloadModalOpen(false);
+    try {
+      a.href = url;
+      a.download = `${feedName}_${selectedStatus}_submissions.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Download failed:", error);
+    } finally {
+      URL.revokeObjectURL(url);
+      setIsDownloadModalOpen(false);
+    }
   };
 
   const DownloadModal = () => (

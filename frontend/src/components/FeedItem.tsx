@@ -289,7 +289,7 @@ export const FeedItem = ({
     submission.moderationHistory?.[submission.moderationHistory.length - 1];
 
   return (
-    <div className="card">
+    <div className="card" id={submission.tweetId}>
       {/* Header Section */}
       <div className="flex justify-between items-start">
         <div className="flex-grow">

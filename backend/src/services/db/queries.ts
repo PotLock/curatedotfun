@@ -496,7 +496,7 @@ export function getAllSubmissions(
     }
 
     // Add feed status if available
-    if (result.sf && result.sf.feedId && result.f && result.f.id) {
+    if (result.sf?.feedId && result.f?.id) {
       // If status is provided, only include feeds with that status
       if (!status || result.sf.status === status) {
         const feedStatusesForSubmission = feedStatusMap.get(result.s.tweetId)!;
