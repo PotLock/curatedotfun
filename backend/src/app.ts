@@ -89,7 +89,8 @@ export async function createApp(): Promise<AppInstance> {
       allowMethods: ["GET", "POST"],
     }),
   );
-  app.use("*", logger());
+
+  if (!isProduction) app.use("*", logger());
 
   // Mount API routes
   app.route("/api", apiRoutes);

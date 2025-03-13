@@ -21,11 +21,11 @@ const DownloadButton = ({ items, feedName = "all" }: DownloadButtonProps) => {
     );
     const jsonContent = JSON.stringify(itemsToDownload, null, 2);
     const file = new File(
-      [jsonContent], 
-      `${feedName.toLowerCase()}_${selectedStatus}_submissions.json`, 
-      { 
-        type: "application/json;charset=utf-8" 
-      }
+      [jsonContent],
+      `${feedName.toLowerCase()}_${selectedStatus}_submissions.json`,
+      {
+        type: "application/json;charset=utf-8",
+      },
     );
     const url = URL.createObjectURL(file);
     const a = document.createElement("a");
