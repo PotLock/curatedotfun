@@ -121,36 +121,68 @@ const FeedStatusBadges = ({
     return null;
   }
 
-  // Show up to 3 badges, with a "+X more" indicator if there are more
-  const visibleStatuses = filteredStatuses.slice(0, 3);
-  const hasMore = filteredStatuses.length > 3;
+  // Show only 1 badge on mobile/tablet, up to 3 on desktop
+  const maxVisibleBadges = {
+    mobile: 1,
+    desktop: 3,
+  };
 
   return (
     <div className="relative">
       <div className="flex flex-wrap gap-1">
-        {visibleStatuses.map((fs) => (
-          <StatusBadge
-            key={fs.feedId}
-            status={fs.status}
-            feedId={fs.feedId}
-            feedName={fs.feedName}
-            clickable
-          />
-        ))}
+        {/* Mobile view - show only 1 badge */}
+        <div className="md:hidden">
+          {filteredStatuses.slice(0, maxVisibleBadges.mobile).map((fs) => (
+            <StatusBadge
+              key={fs.feedId}
+              status={fs.status}
+              feedId={fs.feedId}
+              feedName={fs.feedName}
+              clickable
+            />
+          ))}
 
-        {hasMore && (
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="px-2 py-1 rounded-md text-sm font-medium bg-gray-200 text-black flex items-center"
-          >
-            +{filteredStatuses.length - 3} more
-            {isExpanded ? (
-              <HiChevronUp className="ml-1" />
-            ) : (
-              <HiChevronDown className="ml-1" />
-            )}
-          </button>
-        )}
+          {filteredStatuses.length > maxVisibleBadges.mobile && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="px-2 py-1 rounded-md text-sm font-medium bg-gray-200 text-black flex items-center"
+            >
+              +{filteredStatuses.length - maxVisibleBadges.mobile} more
+              {isExpanded ? (
+                <HiChevronUp className="ml-1" />
+              ) : (
+                <HiChevronDown className="ml-1" />
+              )}
+            </button>
+          )}
+        </div>
+
+        {/* Desktop view - show up to 3 badges */}
+        <div className="hidden md:flex md:flex-wrap md:gap-1">
+          {filteredStatuses.slice(0, maxVisibleBadges.desktop).map((fs) => (
+            <StatusBadge
+              key={fs.feedId}
+              status={fs.status}
+              feedId={fs.feedId}
+              feedName={fs.feedName}
+              clickable
+            />
+          ))}
+
+          {filteredStatuses.length > maxVisibleBadges.desktop && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="px-2 py-1 rounded-md text-sm font-medium bg-gray-200 text-black flex items-center"
+            >
+              +{filteredStatuses.length - maxVisibleBadges.desktop} more
+              {isExpanded ? (
+                <HiChevronUp className="ml-1" />
+              ) : (
+                <HiChevronDown className="ml-1" />
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Popover for expanded view */}
@@ -189,26 +221,35 @@ const NotesSection = ({
   tweetId: string;
   note: string | null;
   className?: string;
-}) => (
-  <div
-    className={`p-4 border-2 border-gray-200 rounded-md bg-gray-50 ${className}`}
-  >
-    <div className="flex items-center gap-2 mb-2">
-      <h4 className="heading-3">{title}</h4>
-      <span className="text-gray-400">·</span>
-      <div className="text-gray-600">
-        by <UserLink username={username} />
-        <span className="text-gray-400 mx-1">·</span>
-        <TweetLink
-          tweetId={tweetId}
-          username={username}
-          title={`View ${title.toLowerCase()} on X/Twitter`}
-        />
+}) => {
+  // Change title based on whether there are notes or not
+  const displayTitle = note
+    ? title
+    : title === "Moderation Notes"
+      ? "Moderated"
+      : "Curated";
+
+  return (
+    <div
+      className={`p-4 border-2 border-gray-200 rounded-md bg-gray-50 ${className}`}
+    >
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        <h4 className="heading-3">{displayTitle}</h4>
+        <span className="text-gray-400">·</span>
+        <div className="text-gray-600 break-words">
+          by <UserLink username={username} />
+          <span className="text-gray-400 mx-1">·</span>
+          <TweetLink
+            tweetId={tweetId}
+            username={username}
+            title={`View ${title.toLowerCase()} on X/Twitter`}
+          />
+        </div>
       </div>
+      {note && <p className="body-text text-gray-700">{note}</p>}
     </div>
-    {note && <p className="body-text text-gray-700">{note}</p>}
-  </div>
-);
+  );
+};
 
 const ModerationActions = ({
   submission,
@@ -292,9 +333,11 @@ export const FeedItem = ({
       </div>
 
       {/* Content Section */}
-      <p className="text-lg leading-relaxed body-text pt-2">
-        {submission.content}
-      </p>
+      <div className="w-full overflow-hidden">
+        <p className="text-lg leading-relaxed body-text pt-2 break-words overflow-wrap-anywhere">
+          {submission.content}
+        </p>
+      </div>
 
       {/* Notes Section */}
       <div className="mt-6">
@@ -302,27 +345,29 @@ export const FeedItem = ({
         {(submission.status === "approved" ||
           submission.status === "rejected") &&
           lastModeration && (
-            <NotesSection
-              title="Moderation Notes"
-              username={lastModeration.adminId}
-              tweetId={submission.moderationResponseTweetId!}
-              note={lastModeration.note}
-              className="mb-4"
-            />
+            <div className="flex">
+              <div className="flex-col flex-grow">
+                <NotesSection
+                  title="Moderation Notes"
+                  username={lastModeration.adminId}
+                  tweetId={submission.moderationResponseTweetId!}
+                  note={lastModeration.note}
+                  className="mb-4"
+                />
+              </div>
+            </div>
           )}
 
         {/* Curator Notes and Moderation Actions */}
         {submission.status === "pending" && (
           <div className="flex gap-8">
             <div className="flex-col flex-grow">
-              {submission.curatorNotes?.trim() && (
-                <NotesSection
-                  title="Curator's Notes"
-                  username={submission.curatorUsername}
-                  tweetId={submission.curatorTweetId}
-                  note={submission.curatorNotes}
-                />
-              )}
+              <NotesSection
+                title="Curator's Notes"
+                username={submission.curatorUsername}
+                tweetId={submission.curatorTweetId}
+                note={submission.curatorNotes}
+              />
             </div>
             <div className="flex-col">
               <div className="flex">

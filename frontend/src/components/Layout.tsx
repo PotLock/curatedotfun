@@ -69,24 +69,26 @@ const Layout = ({ children, sidebar, rightPanel }: LayoutProps) => {
           )}
         </div>
       </div>
-      <footer className="fixed bottom-0 w-full py-2 sm:py-4 text-center bg-white/80 backdrop-blur text-sm sm:text-base border-t-2 border-black">
+      <footer className="fixed bottom-0 w-full py-2 sm:py-4 bg-white/80 backdrop-blur text-sm sm:text-base border-t-2 border-black">
         <div className="relative max-w-7xl mx-auto px-4">
-          <a
-            href="https://potlock.org"
-            className="hover:text-gray-800"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Curated with ❤️ by 🫕 POTLOCK
-          </a>
-          <a
-            href="https://github.com/PotLock/curatedotfun/issues"
-            className="absolute right-4 top-1/2 -translate-y-1/2 px-4 py-1 border-2 border-black hover:bg-black hover:text-white transition-colors rounded-md"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Feedback
-          </a>
+          <div className="flex justify-between items-center sm:block sm:text-center">
+            <a
+              href="https://potlock.org"
+              className="hover:text-gray-800"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {"Curated with ❤️ by 🫕 POTLOCK"}
+            </a>
+            <a
+              href="https://github.com/PotLock/curatedotfun/issues"
+              className="sm:absolute sm:right-4 sm:top-1/2 sm:-translate-y-1/2 px-4 py-1 border-2 border-black hover:bg-black hover:text-white transition-colors rounded-md"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Feedback
+            </a>
+          </div>
         </div>
       </footer>
     </div>

@@ -29,11 +29,15 @@ const FeedHeader = ({
         <p className="text-sm sm:text-base text-gray-600">{description}</p>
       </div>
       <div className="flex flex-wrap gap-2 items-start xl:items-center xl:justify-end">
-        <StatusFilterButtons
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-        />
-        <DownloadButton items={items} feedName={feedName} />
+        <div className="w-full sm:w-auto flex flex-wrap gap-2">
+          <StatusFilterButtons
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+          />
+        </div>
+        <div className="w-full sm:w-auto mt-2 sm:mt-0">
+          <DownloadButton items={items} feedName={feedName} />
+        </div>
       </div>
     </div>
   );
