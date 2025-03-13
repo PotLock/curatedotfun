@@ -354,7 +354,7 @@ export function getAllSubmissions(
   status?: string,
 ): TwitterSubmissionWithFeedData[] {
   // Build the query with or without status filter
-  const queryBuilder = status 
+  const queryBuilder = status
     ? db
         .select({
           s: {
@@ -376,13 +376,15 @@ export function getAllSubmissions(
             note: moderationHistory.note,
             createdAt: moderationHistory.createdAt,
             feedId: moderationHistory.feedId,
-            moderationResponseTweetId: submissionFeeds.moderationResponseTweetId,
+            moderationResponseTweetId:
+              submissionFeeds.moderationResponseTweetId,
           },
           sf: {
             submissionId: submissionFeeds.submissionId,
             feedId: submissionFeeds.feedId,
             status: submissionFeeds.status,
-            moderationResponseTweetId: submissionFeeds.moderationResponseTweetId,
+            moderationResponseTweetId:
+              submissionFeeds.moderationResponseTweetId,
           },
           f: {
             id: feeds.id,
@@ -398,10 +400,7 @@ export function getAllSubmissions(
           submissionFeeds,
           eq(submissions.tweetId, submissionFeeds.submissionId),
         )
-        .leftJoin(
-          feeds,
-          eq(submissionFeeds.feedId, feeds.id),
-        )
+        .leftJoin(feeds, eq(submissionFeeds.feedId, feeds.id))
         .where(eq(submissionFeeds.status, status as SubmissionStatus))
     : db
         .select({
@@ -424,13 +423,15 @@ export function getAllSubmissions(
             note: moderationHistory.note,
             createdAt: moderationHistory.createdAt,
             feedId: moderationHistory.feedId,
-            moderationResponseTweetId: submissionFeeds.moderationResponseTweetId,
+            moderationResponseTweetId:
+              submissionFeeds.moderationResponseTweetId,
           },
           sf: {
             submissionId: submissionFeeds.submissionId,
             feedId: submissionFeeds.feedId,
             status: submissionFeeds.status,
-            moderationResponseTweetId: submissionFeeds.moderationResponseTweetId,
+            moderationResponseTweetId:
+              submissionFeeds.moderationResponseTweetId,
           },
           f: {
             id: feeds.id,
@@ -446,14 +447,9 @@ export function getAllSubmissions(
           submissionFeeds,
           eq(submissions.tweetId, submissionFeeds.submissionId),
         )
-        .leftJoin(
-          feeds,
-          eq(submissionFeeds.feedId, feeds.id),
-        );
-  
-  const results = queryBuilder
-    .orderBy(moderationHistory.createdAt)
-    .all();
+        .leftJoin(feeds, eq(submissionFeeds.feedId, feeds.id));
+
+  const results = queryBuilder.orderBy(moderationHistory.createdAt).all();
 
   // Group results by submission
   const submissionMap = new Map<string, TwitterSubmissionWithFeedData>();
@@ -474,10 +470,12 @@ export function getAllSubmissions(
         createdAt: result.s.createdAt,
         submittedAt: result.s.submittedAt,
         moderationHistory: [],
-        status: status ? status as SubmissionStatus : SubmissionStatus.PENDING, // Use provided status or default
+        status: status
+          ? (status as SubmissionStatus)
+          : SubmissionStatus.PENDING, // Use provided status or default
         feedStatuses: [],
       });
-      
+
       // Initialize feed status map for this submission
       feedStatusMap.set(result.s.tweetId, new Map<string, FeedStatus>());
     }
@@ -502,13 +500,14 @@ export function getAllSubmissions(
       // If status is provided, only include feeds with that status
       if (!status || result.sf.status === status) {
         const feedStatusesForSubmission = feedStatusMap.get(result.s.tweetId)!;
-        
+
         if (!feedStatusesForSubmission.has(result.sf.feedId)) {
           feedStatusesForSubmission.set(result.sf.feedId, {
             feedId: result.sf.feedId,
             feedName: result.f.name,
             status: result.sf.status,
-            moderationResponseTweetId: result.sf.moderationResponseTweetId ?? undefined,
+            moderationResponseTweetId:
+              result.sf.moderationResponseTweetId ?? undefined,
           });
         }
       }
@@ -520,17 +519,18 @@ export function getAllSubmissions(
     const feedStatusesForSubmission = feedStatusMap.get(tweetId);
     if (feedStatusesForSubmission) {
       submission.feedStatuses = Array.from(feedStatusesForSubmission.values());
-      
+
       // Determine the main status based on priority (pending > rejected > approved)
       let hasPending = false;
       let hasRejected = false;
       let hasApproved = false;
-      
+
       for (const feedStatus of submission.feedStatuses) {
         if (feedStatus.status === SubmissionStatus.PENDING) {
           hasPending = true;
           submission.status = SubmissionStatus.PENDING;
-          submission.moderationResponseTweetId = feedStatus.moderationResponseTweetId;
+          submission.moderationResponseTweetId =
+            feedStatus.moderationResponseTweetId;
           break; // Pending has highest priority
         } else if (feedStatus.status === SubmissionStatus.REJECTED) {
           hasRejected = true;
@@ -538,25 +538,27 @@ export function getAllSubmissions(
           hasApproved = true;
         }
       }
-      
+
       if (!hasPending) {
         if (hasRejected) {
           submission.status = SubmissionStatus.REJECTED;
           // Find first rejected status for moderationResponseTweetId
           const rejectedStatus = submission.feedStatuses.find(
-            fs => fs.status === SubmissionStatus.REJECTED
+            (fs) => fs.status === SubmissionStatus.REJECTED,
           );
           if (rejectedStatus) {
-            submission.moderationResponseTweetId = rejectedStatus.moderationResponseTweetId;
+            submission.moderationResponseTweetId =
+              rejectedStatus.moderationResponseTweetId;
           }
         } else if (hasApproved) {
           submission.status = SubmissionStatus.APPROVED;
           // Find first approved status for moderationResponseTweetId
           const approvedStatus = submission.feedStatuses.find(
-            fs => fs.status === SubmissionStatus.APPROVED
+            (fs) => fs.status === SubmissionStatus.APPROVED,
           );
           if (approvedStatus) {
-            submission.moderationResponseTweetId = approvedStatus.moderationResponseTweetId;
+            submission.moderationResponseTweetId =
+              approvedStatus.moderationResponseTweetId;
           }
         }
       }

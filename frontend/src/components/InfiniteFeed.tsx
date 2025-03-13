@@ -21,11 +21,11 @@ function InfiniteFeed<T>({
   status,
   loadingMessage = "Loading more items...",
   noMoreItemsMessage = "No more items to load",
-  initialLoadingMessage = "Loading items..."
+  initialLoadingMessage = "Loading items...",
 }: InfiniteFeedProps<T>) {
   // Create an intersection observer to detect when user scrolls to bottom
   const observerTarget = useRef<HTMLDivElement>(null);
-  
+
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const [entry] = entries;
@@ -33,7 +33,7 @@ function InfiniteFeed<T>({
         fetchNextPage();
       }
     },
-    [fetchNextPage, hasNextPage, isFetchingNextPage]
+    [fetchNextPage, hasNextPage, isFetchingNextPage],
   );
 
   useEffect(() => {
@@ -43,7 +43,7 @@ function InfiniteFeed<T>({
     const observer = new IntersectionObserver(handleObserver, {
       root: null,
       rootMargin: "100px", // Start loading a bit earlier
-      threshold: 0.1,      // Trigger when just 10% of the element is visible
+      threshold: 0.1, // Trigger when just 10% of the element is visible
     });
 
     observer.observe(element);
@@ -58,13 +58,13 @@ function InfiniteFeed<T>({
     itemsLength: items.length,
     hasNextPage,
     isFetchingNextPage,
-    status
+    status,
   });
 
   return (
     <div className="space-y-4">
       {renderItems(items)}
-      
+
       {/* Loading indicator and observer target */}
       <div ref={observerTarget} className="py-4 flex justify-center">
         {isFetchingNextPage && (

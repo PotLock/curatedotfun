@@ -23,7 +23,7 @@ export interface TwitterSubmission {
 export interface TwitterSubmissionWithFeedData extends TwitterSubmission {
   status: SubmissionStatus;
   moderationResponseTweetId?: string;
-  feedStatuses?: FeedStatus[]; 
+  feedStatuses?: FeedStatus[];
 }
 
 export interface Moderation {

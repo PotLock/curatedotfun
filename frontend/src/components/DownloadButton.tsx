@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Modal } from "./Modal";
-import { TwitterSubmission, TwitterSubmissionWithFeedData } from "../types/twitter";
+import {
+  TwitterSubmission,
+  TwitterSubmissionWithFeedData,
+} from "../types/twitter";
 
 interface DownloadButtonProps {
   items: TwitterSubmissionWithFeedData[];

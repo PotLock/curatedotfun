@@ -5,7 +5,10 @@ interface StatusFilterButtonsProps {
   setStatusFilter: (status: "all" | TwitterSubmission["status"]) => void;
 }
 
-const StatusFilterButtons = ({ statusFilter, setStatusFilter }: StatusFilterButtonsProps) => {
+const StatusFilterButtons = ({
+  statusFilter,
+  setStatusFilter,
+}: StatusFilterButtonsProps) => {
   return (
     <div className="flex flex-wrap gap-2 items-start xl:items-center xl:justify-end">
       <button

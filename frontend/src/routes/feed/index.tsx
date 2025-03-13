@@ -21,16 +21,11 @@ function FeedIndexPage() {
 
   // Fetch submissions with infinite scroll
   const ITEMS_PER_PAGE = 20;
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    status
-  } = useAllSubmissions(
-    ITEMS_PER_PAGE, 
-    statusFilter === "all" ? undefined : statusFilter
-  );
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
+    useAllSubmissions(
+      ITEMS_PER_PAGE,
+      statusFilter === "all" ? undefined : statusFilter,
+    );
 
   // Get the items from the transformed data
   const items = data?.items || [];
@@ -68,7 +63,7 @@ function FeedIndexPage() {
           setStatusFilter={setStatusFilter}
           feedName="all"
         />
-        
+
         <InfiniteFeed
           items={items}
           fetchNextPage={fetchNextPage}
