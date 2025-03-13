@@ -33,6 +33,7 @@ Platform Stability and Feature Enhancement
 - Supporting growing number of feeds
 - Maintaining plugin compatibility
 - Balancing performance and features
+- **JSON sanitization throughout transformation pipeline**
 
 ## Active Decisions
 
@@ -81,3 +82,4 @@ Platform Stability and Feature Enhancement
 3. Configuration-driven feed management
 4. Multi-channel content distribution
 5. **Secure static file serving with proper MIME types**
+6. **JSON sanitization at key points in the transformation pipeline**

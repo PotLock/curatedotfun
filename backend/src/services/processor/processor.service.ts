@@ -3,6 +3,7 @@ import { ProcessorError, TransformError } from "../../types/errors";
 import { DistributionService } from "../distribution/distribution.service";
 import { TransformationService } from "../transformation/transformation.service";
 import { logger } from "../../utils/logger";
+import { sanitizeJson } from "../../utils/sanitize";
 
 interface ProcessConfig {
   enabled?: boolean;
@@ -31,6 +32,8 @@ export class ProcessorService {
             config.transform,
             "global",
           );
+          
+          processed = sanitizeJson(processed);
         } catch (error) {
           if (error instanceof TransformError) {
             logger.error("Global transform failed:", error);
@@ -62,6 +65,7 @@ export class ProcessorService {
                   distributor.transform,
                   "distributor",
                 );
+              distributorContent = sanitizeJson(distributorContent);
             } catch (error) {
               if (error instanceof TransformError) {
                 logger.error(
@@ -138,6 +142,8 @@ export class ProcessorService {
                 config.transform,
                 "global",
               );
+              
+              processed = sanitizeJson(processed);
             }
             return processed;
           } catch (error) {
@@ -157,6 +163,8 @@ export class ProcessorService {
             config.batchTransform,
             "batch",
           );
+          
+          batchResult = sanitizeJson(batchResult);
         } catch (error) {
           if (error instanceof TransformError) {
             logger.error("Batch transform failed:", error);
@@ -184,6 +192,8 @@ export class ProcessorService {
                 distributor.transform,
                 "distributor",
               );
+            
+            distributorContent = sanitizeJson(distributorContent);
           }
 
           // Send to distributor

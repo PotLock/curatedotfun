@@ -1148,7 +1148,7 @@
     {
       "id": "shippost",
       "name": "Shippost",
-      "description": "Regular web3 builder demos",
+      "description": "Tracking the ships in the NEAR ecosystem 🚢",
       "moderation": {
         "approvers": {
           "twitter": [
@@ -1245,6 +1245,7 @@
                       "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
                       "description": "{{summary}}",
                       "link": "{{source}}",
+                      "publishedAt": "{{createdAt}}",
                       "author": {
                         "name": "{{username}}",
                         "link": "https://x.com/{{author}}"
@@ -1261,7 +1262,12 @@
               "plugin": "@curatedotfun/rss",
               "config": {
                 "serviceUrl": "https://shippost-rss.up.railway.app",
-                "apiSecret": "{SHIPPOST_RSS_API_SECRET}"
+                "apiSecret": "{SHIPPOST_RSS_API_SECRET}",
+                "feedConfig": {
+                  "title": "Shippost",
+                  "description": "Tracking the ships in the NEAR ecosystem 🚢",
+                  "siteUrl": "https://shippost.near.page"
+                }
               }
             }
           ]
@@ -1778,7 +1784,11 @@
               "plugin": "@curatedotfun/rss",
               "config": {
                 "serviceUrl": "https://climate-rss.up.railway.app",
-                "apiSecret": "{CLIMATE_RSS_API_SECRET}"
+                "apiSecret": "{CLIMATE_RSS_API_SECRET}",
+                "feedConfig": {
+                  "title": "Climate Current",
+                  "description": "Real-time feed for the latest in climate science, policy, and action."
+              }
               }
             }
           ]

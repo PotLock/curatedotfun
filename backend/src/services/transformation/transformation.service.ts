@@ -2,6 +2,7 @@ import { TransformConfig } from "../../types/config";
 import { TransformError } from "../../types/errors";
 import { PluginService } from "../plugins/plugin.service";
 import { logger } from "../../utils/logger";
+import { sanitizeJson } from "../../utils/sanitize";
 import { ActionArgs } from "@curatedotfun/types";
 
 export type TransformStage = "global" | "distributor" | "batch";
@@ -46,7 +47,7 @@ export class TransformationService {
       const transform = transforms[i];
       try {
         const plugin = await this.pluginService.getPlugin(transform.plugin, {
-          type: "transform",
+          type: "transformer",
           config: transform.config,
         });
 
@@ -70,8 +71,10 @@ export class TransformationService {
           );
         }
 
+        const sanitizedResult = sanitizeJson(transformResult);
+
         // Combine results, either merging objects or using new result
-        result = this.combineResults(result, transformResult);
+        result = this.combineResults(result, sanitizedResult);
       } catch (error) {
         // If it's already a TransformError, rethrow it
         if (error instanceof TransformError) {
