@@ -1,7 +1,9 @@
-import { HiExternalLink } from "react-icons/hi";
-import { TwitterSubmissionWithFeedData } from "../types/twitter";
+import { HiExternalLink, HiChevronDown, HiChevronUp } from "react-icons/hi";
+import { FeedStatus, SubmissionStatus, TwitterSubmissionWithFeedData } from "../types/twitter";
 import { getTweetUrl, handleApprove, handleReject } from "../lib/twitter";
 import { useBotId } from "../lib/config";
+import { useState, useRef, useEffect } from "react";
+import { Link } from "@tanstack/react-router";
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleString();
 };
@@ -40,9 +42,13 @@ const TweetLink = ({
 
 const StatusBadge = ({
   status,
+  feedId,
+  feedName,
   clickable = false,
 }: {
   status: TwitterSubmissionWithFeedData["status"];
+  feedId?: string;
+  feedName?: string;
   clickable?: boolean;
 }) => {
   const baseClasses = "status-badge px-2 py-1 rounded-md text-sm font-medium";
@@ -52,7 +58,107 @@ const StatusBadge = ({
     rejected: "bg-red-200 text-black",
   };
   const classes = `${baseClasses} ${statusClasses[status]} ${clickable ? "cursor-pointer hover:opacity-80" : ""}`;
+  
+  if (feedId) {
+    return (
+      <Link to="/feed/$feedId" params={{ feedId }} className={classes} title={feedName}>
+        {status}
+      </Link>
+    );
+  }
+  
   return <span className={classes}>{status}</span>;
+};
+
+// Feed Status Badges component
+const FeedStatusBadges = ({ 
+  feedStatuses, 
+  statusFilter 
+}: { 
+  feedStatuses?: FeedStatus[];
+  statusFilter: "all" | SubmissionStatus;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  
+  // Close popover when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        setIsExpanded(false);
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+  
+  if (!feedStatuses || feedStatuses.length === 0) {
+    return null;
+  }
+  
+  // Filter statuses based on statusFilter
+  const filteredStatuses = statusFilter === "all" 
+    ? feedStatuses 
+    : feedStatuses.filter(fs => fs.status === statusFilter);
+  
+  if (filteredStatuses.length === 0) {
+    return null;
+  }
+  
+  // Show up to 3 badges, with a "+X more" indicator if there are more
+  const visibleStatuses = filteredStatuses.slice(0, 3);
+  const hasMore = filteredStatuses.length > 3;
+  
+  return (
+    <div className="relative">
+      <div className="flex flex-wrap gap-1">
+        {visibleStatuses.map((fs) => (
+          <StatusBadge 
+            key={fs.feedId} 
+            status={fs.status} 
+            feedId={fs.feedId}
+            feedName={fs.feedName}
+            clickable 
+          />
+        ))}
+        
+        {hasMore && (
+          <button 
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="px-2 py-1 rounded-md text-sm font-medium bg-gray-200 text-black flex items-center"
+          >
+            +{filteredStatuses.length - 3} more
+            {isExpanded ? <HiChevronUp className="ml-1" /> : <HiChevronDown className="ml-1" />}
+          </button>
+        )}
+      </div>
+      
+      {/* Popover for expanded view */}
+      {isExpanded && (
+        <div 
+          ref={popoverRef}
+          className="absolute top-full left-0 mt-1 p-2 bg-white border-2 border-black shadow-sharp rounded-md z-10 min-w-[200px]"
+        >
+          <h4 className="font-medium mb-2">All Feeds</h4>
+          <div className="space-y-2">
+            {filteredStatuses.map((fs) => (
+              <div key={fs.feedId} className="flex justify-between items-center">
+                <span className="text-sm">{fs.feedName}</span>
+                <StatusBadge 
+                  status={fs.status} 
+                  feedId={fs.feedId}
+                  clickable 
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 const NotesSection = ({
@@ -115,9 +221,10 @@ const ModerationActions = ({
 
 interface FeedItemProps {
   submission: TwitterSubmissionWithFeedData;
+  statusFilter: "all" | SubmissionStatus;
 }
 
-export const FeedItem = ({ submission }: FeedItemProps) => {
+export const FeedItem = ({ submission, statusFilter = "all" }: FeedItemProps) => {
   const lastModeration =
     submission.moderationHistory?.[submission.moderationHistory.length - 1];
 
@@ -144,16 +251,25 @@ export const FeedItem = ({ submission }: FeedItemProps) => {
             </span>
           </div>
         </div>
-        <a
-          href={getTweetUrl(
-            submission.curatorTweetId,
-            submission.curatorUsername,
-          )}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <StatusBadge status={submission.status} clickable />
-        </a>
+        
+        {/* Show feed statuses if available, otherwise show the main status */}
+        {submission.feedStatuses && submission.feedStatuses.length > 0 ? (
+          <FeedStatusBadges 
+            feedStatuses={submission.feedStatuses} 
+            statusFilter={statusFilter as "all" | SubmissionStatus} 
+          />
+        ) : (
+          <a
+            href={getTweetUrl(
+              submission.curatorTweetId,
+              submission.curatorUsername,
+            )}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <StatusBadge status={submission.status} clickable />
+          </a>
+        )}
       </div>
 
       {/* Content Section */}

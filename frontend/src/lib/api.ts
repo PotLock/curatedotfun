@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import type { AppConfig, FeedConfig } from "../types/config";
 import type { TwitterSubmissionWithFeedData } from "../types/twitter";
 
@@ -104,5 +104,75 @@ export function useLeaderboard() {
       }
       return response.json();
     },
+  });
+}
+
+export interface PaginationMetadata {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+  hasNextPage: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  pagination: PaginationMetadata;
+}
+
+// Define the return type of the transformed data
+export interface TransformedInfiniteData<T> {
+  pages: PaginatedResponse<T>[];
+  pageParams: number[];
+  items: T[];
+}
+
+export function useAllSubmissions(limit: number = 20, status?: string) {
+  // Use infinite query for direct pagination from the backend
+  return useInfiniteQuery<
+    PaginatedResponse<TwitterSubmissionWithFeedData>, 
+    Error,
+    TransformedInfiniteData<TwitterSubmissionWithFeedData>,
+    [string, string | undefined],
+    number
+  >({
+    queryKey: ["all-submissions-paginated", status],
+    queryFn: async ({ pageParam = 0 }) => {
+      const statusParam = status ? `status=${status}` : '';
+      const pageParamStr = `page=${pageParam}`;
+      const limitParam = `limit=${limit}`;
+      
+      // Build query string with available parameters
+      const queryParams = [statusParam, pageParamStr, limitParam]
+        .filter(param => param !== '')
+        .join('&');
+      
+      const url = `/api/submissions${queryParams ? `?${queryParams}` : ''}`;
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Failed to fetch submissions");
+      }
+      
+      return response.json();
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      // Use the pagination metadata to determine if there's a next page
+      return lastPage.pagination.hasNextPage ? lastPage.pagination.page + 1 : undefined;
+    },
+    // Transform the response to extract just the items for components that expect an array
+    select: (data) => ({
+      pages: data.pages,
+      pageParams: data.pageParams,
+      // Add a flattened items array for easier access
+      items: data.pages.flatMap(page => page.items)
+    }),
+    // Poll every 10 seconds
+    refetchInterval: 10000,
+    // Refetch on window focus
+    refetchOnWindowFocus: true,
+    // Refetch when regaining network connection
+    refetchOnReconnect: true,
   });
 }

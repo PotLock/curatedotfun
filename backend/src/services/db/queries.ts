@@ -6,6 +6,7 @@ import {
   TwitterSubmission,
   SubmissionStatus,
   TwitterSubmissionWithFeedData,
+  FeedStatus,
 } from "../../types/twitter";
 import {
   feedPlugins,
@@ -350,54 +351,116 @@ export function getSubmission(
 
 export function getAllSubmissions(
   db: BetterSQLite3Database,
-  limit: number = 50,
-  offset: number = 0,
-): TwitterSubmission[] {
-  const results = db
-    .select({
-      s: {
-        tweetId: submissions.tweetId,
-        userId: submissions.userId,
-        username: submissions.username,
-        content: submissions.content,
-        curatorNotes: submissions.curatorNotes,
-        curatorId: submissions.curatorId,
-        curatorUsername: submissions.curatorUsername,
-        curatorTweetId: submissions.curatorTweetId,
-        createdAt: submissions.createdAt,
-        submittedAt: sql<string>`COALESCE(${submissions.submittedAt}, ${submissions.createdAt})`,
-      },
-      m: {
-        tweetId: moderationHistory.tweetId,
-        adminId: moderationHistory.adminId,
-        action: moderationHistory.action,
-        note: moderationHistory.note,
-        createdAt: moderationHistory.createdAt,
-        feedId: moderationHistory.feedId,
-        moderationResponseTweetId: submissionFeeds.moderationResponseTweetId,
-      },
-    })
-    .from(submissions)
-    .leftJoin(
-      moderationHistory,
-      eq(submissions.tweetId, moderationHistory.tweetId),
-    )
-    .leftJoin(
-      submissionFeeds,
-      and(
-        eq(submissions.tweetId, submissionFeeds.submissionId),
-        eq(moderationHistory.feedId, submissionFeeds.feedId),
-      ),
-    )
+  status?: string,
+): TwitterSubmissionWithFeedData[] {
+  // Build the query with or without status filter
+  const queryBuilder = status 
+    ? db
+        .select({
+          s: {
+            tweetId: submissions.tweetId,
+            userId: submissions.userId,
+            username: submissions.username,
+            content: submissions.content,
+            curatorNotes: submissions.curatorNotes,
+            curatorId: submissions.curatorId,
+            curatorUsername: submissions.curatorUsername,
+            curatorTweetId: submissions.curatorTweetId,
+            createdAt: submissions.createdAt,
+            submittedAt: sql<string>`COALESCE(${submissions.submittedAt}, ${submissions.createdAt})`,
+          },
+          m: {
+            tweetId: moderationHistory.tweetId,
+            adminId: moderationHistory.adminId,
+            action: moderationHistory.action,
+            note: moderationHistory.note,
+            createdAt: moderationHistory.createdAt,
+            feedId: moderationHistory.feedId,
+            moderationResponseTweetId: submissionFeeds.moderationResponseTweetId,
+          },
+          sf: {
+            submissionId: submissionFeeds.submissionId,
+            feedId: submissionFeeds.feedId,
+            status: submissionFeeds.status,
+            moderationResponseTweetId: submissionFeeds.moderationResponseTweetId,
+          },
+          f: {
+            id: feeds.id,
+            name: feeds.name,
+          },
+        })
+        .from(submissions)
+        .leftJoin(
+          moderationHistory,
+          eq(submissions.tweetId, moderationHistory.tweetId),
+        )
+        .leftJoin(
+          submissionFeeds,
+          eq(submissions.tweetId, submissionFeeds.submissionId),
+        )
+        .leftJoin(
+          feeds,
+          eq(submissionFeeds.feedId, feeds.id),
+        )
+        .where(eq(submissionFeeds.status, status as SubmissionStatus))
+    : db
+        .select({
+          s: {
+            tweetId: submissions.tweetId,
+            userId: submissions.userId,
+            username: submissions.username,
+            content: submissions.content,
+            curatorNotes: submissions.curatorNotes,
+            curatorId: submissions.curatorId,
+            curatorUsername: submissions.curatorUsername,
+            curatorTweetId: submissions.curatorTweetId,
+            createdAt: submissions.createdAt,
+            submittedAt: sql<string>`COALESCE(${submissions.submittedAt}, ${submissions.createdAt})`,
+          },
+          m: {
+            tweetId: moderationHistory.tweetId,
+            adminId: moderationHistory.adminId,
+            action: moderationHistory.action,
+            note: moderationHistory.note,
+            createdAt: moderationHistory.createdAt,
+            feedId: moderationHistory.feedId,
+            moderationResponseTweetId: submissionFeeds.moderationResponseTweetId,
+          },
+          sf: {
+            submissionId: submissionFeeds.submissionId,
+            feedId: submissionFeeds.feedId,
+            status: submissionFeeds.status,
+            moderationResponseTweetId: submissionFeeds.moderationResponseTweetId,
+          },
+          f: {
+            id: feeds.id,
+            name: feeds.name,
+          },
+        })
+        .from(submissions)
+        .leftJoin(
+          moderationHistory,
+          eq(submissions.tweetId, moderationHistory.tweetId),
+        )
+        .leftJoin(
+          submissionFeeds,
+          eq(submissions.tweetId, submissionFeeds.submissionId),
+        )
+        .leftJoin(
+          feeds,
+          eq(submissionFeeds.feedId, feeds.id),
+        );
+  
+  const results = queryBuilder
     .orderBy(moderationHistory.createdAt)
-    .limit(limit)
-    .offset(offset)
-    .all() as DbQueryResult[];
+    .all();
 
   // Group results by submission
-  const submissionMap = new Map<string, TwitterSubmission>();
+  const submissionMap = new Map<string, TwitterSubmissionWithFeedData>();
+  const feedStatusMap = new Map<string, Map<string, FeedStatus>>();
 
   for (const result of results) {
+    // Initialize submission if not exists
     if (!submissionMap.has(result.s.tweetId)) {
       submissionMap.set(result.s.tweetId, {
         tweetId: result.s.tweetId,
@@ -411,9 +474,15 @@ export function getAllSubmissions(
         createdAt: result.s.createdAt,
         submittedAt: result.s.submittedAt,
         moderationHistory: [],
+        status: status ? status as SubmissionStatus : SubmissionStatus.PENDING, // Use provided status or default
+        feedStatuses: [],
       });
+      
+      // Initialize feed status map for this submission
+      feedStatusMap.set(result.s.tweetId, new Map<string, FeedStatus>());
     }
 
+    // Add moderation history
     if (result.m && result.m.adminId !== null) {
       const submission = submissionMap.get(result.s.tweetId)!;
       submission.moderationHistory.push({
@@ -426,6 +495,71 @@ export function getAllSubmissions(
         moderationResponseTweetId:
           result.m.moderationResponseTweetId ?? undefined,
       });
+    }
+
+    // Add feed status if available
+    if (result.sf && result.sf.feedId && result.f && result.f.id) {
+      // If status is provided, only include feeds with that status
+      if (!status || result.sf.status === status) {
+        const feedStatusesForSubmission = feedStatusMap.get(result.s.tweetId)!;
+        
+        if (!feedStatusesForSubmission.has(result.sf.feedId)) {
+          feedStatusesForSubmission.set(result.sf.feedId, {
+            feedId: result.sf.feedId,
+            feedName: result.f.name,
+            status: result.sf.status,
+            moderationResponseTweetId: result.sf.moderationResponseTweetId ?? undefined,
+          });
+        }
+      }
+    }
+  }
+
+  // Set the feed statuses and determine the main status for each submission
+  for (const [tweetId, submission] of submissionMap.entries()) {
+    const feedStatusesForSubmission = feedStatusMap.get(tweetId);
+    if (feedStatusesForSubmission) {
+      submission.feedStatuses = Array.from(feedStatusesForSubmission.values());
+      
+      // Determine the main status based on priority (pending > rejected > approved)
+      let hasPending = false;
+      let hasRejected = false;
+      let hasApproved = false;
+      
+      for (const feedStatus of submission.feedStatuses) {
+        if (feedStatus.status === SubmissionStatus.PENDING) {
+          hasPending = true;
+          submission.status = SubmissionStatus.PENDING;
+          submission.moderationResponseTweetId = feedStatus.moderationResponseTweetId;
+          break; // Pending has highest priority
+        } else if (feedStatus.status === SubmissionStatus.REJECTED) {
+          hasRejected = true;
+        } else if (feedStatus.status === SubmissionStatus.APPROVED) {
+          hasApproved = true;
+        }
+      }
+      
+      if (!hasPending) {
+        if (hasRejected) {
+          submission.status = SubmissionStatus.REJECTED;
+          // Find first rejected status for moderationResponseTweetId
+          const rejectedStatus = submission.feedStatuses.find(
+            fs => fs.status === SubmissionStatus.REJECTED
+          );
+          if (rejectedStatus) {
+            submission.moderationResponseTweetId = rejectedStatus.moderationResponseTweetId;
+          }
+        } else if (hasApproved) {
+          submission.status = SubmissionStatus.APPROVED;
+          // Find first approved status for moderationResponseTweetId
+          const approvedStatus = submission.feedStatuses.find(
+            fs => fs.status === SubmissionStatus.APPROVED
+          );
+          if (approvedStatus) {
+            submission.moderationResponseTweetId = approvedStatus.moderationResponseTweetId;
+          }
+        }
+      }
     }
   }
 

@@ -2,21 +2,10 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
-    // Fetch feeds and redirect to the first one
-    const response = await fetch("/api/feeds");
-    if (!response.ok) {
-      throw new Error("Failed to fetch feeds");
-    }
-    const feeds = await response.json();
-
-    if (feeds.length > 0) {
-      throw redirect({
-        to: "/feed/$feedId",
-        params: { feedId: feeds[0].id },
-      });
-    }
-
-    return null;
+    // Redirect to the feed index page
+    throw redirect({
+      to: "/feed",
+    });
   },
   component: Index,
 });

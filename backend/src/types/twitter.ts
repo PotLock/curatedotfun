@@ -1,3 +1,10 @@
+export interface FeedStatus {
+  feedId: string;
+  feedName: string;
+  status: SubmissionStatus;
+  moderationResponseTweetId?: string;
+}
+
 export interface TwitterSubmission {
   tweetId: string;
   userId: string;
@@ -16,6 +23,7 @@ export interface TwitterSubmission {
 export interface TwitterSubmissionWithFeedData extends TwitterSubmission {
   status: SubmissionStatus;
   moderationResponseTweetId?: string;
+  feedStatuses?: FeedStatus[]; 
 }
 
 export interface Moderation {

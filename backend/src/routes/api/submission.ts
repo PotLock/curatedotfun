@@ -1,18 +1,56 @@
-import { zValidator } from "@hono/zod-validator";
 import { db } from "../../services/db";
-import { schemas } from "../../types/api";
 import { HonoApp } from "../../types/app";
+import { z } from "zod";
+import { zValidator } from "@hono/zod-validator";
+import { SubmissionStatus } from "../../types/twitter";
 
 // Create submission routes
 const router = HonoApp();
 
 /**
- * Get all submissions with optional pagination
+ * Get all submissions with optional status filtering and pagination
  */
-router.get("/", zValidator("query", schemas.pagination), async (c) => {
-  const { limit, offset } = c.req.valid("query");
+router.get("/", 
+  zValidator("query", z.object({
+    page: z.coerce.number().int().min(0).default(0),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    status: z.enum([
+      SubmissionStatus.PENDING, 
+      SubmissionStatus.APPROVED, 
+      SubmissionStatus.REJECTED
+    ]).optional(),
+  })),
+  async (c) => {
+  // Extract validated parameters
+  const { page, limit, status } = c.req.valid("query");
 
-  return c.json(db.getAllSubmissions(limit, offset));
+  // Get all submissions with the given status
+  const allSubmissions = db.getAllSubmissions(status);
+  
+  // Sort submissions by submittedAt date (newest first)
+  allSubmissions.sort((a, b) => 
+    new Date(b.submittedAt!).getTime() - new Date(a.submittedAt!).getTime()
+  );
+  
+  // Get total count for pagination metadata
+  const totalCount = allSubmissions.length;
+  
+  // Apply pagination
+  const startIndex = page * limit;
+  const endIndex = startIndex + limit;
+  const paginatedSubmissions = allSubmissions.slice(startIndex, endIndex);
+  
+  // Return data with pagination metadata
+  return c.json({
+    items: paginatedSubmissions,
+    pagination: {
+      page,
+      limit,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      hasNextPage: endIndex < totalCount
+    }
+  });
 });
 
 /**
@@ -34,12 +72,10 @@ router.get("/single/:submissionId", async (c) => {
  */
 router.get(
   "/feed/:feedId",
-  zValidator("query", schemas.pagination),
   async (c) => {
     const context = c.get("context");
     const feedId = c.req.param("feedId");
     const status = c.req.query("status");
-    const { limit, offset } = c.req.valid("query");
 
     const feed = context.configService.getFeedConfig(feedId);
     if (!feed) {
@@ -50,13 +86,6 @@ router.get(
 
     if (status) {
       submissions = submissions.filter((sub) => sub.status === status);
-    }
-
-    // Apply pagination if provided
-    if (limit || offset) {
-      const startIndex = offset || 0;
-      const endIndex = limit ? startIndex + limit : undefined;
-      submissions = submissions.slice(startIndex, endIndex);
     }
 
     return c.json(submissions);
