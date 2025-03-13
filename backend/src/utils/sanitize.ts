@@ -9,7 +9,11 @@ export function sanitizeJson(data: any): any {
   if (typeof data === "string") {
     try {
       // Try to parse if it's a string that might be JSON
-      if (data.trim().startsWith("{") || data.trim().startsWith("[")) {
+      const trimmed = data.trim();
+      if (
+        (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+        (trimmed.startsWith("[") && trimmed.endsWith("]"))
+      ) {
         // Remove BOM if present
         const cleanString = data.replace(/^\uFEFF/, "");
         // Parse and re-stringify to normalize

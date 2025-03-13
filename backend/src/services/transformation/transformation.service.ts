@@ -4,6 +4,7 @@ import { PluginService } from "../plugins/plugin.service";
 import { logger } from "../../utils/logger";
 import { sanitizeJson } from "../../utils/sanitize";
 import { ActionArgs } from "@curatedotfun/types";
+import { merge } from "lodash";
 
 export type TransformStage = "global" | "distributor" | "batch";
 
@@ -23,10 +24,7 @@ export class TransformationService {
       newResult !== null &&
       !Array.isArray(newResult)
     ) {
-      return {
-        ...(prevResult as Record<string, unknown>),
-        ...(newResult as Record<string, unknown>),
-      };
+      return merge({}, prevResult, newResult);
     }
 
     // Otherwise return the new result (string will just return)
