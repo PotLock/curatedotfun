@@ -38,12 +38,12 @@ const Header = () => {
           >
             How It Works
           </button>
-          <button
-            onClick={() => setShowLeaderboard(true)}
-            className="text-gray-600 hover:text-black transition-colors flex items-center"
-          >
-            <FaTrophy className="mr-1" /> Leaderboard
-          </button>
+          <Link
+              to="/leaderboard"
+              className="text-gray-600 hover:text-black transition-colors"
+            >
+              Leaderboard
+          </Link>
           {process.env.NODE_ENV === "development" && (
             <Link
               to="/test"
@@ -93,10 +93,6 @@ const Header = () => {
         <HowItWorks />
       </Modal>
 
-      <LeaderboardModal
-        isOpen={showLeaderboard}
-        onClose={() => setShowLeaderboard(false)}
-      />
     </>
   );
 };
