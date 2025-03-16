@@ -1,6 +1,6 @@
 import { Search,ChevronDown, ChevronUp } from "lucide-react"
-import { useState, useRef, useEffect } from "react"
-import { useLeaderboard, LeaderboardEntry } from "../lib/api";
+import { useState, useRef, useEffect, useMemo } from "react"
+import { useLeaderboard, LeaderboardEntry, useAppConfig } from "../lib/api";
 
 
 export default function Leaderboard() {
@@ -11,12 +11,15 @@ export default function Leaderboard() {
   const [selectedFeed, setSelectedFeed] = useState<string>("All Feed")
   const [selectedTime, setSelectedTime] = useState<string>("All Time")
   const { data: leaderboard, isLoading, error } = useLeaderboard();
-
+  const { data: config } = useAppConfig();
   const feedDropdownRef = useRef<HTMLDivElement>(null);
   const timeDropdownRef = useRef<HTMLDivElement>(null);
 
-  const feeds = ["All Feed", "Crypto Grant Wire", "Grants", "NEARWEEK", "Public Goods Club"];
   const timeOptions = ["All Time", "This Month", "This Week", "Today"];
+  const feeds = useMemo(() => {
+    return ["All Feed", ...(config?.feeds.map((feed) => feed.name) || [])];
+  }, [config]);
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -55,9 +58,6 @@ export default function Leaderboard() {
 
     return feedFilter && matchesSearch;
   })
-
-  // console.log(leaderboard)
-
   
   return (
     <main className="container mx-auto px-4 py-8">
@@ -89,10 +89,10 @@ export default function Leaderboard() {
               <ChevronDown className="h-4 w-4 text-[#64748b]" />
             </button>
             {showFeedDropdown && (
-              <div className="absolute top-full left-0 mt-1 w-full bg-white border border-neutral-200 rounded-md shadow-lg z-20">
-                {feeds.map((feed) => (
+              <div className="absolute top-full left-0 mt-1 w-full bg-white border border-neutral-200 rounded-md shadow-lg z-20 max-h-[300px] overflow-y-auto">
+                {feeds.map((feed,index) => (
                   <button
-                    key={feed}
+                    key={index}
                     onClick={() => {
                       setSelectedFeed(feed);
                       setShowFeedDropdown(false);
@@ -157,37 +157,32 @@ export default function Leaderboard() {
               )}
 
               {error && (
-                <div className="text-left py-8 text-red-500">
-                  <p>Error loading leaderboard: {(error as Error).message}</p>
-                </div>
+                <tr>
+                  <td colSpan={5} className="text-left py-8 text-red-500">
+                    <p>Error loading leaderboard: {(error as Error).message}</p>
+                  </td>
+                </tr>
               )}
 
               {leaderboard && leaderboard.length === 0 && (
-                <div className="text-left py-8">
-                  <p>No curator data available.</p>
-                </div>
+                <tr>
+                  <td colSpan={5} className="text-left py-8">
+                    <p>No curator data available.</p>
+                  </td>
+                </tr>
               )}
-              {filteredLeaderboard && filteredLeaderboard.map((item: LeaderboardEntry, index) => (
+              {filteredLeaderboard?.map((item: LeaderboardEntry, index) => (
                 <tr key={index} className="border-b border-[#e5e5e5] hover:bg-[#f9fafb]">
                   <td className="py-4 px-2">
                     <div className="flex items-center">
-                      {index+1 === 1 && <img src="/icons/star-gold.svg" className="h-5 w-5 mr-1"/>}
-                      {index+1 === 2 && <img src="/icons/star-slive.svg" className="h-5 w-5 mr-1"/>}
-                      {index+1 === 3 && <img src="/icons/star-brone.svg" className="h-5 w-5 mr-1"/>}
+                      {index+1 === 1 && <img src="/icons/star-gold.svg" className="h-5 w-5 mr-1" alt="Gold star - 1st place"/>}
+                      {index+1 === 2 && <img src="/icons/star-silver.svg" className="h-5 w-5 mr-1" alt="Silver star - 2nd place"/>}
+                      {index+1 === 3 && <img src="/icons/star-bronze.svg" className="h-5 w-5 mr-1" alt="Bronze star - 3rd place"/>}
                       <span className="text-[#111111] font-medium">{index+1}</span>
                     </div>
                   </td>
                   <td className="py-4 px-2">
                     <div className="flex items-center gap-2">
-                      {/* <div className="hexagon-avatar">
-                        <img
-                          src={item.image}
-                          width={32}
-                          height={32}
-                          alt={item.curator}
-                          className="h-full w-full object-cover"
-                        />
-                      </div> */}
                       <div>
                         <a href={`https://x.com/${item.curatorUsername}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:underline">
                           <span className="font-medium text-[#111111]">@{item.curatorUsername}</span>

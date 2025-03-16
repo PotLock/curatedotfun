@@ -103,13 +103,3 @@
     border: none;
   }
 }
-
-
-.hexagon-avatar {
-  position: relative;
-  width: 32px;
-  height: 32px;
-  background-color: #f1f5f9;
-  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  overflow: hidden;
-}
