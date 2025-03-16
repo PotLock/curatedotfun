@@ -39,10 +39,10 @@ const Header = () => {
             How It Works
           </button>
           <Link
-              to="/leaderboard"
-              className="text-gray-600 hover:text-black transition-colors"
-            >
-              Leaderboard
+            to="/leaderboard"
+            className="text-gray-600 hover:text-black transition-colors"
+          >
+            Leaderboard
           </Link>
           {process.env.NODE_ENV === "development" && (
             <Link
@@ -92,7 +92,6 @@ const Header = () => {
       <Modal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)}>
         <HowItWorks />
       </Modal>
-
     </>
   );
 };
