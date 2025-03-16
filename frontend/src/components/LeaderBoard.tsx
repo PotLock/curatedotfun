@@ -92,15 +92,24 @@ export default function Leaderboard() {
             <button
               onClick={() => setShowFeedDropdown(!showFeedDropdown)}
               className="flex items-center justify-between gap-2 px-4 py-2 border border-neutral-300 rounded-md bg-white w-full md:w-[180px]"
+              aria-expanded={showFeedDropdown}
+              aria-haspopup="listbox"
+              aria-controls="feed-dropdown"
             >
               <span className="text-[#111111] text-sm">{selectedFeed}</span>
               <ChevronDown className="h-4 w-4 text-[#64748b]" />
             </button>
             {showFeedDropdown && (
-              <div className="absolute top-full left-0 mt-1 w-full bg-white border border-neutral-200 rounded-md shadow-lg z-20 max-h-[300px] overflow-y-auto">
+              <div
+                id="feed-dropdown"
+                role="listbox"
+                className="absolute top-full left-0 mt-1 w-full bg-white border border-neutral-200 rounded-md shadow-lg z-20"
+              >
                 {feeds.map((feed, index) => (
                   <button
                     key={index}
+                    role="option"
+                    aria-selected={selectedFeed === feed}
                     onClick={() => {
                       setSelectedFeed(feed);
                       setShowFeedDropdown(false);
@@ -119,15 +128,24 @@ export default function Leaderboard() {
             <button
               onClick={() => setShowTimeDropdown(!showTimeDropdown)}
               className="flex items-center justify-between gap-2 px-4 py-2 border border-neutral-300 rounded-md bg-white w-full md:w-[160px]"
+              aria-expanded={showTimeDropdown}
+              aria-haspopup="listbox"
+              aria-controls="time-dropdown"
             >
               <span className="text-[#111111] text-sm">{selectedTime}</span>
               <ChevronDown className="h-4 w-4 text-[#64748b]" />
             </button>
             {showTimeDropdown && (
-              <div className="absolute top-full left-0 mt-1 w-full bg-white border border-neutral-200 rounded-md shadow-lg z-20">
+              <div
+                id="time-dropdown"
+                role="listbox"
+                className="absolute top-full left-0 mt-1 w-full bg-white border border-neutral-200 rounded-md shadow-lg z-20"
+              >
                 {timeOptions.map((time) => (
                   <button
                     key={time}
+                    role="option"
+                    aria-selected={selectedTime === time}
                     onClick={() => {
                       setSelectedTime(time);
                       setShowTimeDropdown(false);

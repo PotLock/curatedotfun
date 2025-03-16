@@ -3,17 +3,14 @@ import {
   FaBook,
   FaGithub,
   FaTelegram,
-  FaTrophy,
 } from "react-icons/fa";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Modal } from "./Modal";
 import { HowItWorks } from "./HowItWorks";
-import { LeaderboardModal } from "./LeaderboardModal";
 
 const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   return (
     <>
