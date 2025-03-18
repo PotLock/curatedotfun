@@ -190,6 +190,41 @@
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "@ethagain"
               }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "title": "{{title}}",
+                      "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
+                      "description": "{{summary}}",
+                      "link": "{{source}}",
+                      "publishedAt": "{{createdAt}}",
+                      "author": {
+                        "name": "{{username}}",
+                        "link": "https://x.com/{{author}}"
+                      },
+                      "categories": ["ethereum", "{{tags}}"],
+                      "source": {
+                        "url": "{{source}}",
+                        "title": "twitter"
+                      }
+                    }
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/rss",
+              "config": {
+                "serviceUrl": "https://ethereum-rss.up.railway.app",
+                "apiSecret": "{ETHEREUM_RSS_API_SECRET}",
+                "feedConfig": {
+                  "title": "This Week in Ethereum",
+                  "description": "Ethereum ecosystem updates",
+                  "siteUrl": "https://ethagain.com/"
+                }
+              }
             }
           ]
         }
@@ -271,6 +306,41 @@
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "-1002472938420",
                 "messageThreadId": "8"
+              }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "title": "{{title}}",
+                      "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
+                      "description": "{{summary}}",
+                      "link": "{{source}}",
+                      "publishedAt": "{{createdAt}}",
+                      "author": {
+                        "name": "{{username}}",
+                        "link": "https://x.com/{{author}}"
+                      },
+                      "categories": ["near", "{{tags}}"],
+                      "source": {
+                        "url": "{{source}}",
+                        "title": "twitter"
+                      }
+                    }
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/rss",
+              "config": {
+                "serviceUrl": "https://near-rss.up.railway.app",
+                "apiSecret": "{NEAR_RSS_API_SECRET}",
+                "feedConfig": {
+                  "title": "NEARWEEK",
+                  "description": "NEAR Protocol updates",
+                  "siteUrl": "https://nearweek.com"
+                }
               }
             }
           ]
@@ -652,7 +722,7 @@
                         "name": "{{username}}",
                         "link": "https://x.com/{{author}}"
                       },
-                      "categories": ["near", "{{tags}}"],
+                      "categories": ["solana", "{{tags}}"],
                       "source": {
                         "url": "{{source}}",
                         "title": "twitter"
@@ -666,8 +736,8 @@
                 "serviceUrl": "https://solana-rss.up.railway.app",
                 "apiSecret": "{SOLANA_RSS_API_SECRET}",
                 "feedConfig": {
-                  "title": "Shippost",
-                  "description": "Tracking the ships in the NEAR ecosystem 🚢",
+                  "title": "Solana Digest",
+                  "description": "Solana ecosystem updates",
                   "siteUrl": "https://solanadigest.com"
                 }
               }
@@ -768,7 +838,7 @@
                         "name": "{{username}}",
                         "link": "https://x.com/{{author}}"
                       },
-                      "categories": ["near", "{{tags}}"],
+                      "categories": ["eigen", "{{tags}}"],
                       "source": {
                         "url": "{{source}}",
                         "title": "twitter"
@@ -933,6 +1003,41 @@
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "@abstractionnews"
               }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "title": "{{title}}",
+                      "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
+                      "description": "{{summary}}",
+                      "link": "{{source}}",
+                      "publishedAt": "{{createdAt}}",
+                      "author": {
+                        "name": "{{username}}",
+                        "link": "https://x.com/{{author}}"
+                      },
+                      "categories": ["chain-abstraction", "{{tags}}"],
+                      "source": {
+                        "url": "{{source}}",
+                        "title": "twitter"
+                      }
+                    }
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/rss",
+              "config": {
+                "serviceUrl": "https://abstraction-rss.up.railway.app",
+                "apiSecret": "{ABSTRACTION_RSS_API_SECRET}",
+                "feedConfig": {
+                  "title": "Abstraction News",
+                  "description": "Chain Abstraction ecosystem updates.",
+                  "siteUrl": "http://abstraction.news/"
+                }
+              }
             }
           ]
         }
@@ -1029,12 +1134,7 @@
       "description": "Zcash's Privacy Ecosystem news",
       "moderation": {
         "approvers": {
-          "twitter": [
-            "zooko",
-            "ZecHub",
-            "potlock_intern",
-            "plugrel"
-          ]
+          "twitter": ["zooko", "ZecHub", "potlock_intern", "plugrel"]
         }
       },
       "outputs": {
@@ -1049,10 +1149,7 @@
       "description": "Sonic L1 Ecosystem news",
       "moderation": {
         "approvers": {
-          "twitter": [
-            "potlock_intern",
-            "plugrel"
-          ]
+          "twitter": ["potlock_intern", "plugrel"]
         }
       },
       "outputs": {
@@ -1061,16 +1158,13 @@
         }
       }
     },
-        {
+    {
       "id": "rwa",
       "name": "RWAs",
       "description": "Real World Assets (RWAs) on Chain news",
       "moderation": {
         "approvers": {
-          "twitter": [
-            "potlock_intern",
-            "plugrel"
-          ]
+          "twitter": ["potlock_intern", "plugrel"]
         }
       },
       "outputs": {
@@ -1325,6 +1419,41 @@
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "@americancryptofoundation"
+              }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "title": "{{title}}",
+                      "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
+                      "description": "{{summary}}",
+                      "link": "{{source}}",
+                      "publishedAt": "{{createdAt}}",
+                      "author": {
+                        "name": "{{username}}",
+                        "link": "https://x.com/{{author}}"
+                      },
+                      "categories": ["usa", "{{tags}}"],
+                      "source": {
+                        "url": "{{source}}",
+                        "title": "twitter"
+                      }
+                    }
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/rss",
+              "config": {
+                "serviceUrl": "https://usa-rss.up.railway.app",
+                "apiSecret": "{USA_RSS_API_SECRET}",
+                "feedConfig": {
+                  "title": "American Crypto",
+                  "description": "$TRUMP ecosystem and American first crypto",
+                  "siteUrl": "https://www.americancrypto.foundation"
+                }
               }
             }
           ]
@@ -1620,7 +1749,7 @@
                         "name": "{{username}}",
                         "link": "https://x.com/{{author}}"
                       },
-                      "categories": ["near", "{{tags}}"],
+                      "categories": ["sui", "{{tags}}"],
                       "source": {
                         "url": "{{source}}",
                         "title": "twitter"
@@ -1634,8 +1763,8 @@
                 "serviceUrl": "https://sui-rss.up.railway.app",
                 "apiSecret": "{SUI_RSS_API_SECRET}",
                 "feedConfig": {
-                  "title": "Eigen Ecosystem",
-                  "description": "Eigen Layer Ecosystem News",
+                  "title": "Sui",
+                  "description": "Updates around Sui ecosystem & more",
                   "siteUrl": "https://dailysui.com"
                 }
               }
@@ -1871,6 +2000,41 @@
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "@stablecoinspress"
               }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "title": "{{title}}",
+                      "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
+                      "description": "{{summary}}",
+                      "link": "{{source}}",
+                      "publishedAt": "{{createdAt}}",
+                      "author": {
+                        "name": "{{username}}",
+                        "link": "https://x.com/{{author}}"
+                      },
+                      "categories": ["near", "{{tags}}"],
+                      "source": {
+                        "url": "{{source}}",
+                        "title": "twitter"
+                      }
+                    }
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/rss",
+              "config": {
+                "serviceUrl": "https://stablecoins-rss.up.railway.app",
+                "apiSecret": "{STABLECOINS_RSS_API_SECRET}",
+                "feedConfig": {
+                  "title": "Stablecoins",
+                  "description": "News about the Stablecoins Ecoystem",
+                  "siteUrl": "https://stablecoins.press"
+                }
+              }
             }
           ]
         }
@@ -2077,7 +2241,7 @@
                         "name": "{{username}}",
                         "link": "https://x.com/{{author}}"
                       },
-                      "categories": ["near", "{{tags}}"],
+                      "categories": ["climate", "{{tags}}"],
                       "source": {
                         "url": "{{source}}",
                         "title": "twitter"
