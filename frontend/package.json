@@ -5,9 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "rsbuild dev --port 5173",
+    "dev:pg": "rsbuild dev --port 5173",
     "build": "rsbuild build && tsc --noEmit",
     "preview": "rsbuild preview",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "echo 'No tests yet'",
+    "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.15",

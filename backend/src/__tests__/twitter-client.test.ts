@@ -1,8 +1,8 @@
 import { Tweet } from "agent-twitter-client";
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { TwitterService } from "../services/twitter/client";
 import { MockScraper } from "./mocks/scraper.mock";
-import drizzleMock from "./mocks/drizzle.mock";
+import { mockDb, resetMockDb } from "./setup-test-env";
 
 describe("TwitterService", () => {
   let twitterService: TwitterService;
@@ -16,7 +16,7 @@ describe("TwitterService", () => {
 
   beforeEach(async () => {
     // Reset all mocks
-    Object.values(drizzleMock).forEach((mockFn) => mockFn.mockReset());
+    resetMockDb();
 
     // Create fresh instances
     twitterService = new TwitterService(mockConfig);
@@ -39,8 +39,8 @@ describe("TwitterService", () => {
       (twitterService as any).client = mockScraper;
 
       // Mock no cached cookies
-      drizzleMock.getTwitterCookies.mockReturnValue(null);
-      drizzleMock.getTwitterCacheValue.mockReturnValue(null);
+      mockDb.getTwitterCookies.mockReturnValue(null);
+      mockDb.getTwitterCacheValue.mockReturnValue(null);
 
       await twitterService.initialize();
 
@@ -48,7 +48,7 @@ describe("TwitterService", () => {
       expect(await mockScraper.isLoggedIn()).toBe(true);
 
       // Verify new cookies were cached
-      expect(drizzleMock.setTwitterCookies).toHaveBeenCalledWith(
+      expect(mockDb.setTwitterCookies).toHaveBeenCalledWith(
         mockConfig.username,
         expect.any(Array),
       );
@@ -71,20 +71,26 @@ describe("TwitterService", () => {
           httpOnly: true,
         },
       ];
-      drizzleMock.getTwitterCookies.mockReturnValue(mockCookies);
-      drizzleMock.getTwitterCacheValue.mockReturnValue("last_tweet_123");
+      mockDb.getTwitterCookies.mockReturnValue(mockCookies);
+      mockDb.getTwitterCacheValue.mockReturnValue("last_tweet_123");
+
+      // Spy on setCookies method
+      const setCookiesSpy = mock.method(mockScraper, "setCookies");
 
       await twitterService.initialize();
+
+      // Verify setCookies was called
+      expect(setCookiesSpy).toHaveBeenCalled();
 
       // Verify login was successful using cached cookies
       expect(await mockScraper.isLoggedIn()).toBe(true);
 
       // Verify cookies were set from cache
-      expect(drizzleMock.getTwitterCookies).toHaveBeenCalledWith(
+      expect(mockDb.getTwitterCookies).toHaveBeenCalledWith(
         mockConfig.username,
       );
       // Should save cookies after verifying they work
-      expect(drizzleMock.setTwitterCookies).toHaveBeenCalledWith(
+      expect(mockDb.setTwitterCookies).toHaveBeenCalledWith(
         mockConfig.username,
         expect.any(Array),
       );
@@ -258,7 +264,7 @@ describe("TwitterService", () => {
       (twitterService as any).client = mockScraper;
 
       // Initialize with null last checked ID
-      drizzleMock.getTwitterCacheValue.mockReturnValue(null);
+      mockDb.getTwitterCacheValue.mockReturnValue(null);
       await twitterService.initialize();
 
       // Clear any tweets and fetch
@@ -272,7 +278,7 @@ describe("TwitterService", () => {
 
     it("should stop fetching when reaching old tweets", async () => {
       // Set up initial state with last checked tweet
-      await twitterService.setLastCheckedTweetId("3");
+      twitterService.setLastCheckedTweetId("3");
 
       const tweets: Tweet[] = [
         {
@@ -425,7 +431,7 @@ describe("TwitterService", () => {
       tweets.forEach((tweet) => mockScraper.addMockTweet(tweet));
 
       // First set last checked to tweet 4
-      await twitterService.setLastCheckedTweetId("4");
+      twitterService.setLastCheckedTweetId("4");
 
       // Initial fetch should only get tweet 5
       let result = await twitterService.fetchAllNewMentions();
@@ -433,7 +439,7 @@ describe("TwitterService", () => {
       expect(result[0].id).toBe("5");
 
       // Now set last checked to tweet 2
-      await twitterService.setLastCheckedTweetId("2");
+      twitterService.setLastCheckedTweetId("2");
 
       // Should now get tweets 3, 4, and 5 (oldest to newest)
       result = await twitterService.fetchAllNewMentions();

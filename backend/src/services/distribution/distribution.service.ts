@@ -40,13 +40,10 @@ export class DistributionService {
       }
     } catch (error) {
       // Log but don't crash on plugin errors
-      logger.error(
-        `Error distributing content with plugin ${pluginName}: ${JSON.stringify(input)}`,
-        {
-          error,
-          pluginName,
-        },
-      );
+      logger.error(`Error distributing content with plugin ${pluginName}:`, {
+        error,
+        pluginName,
+      });
 
       // Only throw if it's not a plugin error (system error)
       if (!(error instanceof PluginError)) {

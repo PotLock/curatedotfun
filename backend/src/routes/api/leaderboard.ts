@@ -8,7 +8,7 @@ const router = HonoApp();
  * Get the leaderboard data
  */
 router.get("/", async (c) => {
-  const leaderboard = db.getLeaderboard();
+  const leaderboard = await db.getLeaderboard();
   return c.json(leaderboard);
 });
 

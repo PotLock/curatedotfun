@@ -14,8 +14,8 @@ export interface TwitterSubmission {
   content: string;
   curatorNotes: string | null;
   curatorTweetId: string;
-  createdAt: string;
-  submittedAt: string | null;
+  createdAt: Date;
+  submittedAt: Date | null;
   moderationHistory: Moderation[];
   status?: SubmissionStatus;
 }

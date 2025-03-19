@@ -12,7 +12,7 @@ import { TwitterService } from "../twitter/client";
 import { ProcessorService } from "../processor/processor.service";
 
 export class SubmissionService {
-  private checkInterval: NodeJS.Timeout | null = null;
+  private checkInterval: NodeJS.Timer | null = null;
   private adminIdCache: Map<string, string> = new Map();
 
   constructor(
@@ -24,7 +24,7 @@ export class SubmissionService {
   private async initializeAdminIds(): Promise<void> {
     try {
       // Try to load admin IDs from cache first
-      const cachedAdminIds = db.getTwitterCacheValue("admin_ids");
+      const cachedAdminIds = await db.getTwitterCacheValue("admin_ids");
       if (cachedAdminIds) {
         try {
           const adminMap = JSON.parse(cachedAdminIds);
@@ -213,15 +213,15 @@ export class SubmissionService {
       }
 
       // Check if this tweet was already submitted
-      const existingSubmission = db.getSubmission(originalTweet.id!);
+      const existingSubmission = await db.getSubmission(originalTweet.id!);
       const existingFeeds = existingSubmission
-        ? db.getFeedsBySubmission(existingSubmission.tweetId)
+        ? await db.getFeedsBySubmission(existingSubmission.tweetId)
         : [];
 
       // Create new submission if it doesn't exist
       let submission: TwitterSubmission | undefined;
       if (!existingSubmission) {
-        const dailyCount = db.getDailySubmissionCount(userId);
+        const dailyCount = await db.getDailySubmissionCount(userId);
         const maxSubmissions = this.config.global.maxDailySubmissionsPerUser;
 
         if (dailyCount >= maxSubmissions) {
@@ -245,8 +245,7 @@ export class SubmissionService {
           // item data
           content: originalTweet.text || "",
           username: originalTweet.username!,
-          createdAt:
-            originalTweet.timeParsed?.toISOString() || new Date().toISOString(), // reply to post // vs as self post
+          createdAt: originalTweet.timeParsed || new Date(), // reply to post // vs as self post
 
           // curator data
           curatorId: userId, // tweetId, userId(curator)
@@ -254,7 +253,7 @@ export class SubmissionService {
           // relationship with the tweet
           curatorNotes,
           curatorTweetId: tweet.id!,
-          submittedAt: new Date().toISOString(),
+          submittedAt: new Date(),
 
           // admin data (update)
           moderationHistory: [], // moderatorId, userId, tweetId
@@ -392,7 +391,7 @@ export class SubmissionService {
     const curatorTweetId = tweet.inReplyToStatusId;
     if (!curatorTweetId) return;
 
-    const submission = db.getSubmissionByCuratorTweetId(curatorTweetId);
+    const submission = await db.getSubmissionByCuratorTweetId(curatorTweetId);
     if (!submission) {
       logger.error(`${tweet.id}: Received moderation for unsaved submission`);
       return;
@@ -413,7 +412,7 @@ export class SubmissionService {
     }
 
     // Get submission feeds to determine which feed is being moderated
-    const submissionFeeds = db.getFeedsBySubmission(submission.tweetId);
+    const submissionFeeds = await db.getFeedsBySubmission(submission.tweetId);
     const pendingFeeds = submissionFeeds
       .filter((feed) => feed.status === SubmissionStatus.PENDING)
       .filter((feed) => {

@@ -8,18 +8,34 @@
   },
   "packageManager": "bun@1.0.27",
   "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "scripts": {
-    "dev": "concurrently \"cd backend && bun run dev\" \"cd frontend && bun run dev\"",
+    "dev": "NODE_ENV=development turbo run dev",
     "build": "turbo run build",
-    "start": "cd backend && npm run start",
-    "db:up": "cd backend && npm run db:up",
-    "db:push": "cd backend && npm run db:push",
-    "db:migrate": "cd backend && npm run db:migrate",
+    "start": "turbo run start --filter=@curatedotfun/backend",
+    "test": "turbo run test",
+    "test:docker": "docker-compose up --build test",
+    "test:docker:integration": "docker-compose up --build test -- --timeout 30000 src/__tests__/integration",
+    "test:docker:watch": "docker-compose up --build test -- --watch",
+    "db:up": "turbo run db:up --filter=@curatedotfun/backend",
+    "db:push": "turbo run db:push --filter=@curatedotfun/backend",
+    "db:migrate": "turbo run db:migrate --filter=@curatedotfun/backend",
+    "db:migrate-sqlite-to-pg": "cd backend && bun run db:migrate-sqlite-to-pg --filter=@curatedotfun/backend",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:reset": "docker-compose down -v && docker-compose up -d",
+    "docker:logs": "docker-compose logs -f",
+    "pg:dev": "npm run docker:up && npm run dev:pg",
     "lint": "turbo run lint",
+    "clean": "turbo run clean",
     "deploy:init": "fly launch && fly consul attach",
     "deploy": "fly deploy",
     "fmt": "prettier --write '**/*.{js,jsx,ts,tsx,json}'",
-    "fmt:check": "prettier --check '**/*.{js,jsx,ts,tsx,json}'"
+    "fmt:check": "prettier --check '**/*.{js,jsx,ts,tsx,json}'",
+    "prepare": "corepack enable"
   },
   "type": "module"
 }

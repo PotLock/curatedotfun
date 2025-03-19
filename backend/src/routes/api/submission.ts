@@ -31,7 +31,7 @@ router.get(
     const { page, limit, status } = c.req.valid("query");
 
     // Get all submissions with the given status
-    const allSubmissions = db.getAllSubmissions(status);
+    const allSubmissions = await db.getAllSubmissions(status);
 
     // Sort submissions by submittedAt date (newest first)
     allSubmissions.sort(
@@ -66,7 +66,7 @@ router.get(
  */
 router.get("/single/:submissionId", async (c) => {
   const submissionId = c.req.param("submissionId");
-  const content = db.getSubmission(submissionId);
+  const content = await db.getSubmission(submissionId);
 
   if (!content) {
     return c.notFound();

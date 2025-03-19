@@ -1,7 +1,7 @@
-import { describe, expect, it, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import { DistributionService } from "../services/distribution/distribution.service";
 import { DistributorConfig } from "../types/config";
-import { PluginError, PluginExecutionError } from "../types/errors";
+import { PluginError } from "../types/errors";
 import { TwitterSubmission } from "../types/twitter";
 
 interface DistributeArgs<T> {
@@ -45,8 +45,8 @@ describe("DistributionService", () => {
       curatorUsername: "curator",
       curatorNotes: null,
       curatorTweetId: "456",
-      createdAt: new Date().toISOString(),
-      submittedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      submittedAt: new Date(),
       moderationHistory: [],
       status: "approved",
     };

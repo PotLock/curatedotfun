@@ -1,5 +1,5 @@
 import { and, eq, sql } from "drizzle-orm";
-import { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import {
   SubmissionFeed,
   Moderation,
@@ -16,20 +16,21 @@ import {
   submissionFeeds,
   submissions,
 } from "./schema";
-import { DbQueryResult, DbFeedQueryResult } from "./types";
+import { DbQueryResult, DbFeedQueryResult, RawDbQueryResult } from "./types";
 
-export function upsertFeeds(
-  db: BetterSQLite3Database,
+export async function upsertFeeds(
+  db: NodePgDatabase<any>,
   feedsToUpsert: { id: string; name: string; description?: string }[],
-) {
-  db.transaction(() => {
+): Promise<void> {
+  await db.transaction(async (tx) => {
     for (const feed of feedsToUpsert) {
-      db.insert(feeds)
+      await tx
+        .insert(feeds)
         .values({
           id: feed.id,
           name: feed.name,
           description: feed.description,
-          createdAt: new Date().toISOString(),
+          createdAt: new Date(),
         })
         .onConflictDoUpdate({
           target: feeds.id,
@@ -38,40 +39,38 @@ export function upsertFeeds(
             description: feed.description,
           },
         })
-        .run();
+        .execute();
     }
   });
 }
 
-export function saveSubmissionToFeed(
-  db: BetterSQLite3Database,
+export async function saveSubmissionToFeed(
+  db: NodePgDatabase<any>,
   submissionId: string,
   feedId: string,
   status: SubmissionStatus = SubmissionStatus.PENDING,
-) {
+): Promise<void> {
   // Check if submission exists
-  const submission = db
+  const submissions_result = await db
     .select({ id: submissions.tweetId })
     .from(submissions)
-    .where(eq(submissions.tweetId, submissionId))
-    .get();
+    .where(eq(submissions.tweetId, submissionId));
 
-  if (!submission) {
+  if (!submissions_result.length) {
     throw new Error(`Submission with ID ${submissionId} does not exist`);
   }
 
   // Check if feed exists
-  const feed = db
+  const feeds_result = await db
     .select({ id: feeds.id })
     .from(feeds)
-    .where(eq(feeds.id, feedId))
-    .get();
+    .where(eq(feeds.id, feedId));
 
-  if (!feed) {
+  if (!feeds_result.length) {
     throw new Error(`Feed with ID ${feedId} does not exist`);
   }
 
-  return db
+  await db
     .insert(submissionFeeds)
     .values({
       submissionId,
@@ -79,14 +78,14 @@ export function saveSubmissionToFeed(
       status,
     })
     .onConflictDoNothing()
-    .run();
+    .execute();
 }
 
-export function getFeedsBySubmission(
-  db: BetterSQLite3Database,
+export async function getFeedsBySubmission(
+  db: NodePgDatabase<any>,
   submissionId: string,
-): SubmissionFeed[] {
-  const results = db
+): Promise<SubmissionFeed[]> {
+  const results = await db
     .select({
       submissionId: submissionFeeds.submissionId,
       feedId: submissionFeeds.feedId,
@@ -94,8 +93,7 @@ export function getFeedsBySubmission(
       moderationResponseTweetId: submissionFeeds.moderationResponseTweetId,
     })
     .from(submissionFeeds)
-    .where(eq(submissionFeeds.submissionId, submissionId))
-    .all();
+    .where(eq(submissionFeeds.submissionId, submissionId));
 
   return results.map((result) => ({
     ...result,
@@ -103,11 +101,11 @@ export function getFeedsBySubmission(
   }));
 }
 
-export function saveSubmission(
-  db: BetterSQLite3Database,
+export async function saveSubmission(
+  db: NodePgDatabase<any>,
   submission: TwitterSubmission,
-) {
-  return db
+): Promise<void> {
+  await db
     .insert(submissions)
     .values({
       tweetId: submission.tweetId,
@@ -118,17 +116,19 @@ export function saveSubmission(
       curatorId: submission.curatorId,
       curatorUsername: submission.curatorUsername,
       curatorTweetId: submission.curatorTweetId,
-      createdAt: submission.createdAt,
-      submittedAt: submission.submittedAt,
-    })
-    .run();
+      createdAt: new Date(submission.createdAt),
+      submittedAt: submission.submittedAt
+        ? new Date(submission.submittedAt)
+        : null,
+    } as any)
+    .execute();
 }
 
-export function saveModerationAction(
-  db: BetterSQLite3Database,
+export async function saveModerationAction(
+  db: NodePgDatabase<any>,
   moderation: Moderation,
-) {
-  return db
+): Promise<void> {
+  await db
     .insert(moderationHistory)
     .values({
       tweetId: moderation.tweetId,
@@ -136,16 +136,16 @@ export function saveModerationAction(
       adminId: moderation.adminId,
       action: moderation.action,
       note: moderation.note,
-      createdAt: moderation.timestamp.toISOString(),
-    })
-    .run();
+      createdAt: moderation.timestamp,
+    } as any)
+    .execute();
 }
 
-export function getModerationHistory(
-  db: BetterSQLite3Database,
+export async function getModerationHistory(
+  db: NodePgDatabase<any>,
   tweetId: string,
-): Moderation[] {
-  const results = db
+): Promise<Moderation[]> {
+  const results = await db
     .select({
       tweetId: moderationHistory.tweetId,
       feedId: moderationHistory.feedId,
@@ -164,8 +164,7 @@ export function getModerationHistory(
       ),
     )
     .where(eq(moderationHistory.tweetId, tweetId))
-    .orderBy(moderationHistory.createdAt)
-    .all();
+    .orderBy(moderationHistory.createdAt);
 
   return results.map((result) => ({
     tweetId: result.tweetId,
@@ -173,24 +172,24 @@ export function getModerationHistory(
     adminId: result.adminId,
     action: result.action as "approve" | "reject",
     note: result.note,
-    timestamp: new Date(result.createdAt),
+    timestamp: result.createdAt,
     moderationResponseTweetId: result.moderationResponseTweetId ?? undefined,
   }));
 }
 
-export function updateSubmissionFeedStatus(
-  db: BetterSQLite3Database,
+export async function updateSubmissionFeedStatus(
+  db: NodePgDatabase<any>,
   submissionId: string,
   feedId: string,
   status: SubmissionStatus,
   moderationResponseTweetId: string,
-) {
-  return db
+): Promise<void> {
+  await db
     .update(submissionFeeds)
     .set({
       status,
       moderationResponseTweetId,
-      updatedAt: new Date().toISOString(),
+      updatedAt: new Date(),
     })
     .where(
       and(
@@ -198,14 +197,14 @@ export function updateSubmissionFeedStatus(
         eq(submissionFeeds.feedId, feedId),
       ),
     )
-    .run();
+    .execute();
 }
 
-export function getSubmissionByCuratorTweetId(
-  db: BetterSQLite3Database,
+export async function getSubmissionByCuratorTweetId(
+  db: NodePgDatabase<any>,
   curatorTweetId: string,
-): TwitterSubmission | null {
-  const results = db
+): Promise<TwitterSubmission | null> {
+  const results = await db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -217,7 +216,7 @@ export function getSubmissionByCuratorTweetId(
         curatorUsername: submissions.curatorUsername,
         curatorTweetId: submissions.curatorTweetId,
         createdAt: submissions.createdAt,
-        submittedAt: sql<string>`COALESCE(${submissions.submittedAt}, ${submissions.createdAt})`,
+        submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
       },
       m: {
         tweetId: moderationHistory.tweetId,
@@ -242,21 +241,20 @@ export function getSubmissionByCuratorTweetId(
       ),
     )
     .where(eq(submissions.curatorTweetId, curatorTweetId))
-    .orderBy(moderationHistory.createdAt)
-    .all() as DbQueryResult[];
+    .orderBy(moderationHistory.createdAt);
 
   if (!results.length) return null;
 
   // Group moderation history
   const modHistory: Moderation[] = results
-    .filter((r: DbQueryResult) => r.m && r.m.adminId !== null)
-    .map((r: DbQueryResult) => ({
+    .filter((r: any) => r.m && r.m.adminId !== null)
+    .map((r: any) => ({
       tweetId: results[0].s.tweetId,
       feedId: r.m.feedId!,
       adminId: r.m.adminId!,
       action: r.m.action as "approve" | "reject",
       note: r.m.note,
-      timestamp: new Date(r.m.createdAt!),
+      timestamp: r.m.createdAt!,
       moderationResponseTweetId: r.m.moderationResponseTweetId ?? undefined,
     }));
 
@@ -269,17 +267,19 @@ export function getSubmissionByCuratorTweetId(
     curatorId: results[0].s.curatorId,
     curatorUsername: results[0].s.curatorUsername,
     curatorTweetId: results[0].s.curatorTweetId,
-    createdAt: results[0].s.createdAt,
-    submittedAt: results[0].s.submittedAt,
+    createdAt: new Date(results[0].s.createdAt),
+    submittedAt: results[0].s.submittedAt
+      ? new Date(results[0].s.submittedAt)
+      : null,
     moderationHistory: modHistory,
   };
 }
 
-export function getSubmission(
-  db: BetterSQLite3Database,
+export async function getSubmission(
+  db: NodePgDatabase<any>,
   tweetId: string,
-): TwitterSubmission | null {
-  const results = db
+): Promise<TwitterSubmission | null> {
+  const results = await db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -291,7 +291,7 @@ export function getSubmission(
         curatorUsername: submissions.curatorUsername,
         curatorTweetId: submissions.curatorTweetId,
         createdAt: submissions.createdAt,
-        submittedAt: sql<string>`COALESCE(${submissions.submittedAt}, ${submissions.createdAt})`,
+        submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
       },
       m: {
         tweetId: moderationHistory.tweetId,
@@ -316,21 +316,20 @@ export function getSubmission(
       ),
     )
     .where(eq(submissions.tweetId, tweetId))
-    .orderBy(moderationHistory.createdAt)
-    .all() as DbQueryResult[];
+    .orderBy(moderationHistory.createdAt);
 
   if (!results.length) return null;
 
   // Group moderation history
   const modHistory: Moderation[] = results
-    .filter((r: DbQueryResult) => r.m && r.m.adminId !== null)
-    .map((r: DbQueryResult) => ({
+    .filter((r: any) => r.m && r.m.adminId !== null)
+    .map((r: any) => ({
       tweetId,
       feedId: r.m.feedId!,
       adminId: r.m.adminId!,
       action: r.m.action as "approve" | "reject",
       note: r.m.note,
-      timestamp: new Date(r.m.createdAt!),
+      timestamp: r.m.createdAt!,
       moderationResponseTweetId: r.m.moderationResponseTweetId ?? undefined,
     }));
 
@@ -343,16 +342,18 @@ export function getSubmission(
     curatorId: results[0].s.curatorId,
     curatorUsername: results[0].s.curatorUsername,
     curatorTweetId: results[0].s.curatorTweetId,
-    createdAt: results[0].s.createdAt,
-    submittedAt: results[0].s.submittedAt,
+    createdAt: new Date(results[0].s.createdAt),
+    submittedAt: results[0].s.submittedAt
+      ? new Date(results[0].s.submittedAt)
+      : null,
     moderationHistory: modHistory,
   };
 }
 
-export function getAllSubmissions(
-  db: BetterSQLite3Database,
+export async function getAllSubmissions(
+  db: NodePgDatabase<any>,
   status?: string,
-): TwitterSubmissionWithFeedData[] {
+): Promise<TwitterSubmissionWithFeedData[]> {
   // Build the query with or without status filter
   const queryBuilder = status
     ? db
@@ -367,7 +368,7 @@ export function getAllSubmissions(
             curatorUsername: submissions.curatorUsername,
             curatorTweetId: submissions.curatorTweetId,
             createdAt: submissions.createdAt,
-            submittedAt: sql<string>`COALESCE(${submissions.submittedAt}, ${submissions.createdAt})`,
+            submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
           },
           m: {
             tweetId: moderationHistory.tweetId,
@@ -414,7 +415,7 @@ export function getAllSubmissions(
             curatorUsername: submissions.curatorUsername,
             curatorTweetId: submissions.curatorTweetId,
             createdAt: submissions.createdAt,
-            submittedAt: sql<string>`COALESCE(${submissions.submittedAt}, ${submissions.createdAt})`,
+            submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
           },
           m: {
             tweetId: moderationHistory.tweetId,
@@ -449,7 +450,7 @@ export function getAllSubmissions(
         )
         .leftJoin(feeds, eq(submissionFeeds.feedId, feeds.id));
 
-  const results = queryBuilder.orderBy(moderationHistory.createdAt).all();
+  const results = await queryBuilder.orderBy(moderationHistory.createdAt);
 
   // Group results by submission
   const submissionMap = new Map<string, TwitterSubmissionWithFeedData>();
@@ -467,8 +468,10 @@ export function getAllSubmissions(
         curatorId: result.s.curatorId,
         curatorUsername: result.s.curatorUsername,
         curatorTweetId: result.s.curatorTweetId,
-        createdAt: result.s.createdAt,
-        submittedAt: result.s.submittedAt,
+        createdAt: new Date(result.s.createdAt),
+        submittedAt: result.s.submittedAt
+          ? new Date(result.s.submittedAt)
+          : null,
         moderationHistory: [],
         status: status
           ? (status as SubmissionStatus)
@@ -489,7 +492,7 @@ export function getAllSubmissions(
         adminId: result.m.adminId,
         action: result.m.action as "approve" | "reject",
         note: result.m.note,
-        timestamp: new Date(result.m.createdAt!),
+        timestamp: result.m.createdAt!,
         moderationResponseTweetId:
           result.m.moderationResponseTweetId ?? undefined,
       });
@@ -568,42 +571,41 @@ export function getAllSubmissions(
   return Array.from(submissionMap.values());
 }
 
-export function cleanupOldSubmissionCounts(
-  db: BetterSQLite3Database,
+export async function cleanupOldSubmissionCounts(
+  db: NodePgDatabase<any>,
   date: string,
-) {
-  return db
+): Promise<void> {
+  await db
     .delete(submissionCounts)
-    .where(sql`${submissionCounts.lastResetDate} < ${date}`)
-    .run();
+    .where(sql`${submissionCounts.lastResetDate} < ${sql.raw(`'${date}'`)}`)
+    .execute();
 }
 
-export function getDailySubmissionCount(
-  db: BetterSQLite3Database,
+export async function getDailySubmissionCount(
+  db: NodePgDatabase<any>,
   userId: string,
   date: string,
-): number {
-  const result = db
+): Promise<number> {
+  const results = await db
     .select({ count: submissionCounts.count })
     .from(submissionCounts)
     .where(
       and(
         eq(submissionCounts.userId, userId),
-        eq(submissionCounts.lastResetDate, date),
+        eq(submissionCounts.lastResetDate, sql.raw(`'${date}'`)),
       ),
-    )
-    .get();
+    );
 
-  return result?.count ?? 0;
+  return results.length > 0 ? results[0].count : 0;
 }
 
-export function incrementDailySubmissionCount(
-  db: BetterSQLite3Database,
+export async function incrementDailySubmissionCount(
+  db: NodePgDatabase<any>,
   userId: string,
-) {
-  const today = new Date().toISOString().split("T")[0];
+): Promise<void> {
+  const today = new Date();
 
-  return db
+  await db
     .insert(submissionCounts)
     .values({
       userId,
@@ -614,21 +616,21 @@ export function incrementDailySubmissionCount(
       target: submissionCounts.userId,
       set: {
         count: sql`CASE 
-          WHEN ${submissionCounts.lastResetDate} < ${today} THEN 1
+          WHEN ${submissionCounts.lastResetDate} < ${sql.raw(`'${today}'`)} THEN 1
           ELSE ${submissionCounts.count} + 1
         END`,
         lastResetDate: today,
       },
     })
-    .run();
+    .execute();
 }
 
-export function removeFromSubmissionFeed(
-  db: BetterSQLite3Database,
+export async function removeFromSubmissionFeed(
+  db: NodePgDatabase<any>,
   submissionId: string,
   feedId: string,
-) {
-  return db
+): Promise<void> {
+  await db
     .delete(submissionFeeds)
     .where(
       and(
@@ -636,31 +638,32 @@ export function removeFromSubmissionFeed(
         eq(submissionFeeds.feedId, feedId),
       ),
     )
-    .run();
+    .execute();
 }
 
 // Feed Plugin queries
-export function getFeedPlugin(
-  db: BetterSQLite3Database,
+export async function getFeedPlugin(
+  db: NodePgDatabase<any>,
   feedId: string,
   pluginId: string,
 ) {
-  return db
+  const results = await db
     .select()
     .from(feedPlugins)
     .where(
       and(eq(feedPlugins.feedId, feedId), eq(feedPlugins.pluginId, pluginId)),
-    )
-    .get();
+    );
+
+  return results.length > 0 ? results[0] : null;
 }
 
-export function upsertFeedPlugin(
-  db: BetterSQLite3Database,
+export async function upsertFeedPlugin(
+  db: NodePgDatabase<any>,
   feedId: string,
   pluginId: string,
   config: Record<string, any>,
-) {
-  return db
+): Promise<void> {
+  await db
     .insert(feedPlugins)
     .values({
       feedId,
@@ -671,10 +674,10 @@ export function upsertFeedPlugin(
       target: [feedPlugins.feedId, feedPlugins.pluginId],
       set: {
         config: JSON.stringify(config),
-        updatedAt: new Date().toISOString(),
+        updatedAt: new Date(),
       },
     })
-    .run();
+    .execute();
 }
 
 export interface FeedSubmissionCount {
@@ -694,83 +697,77 @@ export interface CountResult {
   count: number;
 }
 
-export function getPostsCount(db: BetterSQLite3Database): number {
+export async function getPostsCount(db: NodePgDatabase<any>): Promise<number> {
   // Count approved submissions
-  const result = db.get(sql`
+  const result = await db.execute(sql`
     SELECT COUNT(DISTINCT submission_id) as count
     FROM submission_feeds
     WHERE status = 'approved'
-  `) as CountResult | undefined;
+  `);
 
-  return result?.count || 0;
+  return result.rows.length > 0 ? Number(result.rows[0].count) : 0;
 }
 
-export function getCuratorsCount(db: BetterSQLite3Database): number {
+export async function getCuratorsCount(
+  db: NodePgDatabase<any>,
+): Promise<number> {
   // Count unique curator IDs
-  const result = db.get(sql`
+  const result = await db.execute(sql`
     SELECT COUNT(DISTINCT curator_id) as count
     FROM submissions
     WHERE curator_id IS NOT NULL
-  `) as CountResult | undefined;
+  `);
 
-  return result?.count || 0;
+  return result.rows.length > 0 ? Number(result.rows[0].count) : 0;
 }
 
-export function getLeaderboard(db: BetterSQLite3Database): LeaderboardEntry[] {
+export async function getLeaderboard(
+  db: NodePgDatabase<any>,
+): Promise<LeaderboardEntry[]> {
   // Step 1: Get all curators with their total submission counts
-  interface CuratorRow {
-    curatorId: string;
-    curatorUsername: string;
-    submissionCount: number;
-  }
-
-  const curators = db.all(sql`
+  const curatorsResult = await db.execute(sql`
     SELECT 
-      s.curator_id AS curatorId,
-      s.curator_username AS curatorUsername,
-      COUNT(DISTINCT s.tweet_id) AS submissionCount
+      s.curator_id AS curatorid,
+      s.curator_username AS curatorusername,
+      COUNT(DISTINCT s.tweet_id) AS submissioncount
     FROM 
       submissions s
     GROUP BY 
       s.curator_id, s.curator_username
     ORDER BY 
-      submissionCount DESC
-  `) as unknown as CuratorRow[];
+      submissioncount DESC
+  `);
+
+  const curators = curatorsResult.rows.map((row) => ({
+    curatorId: String(row.curatorid),
+    curatorUsername: String(row.curatorusername),
+    submissionCount: Number(row.submissioncount),
+  }));
 
   // Step 2: Get total submissions per feed
-  interface FeedTotalRow {
-    feedId: string;
-    totalCount: number;
-  }
-
-  const feedTotals = db.all(sql`
+  const feedTotalsResult = await db.execute(sql`
     SELECT 
-      feed_id AS feedId,
-      COUNT(DISTINCT submission_id) AS totalCount
+      feed_id AS feedid,
+      COUNT(DISTINCT submission_id) AS totalcount
     FROM 
       submission_feeds
     GROUP BY 
       feed_id
-  `) as unknown as FeedTotalRow[];
+  `);
 
   // Create a map for quick lookup of feed totals
   const feedTotalsMap = new Map<string, number>();
-  for (const feed of feedTotals) {
-    feedTotalsMap.set(feed.feedId, feed.totalCount);
+  for (const row of feedTotalsResult.rows) {
+    feedTotalsMap.set(String(row.feedid), Number(row.totalcount));
   }
 
   // Step 3: For each curator, get their submissions per feed
   const result: LeaderboardEntry[] = [];
 
   for (const curator of curators) {
-    interface CuratorFeedRow {
-      feedId: string;
-      count: number;
-    }
-
-    const curatorFeeds = db.all(sql`
+    const curatorFeedsResult = await db.execute(sql`
       SELECT 
-        sf.feed_id AS feedId,
+        sf.feed_id AS feedid,
         COUNT(DISTINCT sf.submission_id) AS count
       FROM 
         submission_feeds sf
@@ -780,14 +777,16 @@ export function getLeaderboard(db: BetterSQLite3Database): LeaderboardEntry[] {
         s.curator_id = ${curator.curatorId}
       GROUP BY 
         sf.feed_id
-    `) as unknown as CuratorFeedRow[];
+    `);
 
     // Convert to FeedSubmissionCount array with total counts
-    const feedSubmissions: FeedSubmissionCount[] = curatorFeeds.map((feed) => ({
-      feedId: feed.feedId,
-      count: feed.count,
-      totalInFeed: feedTotalsMap.get(feed.feedId) || 0,
-    }));
+    const feedSubmissions: FeedSubmissionCount[] = curatorFeedsResult.rows.map(
+      (row) => ({
+        feedId: String(row.feedid),
+        count: Number(row.count),
+        totalInFeed: feedTotalsMap.get(String(row.feedid)) || 0,
+      }),
+    );
 
     // Sort by count (highest first)
     feedSubmissions.sort((a, b) => b.count - a.count);
@@ -803,14 +802,16 @@ export function getLeaderboard(db: BetterSQLite3Database): LeaderboardEntry[] {
   return result;
 }
 
-export function getSubmissionsByFeed(
-  db: BetterSQLite3Database,
+export async function getSubmissionsByFeed(
+  db: NodePgDatabase<any>,
   feedId: string,
-): (TwitterSubmission & {
-  status: SubmissionStatus;
-  moderationResponseTweetId?: string;
-})[] {
-  const results = db
+): Promise<
+  (TwitterSubmission & {
+    status: SubmissionStatus;
+    moderationResponseTweetId?: string;
+  })[]
+> {
+  const results = await db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -822,7 +823,7 @@ export function getSubmissionsByFeed(
         curatorUsername: submissions.curatorUsername,
         curatorTweetId: submissions.curatorTweetId,
         createdAt: submissions.createdAt,
-        submittedAt: sql<string>`COALESCE(${submissions.submittedAt}, ${submissions.createdAt})`,
+        submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
       },
       sf: {
         status: submissionFeeds.status,
@@ -847,8 +848,7 @@ export function getSubmissionsByFeed(
       eq(submissions.tweetId, moderationHistory.tweetId),
     )
     .where(eq(submissionFeeds.feedId, feedId))
-    .orderBy(moderationHistory.createdAt)
-    .all() as DbFeedQueryResult[];
+    .orderBy(moderationHistory.createdAt);
 
   // Group results by submission
   const submissionMap = new Map<string, TwitterSubmissionWithFeedData>();
@@ -864,8 +864,10 @@ export function getSubmissionsByFeed(
         curatorId: result.s.curatorId,
         curatorUsername: result.s.curatorUsername,
         curatorTweetId: result.s.curatorTweetId,
-        createdAt: result.s.createdAt,
-        submittedAt: result.s.submittedAt,
+        createdAt: new Date(result.s.createdAt),
+        submittedAt: result.s.submittedAt
+          ? new Date(result.s.submittedAt)
+          : null,
         moderationHistory: [],
         status: result.sf.status,
         moderationResponseTweetId:
@@ -878,10 +880,10 @@ export function getSubmissionsByFeed(
       submission.moderationHistory.push({
         tweetId: result.s.tweetId,
         feedId: result.m.feedId!,
-        adminId: result.m.adminId,
+        adminId: result.m.adminId!,
         action: result.m.action as "approve" | "reject",
         note: result.m.note,
-        timestamp: new Date(result.m.createdAt!),
+        timestamp: result.m.createdAt!,
         moderationResponseTweetId:
           result.m.moderationResponseTweetId ?? undefined,
       });

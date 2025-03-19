@@ -1,11 +1,9 @@
-import { sqliteTable as table, text } from "drizzle-orm/sqlite-core";
+import { pgTable as table, text, timestamp } from "drizzle-orm/pg-core";
 
 // Reusable timestamp columns
 const timestamps = {
-  createdAt: text("created_at")
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
-  updatedAt: text("updated_at").$defaultFn(() => new Date().toISOString()),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 };
 
 export const twitterCookies = table("twitter_cookies", {

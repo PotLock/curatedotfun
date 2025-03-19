@@ -8,16 +8,26 @@ export function sanitizeJson(data: any): any {
   // Handle different input types
   if (typeof data === "string") {
     try {
+      // Remove BOM if present
+      let cleanString = data.replace(/^\uFEFF/, "");
+
       // Try to parse if it's a string that might be JSON
-      const trimmed = data.trim();
+      const trimmed = cleanString.trim();
       if (
         (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
-        (trimmed.startsWith("[") && trimmed.endsWith("]"))
+        (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+        // Check for quoted JSON strings (double stringified)
+        (trimmed.startsWith('"') && trimmed.endsWith('"'))
       ) {
-        // Remove BOM if present
-        const cleanString = data.replace(/^\uFEFF/, "");
-        // Parse and re-stringify to normalize
-        return JSON.parse(cleanString);
+        // Parse the string
+        const parsed = JSON.parse(cleanString);
+
+        // If the result is still a string that looks like JSON, recursively parse it
+        if (typeof parsed === "string") {
+          return sanitizeJson(parsed);
+        }
+
+        return parsed;
       }
       return data;
     } catch (e) {

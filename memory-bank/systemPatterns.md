@@ -17,7 +17,7 @@
    - ProcessorService: Orchestrates transformation pipeline
    - TransformationService: Handles content transformations
    - DistributionService: Content distribution
-   - Database Service: Data persistence
+   - Database Service: Data persistence with PostgreSQL and Drizzle ORM
    - PluginService: Dynamic plugin management
    - TwitterService: Twitter API interaction
 
@@ -41,6 +41,26 @@
      * Custom endpoint registration
      * Scheduled task integration
      * Development toolkit with mocks
+
+### Database Architecture
+
+1. **PostgreSQL with Drizzle ORM**
+   - Read/write separation with connection pools
+   - Transaction support with retry logic
+   - Error handling and connection management
+   - Singleton pattern for database service
+
+2. **Development Environment**
+   - Docker Compose for local development
+   - PostgreSQL container with persistent volume
+   - Automatic migrations on startup
+   - Seed data scripts from SQLite
+
+3. **Testing Environment**
+   - Isolated test databases
+   - Automated cleanup between test runs
+   - Mock system for unit tests
+   - Transaction rollbacks for test isolation
 
 ### Design Patterns
 
@@ -130,7 +150,14 @@ graph TD
 
 ## Key Technical Decisions
 
-1. **Hono Framework**
+1. **PostgreSQL Database**
+   - Scalable relational database
+   - Read/write separation capability
+   - Connection pooling for performance
+   - Drizzle ORM for type-safe queries
+   - Docker-based development environment
+
+2. **Hono Framework**
    - High performance
    - Built-in TypeScript support
    - Middleware ecosystem

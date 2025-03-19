@@ -12,10 +12,10 @@ statsRoutes.get("/", async (c) => {
   const config = context.configService.getConfig();
 
   // Get posts count from database
-  const postsCount = db.getPostsCount();
+  const postsCount = await db.getPostsCount();
 
   // Get curators count from database
-  const curatorsCount = db.getCuratorsCount();
+  const curatorsCount = await db.getCuratorsCount();
 
   // Get other stats from config
   const feedsCount = config.feeds.length;

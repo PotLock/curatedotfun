@@ -23,7 +23,7 @@ export class ConfigService {
       // Use test config in development mode
       this.configPath = path.resolve(
         __dirname,
-        "../../curate.config.test.json",
+        "../../../test/curate.config.test.json",
       );
       logger.info("Using test configuration");
     }

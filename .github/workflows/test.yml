@@ -1,0 +1,46 @@
+name: Tests
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run Docker Compose for tests
+        uses: hoverkraft-tech/compose-action@v2.0.1
+        with:
+          compose-file: "./backend/test/setup/docker-compose.yml"
+          services: "postgres_test"
+          up-flags: "--detach"
+          down-flags: "--volumes"
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          chmod +x ./backend/test/wait-for-db.sh
+          ./backend/test/wait-for-db.sh localhost 54321
+
+      - name: Run all tests
+        run: |
+          cd backend
+          bun test test/unit
+          bun test test/component
+          bun test test/integration
+          bun test test/e2e
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:54321/test

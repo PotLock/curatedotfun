@@ -72,11 +72,7 @@ graph TD
     %% Content Sources
     subgraph Sources["Content Sources"]
         Twitter["Twitter Source Plugin"]
-        Telegram["Telegram Source Plugin"]
-        LinkedIn["LinkedIn Source Plugin (Planned)"]
         style Twitter color:black
-        style Telegram color:black
-        style LinkedIn color:black
     end
     
     %% Submission Processing
@@ -105,11 +101,11 @@ graph TD
     
     %% Distributor Plugins
     subgraph Distributors["Distributor Plugins"]
-        TelegramDist["Telegram"]
+        Telegram["Telegram"]
         RSS["RSS"]
         Notion["Notion"]
         Supabase["Supabase"]
-        style TelegramDist color:black
+        style Telegram color:black
         style RSS color:black
         style Notion color:black
         style Supabase color:black
@@ -130,7 +126,7 @@ graph TD
     classDef process fill:#bfb,stroke:#333,stroke-width:1px
     
     class SubmissionService,ProcessorService,DistributionService service
-    class Twitter,Telegram,LinkedIn,TelegramDist,RSS,Notion,Supabase plugin
+    class Twitter,Telegram,RSS,Notion,Supabase plugin
     class Moderation,GlobalTransform,DistTransform process
 ```
 
