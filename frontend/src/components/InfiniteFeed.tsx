@@ -54,7 +54,7 @@ function InfiniteFeed<T>({
   }, [handleObserver]);
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-3 gap-4">
       {renderItems(items)}
 
       {/* Loading indicator and observer target */}

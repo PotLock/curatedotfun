@@ -1,10 +1,4 @@
-import {
-  FaTwitter,
-  FaBook,
-  FaGithub,
-  FaTelegram,
-  FaTrophy,
-} from "react-icons/fa";
+import { FaTwitter, FaBook, FaGithub, FaTelegram } from "react-icons/fa";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Modal } from "./Modal";
@@ -17,7 +11,7 @@ const Header = () => {
 
   return (
     <>
-      <header className="sticky top-0 flex justify-between items-center p-4 border-b-2 border-black bg-white z-10">
+      <header className="sticky top-0 flex justify-between items-center px-[70px] py-3 border-b-2 border-black bg-white z-10">
         <div className="flex flex-wrap items-center gap-4 sm:gap-8">
           <Link
             to="/"
@@ -33,23 +27,23 @@ const Header = () => {
             </div>
           </Link>
           <button
-            onClick={() => setShowHowItWorks(true)}
+            // onClick={() => setShowHowItWorks(true)}
             className="text-gray-600 hover:text-black transition-colors"
           >
-            How It Works
+            <Link to="/explore">Feeds</Link>
           </button>
           <button
             onClick={() => setShowLeaderboard(true)}
             className="text-gray-600 hover:text-black transition-colors flex items-center"
           >
-            <FaTrophy className="mr-1" /> Leaderboard
+            Leaderboard
           </button>
           {process.env.NODE_ENV === "development" && (
             <Link
               to="/test"
               className="text-gray-600 hover:text-black transition-colors"
             >
-              Test Panel
+              Submit Content
             </Link>
           )}
         </div>
