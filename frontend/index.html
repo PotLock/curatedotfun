@@ -1,6 +1,14 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- Polyfills for Web3Auth -->
+    <script type="module">
+      import { Buffer } from "buffer";
+      import process from "process";
+      window.Buffer = Buffer;
+      window.process = process;
+    </script>
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>curate.fun - crowdsource automated content</title>
@@ -25,14 +33,8 @@
       name="twitter:description"
       content="Curate news directly on socials and turn feeds into regular content."
     />
-    <meta
-      property="og:image"
-      content="https://curate.fun/meta.png"
-    />
-    <meta
-      property="twitter:image"
-      content="https://curate.fun/meta.png"
-    />
+    <meta property="og:image" content="https://curate.fun/meta.png" />
+    <meta property="twitter:image" content="https://curate.fun/meta.png" />
     <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />

@@ -10,12 +10,18 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@rsbuild/plugin-node-polyfill": "^1.3.0",
     "@tailwindcss/typography": "^0.5.15",
     "@tanstack/react-query": "^5.64.1",
     "@tanstack/react-router": "^1.114.15",
+    "@web3auth/base": "^9.7.0",
+    "@web3auth/ethereum-provider": "^9.7.0",
+    "@web3auth/modal": "^9.7.0",
     "autoprefixer": "^10.4.20",
     "axios": "^1.7.9",
+    "buffer": "^6.0.3",
     "postcss": "^8.4.49",
+    "process": "^0.11.10",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.4.0",
