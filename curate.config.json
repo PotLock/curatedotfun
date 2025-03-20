@@ -89,6 +89,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -174,6 +181,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -290,6 +304,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -418,6 +439,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -481,6 +509,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -706,6 +741,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -822,6 +864,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -929,6 +978,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -1003,6 +1059,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -1101,6 +1164,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -1294,6 +1364,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -1357,6 +1434,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -1420,6 +1504,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -1733,6 +1824,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -2006,6 +2104,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
