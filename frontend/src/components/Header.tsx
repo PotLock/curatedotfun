@@ -3,11 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Modal } from "./Modal";
 import { HowItWorks } from "./HowItWorks";
-<<<<<<< HEAD
-import { LeaderboardModal } from "./LeaderboardModal";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
-=======
->>>>>>> 5eae149 (Feat: implement frontend leaderboard (#93))
 
 const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
