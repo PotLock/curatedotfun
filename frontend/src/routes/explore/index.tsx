@@ -4,11 +4,11 @@ import { Button } from "../../components/ui/button";
 import SubmissionList from "../../components/SubmissionList";
 import InfiniteFeed from "../../components/InfiniteFeed";
 import { useBotId } from "../../lib/config";
-import { useEffect, useState } from "react";
-import { TwitterSubmission } from "../../types/twitter";
+import { useEffect } from "react";
 import { useAllSubmissions } from "../../lib/api";
 import { Status } from "../../components/StatusFilter";
 import { Sort } from "../../components/Sort";
+import { useFilterStore } from "../../store/useFilterStore";
 
 export const Route = createFileRoute("/explore/")({
   component: ExplorePage,
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/explore/")({
 
 function ExplorePage() {
   const botId = useBotId();
-  const [statusFilter] = useState<"all" | TwitterSubmission["status"]>("all");
+  const { statusFilter } = useFilterStore();
 
   // Fetch submissions with infinite scroll
   const ITEMS_PER_PAGE = 20;

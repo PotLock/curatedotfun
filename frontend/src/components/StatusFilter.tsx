@@ -13,25 +13,30 @@ import {
   CommandList,
 } from "./ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { StatusFilterType, useFilterStore } from "../store/useFilterStore";
 
 const frameworks = [
   {
-    value: "Pending",
+    value: "all",
+    label: "All",
+  },
+  {
+    value: "pending",
     label: "Pending",
   },
   {
-    value: "Approved",
+    value: "approved",
     label: "Approved",
   },
   {
-    value: "Rejected",
+    value: "rejected",
     label: "Rejected",
   },
 ];
 
 export function Status() {
   const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState("");
+  const { statusFilter, setStatusFilter } = useFilterStore();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -42,8 +47,9 @@ export function Status() {
           aria-expanded={open}
           className="max-w-fit text-sm justify-between"
         >
-          {value
-            ? frameworks.find((framework) => framework.value === value)?.label
+          {statusFilter
+            ? frameworks.find((framework) => framework.value === statusFilter)
+                ?.label
             : "Status"}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -59,14 +65,20 @@ export function Status() {
                   key={framework.value}
                   value={framework.value}
                   onSelect={(currentValue) => {
-                    setValue(currentValue === value ? "" : currentValue);
+                    setStatusFilter(
+                      currentValue === statusFilter
+                        ? undefined
+                        : (currentValue as StatusFilterType),
+                    );
                     setOpen(false);
                   }}
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value === framework.value ? "opacity-100" : "opacity-0",
+                      statusFilter === framework.value
+                        ? "opacity-100"
+                        : "opacity-0",
                     )}
                   />
                   {framework.label}

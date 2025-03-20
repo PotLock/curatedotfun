@@ -21,8 +21,5 @@
     "fmt": "prettier --write '**/*.{js,jsx,ts,tsx,json}'",
     "fmt:check": "prettier --check '**/*.{js,jsx,ts,tsx,json}'"
   },
-  "type": "module",
-  "dependencies": {
-    "zustand": "^5.0.3"
-  }
+  "type": "module"
 }
