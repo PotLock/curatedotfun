@@ -1,17 +1,46 @@
-import { HiExternalLink, HiChevronDown, HiChevronUp } from "react-icons/hi";
+import { HiExternalLink } from "react-icons/hi";
 import {
-  FeedStatus,
   SubmissionStatus,
   TwitterSubmissionWithFeedData,
 } from "../types/twitter";
 import { getTweetUrl, handleApprove, handleReject } from "../lib/twitter";
 import { useBotId } from "../lib/config";
-import { useState, useRef, useEffect } from "react";
-import { Link } from "@tanstack/react-router";
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleString();
-};
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+
+  // Convert to hours, days, weeks, months, years
+  const hours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const days = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  const weeks = Math.floor(days / 7);
+  const months = Math.floor(days / 30); // Approximate
+  const years = Math.floor(days / 365); // Approximate
+
+  // Within 24 hours: show hours
+  if (hours < 24) {
+    return `${hours}h`;
+  }
+
+  // Within a week: show days
+  if (days < 7) {
+    return `${days}d`;
+  }
+
+  // Within a year: show weeks or months
+  if (days < 365) {
+    if (months < 1) {
+      return `${weeks}w`;
+    }
+    return `${months}m`;
+  }
+
+  // More than a year: show years
+  return `${years}y`;
+};
 // Reusable Components
 const UserLink = ({ username }: { username: string }) => (
   <a
@@ -43,171 +72,6 @@ const TweetLink = ({
     <HiExternalLink className="inline h-4 w-4" />
   </a>
 );
-
-const StatusBadge = ({
-  status,
-  feedId,
-  feedName,
-  clickable = false,
-}: {
-  status: TwitterSubmissionWithFeedData["status"];
-  feedId?: string;
-  feedName?: string;
-  clickable?: boolean;
-}) => {
-  const baseClasses = "status-badge px-2 py-1 rounded-md text-sm font-medium";
-  const statusClasses = {
-    pending: "bg-yellow-200 text-black",
-    approved: "bg-green-200 text-black",
-    rejected: "bg-red-200 text-black",
-  };
-  const classes = `${baseClasses} ${statusClasses[status]} ${clickable ? "cursor-pointer hover:opacity-80" : ""}`;
-
-  if (feedId) {
-    return (
-      <Link
-        to="/feed/$feedId"
-        params={{ feedId }}
-        className={classes}
-        title={feedName}
-      >
-        {status}
-      </Link>
-    );
-  }
-
-  return <span className={classes}>{status}</span>;
-};
-
-// Feed Status Badges component
-const FeedStatusBadges = ({
-  feedStatuses,
-  statusFilter,
-}: {
-  feedStatuses?: FeedStatus[];
-  statusFilter: "all" | SubmissionStatus;
-}) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const popoverRef = useRef<HTMLDivElement>(null);
-
-  // Close popover when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        popoverRef.current &&
-        !popoverRef.current.contains(event.target as Node)
-      ) {
-        setIsExpanded(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  if (!feedStatuses || feedStatuses.length === 0) {
-    return null;
-  }
-
-  // Filter statuses based on statusFilter
-  const filteredStatuses =
-    statusFilter === "all"
-      ? feedStatuses
-      : feedStatuses.filter((fs) => fs.status === statusFilter);
-
-  if (filteredStatuses.length === 0) {
-    return null;
-  }
-
-  // Show only 1 badge on mobile/tablet, up to 3 on desktop
-  const maxVisibleBadges = {
-    mobile: 1,
-    desktop: 3,
-  };
-
-  return (
-    <div className="relative">
-      <div className="flex flex-wrap gap-1">
-        {/* Mobile view - show only 1 badge */}
-        <div className="md:hidden">
-          {filteredStatuses.slice(0, maxVisibleBadges.mobile).map((fs) => (
-            <StatusBadge
-              key={fs.feedId}
-              status={fs.status}
-              feedId={fs.feedId}
-              feedName={fs.feedName}
-              clickable
-            />
-          ))}
-
-          {filteredStatuses.length > maxVisibleBadges.mobile && (
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="px-2 py-1 rounded-md text-sm font-medium bg-gray-200 text-black flex items-center"
-            >
-              +{filteredStatuses.length - maxVisibleBadges.mobile} more
-              {isExpanded ? (
-                <HiChevronUp className="ml-1" />
-              ) : (
-                <HiChevronDown className="ml-1" />
-              )}
-            </button>
-          )}
-        </div>
-
-        {/* Desktop view - show up to 3 badges */}
-        <div className="hidden md:flex md:flex-wrap md:gap-1">
-          {filteredStatuses.slice(0, maxVisibleBadges.desktop).map((fs) => (
-            <StatusBadge
-              key={fs.feedId}
-              status={fs.status}
-              feedId={fs.feedId}
-              feedName={fs.feedName}
-              clickable
-            />
-          ))}
-
-          {filteredStatuses.length > maxVisibleBadges.desktop && (
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="px-2 py-1 rounded-md text-sm font-medium bg-gray-200 text-black flex items-center"
-            >
-              +{filteredStatuses.length - maxVisibleBadges.desktop} more
-              {isExpanded ? (
-                <HiChevronUp className="ml-1" />
-              ) : (
-                <HiChevronDown className="ml-1" />
-              )}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Popover for expanded view */}
-      {isExpanded && (
-        <div
-          ref={popoverRef}
-          className="absolute top-full left-0 mt-1 p-2 bg-white border-2 border-black shadow-sharp rounded-md z-10 min-w-[200px]"
-        >
-          <h4 className="font-medium mb-2">All Feeds</h4>
-          <div className="space-y-2">
-            {filteredStatuses.map((fs) => (
-              <div
-                key={fs.feedId}
-                className="flex justify-between items-center"
-              >
-                <span className="text-sm">{fs.feedName}</span>
-                <StatusBadge status={fs.status} feedId={fs.feedId} clickable />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 const NotesSection = ({
   title,
@@ -259,19 +123,14 @@ const ModerationActions = ({
   const botId = useBotId();
 
   return (
-    <div className="flex flex-col gap-2 mt-4">
-      <button
-        onClick={() => handleApprove(submission, botId)}
-        className="px-3 py-1.5 bg-green-200 hover:bg-green-300 text-black rounded-md border-2 border-black shadow-sharp hover:shadow-sharp-hover transition-all duration-200 translate-x-0 translate-y-0 hover:-translate-x-0.5 hover:-translate-y-0.5 text-sm font-medium"
-      >
-        approve
-      </button>
-      <button
+    <div className="flex justify-center flex-col gap-2">
+      <Button onClick={() => handleApprove(submission, botId)}>Approve</Button>
+      <Button
         onClick={() => handleReject(submission, botId)}
-        className="px-3 py-1.5 bg-red-200 hover:bg-red-300 text-black rounded-md border-2 border-black shadow-sharp hover:shadow-sharp-hover transition-all duration-200 translate-x-0 translate-y-0 hover:-translate-x-0.5 hover:-translate-y-0.5 text-sm font-medium"
+        variant="destructive"
       >
-        reject
-      </button>
+        Reject
+      </Button>
     </div>
   );
 };
@@ -281,66 +140,75 @@ interface FeedItemProps {
   statusFilter: "all" | SubmissionStatus;
 }
 
-export const FeedItem = ({
-  submission,
-  statusFilter = "all",
-}: FeedItemProps) => {
+// Function to truncate text to a specific character count without breaking words
+const truncateText = (text: string, maxLength: number): string => {
+  if (text.length <= maxLength) return text;
+
+  // Find the last space before the maxLength
+  const lastSpace = text.lastIndexOf(" ", maxLength);
+
+  // If no space found, just cut at maxLength
+  if (lastSpace === -1) return text.substring(0, maxLength) + "...";
+
+  // Otherwise cut at the last space
+  return text.substring(0, lastSpace) + "...";
+};
+
+export const FeedItem = ({ submission }: FeedItemProps) => {
   const lastModeration =
     submission.moderationHistory?.[submission.moderationHistory.length - 1];
 
   return (
-    <div className="card" id={submission.tweetId}>
-      {/* Header Section */}
-      <div className="flex justify-between items-start">
-        <div className="flex-grow">
-          <div className="flex flex-col pr-2">
-            <div className="flex items-center gap-2">
-              <span className="bg-blue-400 font-mono text-white text-xs px-1.5 py-0.5 rounded">
-                Twitter
-              </span>
-              <span className="text-gray-400">·</span>
-              <UserLink username={submission.username} />
-              <TweetLink
-                tweetId={submission.tweetId}
-                username={submission.username}
-                title="View original post on X/Twitter"
-              />
+    <div
+      className="flex gap-3 flex-col p-4 w-full items-center justify-between border rounded-lg border-[#D4D4D4]"
+      id={submission.tweetId}
+    >
+      <div className="flex flex-col gap-3 w-full justify-between items-center">
+        <div className="flex w-full justify-between items-center">
+          <div className="flex items-center justify-center gap-2">
+            <div>
+              <p className="text-[--card-foreground] text-nowrap text-base font-semibold leading-4">
+                Web3Plug (murica/acc)
+              </p>
+              <p>@{submission.username}</p>
             </div>
-            <span className="text-gray-600 mt-1">
-              {formatDate(submission.createdAt)}
-            </span>
+            <div className="flex flex-shrink-0 items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="7"
+                height="6"
+                viewBox="0 0 7 6"
+                fill="none"
+              >
+                <circle cx="3.28564" cy="3" r="3" fill="#D9D9D9" />
+              </svg>
+              <span className="text-gray-600 mt-1">
+                {formatDate(submission.createdAt)}
+              </span>
+            </div>
+          </div>
+          <div>
+            <Badge variant={submission.status}>{submission.status}</Badge>
           </div>
         </div>
-
-        {/* Show feed statuses if available, otherwise show the main status */}
-        {submission.feedStatuses && submission.feedStatuses.length > 0 ? (
-          <FeedStatusBadges
-            feedStatuses={submission.feedStatuses}
-            statusFilter={statusFilter as "all" | SubmissionStatus}
-          />
-        ) : (
-          <a
-            href={getTweetUrl(
-              submission.curatorTweetId,
-              submission.curatorUsername,
-            )}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <StatusBadge status={submission.status} clickable />
-          </a>
-        )}
+        <div className="w-full overflow-hidden">
+          <p className="text-base font-semibold leading-6">
+            EP 4. Arbitrum DAO's 7,500 ETH Allocation Faces Mixed Reactions Over
+            Non-Native Project
+          </p>
+        </div>
       </div>
+      {/* Title Section */}
 
       {/* Content Section */}
       <div className="w-full overflow-hidden">
-        <p className="text-lg leading-relaxed body-text pt-2 break-words overflow-wrap-anywhere">
-          {submission.content}
+        <p className="text-sm text-[#666]  leading-6 font-normal overflow-hidden text-ellipsis">
+          {truncateText(submission.content, 240)}
         </p>
       </div>
 
       {/* Notes Section */}
-      <div className="mt-6">
+      <div className="mt-6 w-full">
         {/* Moderation Notes */}
         {(submission.status === "approved" ||
           submission.status === "rejected") &&
@@ -352,7 +220,7 @@ export const FeedItem = ({
                   username={lastModeration.adminId}
                   tweetId={submission.moderationResponseTweetId!}
                   note={lastModeration.note}
-                  className="mb-4"
+                  // className="mb-4"
                 />
               </div>
             </div>
@@ -360,7 +228,7 @@ export const FeedItem = ({
 
         {/* Curator Notes and Moderation Actions */}
         {submission.status === "pending" && (
-          <div className="flex gap-8">
+          <div className="flex items-center gap-8">
             <div className="flex-col flex-grow">
               <NotesSection
                 title="Curator's Notes"

@@ -6,7 +6,7 @@ fuse:
   dir: "/litefs"
   allow-other: true
 
-# The data section describes settings for the internal LiteFS storage. We'll 
+# The data section describes settings for the internal LiteFS storage. We'll
 # mount a volume to the data directory so it can be persisted across restarts.
 # However, this data should not be accessed directly by the user application.
 data:
@@ -24,7 +24,7 @@ proxy:
   addr: ":8080"
   target: "localhost:3000"
   db: "db"
-  passthrough: 
+  passthrough:
     - "*.ico"
     - "*.png"
 

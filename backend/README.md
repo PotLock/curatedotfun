@@ -50,7 +50,7 @@ graph TD
     Services --> DistributionService["Distribution Service"]
     Services --> ConfigService["Configuration Service"]
     Services --> PluginLoader["Plugin Loader Service"]
-    
+
     style Server color:white
     style Services color:white
     style SubmissionService color:white
