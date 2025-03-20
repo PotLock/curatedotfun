@@ -2,6 +2,48 @@ import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useLeaderboard, LeaderboardEntry, useAppConfig } from "../lib/api";
 
+const HexagonAvatar = () => {
+  return (
+    <div className="relative w-10 h-10 -mt-2">
+      <div className="absolute inset-0">
+        <svg viewBox="0 0 24 24" className="w-full h-full">
+          <defs>
+            <linearGradient id="hexGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style={{ stopColor: '#ff8f3e' }} />
+              <stop offset="100%" style={{ stopColor: '#ff6b00' }} />
+            </linearGradient>
+            <clipPath id="hexagonClip">
+              <path d="M12 2l8.66 5v10L12 22l-8.66-5V7L12 2z" />
+            </clipPath>
+          </defs>
+          <path
+            d="M12 2l8.66 5v10L12 22l-8.66-5V7L12 2z"
+            fill="none"
+            stroke="#94a3b8"
+            strokeWidth="1.5"
+            className="scale-[1.01] origin-center"
+          />
+          <image
+            href="https://i.pinimg.com/736x/66/3d/2a/663d2a5aea2fe70f6aefc96464cb1e2a.jpg"
+            width="24"
+            height="24"
+            clipPath="url(#hexagonClip)"
+            className="object-cover"
+          />
+          <path
+            d="M12 2l8.66 5v10L12 22l-8.66-5V7L12 2z"
+            fill="none"
+            stroke="white"
+            strokeWidth="0.2"
+            strokeOpacity="0.5"
+            className="scale-[0.95] origin-center"
+          />
+        </svg>
+      </div>
+    </div>
+  );
+};
+
 export default function Leaderboard() {
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
@@ -47,6 +89,10 @@ export default function Leaderboard() {
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+  };
+
+  const removeSpecialChars = (str: string): string => {
+    return str.replace(/[^a-zA-Z0-9]/g, " ");
   };
 
   const filteredLeaderboard = leaderboard?.filter((item) => {
@@ -175,7 +221,10 @@ export default function Leaderboard() {
                   Curator
                 </th>
                 <th className="text-left py-4 px-2 font-medium text-sm whitespace-nowrap">
-                  Platform
+                  Username
+                </th>
+                <th className="text-left py-4 px-2 font-medium text-sm whitespace-nowrap">
+                  Approval Rate
                 </th>
                 <th className="text-left py-4 px-2 font-medium text-sm whitespace-nowrap">
                   Submissions
@@ -211,11 +260,11 @@ export default function Leaderboard() {
               )}
               {filteredLeaderboard?.map((item: LeaderboardEntry, index) => (
                 <tr
-                  key={index}
+                  key={item.curatorId}
                   className="border-b border-[#e5e5e5] hover:bg-[#f9fafb]"
                 >
-                  <td className="py-4 px-2">
-                    <div className="flex items-center">
+                  <td className="py-4 px-2 align-top">
+                    <div className="flex items-center w-[35px]">
                       {index + 1 === 1 && (
                         <img
                           src="/icons/star-gold.svg"
@@ -237,19 +286,29 @@ export default function Leaderboard() {
                           alt="Bronze star - 3rd place"
                         />
                       )}
-                      <span className="text-[#111111] font-medium">
-                        {index + 1}
+                      <div className="flex w-full text-right justify-end">
+                        <span className="text-[#111111] font-medium">
+                          {index + 1}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-4 px-2 align-top">
+                    <div className="flex items-start">
+                      <HexagonAvatar />
+                      <span className="font-medium text-[#111111] capitalize">
+                        {removeSpecialChars(item.curatorUsername)}
                       </span>
                     </div>
                   </td>
-                  <td className="py-4 px-2">
-                    <div className="flex items-center gap-2">
+                  <td className="py-4 px-2 align-top">
+                    <div className="flex items-start gap-2">
                       <div>
                         <a
                           href={`https://x.com/${item.curatorUsername}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 hover:underline"
+                          className="flex items-start gap-2 hover:underline"
                         >
                           <span className="font-medium text-[#111111]">
                             @{item.curatorUsername}
@@ -258,21 +317,25 @@ export default function Leaderboard() {
                       </div>
                     </div>
                   </td>
-                  <td className="py-4 px-2">Twitter</td>
-                  <td className="py-4 px-2 text-[#111111] font-medium">
-                    {item.submissionCount}
+                  <td className="py-4 px-2 align-top">
+                    <div className="flex items-start">20%</div>
                   </td>
-                  <td className="py-4 px-2">
+                  <td className="py-4 px-2 align-top">
+                    <div className="flex items-start text-[#111111] font-medium">
+                      {item.submissionCount}
+                    </div>
+                  </td>
+                  <td className="py-4 px-2 align-top">
                     <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-start gap-2">
                         {item.feedSubmissions &&
                           item.feedSubmissions.length > 0 && (
-                            <div className="flex items-center gap-1 border border-neutral-400 px-2 py-1 rounded-md">
+                            <div className="flex items-center justify-between gap-1 border border-neutral-400 px-2 py-1 rounded-md w-[150px]">
                               <span className="text-sm">
-                                {item.feedSubmissions[0].feedId}
+                                #{item.feedSubmissions[0].feedId}
                               </span>
                               <span className="text-sm">
-                                {item.feedSubmissions[0].count}
+                                {item.feedSubmissions[0].count}/{item.feedSubmissions[0].totalInFeed}
                               </span>
                             </div>
                           )}
@@ -303,9 +366,11 @@ export default function Leaderboard() {
                                 key={feedIndex}
                                 className="flex items-center"
                               >
-                                <div className="flex items-center gap-1 border border-neutral-400 px-2 py-1 rounded-md">
-                                  <span className="text-sm">{feed.feedId}</span>
-                                  <span className="text-sm">{feed.count}</span>
+                                <div className="flex items-center gap-1 border border-neutral-400 px-2 py-1 rounded-md justify-between w-[150px]">
+                                  <span className="text-sm">#{feed.feedId}</span>
+                                  <span className="text-sm">
+                                    {feed.count}/{feed.totalInFeed}
+                                  </span>
                                 </div>
                               </div>
                             ))}
