@@ -37,16 +37,19 @@
 The frontend leverages modern web technologies for optimal performance and developer experience:
 
 - **Framework**: [React](https://reactjs.org) + TypeScript
+
   - Component-based architecture
   - Strong type safety
   - Excellent ecosystem support
 
 - **Build Tool**: [RSBuild](https://rsbuild.dev/)
+
   - High-performance build system
   - Optimized production builds
   - Modern development experience
 
 - **Styling**: [Tailwind CSS](https://tailwindcss.com)
+
   - Utility-first CSS framework
   - Highly customizable
   - Zero runtime overhead
