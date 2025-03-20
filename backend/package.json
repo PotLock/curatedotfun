@@ -4,7 +4,7 @@
   "scripts": {
     "build": "rspack build",
     "start": "node dist/main.js",
-    "dev": "NODE_ENV=development nodemon --exec \"rspack build && node dist/main.js\" --watch src",
+    "dev": "nodemon --exec \"rspack build && node dist/main.js\" --watch src",
     "test": "bun test",
     "test:watch": "npm test --watch",
     "db:generate": "drizzle-kit generate",
