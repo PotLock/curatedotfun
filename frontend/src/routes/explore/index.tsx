@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Header from "../../components/Header"; // Adjust based on your project structure
 import { Button } from "../../components/ui/button";
-import RecentTokenLaunches from "../../components/RecentLaunches";
+// import RecentTokenLaunches from "../../components/RecentLaunches";
 import SubmissionList from "../../components/SubmissionList";
 import InfiniteFeed from "../../components/InfiniteFeed";
 import { useBotId } from "../../lib/config";
@@ -59,9 +59,9 @@ function ExplorePage() {
             <Button variant="secondary">My Feeds</Button>
           </div>
         </div>
-        <div>
+        {/* <div>
           <RecentTokenLaunches />
-        </div>
+        </div> */}
         <div className="w-full mx-auto p-4 gap-6 flex flex-col">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl  leading-10 ">Recent Submissions</h2>
