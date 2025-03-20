@@ -40,11 +40,11 @@ export function Status() {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[140px] text-sm justify-between"
+          className="max-w-fit text-sm justify-between"
         >
           {value
             ? frameworks.find((framework) => framework.value === value)?.label
-            : "Select Status"}
+            : "Status"}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

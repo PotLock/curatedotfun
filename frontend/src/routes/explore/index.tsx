@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import Header from "../../components/Header"; // Adjust based on your project structure
+import Header from "../../components/Header";
 import { Button } from "../../components/ui/button";
-// import RecentTokenLaunches from "../../components/RecentLaunches";
 import SubmissionList from "../../components/SubmissionList";
 import InfiniteFeed from "../../components/InfiniteFeed";
 import { useBotId } from "../../lib/config";
@@ -21,7 +20,6 @@ function ExplorePage() {
 
   // Fetch submissions with infinite scroll
   const ITEMS_PER_PAGE = 20;
-  // const SUBMISSION_PER_PAGE = 3;
   const {
     data,
     fetchNextPage,
@@ -68,6 +66,34 @@ function ExplorePage() {
             <div className="flex gap-3">
               <Status />
               <Sort />
+            </div>
+          </div>
+          <InfiniteFeed
+            items={items}
+            fetchNextPage={fetchNextPage}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            status={status}
+            showAll={false} // Show only 3 items at a time
+            loadingMessage="Loading more submissions..."
+            noMoreItemsMessage="No more submissions to load"
+            initialLoadingMessage="Loading submissions..."
+            renderItems={(items) => (
+              <SubmissionList
+                items={items}
+                statusFilter={statusFilter}
+                botId={botId}
+              />
+            )}
+          />
+        </div>
+        <div className="w-full mx-auto p-4 gap-6 flex flex-col">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl  leading-10 ">Feed</h2>
+            <div className="flex gap-3">
+              <Status />
+              {/* <Sort /> */}
+              <Button variant={"outline"}>View All Feeds</Button>
             </div>
           </div>
           <InfiniteFeed
