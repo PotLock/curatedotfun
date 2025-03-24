@@ -1,20 +1,16 @@
-import {
-  FaTwitter,
-  FaBook,
-  FaGithub,
-  FaTelegram,
-  FaTrophy,
-} from "react-icons/fa";
+import { FaTwitter, FaBook, FaGithub, FaTelegram } from "react-icons/fa";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Modal } from "./Modal";
 import { HowItWorks } from "./HowItWorks";
+<<<<<<< HEAD
 import { LeaderboardModal } from "./LeaderboardModal";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
+=======
+>>>>>>> 5eae149 (Feat: implement frontend leaderboard (#93))
 
 const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   const { isInitialized, isLoggedIn, login, logout } = useWeb3Auth();
 
@@ -41,12 +37,12 @@ const Header = () => {
           >
             How It Works
           </button>
-          <button
-            onClick={() => setShowLeaderboard(true)}
-            className="text-gray-600 hover:text-black transition-colors flex items-center"
+          <Link
+            to="/leaderboard"
+            className="text-gray-600 hover:text-black transition-colors"
           >
-            <FaTrophy className="mr-1" /> Leaderboard
-          </button>
+            Leaderboard
+          </Link>
           {process.env.NODE_ENV === "development" && (
             <Link
               to="/test"
@@ -116,11 +112,6 @@ const Header = () => {
       <Modal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)}>
         <HowItWorks />
       </Modal>
-
-      <LeaderboardModal
-        isOpen={showLeaderboard}
-        onClose={() => setShowLeaderboard(false)}
-      />
     </>
   );
 };

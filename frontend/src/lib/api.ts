@@ -91,14 +91,19 @@ export interface LeaderboardEntry {
   curatorId: string;
   curatorUsername: string;
   submissionCount: number;
+  approvalCount: number;
+  rejectionCount: number;
   feedSubmissions: FeedSubmissionCount[];
 }
 
-export function useLeaderboard() {
+export function useLeaderboard(timeRange?: string) {
   return useQuery<LeaderboardEntry[]>({
-    queryKey: ["leaderboard"],
+    queryKey: ["leaderboard", timeRange],
     queryFn: async () => {
-      const response = await fetch("/api/leaderboard");
+      const url = timeRange
+        ? `/api/leaderboard?timeRange=${timeRange}`
+        : "/api/leaderboard";
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch leaderboard");
       }
