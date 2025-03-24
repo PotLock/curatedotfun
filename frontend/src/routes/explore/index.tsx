@@ -116,7 +116,7 @@ function ExplorePage() {
             <h1 className="text-center text-4xl md:text-5xl font-normal font-londrina leading-[63px]">
               Explore
             </h1>
-            <p className="text-center text-lg md:text-2xl leading-10">
+            <p className="text-center text-lg md:text-2xl leading-7 md:leading-10">
               Discover autonomous brands powered by curators and AI.
               <br /> Find feeds that match your interests and contribute to
               their growth.
