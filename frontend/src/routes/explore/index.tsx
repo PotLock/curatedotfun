@@ -106,21 +106,6 @@ function ExplorePage() {
 
   const items = data?.items || [];
 
-  const handleCreateFeed = () => {
-    // Implement create feed functionality
-    console.log("Create feed clicked");
-  };
-
-  const handleMyFeeds = () => {
-    // Implement my feeds functionality
-    console.log("My feeds clicked");
-  };
-
-  const handleViewAllFeeds = () => {
-    // Implement view all feeds functionality
-    console.log("View all feeds clicked");
-  };
-
   return (
     <div className="min-h-screen">
       <Header />
@@ -138,10 +123,8 @@ function ExplorePage() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button onClick={handleCreateFeed}>Create Feed</Button>
-            <Button variant="secondary" onClick={handleMyFeeds}>
-              My Feeds
-            </Button>
+            <Button>Create Feed</Button>
+            <Button variant="secondary">My Feeds</Button>
           </div>
         </div>
 
@@ -171,7 +154,6 @@ function ExplorePage() {
           botId={botId}
           actionButton={{
             label: "View All Feeds",
-            onClick: handleViewAllFeeds,
           }}
         />
       </main>
