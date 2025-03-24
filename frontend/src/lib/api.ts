@@ -91,6 +91,8 @@ export interface LeaderboardEntry {
   curatorId: string;
   curatorUsername: string;
   submissionCount: number;
+  approvalCount: number;
+  rejectionCount: number;
   feedSubmissions: FeedSubmissionCount[];
 }
 

@@ -687,6 +687,8 @@ export interface LeaderboardEntry {
   curatorId: string;
   curatorUsername: string;
   submissionCount: number;
+  approvalCount: number;
+  rejectionCount: number;
   feedSubmissions: FeedSubmissionCount[];
 }
 
@@ -717,20 +719,25 @@ export function getCuratorsCount(db: BetterSQLite3Database): number {
 }
 
 export function getLeaderboard(db: BetterSQLite3Database): LeaderboardEntry[] {
-  // Step 1: Get all curators with their total submission counts
   interface CuratorRow {
     curatorId: string;
     curatorUsername: string;
     submissionCount: number;
+    approvalCount: number;
+    rejectionCount: number;
   }
 
   const curators = db.all(sql`
     SELECT 
       s.curator_id AS curatorId,
       s.curator_username AS curatorUsername,
-      COUNT(DISTINCT s.tweet_id) AS submissionCount
+      COUNT(DISTINCT s.tweet_id) AS submissionCount,
+      COUNT(DISTINCT CASE WHEN mh.action = 'approve' THEN s.tweet_id END) AS approvalCount,
+      COUNT(DISTINCT CASE WHEN mh.action = 'reject' THEN s.tweet_id END) AS rejectionCount
     FROM 
       submissions s
+    LEFT JOIN 
+      moderation_history mh ON s.tweet_id = mh.tweet_id
     GROUP BY 
       s.curator_id, s.curator_username
     ORDER BY 
@@ -796,6 +803,8 @@ export function getLeaderboard(db: BetterSQLite3Database): LeaderboardEntry[] {
       curatorId: curator.curatorId,
       curatorUsername: curator.curatorUsername,
       submissionCount: curator.submissionCount,
+      approvalCount: curator.approvalCount,
+      rejectionCount: curator.rejectionCount,
       feedSubmissions,
     });
   }

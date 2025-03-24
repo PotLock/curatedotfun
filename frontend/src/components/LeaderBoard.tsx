@@ -2,54 +2,12 @@ import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useLeaderboard, LeaderboardEntry, useAppConfig } from "../lib/api";
 
-const HexagonAvatar = () => {
-  return (
-    <div className="relative w-10 h-10 -mt-2">
-      <div className="absolute inset-0">
-        <svg viewBox="0 0 24 24" className="w-full h-full">
-          <defs>
-            <linearGradient id="hexGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{ stopColor: '#ff8f3e' }} />
-              <stop offset="100%" style={{ stopColor: '#ff6b00' }} />
-            </linearGradient>
-            <clipPath id="hexagonClip">
-              <path d="M12 2l8.66 5v10L12 22l-8.66-5V7L12 2z" />
-            </clipPath>
-          </defs>
-          <path
-            d="M12 2l8.66 5v10L12 22l-8.66-5V7L12 2z"
-            fill="none"
-            stroke="#94a3b8"
-            strokeWidth="1.5"
-            className="scale-[1.01] origin-center"
-          />
-          <image
-            href="https://i.pinimg.com/736x/66/3d/2a/663d2a5aea2fe70f6aefc96464cb1e2a.jpg"
-            width="24"
-            height="24"
-            clipPath="url(#hexagonClip)"
-            className="object-cover"
-          />
-          <path
-            d="M12 2l8.66 5v10L12 22l-8.66-5V7L12 2z"
-            fill="none"
-            stroke="white"
-            strokeWidth="0.2"
-            strokeOpacity="0.5"
-            className="scale-[0.95] origin-center"
-          />
-        </svg>
-      </div>
-    </div>
-  );
-};
-
 export default function Leaderboard() {
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
   const [showFeedDropdown, setShowFeedDropdown] = useState<boolean>(false);
   const [showTimeDropdown, setShowTimeDropdown] = useState<boolean>(false);
-  const [selectedFeed, setSelectedFeed] = useState<string>("All Feed");
+  const [selectedFeed, setSelectedFeed] = useState<string>("All Feeds");
   const [selectedTime, setSelectedTime] = useState<string>("All Time");
   const { data: leaderboard, isLoading, error } = useLeaderboard();
   const { data: config } = useAppConfig();
@@ -58,7 +16,7 @@ export default function Leaderboard() {
 
   const timeOptions = ["All Time", "This Month", "This Week", "Today"];
   const feeds = useMemo(() => {
-    return ["All Feed", ...(config?.feeds.map((feed) => feed.name) || [])];
+    return ["All Feeds", ...(config?.feeds.map((feed) => feed.name) || [])];
   }, [config]);
 
   useEffect(() => {
@@ -91,14 +49,14 @@ export default function Leaderboard() {
     setSearchQuery(e.target.value);
   };
 
-  const removeSpecialChars = (str: string): string => {
-    return str.replace(/[^a-zA-Z0-9]/g, " ");
-  };
+  // const removeSpecialChars = (str: string): string => {
+  //   return str.replace(/[^a-zA-Z0-9]/g, " ");
+  // };
 
   const filteredLeaderboard = leaderboard?.filter((item) => {
     const searchTerm = searchQuery?.toLowerCase();
     const feedFilter =
-      selectedFeed === "All Feed"
+      selectedFeed === "All Feeds"
         ? true
         : item.feedSubmissions?.some((feed) => feed.feedId === selectedFeed);
 
@@ -217,9 +175,9 @@ export default function Leaderboard() {
                 <th className="text-left py-4 px-2 font-medium text-sm whitespace-nowrap">
                   Rank
                 </th>
-                <th className="text-left py-4 px-2 font-medium text-sm whitespace-nowrap">
+                {/* <th className="text-left py-4 px-2 font-medium text-sm whitespace-nowrap">
                   Curator
-                </th>
+                </th> */}
                 <th className="text-left py-4 px-2 font-medium text-sm whitespace-nowrap">
                   Username
                 </th>
@@ -293,14 +251,14 @@ export default function Leaderboard() {
                       </div>
                     </div>
                   </td>
-                  <td className="py-4 px-2 align-top">
+                  {/* <td className="py-4 px-2 align-top">
                     <div className="flex items-start">
                       <HexagonAvatar />
                       <span className="font-medium text-[#111111] capitalize">
                         {removeSpecialChars(item.curatorUsername)}
                       </span>
                     </div>
-                  </td>
+                  </td> */}
                   <td className="py-4 px-2 align-top">
                     <div className="flex items-start gap-2">
                       <div>
@@ -318,7 +276,11 @@ export default function Leaderboard() {
                     </div>
                   </td>
                   <td className="py-4 px-2 align-top">
-                    <div className="flex items-start">20%</div>
+                    <div className="flex items-start">
+                      {item.submissionCount > 0 
+                        ? `${Math.round((item.approvalCount / item.submissionCount) * 100)}%` 
+                        : "0%"}
+                    </div>
                   </td>
                   <td className="py-4 px-2 align-top">
                     <div className="flex items-start text-[#111111] font-medium">

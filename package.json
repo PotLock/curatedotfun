@@ -6,7 +6,6 @@
     "prettier": "^3.3.3",
     "turbo": "latest"
   },
-  "packageManager": "bun@1.0.27",
   "private": true,
   "scripts": {
     "dev": "concurrently \"cd backend && bun run dev\" \"cd frontend && bun run dev\"",
