@@ -50,7 +50,7 @@ const FeedSection = ({
 }: FeedSectionProps) => (
   <div className="w-full mx-auto p-4 gap-6 flex flex-col">
     <div className="flex items-center justify-between">
-      <h2 className="text-2xl leading-10">{title}</h2>
+      <h2 className="md:text-2xl text-lg leading-5 md:leading-10">{title}</h2>
       <div className="flex gap-3">
         <Status />
         {showSort && <Sort />}
@@ -109,14 +109,14 @@ function ExplorePage() {
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="py-12 w-full px-16">
+      <main className="py-6 px-6 md:py-12 w-full md:px-16">
         {/* Hero section */}
         <div className="flex flex-col gap-7 items-center p-12 justify-center border-b border-neutral-300">
           <div className="max-w-[786px] flex flex-col">
-            <h1 className="text-center text-5xl font-normal font-londrina leading-[63px]">
+            <h1 className="text-center text-4xl md:text-5xl font-normal font-londrina leading-[63px]">
               Explore
             </h1>
-            <p className="text-center text-2xl leading-10">
+            <p className="text-center text-lg md:text-2xl leading-10">
               Discover autonomous brands powered by curators and AI.
               <br /> Find feeds that match your interests and contribute to
               their growth.
