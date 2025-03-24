@@ -718,7 +718,35 @@ export function getCuratorsCount(db: BetterSQLite3Database): number {
   return result?.count || 0;
 }
 
-export function getLeaderboard(db: BetterSQLite3Database): LeaderboardEntry[] {
+export function getLeaderboard(
+  db: BetterSQLite3Database,
+  timeRange: string = "all",
+): LeaderboardEntry[] {
+  // Calculate date range based on timeRange
+  let dateFilter = "";
+  const now = new Date();
+
+  if (timeRange === "month") {
+    // First day of current month
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    dateFilter = `AND s.created_at >= '${firstDayOfMonth.toISOString()}'`;
+  } else if (timeRange === "week") {
+    // Start of current week (Sunday)
+    const firstDayOfWeek = new Date(now);
+    const day = now.getDay(); // 0 for Sunday, 1 for Monday, etc.
+    firstDayOfWeek.setDate(now.getDate() - day);
+    firstDayOfWeek.setHours(0, 0, 0, 0);
+    dateFilter = `AND s.created_at >= '${firstDayOfWeek.toISOString()}'`;
+  } else if (timeRange === "today") {
+    // Start of today
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+    dateFilter = `AND s.created_at >= '${startOfDay.toISOString()}'`;
+  }
+
   interface CuratorRow {
     curatorId: string;
     curatorUsername: string;
@@ -738,6 +766,8 @@ export function getLeaderboard(db: BetterSQLite3Database): LeaderboardEntry[] {
       submissions s
     LEFT JOIN 
       moderation_history mh ON s.tweet_id = mh.tweet_id
+    WHERE 
+      1=1 ${sql.raw(dateFilter)}
     GROUP BY 
       s.curator_id, s.curator_username
     ORDER BY 

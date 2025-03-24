@@ -10,7 +10,9 @@ try {
   // Directory already exists, ignore error
 }
 
-const DB_PATH = process.env.DATABASE_URL?.replace("file:", "") || join(DB_DIR, "submissions.sqlite");
+const DB_PATH =
+  process.env.DATABASE_URL?.replace("file:", "") ||
+  join(DB_DIR, "submissions.sqlite");
 
 export default {
   schema: "./src/services/db/schema.ts",

@@ -6,9 +6,11 @@ const router = HonoApp();
 
 /**
  * Get the leaderboard data
+ * @param timeRange - Optional time range filter: "all", "month", "week", "today"
  */
 router.get("/", async (c) => {
-  const leaderboard = db.getLeaderboard();
+  const timeRange = c.req.query("timeRange") || "all";
+  const leaderboard = db.getLeaderboard(timeRange);
   return c.json(leaderboard);
 });
 

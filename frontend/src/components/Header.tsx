@@ -1,9 +1,4 @@
-import {
-  FaTwitter,
-  FaBook,
-  FaGithub,
-  FaTelegram,
-} from "react-icons/fa";
+import { FaTwitter, FaBook, FaGithub, FaTelegram } from "react-icons/fa";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Modal } from "./Modal";

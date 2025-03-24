@@ -206,11 +206,11 @@ export class DatabaseService {
     }
   }
 
-  getLeaderboard(): queries.LeaderboardEntry[] {
+  getLeaderboard(timeRange: string = "all"): queries.LeaderboardEntry[] {
     try {
-      return queries.getLeaderboard(this.db);
+      return queries.getLeaderboard(this.db, timeRange);
     } catch (error: any) {
-      logger.error("Failed to get leaderboard:", { error });
+      logger.error("Failed to get leaderboard:", { error, timeRange });
       throw new Error(`Failed to get leaderboard: ${error.message}`);
     }
   }

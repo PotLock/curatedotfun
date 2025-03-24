@@ -9,7 +9,29 @@ export default function Leaderboard() {
   const [showTimeDropdown, setShowTimeDropdown] = useState<boolean>(false);
   const [selectedFeed, setSelectedFeed] = useState<string>("All Feeds");
   const [selectedTime, setSelectedTime] = useState<string>("All Time");
-  const { data: leaderboard, isLoading, error } = useLeaderboard();
+
+  // Map UI time options to API timeRange values
+  const getTimeRangeParam = (timeOption: string): string | undefined => {
+    switch (timeOption) {
+      case "All Time":
+        return undefined;
+      case "This Month":
+        return "month";
+      case "This Week":
+        return "week";
+      case "Today":
+        return "today";
+      default:
+        return undefined;
+    }
+  };
+
+  const timeRangeParam = getTimeRangeParam(selectedTime);
+  const {
+    data: leaderboard,
+    isLoading,
+    error,
+  } = useLeaderboard(timeRangeParam);
   const { data: config } = useAppConfig();
   const feedDropdownRef = useRef<HTMLDivElement>(null);
   const timeDropdownRef = useRef<HTMLDivElement>(null);
@@ -277,8 +299,8 @@ export default function Leaderboard() {
                   </td>
                   <td className="py-4 px-2 align-top">
                     <div className="flex items-start">
-                      {item.submissionCount > 0 
-                        ? `${Math.round((item.approvalCount / item.submissionCount) * 100)}%` 
+                      {item.submissionCount > 0
+                        ? `${Math.round((item.approvalCount / item.submissionCount) * 100)}%`
                         : "0%"}
                     </div>
                   </td>
@@ -297,7 +319,8 @@ export default function Leaderboard() {
                                 #{item.feedSubmissions[0].feedId}
                               </span>
                               <span className="text-sm">
-                                {item.feedSubmissions[0].count}/{item.feedSubmissions[0].totalInFeed}
+                                {item.feedSubmissions[0].count}/
+                                {item.feedSubmissions[0].totalInFeed}
                               </span>
                             </div>
                           )}
@@ -329,7 +352,9 @@ export default function Leaderboard() {
                                 className="flex items-center"
                               >
                                 <div className="flex items-center gap-1 border border-neutral-400 px-2 py-1 rounded-md justify-between w-[150px]">
-                                  <span className="text-sm">#{feed.feedId}</span>
+                                  <span className="text-sm">
+                                    #{feed.feedId}
+                                  </span>
                                   <span className="text-sm">
                                     {feed.count}/{feed.totalInFeed}
                                   </span>
