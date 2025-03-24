@@ -6,7 +6,12 @@ import {
 import { Badge } from "./ui/badge";
 import { HiExternalLink } from "react-icons/hi";
 import { getTweetUrl } from "../lib/twitter";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 
 // Updated formatDate function to show hours if posted within 24 hours
 const formatDate = (dateString: string) => {
@@ -47,10 +52,11 @@ const TopFeeds: React.FC<TopFeedsProps> = ({
     });
 
     // Sort by submission date (newest first)
-    const sorted = filtered.sort(
-      (a, b) =>
-        new Date(b.submittedAt!).getTime() - new Date(a.submittedAt!).getTime(),
-    );
+    const sorted = filtered.sort((a, b) => {
+      const dateB = b.submittedAt ? new Date(b.submittedAt).getTime() : 0;
+      const dateA = a.submittedAt ? new Date(a.submittedAt).getTime() : 0;
+      return dateB - dateA;
+    });
 
     // Take only the top 3
     setFilteredItems(sorted.slice(0, 3));

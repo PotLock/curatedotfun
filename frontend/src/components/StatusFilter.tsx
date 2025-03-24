@@ -67,7 +67,7 @@ export function Status() {
                   onSelect={(currentValue) => {
                     setStatusFilter(
                       currentValue === statusFilter
-                        ? undefined
+                        ? "all"
                         : (currentValue as StatusFilterType),
                     );
                     setOpen(false);
