@@ -4,9 +4,23 @@ import { useState } from "react";
 import { Modal } from "./Modal";
 import { HowItWorks } from "./HowItWorks";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
+import { Button } from "./ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { AvatarDemo } from "./Avatar";
+import { ChevronDown, Menu, X } from "lucide-react";
 
 const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const { isInitialized, isLoggedIn, login, logout } = useWeb3Auth();
 
@@ -187,65 +201,63 @@ const Header = () => {
             </div>
           </div>
         </div>
-
       )}
 
-        <div>
-          {isInitialized ? (
-            isLoggedIn ? (
-              <button
-                onClick={logout}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded"
-              >
-                Logout
-              </button>
-            ) : (
-              <button
-                onClick={login}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded"
-              >
-                Login
-              </button>
-            )
+      <div>
+        {isInitialized ? (
+          isLoggedIn ? (
+            <button
+              onClick={logout}
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded"
+            >
+              Logout
+            </button>
           ) : (
-            <p>Loading...</p>
-          )}
-        </div>
-        <nav className="flex space-x-4 mx-4">
-          <a
-            href="https://twitter.com/curatedotfun"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xl hover:text-blue-500"
-          >
-            <FaTwitter />
-          </a>
-          <a
-            href="https://docs.curate.fun"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xl hover:text-blue-500"
-          >
-            <FaBook />
-          </a>
-          <a
-            href="https://github.com/potlock/curatedotfun"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xl hover:text-blue-500"
-          >
-            <FaGithub />
-          </a>
-          <a
-            href="https://t.me/+UM70lvMnofk3YTVh"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xl hover:text-blue-500"
-          >
-            <FaTelegram />
-          </a>
-        </nav>
-      </header>
+            <button
+              onClick={login}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded"
+            >
+              Login
+            </button>
+          )
+        ) : (
+          <p>Loading...</p>
+        )}
+      </div>
+      <nav className="flex space-x-4 mx-4">
+        <a
+          href="https://twitter.com/curatedotfun"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xl hover:text-blue-500"
+        >
+          <FaTwitter />
+        </a>
+        <a
+          href="https://docs.curate.fun"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xl hover:text-blue-500"
+        >
+          <FaBook />
+        </a>
+        <a
+          href="https://github.com/potlock/curatedotfun"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xl hover:text-blue-500"
+        >
+          <FaGithub />
+        </a>
+        <a
+          href="https://t.me/+UM70lvMnofk3YTVh"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xl hover:text-blue-500"
+        >
+          <FaTelegram />
+        </a>
+      </nav>
 
       <Modal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)}>
         <HowItWorks />
