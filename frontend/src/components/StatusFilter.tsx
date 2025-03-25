@@ -13,7 +13,7 @@ import {
   CommandList,
 } from "./ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { StatusFilterType, useFilterStore } from "../store/useFilterStore";
+import { StatusFilterType } from "../store/useFilterStore";
 
 const frameworks = [
   {
@@ -34,9 +34,13 @@ const frameworks = [
   },
 ];
 
-export function Status() {
+interface StatusProps {
+  statusFilter: string;
+  setStatusFilter: (status: StatusFilterType) => void;
+}
+
+export function Status({ statusFilter, setStatusFilter }: StatusProps) {
   const [open, setOpen] = React.useState(false);
-  const { statusFilter, setStatusFilter } = useFilterStore();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -68,7 +72,7 @@ export function Status() {
                     setStatusFilter(
                       currentValue === statusFilter
                         ? "all"
-                        : (currentValue as StatusFilterType),
+                        : ((currentValue || "all") as StatusFilterType),
                     );
                     setOpen(false);
                   }}

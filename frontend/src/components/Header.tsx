@@ -1,6 +1,5 @@
-import { FaTwitter, FaBook, FaGithub, FaTelegram } from "react-icons/fa";
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal } from "./Modal";
 import { HowItWorks } from "./HowItWorks";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
@@ -9,20 +8,47 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { AvatarDemo } from "./Avatar";
-import { ChevronDown, Menu, X } from "lucide-react";
+
+import {
+  ChevronDown,
+  CircleUserRound,
+  CreditCard,
+  LogOut,
+  Menu,
+  X,
+} from "lucide-react";
+import { AuthUserInfo } from "../types/web3auth";
+import UserMenu from "./UserMenu";
 
 const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
 
-  const { isInitialized, isLoggedIn, login, logout } = useWeb3Auth();
+  const { isInitialized, isLoggedIn, login, logout, getUserInfo } =
+    useWeb3Auth();
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const info = await getUserInfo();
+        setUserInfo(info);
+        console.log("User Info:", info);
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+      }
+    };
+
+    if (isLoggedIn) {
+      fetchUserInfo();
+    } else {
+      setUserInfo({});
+    }
+  }, [isLoggedIn, getUserInfo]);
 
   return (
     <>
@@ -47,43 +73,16 @@ const Header = () => {
             <Link to="/explore">
               <Button variant={"ghost"}>Feeds</Button>
             </Link>
-            <Link to="/">
+            <Link to="/leaderboard">
               <Button variant={"ghost"}>Leaderboard</Button>
             </Link>
             <Link to="/test">
               <Button variant={"ghost"}>Submit Content</Button>
             </Link>
           </div>
-        </div>
-
+        </div>{" "}
         <div className="flex items-center gap-2">
-          {/* User Dropdown */}
-          <DropdownMenu onOpenChange={setDropdownOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="hidden md:flex">
-                <div className="flex gap-1 items-center justify-center">
-                  <AvatarDemo />
-                  <p className="text-sm font-medium leading-6 hidden sm:block">
-                    7dc12........976f
-                  </p>
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform duration-200 ${
-                      dropdownOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem>
-                <span>Log out</span>
-                <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <UserMenu />
 
           {/* Mobile menu button */}
           <Button
@@ -172,93 +171,73 @@ const Header = () => {
             </div>
 
             <div className="w-full flex justify-center mt-4">
-              <DropdownMenu onOpenChange={setDropdownOpen}>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex w-full max-w-xs">
-                    <div className="flex gap-1 items-center justify-center">
-                      <AvatarDemo />
-                      <p className="text-sm font-medium leading-6">
-                        7dc12........976f
-                      </p>
-                      <ChevronDown
-                        className={`h-4 w-4 transition-transform duration-200 ${
-                          dropdownOpen ? "rotate-180" : ""
-                        }`}
-                      />
-                    </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuItem>
-                    <span>Log out</span>
-                    <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {isInitialized && isLoggedIn && userInfo ? (
+                <DropdownMenu onOpenChange={setDropdownOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="flex w-full md:hidden">
+                      <div className="flex gap-1 items-center justify-center">
+                        <img
+                          className="rounded-full h-7 w-7"
+                          alt="Profile Image"
+                          src={userInfo.profileImage}
+                        />
+                        <p className="text-sm font-medium leading-6 sm:block">
+                          {(userInfo as { name?: string }).name ||
+                            (userInfo as { email?: string }).email}
+                        </p>
+                        <ChevronDown
+                          className={`h-4 w-4 transition-transform duration-200 ${
+                            dropdownOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </div>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 mt-4">
+                    <DropdownMenuItem>
+                      <div className="flex gap-2 w-full items-start">
+                        <img
+                          src={userInfo.profileImage}
+                          alt="Profile Image"
+                          height={24}
+                          width={24}
+                          className="rounded-full"
+                        />
+                        <div>
+                          <p className="text-sm font-semibold leading-5">
+                            {(userInfo as { name?: string }).name}
+                          </p>
+                          <p className="text-xs leading-5 text-gray-500">
+                            {(userInfo as { email?: string }).email}
+                          </p>
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={logout}>
+                      <CircleUserRound />
+                      <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={logout}>
+                      <CreditCard />
+                      <span>Wallet</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={logout}
+                      className="cursor-pointer hover:bg-gray-100"
+                    >
+                      <LogOut />
+                      <span>Disconnect</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button onClick={login}>Login</Button>
+              )}
             </div>
           </div>
         </div>
       )}
-
-      <div>
-        {isInitialized ? (
-          isLoggedIn ? (
-            <button
-              onClick={logout}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded"
-            >
-              Logout
-            </button>
-          ) : (
-            <button
-              onClick={login}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded"
-            >
-              Login
-            </button>
-          )
-        ) : (
-          <p>Loading...</p>
-        )}
-      </div>
-      <nav className="flex space-x-4 mx-4">
-        <a
-          href="https://twitter.com/curatedotfun"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xl hover:text-blue-500"
-        >
-          <FaTwitter />
-        </a>
-        <a
-          href="https://docs.curate.fun"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xl hover:text-blue-500"
-        >
-          <FaBook />
-        </a>
-        <a
-          href="https://github.com/potlock/curatedotfun"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xl hover:text-blue-500"
-        >
-          <FaGithub />
-        </a>
-        <a
-          href="https://t.me/+UM70lvMnofk3YTVh"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xl hover:text-blue-500"
-        >
-          <FaTelegram />
-        </a>
-      </nav>
-
       <Modal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)}>
         <HowItWorks />
       </Modal>

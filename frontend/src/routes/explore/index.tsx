@@ -8,11 +8,12 @@ import { useEffect } from "react";
 import { useAllSubmissions } from "../../lib/api";
 import { Status } from "../../components/StatusFilter";
 import { Sort } from "../../components/Sort";
-import { useFilterStore } from "../../store/useFilterStore";
+import { StatusFilterType, useFilterStore } from "../../store/useFilterStore";
 import {
   SubmissionStatus,
   TwitterSubmissionWithFeedData,
 } from "../../types/twitter";
+import { useFeedFilterStore } from "../../store/useFeedFilterStore";
 
 export const Route = createFileRoute("/explore/")({
   component: ExplorePage,
@@ -33,6 +34,7 @@ type FeedSectionProps = {
     label: string;
     onClick?: () => void;
   };
+  setStatusFilter: (status: StatusFilterType) => void;
 };
 
 const FeedSection = ({
@@ -44,15 +46,16 @@ const FeedSection = ({
   status,
   statusFilter,
   botId,
+  setStatusFilter,
   showAll = true,
   showSort = false,
   actionButton,
 }: FeedSectionProps) => (
-  <div className="w-full mx-auto p-4 gap-6 flex flex-col">
+  <div className="w-full mx-auto py-4 md:p-4 gap-6 flex flex-col">
     <div className="flex items-center justify-between">
       <h2 className="md:text-2xl text-lg leading-5 md:leading-10">{title}</h2>
       <div className="flex gap-3">
-        <Status />
+        <Status statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
         {showSort && <Sort />}
         {actionButton && (
           <Button variant="outline" onClick={actionButton.onClick}>
@@ -84,27 +87,49 @@ const FeedSection = ({
 
 function ExplorePage() {
   const botId = useBotId();
-  const { statusFilter } = useFilterStore();
+  const { statusFilter, setStatusFilter } = useFilterStore();
+  const {
+    statusFilter: feedStatusFilter,
+    setStatusFilter: setFeedStatusFilter,
+  } = useFeedFilterStore();
 
-  // Fetch submissions with infinite scroll
+  // Fetch submissions for Recent Submissions
   const ITEMS_PER_PAGE = 20;
   const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    status,
-    refetch,
+    data: recentSubmissionsData,
+    fetchNextPage: fetchNextRecentPage,
+    hasNextPage: hasNextRecentPage,
+    isFetchingNextPage: isFetchingNextRecentPage,
+    status: recentStatus,
+    refetch: refetchRecent,
   } = useAllSubmissions(
     ITEMS_PER_PAGE,
     statusFilter === "all" ? undefined : statusFilter,
   );
 
-  useEffect(() => {
-    refetch();
-  }, [statusFilter, refetch]);
+  // Fetch submissions for Feed
+  const {
+    data: feedData,
+    fetchNextPage: fetchNextFeedPage,
+    hasNextPage: hasNextFeedPage,
+    isFetchingNextPage: isFetchingNextFeedPage,
+    status: feedStatus,
+    refetch: refetchFeed,
+  } = useAllSubmissions(
+    ITEMS_PER_PAGE,
+    feedStatusFilter === "all" ? undefined : feedStatusFilter,
+  );
 
-  const items = data?.items || [];
+  useEffect(() => {
+    refetchRecent();
+  }, [statusFilter, refetchRecent]);
+
+  useEffect(() => {
+    refetchFeed();
+  }, [feedStatusFilter, refetchFeed]);
+
+  const recentItems = recentSubmissionsData?.items || [];
+  const feedItems = feedData?.items || [];
 
   return (
     <div className="min-h-screen">
@@ -131,12 +156,13 @@ function ExplorePage() {
         {/* Recent Submissions Section */}
         <FeedSection
           title="Recent Submissions"
-          items={items}
-          fetchNextPage={fetchNextPage}
-          hasNextPage={hasNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-          status={status}
+          items={recentItems}
+          fetchNextPage={fetchNextRecentPage}
+          hasNextPage={hasNextRecentPage}
+          isFetchingNextPage={isFetchingNextRecentPage}
+          status={recentStatus}
           statusFilter={statusFilter || ""}
+          setStatusFilter={setStatusFilter}
           botId={botId}
           showAll={false}
           showSort={true}
@@ -145,12 +171,13 @@ function ExplorePage() {
         {/* Feeds Section */}
         <FeedSection
           title="Feed"
-          items={items}
-          fetchNextPage={fetchNextPage}
-          hasNextPage={hasNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-          status={status}
-          statusFilter={statusFilter || ""}
+          items={feedItems}
+          fetchNextPage={fetchNextFeedPage}
+          hasNextPage={hasNextFeedPage}
+          isFetchingNextPage={isFetchingNextFeedPage}
+          status={feedStatus}
+          statusFilter={feedStatusFilter || ""}
+          setStatusFilter={setFeedStatusFilter}
           botId={botId}
           actionButton={{
             label: "View All Feeds",

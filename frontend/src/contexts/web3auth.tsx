@@ -108,6 +108,14 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
     }
   };
 
+  const getUserInfo = async () => {
+    if (!web3auth || !provider) {
+      throw new Error("Web3Auth not initialized or provider not set");
+    }
+    const userInfo = await web3auth.getUserInfo();
+    return userInfo;
+  };
+
   return (
     <Web3AuthContext.Provider
       value={{
@@ -117,6 +125,7 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
         isLoggedIn,
         login,
         logout,
+        getUserInfo,
       }}
     >
       {children}
