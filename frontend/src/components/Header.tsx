@@ -8,6 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
@@ -27,6 +28,7 @@ const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
 
   const { isInitialized, isLoggedIn, login, logout, getUserInfo } =
@@ -73,6 +75,7 @@ const Header = () => {
             <Link to="/explore">
               <Button variant={"ghost"}>Feeds</Button>
             </Link>
+
             <Link to="/leaderboard">
               <Button variant={"ghost"}>Leaderboard</Button>
             </Link>
@@ -80,6 +83,7 @@ const Header = () => {
               <Button variant={"ghost"}>Submit Content</Button>
             </Link>
           </div>
+
         </div>{" "}
         <div className="flex items-center gap-2">
           <UserMenu />
