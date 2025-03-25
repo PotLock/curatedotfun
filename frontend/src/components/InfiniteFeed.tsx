@@ -10,6 +10,7 @@ interface InfiniteFeedProps<T> {
   loadingMessage?: string;
   noMoreItemsMessage?: string;
   initialLoadingMessage?: string;
+  showAll?: boolean; // New prop to control showing all or limited items
 }
 
 function InfiniteFeed<T>({
@@ -22,6 +23,7 @@ function InfiniteFeed<T>({
   loadingMessage = "Loading more items...",
   noMoreItemsMessage = "No more items to load",
   initialLoadingMessage = "Loading items...",
+  showAll = true, // Default to showing all items
 }: InfiniteFeedProps<T>) {
   // Create an intersection observer to detect when user scrolls to bottom
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -37,6 +39,9 @@ function InfiniteFeed<T>({
   );
 
   useEffect(() => {
+    // Only set up the observer if we're showing all items
+    if (!showAll) return;
+
     const element = observerTarget.current;
     if (!element) return;
 
@@ -51,24 +56,29 @@ function InfiniteFeed<T>({
       observer.unobserve(element);
       observer.disconnect();
     };
-  }, [handleObserver]);
+  }, [handleObserver, showAll]);
+
+  // Determine which items to render
+  const itemsToRender = showAll ? items : items.slice(0, 3);
 
   return (
-    <div className="space-y-4">
-      {renderItems(items)}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {renderItems(itemsToRender)}
 
-      {/* Loading indicator and observer target */}
-      <div ref={observerTarget} className="py-4 flex justify-center">
-        {isFetchingNextPage && (
-          <div className="text-gray-500">{loadingMessage}</div>
-        )}
-        {!hasNextPage && items.length > 0 && !isFetchingNextPage && (
-          <div className="text-gray-500">{noMoreItemsMessage}</div>
-        )}
-        {status === "pending" && items.length === 0 && (
-          <div className="text-gray-500">{initialLoadingMessage}</div>
-        )}
-      </div>
+      {/* Loading indicator and observer target - only shown when showAll is true */}
+      {showAll && (
+        <div ref={observerTarget} className="py-4 flex justify-center">
+          {isFetchingNextPage && (
+            <div className="text-gray-500">{loadingMessage}</div>
+          )}
+          {!hasNextPage && items.length > 0 && !isFetchingNextPage && (
+            <div className="text-gray-500">{noMoreItemsMessage}</div>
+          )}
+          {status === "pending" && items.length === 0 && (
+            <div className="text-gray-500">{initialLoadingMessage}</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
