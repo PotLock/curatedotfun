@@ -8,7 +8,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
@@ -83,7 +82,6 @@ const Header = () => {
               <Button variant={"ghost"}>Submit Content</Button>
             </Link>
           </div>
-
         </div>{" "}
         <div className="flex items-center gap-2">
           <UserMenu />
