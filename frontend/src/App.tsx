@@ -18,7 +18,7 @@ declare module "@tanstack/react-router" {
 function App() {
   return (
     <Web3AuthProvider>
-      <RouterProvider router={router} />;
+      <RouterProvider router={router} />
     </Web3AuthProvider>
   );
 }
