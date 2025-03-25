@@ -3,9 +3,12 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Modal } from "./Modal";
 import { HowItWorks } from "./HowItWorks";
+import { useWeb3Auth } from "../hooks/use-web3-auth";
 
 const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+
+  const { isInitialized, isLoggedIn, login, logout } = useWeb3Auth();
 
   return (
     <>
@@ -43,6 +46,27 @@ const Header = () => {
             >
               Test Panel
             </Link>
+          )}
+        </div>
+        <div>
+          {isInitialized ? (
+            isLoggedIn ? (
+              <button
+                onClick={logout}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded"
+              >
+                Logout
+              </button>
+            ) : (
+              <button
+                onClick={login}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded"
+              >
+                Login
+              </button>
+            )
+          ) : (
+            <p>Loading...</p>
           )}
         </div>
         <nav className="flex space-x-4 mx-4">
