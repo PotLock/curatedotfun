@@ -687,6 +687,8 @@ export interface LeaderboardEntry {
   curatorId: string;
   curatorUsername: string;
   submissionCount: number;
+  approvalCount: number;
+  rejectionCount: number;
   feedSubmissions: FeedSubmissionCount[];
 }
 
@@ -716,21 +718,56 @@ export function getCuratorsCount(db: BetterSQLite3Database): number {
   return result?.count || 0;
 }
 
-export function getLeaderboard(db: BetterSQLite3Database): LeaderboardEntry[] {
-  // Step 1: Get all curators with their total submission counts
+export function getLeaderboard(
+  db: BetterSQLite3Database,
+  timeRange: string = "all",
+): LeaderboardEntry[] {
+  // Calculate date range based on timeRange
+  let dateFilter = "";
+  const now = new Date();
+
+  if (timeRange === "month") {
+    // First day of current month
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    dateFilter = `AND s.created_at >= '${firstDayOfMonth.toISOString()}'`;
+  } else if (timeRange === "week") {
+    // Start of current week (Sunday)
+    const firstDayOfWeek = new Date(now);
+    const day = now.getDay(); // 0 for Sunday, 1 for Monday, etc.
+    firstDayOfWeek.setDate(now.getDate() - day);
+    firstDayOfWeek.setHours(0, 0, 0, 0);
+    dateFilter = `AND s.created_at >= '${firstDayOfWeek.toISOString()}'`;
+  } else if (timeRange === "today") {
+    // Start of today
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+    dateFilter = `AND s.created_at >= '${startOfDay.toISOString()}'`;
+  }
+
   interface CuratorRow {
     curatorId: string;
     curatorUsername: string;
     submissionCount: number;
+    approvalCount: number;
+    rejectionCount: number;
   }
 
   const curators = db.all(sql`
     SELECT 
       s.curator_id AS curatorId,
       s.curator_username AS curatorUsername,
-      COUNT(DISTINCT s.tweet_id) AS submissionCount
+      COUNT(DISTINCT s.tweet_id) AS submissionCount,
+      COUNT(DISTINCT CASE WHEN mh.action = 'approve' THEN s.tweet_id END) AS approvalCount,
+      COUNT(DISTINCT CASE WHEN mh.action = 'reject' THEN s.tweet_id END) AS rejectionCount
     FROM 
       submissions s
+    LEFT JOIN 
+      moderation_history mh ON s.tweet_id = mh.tweet_id
+    WHERE 
+      1=1 ${sql.raw(dateFilter)}
     GROUP BY 
       s.curator_id, s.curator_username
     ORDER BY 
@@ -796,6 +833,8 @@ export function getLeaderboard(db: BetterSQLite3Database): LeaderboardEntry[] {
       curatorId: curator.curatorId,
       curatorUsername: curator.curatorUsername,
       submissionCount: curator.submissionCount,
+      approvalCount: curator.approvalCount,
+      rejectionCount: curator.rejectionCount,
       feedSubmissions,
     });
   }

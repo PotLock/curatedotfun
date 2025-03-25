@@ -89,6 +89,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -112,7 +119,11 @@
               "config": {
                 "token": "{CRYPTOGRANTWIRE_NOTION_TOKEN}",
                 "databaseId": "191000c0d5908055bdb7d6ec9bef599c",
-                "aiToken": "{OPENROUTER_API_KEY}"
+                "fields": {
+                  "tweetId": "title",
+                  "userId": "rich_text",
+                  "submittedAt": "date"
+                }
               }
             }
           ]
@@ -170,6 +181,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -181,7 +199,7 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "🔷 Ethereum: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})\n🔗 [Read More](<{{source}}>)"
+                    "template": "🔷 Ethereum: *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
@@ -189,6 +207,41 @@
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "@ethagain"
+              }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "title": "{{title}}",
+                      "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
+                      "description": "{{summary}}",
+                      "link": "{{source}}",
+                      "publishedAt": "{{createdAt}}",
+                      "author": {
+                        "name": "{{username}}",
+                        "link": "https://x.com/{{author}}"
+                      },
+                      "categories": ["ethereum", "{{tags}}"],
+                      "source": {
+                        "url": "{{source}}",
+                        "title": "twitter"
+                      }
+                    }
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/rss",
+              "config": {
+                "serviceUrl": "https://ethereum-rss.up.railway.app",
+                "apiSecret": "{ETHEREUM_RSS_API_SECRET}",
+                "feedConfig": {
+                  "title": "This Week in Ethereum",
+                  "description": "Ethereum ecosystem updates",
+                  "siteUrl": "https://ethagain.com/"
+                }
               }
             }
           ]
@@ -251,6 +304,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -262,7 +322,7 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "🐉  NEAR: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})\n🔗 [Read More](<{{source}}>)"
+                    "template": "🐉  NEAR: *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
@@ -271,6 +331,41 @@
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "-1002472938420",
                 "messageThreadId": "8"
+              }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "title": "{{title}}",
+                      "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
+                      "description": "{{summary}}",
+                      "link": "{{source}}",
+                      "publishedAt": "{{createdAt}}",
+                      "author": {
+                        "name": "{{username}}",
+                        "link": "https://x.com/{{author}}"
+                      },
+                      "categories": ["near", "{{tags}}"],
+                      "source": {
+                        "url": "{{source}}",
+                        "title": "twitter"
+                      }
+                    }
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/rss",
+              "config": {
+                "serviceUrl": "https://near-rss.up.railway.app",
+                "apiSecret": "{NEAR_RSS_API_SECRET}",
+                "feedConfig": {
+                  "title": "NEARWEEK",
+                  "description": "NEAR Protocol updates",
+                  "siteUrl": "https://nearweek.com"
+                }
               }
             }
           ]
@@ -344,6 +439,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -355,7 +457,7 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "🧠 AI3: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})\n🔗 [Read More](<{{source}}>)"
+                    "template": "🧠 AI3: *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
@@ -407,6 +509,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -418,7 +527,7 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "🤖 AI: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})\n🔗 [Read More](<{{source}}>)"
+                    "template": "🤖 AI: *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
@@ -499,6 +608,14 @@
           "enabled": true,
           "distribute": [
             {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "🌳 Refi: *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
+                  }
+                }
+              ],
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
@@ -521,6 +638,7 @@
             "jb87ua",
             "paulkhls",
             "0xDeSci",
+            "beashroomfairy",
             "potlock_intern",
             "DeSciWorld"
           ]
@@ -531,6 +649,14 @@
           "enabled": true,
           "distribute": [
             {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "🧪 DeSci: *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
+                  }
+                }
+              ],
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
@@ -616,6 +742,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -627,7 +760,7 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "⚡ Solana: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})\n🔗 [Read More](<{{source}}>)"
+                    "template": "⚡ Solana: *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
@@ -652,7 +785,7 @@
                         "name": "{{username}}",
                         "link": "https://x.com/{{author}}"
                       },
-                      "categories": ["near", "{{tags}}"],
+                      "categories": ["solana", "{{tags}}"],
                       "source": {
                         "url": "{{source}}",
                         "title": "twitter"
@@ -666,8 +799,8 @@
                 "serviceUrl": "https://solana-rss.up.railway.app",
                 "apiSecret": "{SOLANA_RSS_API_SECRET}",
                 "feedConfig": {
-                  "title": "Shippost",
-                  "description": "Tracking the ships in the NEAR ecosystem 🚢",
+                  "title": "Solana Digest",
+                  "description": "Solana ecosystem updates",
                   "siteUrl": "https://solanadigest.com"
                 }
               }
@@ -732,6 +865,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -743,7 +883,7 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "⚡ Eigen News: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})\n🔗 [Read More](<{{source}}>)"
+                    "template": "🥩 Eigen: *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
@@ -768,7 +908,7 @@
                         "name": "{{username}}",
                         "link": "https://x.com/{{author}}"
                       },
-                      "categories": ["near", "{{tags}}"],
+                      "categories": ["eigen", "{{tags}}"],
                       "source": {
                         "url": "{{source}}",
                         "title": "twitter"
@@ -839,6 +979,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -850,7 +997,7 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "🌐🤝 How to DAO News: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})\n🔗 [Read More](<{{source}}>)"
+                    "template": "*[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
@@ -913,6 +1060,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -924,7 +1078,7 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "⚡ Chain Abstraction: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})\n🔗 [Read More](<{{source}}>)"
+                    "template": "⚡ *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
@@ -932,6 +1086,41 @@
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "@abstractionnews"
+              }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "title": "{{title}}",
+                      "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
+                      "description": "{{summary}}",
+                      "link": "{{source}}",
+                      "publishedAt": "{{createdAt}}",
+                      "author": {
+                        "name": "{{username}}",
+                        "link": "https://x.com/{{author}}"
+                      },
+                      "categories": ["chain-abstraction", "{{tags}}"],
+                      "source": {
+                        "url": "{{source}}",
+                        "title": "twitter"
+                      }
+                    }
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/rss",
+              "config": {
+                "serviceUrl": "https://abstraction-rss.up.railway.app",
+                "apiSecret": "{ABSTRACTION_RSS_API_SECRET}",
+                "feedConfig": {
+                  "title": "Abstraction News",
+                  "description": "Chain Abstraction ecosystem updates.",
+                  "siteUrl": "http://abstraction.news/"
+                }
               }
             }
           ]
@@ -976,6 +1165,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -987,7 +1183,7 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "🍑 ANUS Update: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})\n🔗 [Read More](<{{source}}>)"
+                    "template": "🍑: *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
@@ -1015,6 +1211,51 @@
             "potlock_intern",
             "plugrel"
           ]
+        }
+      },
+      "outputs": {
+        "stream": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "zcash",
+      "name": "Zcash Ecosystem",
+      "description": "Zcash's Privacy Ecosystem news",
+      "moderation": {
+        "approvers": {
+          "twitter": ["zooko", "ZecHub", "potlock_intern", "plugrel"]
+        }
+      },
+      "outputs": {
+        "stream": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "sonic",
+      "name": "Sonic Ecosystem",
+      "description": "Sonic L1 Ecosystem news",
+      "moderation": {
+        "approvers": {
+          "twitter": ["potlock_intern", "plugrel"]
+        }
+      },
+      "outputs": {
+        "stream": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "rwa",
+      "name": "RWAs",
+      "description": "Real World Assets (RWAs) on Chain news",
+      "moderation": {
+        "approvers": {
+          "twitter": ["potlock_intern", "plugrel"]
         }
       },
       "outputs": {
@@ -1124,6 +1365,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -1135,7 +1383,7 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "💰 New Crypto Fundraise 💸: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})\n🔗 [Read More](<{{source}}>)"
+                    "template": "💰 Crypto Fundraise: *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
@@ -1143,6 +1391,76 @@
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "@cryptofundraises"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "web3hackathons",
+      "name": "Web3Hackathons",
+      "description": "Everything Web3 Hackathons and competition",
+      "moderation": {
+        "approvers": {
+          "twitter": ["plugrel", "elliot_braem", "potlock_intern"]
+        }
+      },
+      "outputs": {
+        "stream": {
+          "enabled": true,
+          "transform": [
+            {
+              "plugin": "@curatedotfun/object-transform",
+              "config": {
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "content": "{{content}}",
+                  "author": "{{username}}",
+                  "notes": "{{curator.notes}}",
+                  "submittedAt": "{{submittedAt}}"
+                }
+              }
+            },
+            {
+              "plugin": "@curatedotfun/ai-transform",
+              "config": {
+                "prompt": "Summarize the content into a concise news flash, incorporating relevant details from the curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information. When processing social media-style content, convert @mentions into markdown links in the format: [@username](https://x.com/username). Ensure all mentions are accurately linked and preserve their original intent.",
+                "apiKey": "{OPENROUTER_API_KEY}",
+                "schema": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title derived from summary of content"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
+                  }
+                }
+              }
+            }
+          ],
+          "distribute": [
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "🛠️:  *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "@web3hackathons"
               }
             }
           ]
@@ -1187,6 +1505,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -1198,7 +1523,7 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "🇺🇸 USA: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})\n🔗 [Read More](<{{source}}>)"
+                    "template": "🇺🇸 USA:  *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
@@ -1206,6 +1531,41 @@
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "@americancryptofoundation"
+              }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "title": "{{title}}",
+                      "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
+                      "description": "{{summary}}",
+                      "link": "{{source}}",
+                      "publishedAt": "{{createdAt}}",
+                      "author": {
+                        "name": "{{username}}",
+                        "link": "https://x.com/{{author}}"
+                      },
+                      "categories": ["usa", "{{tags}}"],
+                      "source": {
+                        "url": "{{source}}",
+                        "title": "twitter"
+                      }
+                    }
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/rss",
+              "config": {
+                "serviceUrl": "https://usa-rss.up.railway.app",
+                "apiSecret": "{USA_RSS_API_SECRET}",
+                "feedConfig": {
+                  "title": "American Crypto",
+                  "description": "$TRUMP ecosystem and American first crypto",
+                  "siteUrl": "https://www.americancrypto.foundation"
+                }
               }
             }
           ]
@@ -1311,7 +1671,7 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "🚢 Shippost: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})\n🔗 [Read More](<{{source}}>)"
+                    "template": "🚢 Shippost: *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
@@ -1327,7 +1687,7 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "🚢 Shippost: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})\n🔗 [Read More](<{{source}}>)"
+                    "template": "🚢 Shippost: *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
@@ -1465,6 +1825,13 @@
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
                   }
                 }
               }
@@ -1476,7 +1843,7 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "🌊 Sui: *{{title}}*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})\n🔗 [Read More](<{{source}}>)"
+                    "template": "🌊 Sui: *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
@@ -1501,7 +1868,7 @@
                         "name": "{{username}}",
                         "link": "https://x.com/{{author}}"
                       },
-                      "categories": ["near", "{{tags}}"],
+                      "categories": ["sui", "{{tags}}"],
                       "source": {
                         "url": "{{source}}",
                         "title": "twitter"
@@ -1515,8 +1882,8 @@
                 "serviceUrl": "https://sui-rss.up.railway.app",
                 "apiSecret": "{SUI_RSS_API_SECRET}",
                 "feedConfig": {
-                  "title": "Eigen Ecosystem",
-                  "description": "Eigen Layer Ecosystem News",
+                  "title": "Sui",
+                  "description": "Updates around Sui ecosystem & more",
                   "siteUrl": "https://dailysui.com"
                 }
               }
@@ -1700,12 +2067,108 @@
       "description": "News about the Stablecoins Ecoystem",
       "moderation": {
         "approvers": {
-          "twitter": ["plugrel", "potlock_intern"]
+          "twitter": [
+            "plugrel",
+            "0xAmerican",
+            "potlock_intern",
+            "Degenerate_DeFi",
+            "Piotr_Saczuk"
+          ]
         }
       },
       "outputs": {
         "stream": {
-          "enabled": false
+          "enabled": true,
+          "transform": [
+            {
+              "plugin": "@curatedotfun/object-transform",
+              "config": {
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "content": "{{content}}",
+                  "author": "{{username}}",
+                  "notes": "{{curator.notes}}",
+                  "submittedAt": "{{submittedAt}}"
+                }
+              }
+            },
+            {
+              "plugin": "@curatedotfun/ai-transform",
+              "config": {
+                "prompt": "Summarize the content into a concise news flash, incorporating relevant details from the curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information. When processing social media-style content, convert @mentions into markdown links in the format: [@username](https://x.com/username). Ensure all mentions are accurately linked and preserve their original intent.",
+                "apiKey": "{OPENROUTER_API_KEY}",
+                "schema": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title derived from summary of content"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
+                  }
+                }
+              }
+            }
+          ],
+          "distribute": [
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": " *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "@stablecoinspress"
+              }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "title": "{{title}}",
+                      "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
+                      "description": "{{summary}}",
+                      "link": "{{source}}",
+                      "publishedAt": "{{createdAt}}",
+                      "author": {
+                        "name": "{{username}}",
+                        "link": "https://x.com/{{author}}"
+                      },
+                      "categories": ["near", "{{tags}}"],
+                      "source": {
+                        "url": "{{source}}",
+                        "title": "twitter"
+                      }
+                    }
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/rss",
+              "config": {
+                "serviceUrl": "https://stablecoins-rss.up.railway.app",
+                "apiSecret": "{STABLECOINS_RSS_API_SECRET}",
+                "feedConfig": {
+                  "title": "Stablecoins",
+                  "description": "News about the Stablecoins Ecoystem",
+                  "siteUrl": "https://stablecoins.press"
+                }
+              }
+            }
+          ]
         }
       }
     },
@@ -1910,7 +2373,7 @@
                         "name": "{{username}}",
                         "link": "https://x.com/{{author}}"
                       },
-                      "categories": ["near", "{{tags}}"],
+                      "categories": ["climate", "{{tags}}"],
                       "source": {
                         "url": "{{source}}",
                         "title": "twitter"

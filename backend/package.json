@@ -30,9 +30,9 @@
   "devDependencies": {
     "@curatedotfun/types": "^0.0.5",
     "@module-federation/node": "^2.6.22",
+    "@rspack/binding": "1.2.6",
     "@rspack/cli": "1.2.6",
     "@rspack/core": "1.2.6",
-    "@rspack/binding": "1.2.6",
     "@types/better-sqlite3": "^7.6.9",
     "@types/node": "^20.17.19",
     "@types/ora": "^3.2.0",
@@ -50,6 +50,7 @@
     "@hono/node-server": "^1.8.2",
     "@hono/zod-openapi": "^0.9.5",
     "@hono/zod-validator": "^0.1.11",
+    "@module-federation/runtime": "^0.11.1",
     "@notionhq/client": "^2.2.15",
     "@types/lodash": "^4.17.16",
     "agent-twitter-client": "^0.0.16",
