@@ -4,7 +4,15 @@ import { TanStackRouterRspack } from "@tanstack/router-plugin/rspack";
 import { pluginNodePolyfill } from "@rsbuild/plugin-node-polyfill";
 
 export default defineConfig({
-  plugins: [pluginReact(), pluginNodePolyfill()],
+  plugins: [
+    pluginReact(),
+    pluginNodePolyfill({
+      globals: {
+        Buffer: true,
+        process: true,
+      },
+    }),
+  ],
   html: {
     template: "./index.html",
   },
