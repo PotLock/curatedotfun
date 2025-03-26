@@ -2,6 +2,7 @@
 import typography from "@tailwindcss/typography";
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  darkMode: 'class', // This ensures dark mode only activates with the 'dark' class
   theme: {
     extend: {
       fontFamily: {
