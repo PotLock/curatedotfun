@@ -466,7 +466,9 @@ export class DatabaseService {
     );
   }
 
-  async getLeaderboard(timeRange: string = "all"): Promise<queries.LeaderboardEntry[]> {
+  async getLeaderboard(
+    timeRange: string = "all",
+  ): Promise<queries.LeaderboardEntry[]> {
     return withErrorHandling(
       async () => {
         return await this.executeWithRetry(async (db) => {

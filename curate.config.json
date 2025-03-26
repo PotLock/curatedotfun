@@ -674,11 +674,7 @@
       "description": "Chain agnostic Decentralized Finance news, product updates, traction, thought leadership, innovation",
       "moderation": {
         "approvers": {
-          "twitter": [
-            "potlock_",
-            "plugrel",
-            "potlock_intern"
-          ]
+          "twitter": ["potlock_", "plugrel", "potlock_intern"]
         }
       },
       "outputs": {
@@ -693,10 +689,7 @@
       "description": "Tech mergers and acquisitions",
       "moderation": {
         "approvers": {
-          "twitter": [
-            "plugrel",
-            "potlock_intern"
-          ]
+          "twitter": ["plugrel", "potlock_intern"]
         }
       },
       "outputs": {
@@ -711,12 +704,7 @@
       "description": "Decentralized social, Social FI product updates, news, traction, thought leadership.",
       "moderation": {
         "approvers": {
-          "twitter": [
-            "elliot_braem",
-            "potlock_",
-            "plugrel",
-            "potlock_intern"
-          ]
+          "twitter": ["elliot_braem", "potlock_", "plugrel", "potlock_intern"]
         }
       },
       "outputs": {

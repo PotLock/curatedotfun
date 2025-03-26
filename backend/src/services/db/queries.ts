@@ -784,7 +784,7 @@ export async function getLeaderboard(
     curatorUsername: String(row.curatorUsername),
     submissionCount: Number(row.submissionCount),
     approvalCount: Number(row.approvalCount),
-    rejectionCount: Number(row.rejectionCount)
+    rejectionCount: Number(row.rejectionCount),
   }));
 
   // Get total submissions per feed
