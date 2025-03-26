@@ -216,11 +216,11 @@ const Header = () => {
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={logout}>
+                    <DropdownMenuItem>
                       <CircleUserRound />
                       <span>Profile</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={logout}>
+                    <DropdownMenuItem>
                       <CreditCard />
                       <span>Wallet</span>
                     </DropdownMenuItem>
