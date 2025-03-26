@@ -160,7 +160,7 @@ export const FeedItem = ({ submission }: FeedItemProps) => {
 
   return (
     <div
-      className="flex gap-3 flex-col p-4 w-full items-center justify-between border rounded-lg border-[#D4D4D4]"
+      className="flex gap-3 flex-col p-4 w-full items-center justify-between border rounded-lg border-neutral-300"
       id={submission.tweetId}
     >
       <div className="flex flex-col gap-3 w-full justify-between items-center">

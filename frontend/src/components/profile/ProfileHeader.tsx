@@ -1,13 +1,13 @@
 export function ProfileHeader() {
   return (
-    <div className="flex w-full items-center gap-10 p-6 border border-[#D4D4D4] rounded-md light">
+    <div className="flex w-full items-center gap-10 p-6 border border-neutral-300 rounded-md light">
       <div className="size-28 rounded-full bg-red-500 shrink-0" />
       <div className="flex flex-col gap-2.5">
         <div className="flex flex-col">
           <h2>Web3Plug (murica/acc) 🇺🇸</h2>
           <div className="flex items-center gap-2">
             <div className="rounded-lg bg-red-500 size-6" />
-            <p className="text-base font-normal text-[#64748B]">
+            <p className="text-base font-normal text-muted-foreground">
               6f2d.......xd345
             </p>
           </div>

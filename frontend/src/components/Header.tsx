@@ -53,7 +53,7 @@ const Header = () => {
 
   return (
     <>
-      <header className="sticky top-0 flex justify-between items-center px-4 sm:px-6 md:px-[70px] py-3 border-b-2 border-[#D4d4d4] bg-white z-10">
+      <header className="sticky top-0 flex justify-between items-center px-4 sm:px-6 md:px-[70px] py-3 border-b-2 border-neutral-300 bg-white z-10">
         <div className="flex items-center gap-4 md:gap-16 flex-shrink-0">
           <Link
             to="/"
@@ -106,7 +106,7 @@ const Header = () => {
       {/* Mobile Navigation Menu */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 top-0 left-0 z-50 bg-white flex flex-col">
-          <div className="sticky top-0 flex justify-between items-center px-4 py-3 border-b-2 border-[#D4d4d4]">
+          <div className="sticky top-0 flex justify-between items-center px-4 py-3 border-b-2 border-neutral-300">
             <Link
               to="/"
               className="flex items-center hover:opacity-80 transition-opacity"
