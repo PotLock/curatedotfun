@@ -16,7 +16,7 @@ import { ProfileOverview } from "./overview";
 export function ProfileTabs() {
   return (
     <Tabs defaultValue="overview" className="w-full space-y-[30px]">
-      <TabsList>
+      <TabsList className="overflow-x-auto">
         <TabsTrigger value="overview">
           <ScanSearch strokeWidth={1} size={24} />
           Overview

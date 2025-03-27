@@ -5,11 +5,11 @@ interface StatCardProps {
 
 function StatCard({ title, value }: StatCardProps) {
   return (
-    <div className="border-r px-3 py-4 border-[#64748B] gap-1.5 flex flex-col last:border-r-0">
-      <p className="text-base font-semibold text-[#020617] font-[Geist]">
+    <div className="border-r px-2 sm:px-3 py-2 sm:py-4 border-[#64748B] gap-1 flex flex-col last:border-r-0">
+      <p className="text-sm sm:text-base font-semibold text-[#020617] font-[Geist]">
         {value}
       </p>
-      <h4 className="text-[#64748B] text-sm leading-5 font-normal font-[Geist]">
+      <h4 className="text-[#64748B] text-xs leading-5 font-normal font-[Geist]">
         {title}
       </h4>
     </div>
@@ -18,9 +18,9 @@ function StatCard({ title, value }: StatCardProps) {
 
 export function UserStats() {
   return (
-    <div className="border rounded-lg py-5 px-[14px] border-neutral-300 gap-6 flex flex-col">
-      <div className="rounded border pt-24 px-5 pb-[14px] border-[#94A3B8] relative overflow-hidden">
-        <p className="font-semibold text-black text-[22px] leading-6 z-10 relative">
+    <div className="border rounded-lg py-3 sm:py-5 px-2 sm:px-[14px] border-neutral-300 gap-4 sm:gap-6 flex flex-col">
+      <div className="rounded border pt-16 sm:pt-24 px-3 sm:px-5 pb-2 sm:pb-[14px] border-[#94A3B8] relative overflow-hidden">
+        <p className="font-semibold text-black text-lg sm:text-[22px] leading-6 z-10 relative">
           Welcome,
           <br />
           72d2......2532
@@ -34,7 +34,7 @@ export function UserStats() {
           />
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-5">
+      <div className="grid grid-cols-3 gap-2 sm:gap-5">
         <StatCard value="7,000" title="Total Approves" />
         <StatCard value="5,000" title="Total Submissions" />
         <StatCard value="38%" title="Approval Rate" />

@@ -20,6 +20,9 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-50",
         link: "text-neutral-900 underline-offset-4 hover:underline dark:text-neutral-50",
+        "outline-button":
+          "border border-black bg-white rounded-[4px] py-3 shadow-sm hover:bg-neutral-100 hover:text-neutral-900 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-800 dark:hover:text-neutral-50",
+        filled: "bg-black text-white rounded-[4px] px-4 py-3 hover:bg-black/80",
       },
       size: {
         default: "h-9 px-4 py-2",
