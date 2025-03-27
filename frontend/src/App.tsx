@@ -1,6 +1,7 @@
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import { Web3AuthProvider } from "./contexts/web3auth";
+// import Header from "./components/Header";
 
 // Set up a Router instance
 const router = createRouter({
