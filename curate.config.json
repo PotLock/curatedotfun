@@ -2113,10 +2113,7 @@
       "moderation": {
         "approvers": {
           "twitter": [
-            "plugrel",
-            "0xAmerican",
-            "potlock_intern",
-            "Degenerate_DeFi",
+            "stablewatchHQ",
             "Piotr_Saczuk"
           ]
         }
@@ -2178,6 +2175,20 @@
                 "channelId": "@stablecoinspress"
               }
             },
+            "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": " *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "@stablewatch"
+              }
+            },
             {
               "transform": [
                 {
@@ -2193,7 +2204,7 @@
                         "name": "{{username}}",
                         "link": "https://x.com/{{author}}"
                       },
-                      "categories": ["near", "{{tags}}"],
+                      "categories": ["{{tags}}"],
                       "source": {
                         "url": "{{source}}",
                         "title": "twitter"
