@@ -25,7 +25,7 @@ function Badge({ image, points, name, description }: BadgeProps) {
 export function TopBadges() {
   return (
     <div className="border rounded-lg px-2 sm:px-3 pb-3 border-neutral-300 gap-4 sm:gap-6 flex flex-col">
-      <h3 className="text-neutral-500 font-sans text-sm sm:text-base font-bold py-2 sm:py-[14px] border-b border-dashed border-neutral-500 truncate">
+      <h3 className="text-neutral-500 font-sans text-base sm:text-xl font-bold py-2 sm:py-[14px] border-b border-dashed border-neutral-500 truncate">
         Top Badges
       </h3>
       <div className="grid gap-1">

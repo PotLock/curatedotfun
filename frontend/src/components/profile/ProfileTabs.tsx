@@ -1,9 +1,4 @@
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../../components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/profile-tabs";
 import {
   Activity,
   Award,
@@ -12,6 +7,7 @@ import {
   ScanSearch,
 } from "lucide-react";
 import { ProfileOverview } from "./overview";
+import { ProfileContent } from "./content";
 
 export function ProfileTabs() {
   return (
@@ -42,7 +38,7 @@ export function ProfileTabs() {
         <ProfileOverview />
       </TabsContent>
       <TabsContent value="content">
-        <p>Content</p>
+        <ProfileContent />
       </TabsContent>
       <TabsContent value="my-feeds">
         <p>My Feeds</p>
