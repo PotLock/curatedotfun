@@ -4,8 +4,8 @@
 
 ### Package Management
 - Use pnpm for package management (pnpm@10.6.4)
-- Use Corepack for package manager versioning
-- Bun is used for running scripts and tests
+- Use Corepack for package manager version consistency
+- Bun is used for running scripts and tests only
 - Save type errors and dependency installations until ready to address them
 
 ### Database
@@ -22,14 +22,20 @@
 
 ### Code Organization
 - Use service-based architecture
-- Implement plugin system for extensibility
+- Implement plugin system with module federation for extensibility
 - Follow clean architecture principles
 - Use TypeScript strict mode
 
 ### Monorepo Structure
 - Use Turborepo for build orchestration and caching
-- Bun workspaces for dependency management
+- pnpm workspaces for dependency management
 - Separate backend and frontend as distinct workspaces
+
+### Build System
+- Use RSPack for backend building
+- Use RSBuild for frontend building
+- Support for module federation
+- Optimized for TypeScript
 
 ## Project Preferences
 
@@ -51,6 +57,18 @@
 - Handle nested stringified JSON
 - Implement proper error handling for malformed JSON
 
+### Deployment
+- Deploy to Railway using Docker containers
+- Use Kubernetes for orchestration
+- Implement CI/CD with GitHub Actions
+- Use environment-specific configurations
+
+### Security
+- Implement proper database security measures
+- Plan for Web3Auth integration in frontend
+- Use secure headers and CORS policies
+- Implement audit logging for sensitive operations
+
 ## Critical Implementation Paths
 
 ### Content Flow
@@ -61,7 +79,7 @@
 5. Distribution to configured channels
 
 ### Plugin System
-1. PluginService loads plugins at runtime
+1. PluginService loads plugins at runtime via module federation
 2. Plugins register with appropriate service
 3. Services use plugins based on configuration
 4. Error handling and recovery for plugin failures
@@ -72,20 +90,32 @@
 3. Error handling and connection management
 4. Type-safe queries with Drizzle ORM
 
-## Known Challenges
+## Current Focus Areas
 
-### Testing Infrastructure
-- Current testing approach relies too heavily on mocks
-- Need to implement Docker-based testing infrastructure
-- Need to refactor tests to use real database
-- Need to implement component tests for key flows
+### Comprehensive Error Handling
+- Implementing granular error types across the application
+- Developing consistent error recovery mechanisms
+- Enhancing error logging and monitoring
+- Creating user-friendly error messages
+- Implementing graceful degradation strategies
 
-### PostgreSQL Migration
-- Migration from SQLite to PostgreSQL in progress
-- Need to update database service implementation
-- Need to migrate existing data
+### Configuration in Database
+- Migrating from JSON-based configuration to database storage
+- Implementing configuration versioning
+- Creating admin interface for configuration management
+- Ensuring backward compatibility
+- Implementing validation and security measures
 
-### Performance Optimization
-- Need to optimize resource usage
-- Need to implement performance monitoring
-- Need to identify and address bottlenecks
+### Test Coverage
+- Expanding component tests for key flows
+- Implementing integration tests for external services
+- Adding E2E tests for critical user journeys
+- Improving test infrastructure with Docker
+- Implementing performance testing
+
+### Web3Auth Security
+- Implementing secure authentication with Web3Auth
+- Adding database protections for user data
+- Creating proper access control mechanisms
+- Implementing audit logging
+- Ensuring compliance with security best practices
