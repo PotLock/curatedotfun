@@ -36,7 +36,7 @@
      * Simple Transform (Basic formatting)
      * Object Transform (Data mapping and transformation)
    - Plugin Features
-     * Runtime loading and hot-reloading
+     * Runtime loading via module federation
      * Type-safe configuration
      * Custom endpoint registration
      * Scheduled task integration
@@ -164,42 +164,50 @@ graph TD
    - Process endpoint for content handling
    - Dynamic endpoint registration
 
-2. **Plugin Architecture**
-   - Module federation for runtime loading
+3. **Module Federation Plugin System**
+   - Runtime plugin loading without rebuilds
    - Type-safe plugin interfaces
    - Easy plugin development
    - Comprehensive testing support
    - Hot-reloading capability
 
-3. **Configuration-Driven**
+4. **Configuration-Driven**
    - JSON-based configuration
    - Runtime configuration updates
    - Environment variable support
    - Extensible action handling
    - Easy forking and customization
 
-4. **Service Architecture**
+5. **Service Architecture**
    - Platform-agnostic services
    - Clear service boundaries
    - Optimized transformer-distributor flow
    - Comprehensive testing
    - Mock system for plugin validation
 
-5. **Error Handling**
+6. **Error Handling**
    - Granular error types
    - Graceful degradation
    - Error recovery strategies
    - Detailed error logging
    - Error aggregation for multiple failures
 
-6. **Task Scheduling**
+7. **Task Scheduling**
    - Configuration-driven cron jobs
    - Recap generation scheduling
    - Plugin-specific scheduled tasks
    - Reliable execution tracking
 
-7. **Hybrid Runtime Approach**
-   - Node.js for production stability
-   - Bun for development speed
-   - Consistent package management
-   - Optimized build process
+8. **Build System**
+   - RSPack for optimized builds
+   - Module federation support
+   - Fast development experience
+   - Efficient bundling
+   - TypeScript integration
+
+9. **Deployment Architecture**
+   - Docker containerization
+   - Railway platform deployment
+   - Kubernetes configuration
+   - Automated CI/CD pipeline
+   - Environment-specific configurations

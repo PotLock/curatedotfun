@@ -3,7 +3,7 @@
 ## Technology Stack
 
 ### Backend
-- **Runtime**: Node.js (production)
+- **Runtime**: Node.js
 - **Framework**: Hono
 - **Language**: TypeScript
 - **Database**: PostgreSQL with Drizzle ORM (with DB service abstraction)
@@ -66,6 +66,13 @@
   * MAX_PLUGIN_MEMORY
 
 ## Plugin System
+
+### Module Federation
+- Runtime loading of remote modules
+- Shared dependencies between host and remotes
+- Type-safe plugin interfaces
+- Hot-reloading support
+- Plugin caching and invalidation
 
 ### Core Plugin Features
 - Runtime module federation loading
@@ -134,27 +141,38 @@
 - Twitter-based curator authentication
 - Environment-based service authentication
 - API endpoint access control
+- Web3Auth integration for frontend (planned)
+
+### Database Security
+- Connection pooling with proper limits
+- Prepared statements for all queries
+- Input validation and sanitization
+- Transaction isolation levels
+- Database user permissions
 
 ## Deployment
 
-### Requirements
-- Node.js environment
-- Environment variables configuration
-- Plugin dependencies
-- Frontend build artifacts
-
 ### Infrastructure
-- Fly.io deployment
+- Railway platform deployment
+- Docker containerization
+- Kubernetes orchestration
 - PostgreSQL database
-- Docker-based development environment
-- Health check endpoint
+- Health check endpoints
 - Graceful shutdown handling
 
+### CI/CD Pipeline
+- GitHub Actions workflows
+- Automated testing
+- Docker image building
+- Railway deployment
+- Environment-specific configurations
+
 ### Monitoring
-- Health check endpoint
+- Health check endpoints
 - Service initialization status
 - Graceful shutdown handling
 - Error logging and recovery
+- Performance metrics
 
 ## Development Practices
 

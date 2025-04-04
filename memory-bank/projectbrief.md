@@ -50,12 +50,14 @@ curate.fun is a content curation platform that aggregates and distributes curate
 ## Technical Requirements
 - High reliability and uptime
 - Scalable architecture
-- Plugin extensibility
+- Plugin extensibility through module federation
 - Secure moderation system
 - Real-time content processing
 - Efficient resource usage
 - Comprehensive error handling
 - Graceful degradation
+- Containerized deployment with Docker
+- PostgreSQL database with proper security measures
 
 ## Current Status
 The platform is fully operational with:
@@ -64,3 +66,4 @@ The platform is fully operational with:
 - Multiple distribution channels
 - AI-powered content transformation
 - Comprehensive plugin system
+- Containerized deployment on Railway
