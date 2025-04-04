@@ -5,8 +5,13 @@ import path from "path";
 if (process.env.NODE_ENV === "test") {
   config({ path: path.resolve(process.cwd(), "backend/.env.test") });
 } else {
-  config();
+  config({ path: path.resolve(process.cwd(), "backend/.env") });
 }
+
+// Log all environment variables for debugging
+console.log("Environment variables loaded:");
+console.log("DATABASE_URL:", process.env.DATABASE_URL);
+console.log("NODE_ENV:", process.env.NODE_ENV);
 
 import { serve } from "@hono/node-server";
 import { AppInstance } from "types/app";
@@ -28,8 +33,16 @@ async function getInstance(): Promise<AppInstance> {
     try {
       instance = await createApp();
     } catch (error) {
-      logger.error("Failed to create app instance:", error);
-      throw new Error("Failed to initialize application");
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      
+      logger.error("Failed to create app instance:", { 
+        error: errorMessage,
+        stack: errorStack,
+        dirname: __dirname,
+        cwd: process.cwd()
+      });
+      throw new Error(`Failed to initialize application: ${errorMessage}`);
     }
   }
   return instance;
@@ -41,10 +54,30 @@ async function startServer() {
 
     // Initialize database in production, but not in tests
     if (process.env.NODE_ENV !== "test") {
-      const dbInitialized = await initializeDatabase();
-      if (dbInitialized) {
-      } else {
-        logger.warn("Continuing without database connection");
+      logger.info("Initializing database connection...");
+      try {
+        const dbInitialized = await initializeDatabase();
+        if (dbInitialized) {
+          logger.info("Database connection established successfully");
+        } else {
+          logger.error("Database connection failed. Application cannot continue without database.");
+          
+          // Check if DATABASE_URL is set
+          if (!process.env.DATABASE_URL) {
+            logger.error("DATABASE_URL environment variable is not set");
+          } else {
+            logger.error("DATABASE_URL is set but connection failed. Check if the database server is running and accessible.");
+            logger.error("Make sure Docker is running and the PostgreSQL container is started.");
+          }
+          
+          // Exit the application
+          logger.error("Exiting application due to database connection failure");
+          process.exit(1);
+        }
+      } catch (dbError) {
+        logger.error("Error during database initialization:", dbError);
+        logger.error("Application cannot continue without database. Exiting...");
+        process.exit(1);
       }
     }
 

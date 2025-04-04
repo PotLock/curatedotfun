@@ -552,10 +552,44 @@ export const db = dbInstance;
 
 export const initializeDatabase = async () => {
   try {
+    // Log the database URL (with password masked)
+    const dbUrl = process.env.DATABASE_URL || '';
+    const maskedUrl = dbUrl.replace(/:\/\/([^:]+):([^@]+)@/, '://$1:****@');
+    logger.info("Attempting to connect to database:", { url: maskedUrl });
+    
+    if (!dbUrl) {
+      logger.error("DATABASE_URL environment variable is not set or empty");
+      return false;
+    }
+    
     await dbInstance.connect();
     return true;
   } catch (err) {
-    logger.error("Failed to establish database connection:", { err });
+    // More detailed error logging
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    const errorStack = err instanceof Error ? err.stack : undefined;
+    const errorCode = (err as any).code;
+    
+    logger.error("Failed to establish database connection:", { 
+      error: errorMessage,
+      code: errorCode,
+      stack: errorStack,
+      dirname: __dirname,
+      cwd: process.cwd()
+    });
+    
+    // Provide more specific error messages based on error codes
+    if (errorCode === 'ECONNREFUSED') {
+      logger.error("Connection refused. Make sure the database server is running and accessible.");
+      logger.error("If using Docker, ensure the Docker daemon is running and the PostgreSQL container is started.");
+    } else if (errorCode === 'ENOTFOUND') {
+      logger.error("Host not found. Check the hostname in your DATABASE_URL.");
+    } else if (errorCode === '28P01') {
+      logger.error("Authentication failed. Check your database username and password.");
+    } else if (errorCode === '3D000') {
+      logger.error("Database does not exist. Make sure the database has been created.");
+    }
+    
     return false;
   }
 };

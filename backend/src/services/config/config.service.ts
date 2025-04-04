@@ -17,13 +17,14 @@ export class ConfigService {
 
   private constructor() {
     if (isProduction) {
-      this.configPath = path.resolve(__dirname, "../../curate.config.json");
+      this.configPath = path.resolve(process.cwd(), "curate.config.json");
       logger.info("Using production configuration");
     } else {
       // Use test config in development mode
       this.configPath = path.resolve(
-        __dirname,
-        "../test/curate.config.test.json",
+        process.cwd(),
+        "backend/test/curate.config.test.json"
+        
       );
       logger.info("Using test configuration");
     }
