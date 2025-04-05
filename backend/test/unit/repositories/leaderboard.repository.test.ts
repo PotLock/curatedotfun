@@ -5,7 +5,9 @@ import * as queries from "../../../src/services/db/queries";
 
 // Mock the transaction module
 mock.module("../../../src/services/db/transaction", () => ({
-  executeOperation: mock((callback, isWrite = false) => callback({ mockDb: true })),
+  executeOperation: mock((callback, isWrite = false) =>
+    callback({ mockDb: true }),
+  ),
   withDatabaseErrorHandling: mock(async (operation, options, defaultValue) => {
     try {
       return await operation();
@@ -52,16 +54,19 @@ describe("LeaderboardRepository", () => {
           ],
         },
       ];
-      
+
       mock.module("../../../src/services/db/queries", () => ({
         ...queries,
         getLeaderboard: mock().mockResolvedValue(mockLeaderboard),
       }));
-      
+
       const result = await leaderboardRepository.getLeaderboard();
-      
+
       expect(transaction.withDatabaseErrorHandling).toHaveBeenCalled();
-      expect(queries.getLeaderboard).toHaveBeenCalledWith({ mockDb: true }, "all");
+      expect(queries.getLeaderboard).toHaveBeenCalledWith(
+        { mockDb: true },
+        "all",
+      );
       expect(result).toEqual(mockLeaderboard);
     });
 
@@ -80,33 +85,41 @@ describe("LeaderboardRepository", () => {
           ],
         },
       ];
-      
+
       mock.module("../../../src/services/db/queries", () => ({
         ...queries,
         getLeaderboard: mock().mockResolvedValue(mockLeaderboard),
       }));
-      
+
       const result = await leaderboardRepository.getLeaderboard(timeRange);
-      
+
       expect(transaction.withDatabaseErrorHandling).toHaveBeenCalled();
-      expect(queries.getLeaderboard).toHaveBeenCalledWith({ mockDb: true }, timeRange);
+      expect(queries.getLeaderboard).toHaveBeenCalledWith(
+        { mockDb: true },
+        timeRange,
+      );
       expect(result).toEqual(mockLeaderboard);
     });
 
     test("should handle errors gracefully", async () => {
       const error = new Error("Database error");
-      
+
       mock.module("../../../src/services/db/queries", () => ({
         ...queries,
         getLeaderboard: mock().mockRejectedValue(error),
       }));
-      
+
       // The withDatabaseErrorHandling function should rethrow the error
       // since no default value is provided
-      await expect(leaderboardRepository.getLeaderboard()).rejects.toThrow(error);
-      
+      await expect(leaderboardRepository.getLeaderboard()).rejects.toThrow(
+        error,
+      );
+
       expect(transaction.withDatabaseErrorHandling).toHaveBeenCalled();
-      expect(queries.getLeaderboard).toHaveBeenCalledWith({ mockDb: true }, "all");
+      expect(queries.getLeaderboard).toHaveBeenCalledWith(
+        { mockDb: true },
+        "all",
+      );
     });
   });
 });

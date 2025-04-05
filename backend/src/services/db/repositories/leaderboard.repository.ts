@@ -7,7 +7,7 @@ import { executeOperation, withDatabaseErrorHandling } from "../transaction";
 export class LeaderboardRepository {
   /**
    * Gets the leaderboard data.
-   * 
+   *
    * @param timeRange The time range for the leaderboard (default: "all")
    * @returns Array of leaderboard entries
    */

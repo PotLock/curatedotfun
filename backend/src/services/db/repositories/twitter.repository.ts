@@ -9,7 +9,7 @@ import { executeOperation, withDatabaseErrorHandling } from "../transaction";
 export class TwitterRepository {
   /**
    * Sets Twitter cookies for a user.
-   * 
+   *
    * @param username Twitter username
    * @param cookies Twitter cookies
    */
@@ -33,7 +33,7 @@ export class TwitterRepository {
 
   /**
    * Gets Twitter cookies for a user.
-   * 
+   *
    * @param username Twitter username
    * @returns Twitter cookies or null if not found
    */
@@ -56,7 +56,7 @@ export class TwitterRepository {
 
   /**
    * Deletes Twitter cookies for a user.
-   * 
+   *
    * @param username Twitter username
    */
   async deleteTwitterCookies(username: string): Promise<void> {
@@ -75,7 +75,7 @@ export class TwitterRepository {
 
   /**
    * Sets a Twitter cache value.
-   * 
+   *
    * @param key Cache key
    * @param value Cache value
    */
@@ -95,7 +95,7 @@ export class TwitterRepository {
 
   /**
    * Gets a Twitter cache value.
-   * 
+   *
    * @param key Cache key
    * @returns Cache value or null if not found
    */
@@ -117,7 +117,7 @@ export class TwitterRepository {
 
   /**
    * Deletes a Twitter cache value.
-   * 
+   *
    * @param key Cache key
    */
   async deleteTwitterCacheValue(key: string): Promise<void> {

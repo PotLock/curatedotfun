@@ -12,7 +12,7 @@ import { executeOperation } from "../transaction";
 export class FeedRepository {
   /**
    * Upserts feeds in the database.
-   * 
+   *
    * @param feeds Array of feeds to upsert
    */
   async upsertFeeds(
@@ -25,7 +25,7 @@ export class FeedRepository {
 
   /**
    * Saves a submission to a feed.
-   * 
+   *
    * @param submissionId The submission ID
    * @param feedId The feed ID
    * @param status The submission status
@@ -42,7 +42,7 @@ export class FeedRepository {
 
   /**
    * Gets feeds by submission ID.
-   * 
+   *
    * @param submissionId The submission ID
    * @returns Array of submission feeds
    */
@@ -54,7 +54,7 @@ export class FeedRepository {
 
   /**
    * Removes a submission from a feed.
-   * 
+   *
    * @param submissionId The submission ID
    * @param feedId The feed ID
    */
@@ -69,7 +69,7 @@ export class FeedRepository {
 
   /**
    * Gets submissions by feed ID.
-   * 
+   *
    * @param feedId The feed ID
    * @returns Array of submissions with status
    */
@@ -86,7 +86,7 @@ export class FeedRepository {
 
   /**
    * Gets a feed plugin.
-   * 
+   *
    * @param feedId The feed ID
    * @param pluginId The plugin ID
    * @returns The feed plugin or undefined if not found
@@ -99,7 +99,7 @@ export class FeedRepository {
 
   /**
    * Upserts a feed plugin.
-   * 
+   *
    * @param feedId The feed ID
    * @param pluginId The plugin ID
    * @param config The plugin configuration
@@ -116,7 +116,7 @@ export class FeedRepository {
 
   /**
    * Updates the status of a submission in a feed.
-   * 
+   *
    * @param submissionId The submission ID
    * @param feedId The feed ID
    * @param status The new status

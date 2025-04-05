@@ -14,7 +14,7 @@ import { executeOperation, withDatabaseErrorHandling } from "../transaction";
 export class SubmissionRepository {
   /**
    * Saves a Twitter submission to the database.
-   * 
+   *
    * @param submission The submission to save
    */
   async saveSubmission(submission: TwitterSubmission): Promise<void> {
@@ -25,7 +25,7 @@ export class SubmissionRepository {
 
   /**
    * Saves a moderation action to the database.
-   * 
+   *
    * @param moderation The moderation action to save
    */
   async saveModerationAction(moderation: Moderation): Promise<void> {
@@ -36,7 +36,7 @@ export class SubmissionRepository {
 
   /**
    * Updates the status of a submission in a feed.
-   * 
+   *
    * @param submissionId The submission ID
    * @param feedId The feed ID
    * @param status The new status
@@ -61,7 +61,7 @@ export class SubmissionRepository {
 
   /**
    * Gets a submission by tweet ID.
-   * 
+   *
    * @param tweetId The tweet ID
    * @returns The submission or null if not found
    */
@@ -73,7 +73,7 @@ export class SubmissionRepository {
 
   /**
    * Gets a submission by curator tweet ID.
-   * 
+   *
    * @param curatorTweetId The curator tweet ID
    * @returns The submission or null if not found
    */
@@ -87,7 +87,7 @@ export class SubmissionRepository {
 
   /**
    * Gets all submissions, optionally filtered by status.
-   * 
+   *
    * @param status Optional status filter
    * @returns Array of submissions with feed data
    */
@@ -101,7 +101,7 @@ export class SubmissionRepository {
 
   /**
    * Gets the daily submission count for a user.
-   * 
+   *
    * @param userId The user ID
    * @returns The daily submission count
    */
@@ -121,7 +121,7 @@ export class SubmissionRepository {
 
   /**
    * Increments the daily submission count for a user.
-   * 
+   *
    * @param userId The user ID
    */
   async incrementDailySubmissionCount(userId: string): Promise<void> {
@@ -132,7 +132,7 @@ export class SubmissionRepository {
 
   /**
    * Gets the total number of posts.
-   * 
+   *
    * @returns The total number of posts
    */
   async getPostsCount(): Promise<number> {
@@ -149,7 +149,7 @@ export class SubmissionRepository {
 
   /**
    * Gets the total number of curators.
-   * 
+   *
    * @returns The total number of curators
    */
   async getCuratorsCount(): Promise<number> {

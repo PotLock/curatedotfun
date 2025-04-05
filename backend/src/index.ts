@@ -59,7 +59,7 @@ async function initializeDatabaseConnection(): Promise<boolean> {
     );
     return false;
   }
-  
+
   return true;
 }
 

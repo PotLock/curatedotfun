@@ -68,7 +68,10 @@ export class TwitterService {
           httpOnly: cookie.httpOnly,
           sameSite: cookie.sameSite as "Strict" | "Lax" | "None" | undefined,
         }));
-        await twitterRepository.setTwitterCookies(this.config.username, formattedCookies);
+        await twitterRepository.setTwitterCookies(
+          this.config.username,
+          formattedCookies,
+        );
         logger.info("Successfully logged in to Twitter");
         return true;
       }

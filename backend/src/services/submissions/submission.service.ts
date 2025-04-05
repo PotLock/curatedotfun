@@ -26,7 +26,8 @@ export class SubmissionService {
   private async initializeAdminIds(): Promise<void> {
     try {
       // Try to load admin IDs from cache first
-      const cachedAdminIds = await twitterRepository.getTwitterCacheValue("admin_ids");
+      const cachedAdminIds =
+        await twitterRepository.getTwitterCacheValue("admin_ids");
       if (cachedAdminIds) {
         try {
           const adminMap = JSON.parse(cachedAdminIds);
@@ -66,7 +67,10 @@ export class SubmissionService {
       }
 
       // Cache the admin IDs
-      await twitterRepository.setTwitterCacheValue("admin_ids", JSON.stringify(adminMap));
+      await twitterRepository.setTwitterCacheValue(
+        "admin_ids",
+        JSON.stringify(adminMap),
+      );
       logger.info("Cached admin IDs for future use");
     } catch (error) {
       logger.error("Failed to initialize admin IDs:", error);
@@ -213,7 +217,9 @@ export class SubmissionService {
       }
 
       // Check if this tweet was already submitted
-      const existingSubmission = await submissionRepository.getSubmission(originalTweet.id!);
+      const existingSubmission = await submissionRepository.getSubmission(
+        originalTweet.id!,
+      );
       const existingFeeds = existingSubmission
         ? await feedRepository.getFeedsBySubmission(existingSubmission.tweetId)
         : [];
@@ -221,7 +227,8 @@ export class SubmissionService {
       // Create new submission if it doesn't exist
       let submission: TwitterSubmission | undefined;
       if (!existingSubmission) {
-        const dailyCount = await submissionRepository.getDailySubmissionCount(userId);
+        const dailyCount =
+          await submissionRepository.getDailySubmissionCount(userId);
         const maxSubmissions = this.config.global.maxDailySubmissionsPerUser;
 
         if (dailyCount >= maxSubmissions) {
@@ -391,7 +398,8 @@ export class SubmissionService {
     const curatorTweetId = tweet.inReplyToStatusId;
     if (!curatorTweetId) return;
 
-    const submission = await submissionRepository.getSubmissionByCuratorTweetId(curatorTweetId);
+    const submission =
+      await submissionRepository.getSubmissionByCuratorTweetId(curatorTweetId);
     if (!submission) {
       logger.error(`${tweet.id}: Received moderation for unsaved submission`);
       return;
@@ -412,7 +420,9 @@ export class SubmissionService {
     }
 
     // Get submission feeds to determine which feed is being moderated
-    const submissionFeeds = await feedRepository.getFeedsBySubmission(submission.tweetId);
+    const submissionFeeds = await feedRepository.getFeedsBySubmission(
+      submission.tweetId,
+    );
     const pendingFeeds = submissionFeeds
       .filter((feed) => feed.status === SubmissionStatus.PENDING)
       .filter((feed) => {

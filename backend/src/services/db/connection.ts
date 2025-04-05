@@ -3,10 +3,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 
 import { logger } from "../../utils/logger";
-import {
-  DEFAULT_READ_POOL_CONFIG,
-  DEFAULT_WRITE_POOL_CONFIG,
-} from "./utils";
+import { DEFAULT_READ_POOL_CONFIG, DEFAULT_WRITE_POOL_CONFIG } from "./utils";
 
 /**
  * DatabaseConnection manages the database connection pools and provides
@@ -274,10 +271,11 @@ export class DatabaseConnection {
         writeResponseTime: writeDuration,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
       logger.error("Database health check failed", { error: errorMessage });
-      
+
       return {
         status: "error",
         error: errorMessage,

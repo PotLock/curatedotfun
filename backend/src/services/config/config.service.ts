@@ -26,17 +26,23 @@ export class ConfigService {
     } else {
       // Use test config in development mode
       // First try to find it relative to the current file
-      const testConfigPath = path.resolve(__dirname, "../../../test/curate.config.test.json");
-      
+      const testConfigPath = path.resolve(
+        __dirname,
+        "../../../test/curate.config.test.json",
+      );
+
       // Check if the file exists at this path
       try {
         fs.access(testConfigPath);
         this.configPath = testConfigPath;
       } catch (error) {
         // Fallback to the old path
-        this.configPath = path.resolve(process.cwd(), "test/curate.config.test.json");
+        this.configPath = path.resolve(
+          process.cwd(),
+          "test/curate.config.test.json",
+        );
       }
-      
+
       logger.info(`Using test configuration: ${this.configPath}`);
     }
   }

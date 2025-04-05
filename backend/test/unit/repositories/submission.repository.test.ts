@@ -6,7 +6,9 @@ import { SubmissionStatus } from "../../../src/types/twitter";
 
 // Mock the transaction module
 mock.module("../../../src/services/db/transaction", () => ({
-  executeOperation: mock((callback, isWrite = false) => callback({ mockDb: true })),
+  executeOperation: mock((callback, isWrite = false) =>
+    callback({ mockDb: true }),
+  ),
   withDatabaseErrorHandling: mock(async (operation, options, defaultValue) => {
     try {
       return await operation();
@@ -52,11 +54,14 @@ describe("SubmissionRepository", () => {
         moderationHistory: [],
         curatorNotes: "Test notes",
       };
-      
+
       await submissionRepository.saveSubmission(submission);
-      
+
       expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.saveSubmission).toHaveBeenCalledWith({ mockDb: true }, submission);
+      expect(queries.saveSubmission).toHaveBeenCalledWith(
+        { mockDb: true },
+        submission,
+      );
     });
   });
 
@@ -70,11 +75,14 @@ describe("SubmissionRepository", () => {
         timestamp: new Date(),
         note: "Approved",
       };
-      
+
       await submissionRepository.saveModerationAction(moderation);
-      
+
       expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.saveModerationAction).toHaveBeenCalledWith({ mockDb: true }, moderation);
+      expect(queries.saveModerationAction).toHaveBeenCalledWith(
+        { mockDb: true },
+        moderation,
+      );
     });
   });
 
@@ -94,31 +102,37 @@ describe("SubmissionRepository", () => {
         moderationHistory: [],
         curatorNotes: "Test notes",
       };
-      
+
       mock.module("../../../src/services/db/queries", () => ({
         ...queries,
         getSubmission: mock().mockResolvedValue(mockSubmission),
       }));
-      
+
       const result = await submissionRepository.getSubmission(tweetId);
-      
+
       expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.getSubmission).toHaveBeenCalledWith({ mockDb: true }, tweetId);
+      expect(queries.getSubmission).toHaveBeenCalledWith(
+        { mockDb: true },
+        tweetId,
+      );
       expect(result).toEqual(mockSubmission);
     });
 
     test("should return null when submission not found", async () => {
       const tweetId = "123";
-      
+
       mock.module("../../../src/services/db/queries", () => ({
         ...queries,
         getSubmission: mock().mockResolvedValue(null),
       }));
-      
+
       const result = await submissionRepository.getSubmission(tweetId);
-      
+
       expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.getSubmission).toHaveBeenCalledWith({ mockDb: true }, tweetId);
+      expect(queries.getSubmission).toHaveBeenCalledWith(
+        { mockDb: true },
+        tweetId,
+      );
       expect(result).toBeNull();
     });
   });
@@ -139,31 +153,43 @@ describe("SubmissionRepository", () => {
         moderationHistory: [],
         curatorNotes: "Test notes",
       };
-      
+
       mock.module("../../../src/services/db/queries", () => ({
         ...queries,
         getSubmissionByCuratorTweetId: mock().mockResolvedValue(mockSubmission),
       }));
-      
-      const result = await submissionRepository.getSubmissionByCuratorTweetId(curatorTweetId);
-      
+
+      const result =
+        await submissionRepository.getSubmissionByCuratorTweetId(
+          curatorTweetId,
+        );
+
       expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.getSubmissionByCuratorTweetId).toHaveBeenCalledWith({ mockDb: true }, curatorTweetId);
+      expect(queries.getSubmissionByCuratorTweetId).toHaveBeenCalledWith(
+        { mockDb: true },
+        curatorTweetId,
+      );
       expect(result).toEqual(mockSubmission);
     });
 
     test("should return null when submission not found", async () => {
       const curatorTweetId = "456";
-      
+
       mock.module("../../../src/services/db/queries", () => ({
         ...queries,
         getSubmissionByCuratorTweetId: mock().mockResolvedValue(null),
       }));
-      
-      const result = await submissionRepository.getSubmissionByCuratorTweetId(curatorTweetId);
-      
+
+      const result =
+        await submissionRepository.getSubmissionByCuratorTweetId(
+          curatorTweetId,
+        );
+
       expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.getSubmissionByCuratorTweetId).toHaveBeenCalledWith({ mockDb: true }, curatorTweetId);
+      expect(queries.getSubmissionByCuratorTweetId).toHaveBeenCalledWith(
+        { mockDb: true },
+        curatorTweetId,
+      );
       expect(result).toBeNull();
     });
   });
@@ -186,16 +212,19 @@ describe("SubmissionRepository", () => {
           feedStatuses: [],
         },
       ];
-      
+
       mock.module("../../../src/services/db/queries", () => ({
         ...queries,
         getAllSubmissions: mock().mockResolvedValue(mockSubmissions),
       }));
-      
+
       const result = await submissionRepository.getAllSubmissions();
-      
+
       expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.getAllSubmissions).toHaveBeenCalledWith({ mockDb: true }, undefined);
+      expect(queries.getAllSubmissions).toHaveBeenCalledWith(
+        { mockDb: true },
+        undefined,
+      );
       expect(result).toEqual(mockSubmissions);
     });
 
@@ -217,16 +246,19 @@ describe("SubmissionRepository", () => {
           feedStatuses: [],
         },
       ];
-      
+
       mock.module("../../../src/services/db/queries", () => ({
         ...queries,
         getAllSubmissions: mock().mockResolvedValue(mockSubmissions),
       }));
-      
+
       const result = await submissionRepository.getAllSubmissions(status);
-      
+
       expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.getAllSubmissions).toHaveBeenCalledWith({ mockDb: true }, status);
+      expect(queries.getAllSubmissions).toHaveBeenCalledWith(
+        { mockDb: true },
+        status,
+      );
       expect(result).toEqual(mockSubmissions);
     });
   });
@@ -235,18 +267,22 @@ describe("SubmissionRepository", () => {
     test("should clean up old entries and return count", async () => {
       const userId = "user1";
       const count = 5;
-      
+
       mock.module("../../../src/services/db/queries", () => ({
         ...queries,
         getDailySubmissionCount: mock().mockResolvedValue(count),
       }));
-      
+
       const result = await submissionRepository.getDailySubmissionCount(userId);
-      
+
       // Don't check the exact number of calls as it may vary
       expect(transaction.executeOperation).toHaveBeenCalled();
       expect(queries.cleanupOldSubmissionCounts).toHaveBeenCalled();
-      expect(queries.getDailySubmissionCount).toHaveBeenCalledWith({ mockDb: true }, userId, expect.any(String));
+      expect(queries.getDailySubmissionCount).toHaveBeenCalledWith(
+        { mockDb: true },
+        userId,
+        expect.any(String),
+      );
       expect(result).toEqual(count);
     });
   });
@@ -254,25 +290,28 @@ describe("SubmissionRepository", () => {
   describe("incrementDailySubmissionCount", () => {
     test("should call executeOperation with the correct parameters", async () => {
       const userId = "user1";
-      
+
       await submissionRepository.incrementDailySubmissionCount(userId);
-      
+
       expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.incrementDailySubmissionCount).toHaveBeenCalledWith({ mockDb: true }, userId);
+      expect(queries.incrementDailySubmissionCount).toHaveBeenCalledWith(
+        { mockDb: true },
+        userId,
+      );
     });
   });
 
   describe("getPostsCount", () => {
     test("should return posts count", async () => {
       const count = 10;
-      
+
       mock.module("../../../src/services/db/queries", () => ({
         ...queries,
         getPostsCount: mock().mockResolvedValue(count),
       }));
-      
+
       const result = await submissionRepository.getPostsCount();
-      
+
       expect(transaction.withDatabaseErrorHandling).toHaveBeenCalled();
       expect(queries.getPostsCount).toHaveBeenCalledWith({ mockDb: true });
       expect(result).toEqual(count);
@@ -283,9 +322,9 @@ describe("SubmissionRepository", () => {
         ...queries,
         getPostsCount: mock().mockRejectedValue(new Error("Database error")),
       }));
-      
+
       const result = await submissionRepository.getPostsCount();
-      
+
       expect(transaction.withDatabaseErrorHandling).toHaveBeenCalled();
       expect(result).toEqual(0); // Default value
     });
@@ -294,14 +333,14 @@ describe("SubmissionRepository", () => {
   describe("getCuratorsCount", () => {
     test("should return curators count", async () => {
       const count = 5;
-      
+
       mock.module("../../../src/services/db/queries", () => ({
         ...queries,
         getCuratorsCount: mock().mockResolvedValue(count),
       }));
-      
+
       const result = await submissionRepository.getCuratorsCount();
-      
+
       expect(transaction.withDatabaseErrorHandling).toHaveBeenCalled();
       expect(queries.getCuratorsCount).toHaveBeenCalledWith({ mockDb: true });
       expect(result).toEqual(count);
@@ -312,9 +351,9 @@ describe("SubmissionRepository", () => {
         ...queries,
         getCuratorsCount: mock().mockRejectedValue(new Error("Database error")),
       }));
-      
+
       const result = await submissionRepository.getCuratorsCount();
-      
+
       expect(transaction.withDatabaseErrorHandling).toHaveBeenCalled();
       expect(result).toEqual(0); // Default value
     });

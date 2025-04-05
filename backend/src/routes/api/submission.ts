@@ -1,4 +1,7 @@
-import { submissionRepository, feedRepository } from "../../services/db/repositories";
+import {
+  submissionRepository,
+  feedRepository,
+} from "../../services/db/repositories";
 import { HonoApp } from "../../types/app";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";

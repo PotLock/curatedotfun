@@ -7,9 +7,9 @@ import {
   beforeEach,
 } from "bun:test";
 import { dbConnection } from "../../src/services/db/connection";
-import { 
-  submissionRepository, 
-  feedRepository 
+import {
+  submissionRepository,
+  feedRepository,
 } from "../../src/services/db/repositories";
 import { createMockSubmission } from "../utils/test-data";
 import { SubmissionStatus } from "../../src/types/twitter";
@@ -95,7 +95,9 @@ describe("Database Integration", () => {
     await submissionRepository.saveSubmission(submission);
 
     // Assert
-    const retrievedSubmission = await submissionRepository.getSubmission(submission.tweetId);
+    const retrievedSubmission = await submissionRepository.getSubmission(
+      submission.tweetId,
+    );
     expect(retrievedSubmission).toMatchObject({
       tweetId: submission.tweetId,
       userId: submission.userId,
@@ -153,7 +155,8 @@ describe("Database Integration", () => {
     }
 
     // Act
-    const retrievedSubmissions = await feedRepository.getSubmissionsByFeed(feedId);
+    const retrievedSubmissions =
+      await feedRepository.getSubmissionsByFeed(feedId);
 
     // Assert
     expect(retrievedSubmissions.length).toBe(submissions.length);

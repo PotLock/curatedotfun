@@ -48,7 +48,7 @@ export async function executeTransaction<T>(
 /**
  * Wraps a database operation with error handling.
  * Provides consistent error handling and logging for database operations.
- * 
+ *
  * @param operation The database operation to execute
  * @param options Options for error handling
  * @param defaultValue Optional default value to return on error
