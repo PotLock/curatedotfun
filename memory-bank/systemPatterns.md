@@ -48,15 +48,26 @@
    - Read/write separation with connection pools
    - Transaction support with retry logic
    - Error handling and connection management
-   - Singleton pattern for database service
+   - Repository pattern for domain-specific database operations
+   - Modular organization with clear separation of concerns
 
-2. **Development Environment**
+2. **Database Service Structure**
+   - Connection management (connection.ts)
+   - Transaction utilities (transaction.ts)
+   - Domain-specific repositories (repositories/)
+     * Twitter repository
+     * Submission repository
+     * Feed repository
+     * Leaderboard repository
+   - Backward compatibility layer for gradual migration
+
+3. **Development Environment**
    - Docker Compose for local development
    - PostgreSQL container with persistent volume
    - Automatic migrations on startup
    - Seed data scripts from SQLite
 
-3. **Testing Environment**
+4. **Testing Environment**
    - Isolated test databases
    - Automated cleanup between test runs
    - Mock system for unit tests

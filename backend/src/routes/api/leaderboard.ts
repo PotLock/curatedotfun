@@ -1,5 +1,5 @@
 import { HonoApp } from "../../types/app";
-import { db } from "../../services/db";
+import { leaderboardRepository } from "../../services/db/repositories";
 
 // Create leaderboard routes
 const router = HonoApp();
@@ -10,7 +10,7 @@ const router = HonoApp();
  */
 router.get("/", async (c) => {
   const timeRange = c.req.query("timeRange") || "all";
-  const leaderboard = db.getLeaderboard(timeRange);
+  const leaderboard = await leaderboardRepository.getLeaderboard(timeRange);
   return c.json(leaderboard);
 });
 

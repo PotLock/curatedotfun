@@ -8,6 +8,10 @@ import { createTestClient } from "./test-client";
  * @returns An object containing the server and API client
  */
 export async function setupTestServer() {
+  // Set the CONFIG_PATH environment variable to point to the test config file
+  process.env.CONFIG_PATH = process.env.CONFIG_PATH || 
+    require('path').resolve(process.cwd(), 'test/curate.config.test.json');
+  
   const testServer = await createTestServer();
   const apiClient = createTestClient(testServer.port);
 

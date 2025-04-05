@@ -16,17 +16,28 @@ export class ConfigService {
   private configPath: string;
 
   private constructor() {
-    if (isProduction) {
+    // Allow overriding config path with environment variable
+    if (process.env.CONFIG_PATH) {
+      this.configPath = process.env.CONFIG_PATH;
+      logger.info(`Using configuration from CONFIG_PATH: ${this.configPath}`);
+    } else if (isProduction) {
       this.configPath = path.resolve(process.cwd(), "curate.config.json");
       logger.info("Using production configuration");
     } else {
       // Use test config in development mode
-      this.configPath = path.resolve(
-        process.cwd(),
-        "backend/test/curate.config.test.json"
-        
-      );
-      logger.info("Using test configuration");
+      // First try to find it relative to the current file
+      const testConfigPath = path.resolve(__dirname, "../../../test/curate.config.test.json");
+      
+      // Check if the file exists at this path
+      try {
+        fs.access(testConfigPath);
+        this.configPath = testConfigPath;
+      } catch (error) {
+        // Fallback to the old path
+        this.configPath = path.resolve(process.cwd(), "test/curate.config.test.json");
+      }
+      
+      logger.info(`Using test configuration: ${this.configPath}`);
     }
   }
 

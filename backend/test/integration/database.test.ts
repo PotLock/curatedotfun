@@ -6,7 +6,11 @@ import {
   afterAll,
   beforeEach,
 } from "bun:test";
-import { db } from "../../src/services/db";
+import { dbConnection } from "../../src/services/db/connection";
+import { 
+  submissionRepository, 
+  feedRepository 
+} from "../../src/services/db/repositories";
 import { createMockSubmission } from "../utils/test-data";
 import { SubmissionStatus } from "../../src/types/twitter";
 import { Pool } from "pg";
@@ -27,11 +31,11 @@ describe("Database Integration", () => {
 
       // Initialize the database connection
       console.log("Initializing database service connection...");
-      await db.connect();
+      await dbConnection.connect();
       console.log("Database service connected successfully");
 
       // Verify database service connection
-      const healthCheck = await db.healthCheck();
+      const healthCheck = await dbConnection.healthCheck();
       console.log("Database health check:", healthCheck);
 
       if (healthCheck.status !== "ok") {
@@ -63,7 +67,7 @@ describe("Database Integration", () => {
       }
 
       // Close the database service connection
-      await db.disconnect();
+      await dbConnection.disconnect();
       console.log("Database service disconnected");
     } catch (error) {
       console.error("Error in afterAll:", error);
@@ -88,10 +92,10 @@ describe("Database Integration", () => {
     const submission = createMockSubmission();
 
     // Act
-    await db.saveSubmission(submission);
+    await submissionRepository.saveSubmission(submission);
 
     // Assert
-    const retrievedSubmission = await db.getSubmission(submission.tweetId);
+    const retrievedSubmission = await submissionRepository.getSubmission(submission.tweetId);
     expect(retrievedSubmission).toMatchObject({
       tweetId: submission.tweetId,
       userId: submission.userId,
@@ -106,17 +110,17 @@ describe("Database Integration", () => {
     const feedId = "test-feed-1"; // Use existing feed from seed data
 
     // Save submission
-    await db.saveSubmission(submission);
+    await submissionRepository.saveSubmission(submission);
 
     // Add submission to feed
-    await db.saveSubmissionToFeed(
+    await feedRepository.saveSubmissionToFeed(
       submission.tweetId,
       feedId,
       SubmissionStatus.PENDING,
     );
 
     // Act
-    await db.updateSubmissionFeedStatus(
+    await feedRepository.updateSubmissionFeedStatus(
       submission.tweetId,
       feedId,
       SubmissionStatus.APPROVED,
@@ -124,7 +128,7 @@ describe("Database Integration", () => {
     );
 
     // Assert
-    const feeds = await db.getFeedsBySubmission(submission.tweetId);
+    const feeds = await feedRepository.getFeedsBySubmission(submission.tweetId);
     const feed = feeds.find((f) => f.feedId === feedId);
     expect(feed).toBeDefined();
     expect(feed?.status).toBe(SubmissionStatus.APPROVED);
@@ -140,8 +144,8 @@ describe("Database Integration", () => {
     ];
 
     for (const submission of submissions) {
-      await db.saveSubmission(submission);
-      await db.saveSubmissionToFeed(
+      await submissionRepository.saveSubmission(submission);
+      await feedRepository.saveSubmissionToFeed(
         submission.tweetId,
         feedId,
         SubmissionStatus.PENDING,
@@ -149,7 +153,7 @@ describe("Database Integration", () => {
     }
 
     // Act
-    const retrievedSubmissions = await db.getSubmissionsByFeed(feedId);
+    const retrievedSubmissions = await feedRepository.getSubmissionsByFeed(feedId);
 
     // Assert
     expect(retrievedSubmissions.length).toBe(submissions.length);
@@ -170,32 +174,32 @@ describe("Database Integration", () => {
     ];
 
     // Add submissions with different statuses
-    await db.saveSubmission(submissions[0]);
-    await db.saveSubmissionToFeed(
+    await submissionRepository.saveSubmission(submissions[0]);
+    await feedRepository.saveSubmissionToFeed(
       submissions[0].tweetId,
       "test-feed-1",
       SubmissionStatus.PENDING,
     );
 
-    await db.saveSubmission(submissions[1]);
-    await db.saveSubmissionToFeed(
+    await submissionRepository.saveSubmission(submissions[1]);
+    await feedRepository.saveSubmissionToFeed(
       submissions[1].tweetId,
       "test-feed-1",
       SubmissionStatus.APPROVED,
     );
 
-    await db.saveSubmission(submissions[2]);
-    await db.saveSubmissionToFeed(
+    await submissionRepository.saveSubmission(submissions[2]);
+    await feedRepository.saveSubmissionToFeed(
       submissions[2].tweetId,
       "test-feed-1",
       SubmissionStatus.REJECTED,
     );
 
     // Act - Get all submissions
-    const allSubmissions = await db.getAllSubmissions();
+    const allSubmissions = await submissionRepository.getAllSubmissions();
 
     // Act - Get pending submissions
-    const pendingSubmissions = await db.getAllSubmissions(
+    const pendingSubmissions = await submissionRepository.getAllSubmissions(
       SubmissionStatus.PENDING,
     );
 
@@ -219,25 +223,25 @@ describe("Database Integration", () => {
     const feedId = "test-feed-3"; // Use existing feed from seed data
 
     // Save submission
-    await db.saveSubmission(submission);
+    await submissionRepository.saveSubmission(submission);
 
     // Add to feed
-    await db.saveSubmissionToFeed(
+    await feedRepository.saveSubmissionToFeed(
       submission.tweetId,
       feedId,
       SubmissionStatus.PENDING,
     );
 
     // Assert feed was added
-    let feeds = await db.getFeedsBySubmission(submission.tweetId);
+    let feeds = await feedRepository.getFeedsBySubmission(submission.tweetId);
     expect(feeds.length).toBe(1);
     expect(feeds[0].feedId).toBe(feedId);
 
     // Remove from feed
-    await db.removeFromSubmissionFeed(submission.tweetId, feedId);
+    await feedRepository.removeFromSubmissionFeed(submission.tweetId, feedId);
 
     // Assert feed was removed
-    feeds = await db.getFeedsBySubmission(submission.tweetId);
+    feeds = await feedRepository.getFeedsBySubmission(submission.tweetId);
     expect(feeds.length).toBe(0);
   });
 
@@ -246,8 +250,8 @@ describe("Database Integration", () => {
     const submission = createMockSubmission();
     const feedId = "test-feed-3"; // Use existing feed from seed data
 
-    await db.saveSubmission(submission);
-    await db.saveSubmissionToFeed(
+    await submissionRepository.saveSubmission(submission);
+    await feedRepository.saveSubmissionToFeed(
       submission.tweetId,
       feedId,
       SubmissionStatus.PENDING,
@@ -255,14 +259,14 @@ describe("Database Integration", () => {
 
     // Act - Run multiple operations concurrently
     const operations = [
-      db.updateSubmissionFeedStatus(
+      feedRepository.updateSubmissionFeedStatus(
         submission.tweetId,
         feedId,
         SubmissionStatus.APPROVED,
         "mod_tweet_id",
       ),
-      db.getSubmission(submission.tweetId),
-      db.getSubmissionsByFeed(feedId),
+      submissionRepository.getSubmission(submission.tweetId),
+      feedRepository.getSubmissionsByFeed(feedId),
     ];
 
     // Assert - No errors should be thrown

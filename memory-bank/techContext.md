@@ -6,7 +6,7 @@
 - **Runtime**: Node.js
 - **Framework**: Hono
 - **Language**: TypeScript
-- **Database**: PostgreSQL with Drizzle ORM (with DB service abstraction)
+- **Database**: PostgreSQL with Drizzle ORM (with repository pattern)
 - **Build Tool**: RSPack
 - **Package Manager**: pnpm (with Corepack)
 - **Script Runner**: Bun (for tests and development scripts)

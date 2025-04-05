@@ -1,4 +1,4 @@
-import { db } from "../../services/db";
+import { submissionRepository, feedRepository } from "../../services/db/repositories";
 import { HonoApp } from "../../types/app";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
@@ -31,7 +31,7 @@ router.get(
     const { page, limit, status } = c.req.valid("query");
 
     // Get all submissions with the given status
-    const allSubmissions = await db.getAllSubmissions(status);
+    const allSubmissions = await submissionRepository.getAllSubmissions(status);
 
     // Sort submissions by submittedAt date (newest first)
     allSubmissions.sort(
@@ -66,7 +66,7 @@ router.get(
  */
 router.get("/single/:submissionId", async (c) => {
   const submissionId = c.req.param("submissionId");
-  const content = await db.getSubmission(submissionId);
+  const content = await submissionRepository.getSubmission(submissionId);
 
   if (!content) {
     return c.notFound();
@@ -88,7 +88,7 @@ router.get("/feed/:feedId", async (c) => {
     return c.notFound();
   }
 
-  let submissions = await db.getSubmissionsByFeed(feedId);
+  let submissions = await feedRepository.getSubmissionsByFeed(feedId);
 
   if (status) {
     submissions = submissions.filter((sub) => sub.status === status);

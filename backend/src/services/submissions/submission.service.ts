@@ -7,12 +7,14 @@ import {
   TwitterSubmission,
 } from "../../types/twitter";
 import { logger } from "../../utils/logger";
-import { db } from "../db";
+import { twitterRepository } from "../db/repositories/twitter.repository";
+import { submissionRepository } from "../db/repositories/submission.repository";
+import { feedRepository } from "../db/repositories/feed.repository";
 import { TwitterService } from "../twitter/client";
 import { ProcessorService } from "../processor/processor.service";
 
 export class SubmissionService {
-  private checkInterval: NodeJS.Timer | null = null;
+  private checkInterval: NodeJS.Timeout | null = null;
   private adminIdCache: Map<string, string> = new Map();
 
   constructor(
@@ -24,7 +26,7 @@ export class SubmissionService {
   private async initializeAdminIds(): Promise<void> {
     try {
       // Try to load admin IDs from cache first
-      const cachedAdminIds = await db.getTwitterCacheValue("admin_ids");
+      const cachedAdminIds = await twitterRepository.getTwitterCacheValue("admin_ids");
       if (cachedAdminIds) {
         try {
           const adminMap = JSON.parse(cachedAdminIds);
@@ -64,7 +66,7 @@ export class SubmissionService {
       }
 
       // Cache the admin IDs
-      db.setTwitterCacheValue("admin_ids", JSON.stringify(adminMap));
+      await twitterRepository.setTwitterCacheValue("admin_ids", JSON.stringify(adminMap));
       logger.info("Cached admin IDs for future use");
     } catch (error) {
       logger.error("Failed to initialize admin IDs:", error);
@@ -72,14 +74,14 @@ export class SubmissionService {
     }
   }
 
-  private initializeFeeds(): void {
+  private async initializeFeeds(): Promise<void> {
     try {
       const feedsToUpsert = this.config.feeds.map((feed) => ({
         id: feed.id,
         name: feed.name,
         description: feed.description,
       }));
-      db.upsertFeeds(feedsToUpsert);
+      await feedRepository.upsertFeeds(feedsToUpsert);
     } catch (error) {
       logger.error("Failed to initialize feeds:", error);
       throw error;
@@ -89,7 +91,7 @@ export class SubmissionService {
   async initialize(): Promise<void> {
     try {
       // Initialize feeds
-      this.initializeFeeds();
+      await this.initializeFeeds();
 
       // Initialize admin IDs with caching
       await this.initializeAdminIds();
@@ -211,15 +213,15 @@ export class SubmissionService {
       }
 
       // Check if this tweet was already submitted
-      const existingSubmission = await db.getSubmission(originalTweet.id!);
+      const existingSubmission = await submissionRepository.getSubmission(originalTweet.id!);
       const existingFeeds = existingSubmission
-        ? await db.getFeedsBySubmission(existingSubmission.tweetId)
+        ? await feedRepository.getFeedsBySubmission(existingSubmission.tweetId)
         : [];
 
       // Create new submission if it doesn't exist
       let submission: TwitterSubmission | undefined;
       if (!existingSubmission) {
-        const dailyCount = await db.getDailySubmissionCount(userId);
+        const dailyCount = await submissionRepository.getDailySubmissionCount(userId);
         const maxSubmissions = this.config.global.maxDailySubmissionsPerUser;
 
         if (dailyCount >= maxSubmissions) {
@@ -256,8 +258,8 @@ export class SubmissionService {
           // admin data (update)
           moderationHistory: [], // moderatorId, userId, tweetId
         };
-        db.saveSubmission(submission);
-        db.incrementDailySubmissionCount(userId);
+        await submissionRepository.saveSubmission(submission);
+        await submissionRepository.incrementDailySubmissionCount(userId);
       }
 
       // Process each feed
@@ -294,10 +296,10 @@ export class SubmissionService {
               note:
                 this.extractDescription(originalTweet.username!, tweet) || null,
             };
-            db.saveModerationAction(moderation);
+            await submissionRepository.saveModerationAction(moderation);
 
             // Then update feed status
-            db.updateSubmissionFeedStatus(
+            await feedRepository.updateSubmissionFeedStatus(
               originalTweet.id!,
               feed.id,
               SubmissionStatus.APPROVED,
@@ -313,7 +315,7 @@ export class SubmissionService {
           }
         } else {
           if (feed) {
-            db.saveSubmissionToFeed(
+            await feedRepository.saveSubmissionToFeed(
               originalTweet.id!,
               feed.id,
               this.config.global.defaultStatus,
@@ -332,10 +334,10 @@ export class SubmissionService {
               note:
                 this.extractDescription(originalTweet.username!, tweet) || null,
             };
-            db.saveModerationAction(moderation);
+            await submissionRepository.saveModerationAction(moderation);
 
             // Then update feed status
-            db.updateSubmissionFeedStatus(
+            await feedRepository.updateSubmissionFeedStatus(
               originalTweet.id!,
               feed.id,
               SubmissionStatus.APPROVED,
@@ -389,7 +391,7 @@ export class SubmissionService {
     const curatorTweetId = tweet.inReplyToStatusId;
     if (!curatorTweetId) return;
 
-    const submission = await db.getSubmissionByCuratorTweetId(curatorTweetId);
+    const submission = await submissionRepository.getSubmissionByCuratorTweetId(curatorTweetId);
     if (!submission) {
       logger.error(`${tweet.id}: Received moderation for unsaved submission`);
       return;
@@ -410,7 +412,7 @@ export class SubmissionService {
     }
 
     // Get submission feeds to determine which feed is being moderated
-    const submissionFeeds = await db.getFeedsBySubmission(submission.tweetId);
+    const submissionFeeds = await feedRepository.getFeedsBySubmission(submission.tweetId);
     const pendingFeeds = submissionFeeds
       .filter((feed) => feed.status === SubmissionStatus.PENDING)
       .filter((feed) => {
@@ -439,7 +441,7 @@ export class SubmissionService {
       };
 
       // Save moderation action
-      db.saveModerationAction(moderation);
+      await submissionRepository.saveModerationAction(moderation);
     }
 
     // Process based on action
@@ -465,7 +467,7 @@ export class SubmissionService {
 
         // Only update if not already moderated
         if (!pendingFeed.moderationResponseTweetId) {
-          db.updateSubmissionFeedStatus(
+          await feedRepository.updateSubmissionFeedStatus(
             submission.tweetId,
             pendingFeed.feedId,
             SubmissionStatus.APPROVED,
@@ -498,7 +500,7 @@ export class SubmissionService {
       for (const pendingFeed of pendingFeeds) {
         // Only update if not already moderated
         if (!pendingFeed.moderationResponseTweetId) {
-          db.updateSubmissionFeedStatus(
+          await feedRepository.updateSubmissionFeedStatus(
             submission.tweetId,
             pendingFeed.feedId,
             SubmissionStatus.REJECTED,

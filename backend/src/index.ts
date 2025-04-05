@@ -1,4 +1,3 @@
-// Load environment variables from the appropriate .env file
 import { config } from "dotenv";
 import path from "path";
 
@@ -8,15 +7,10 @@ if (process.env.NODE_ENV === "test") {
   config({ path: path.resolve(process.cwd(), "backend/.env") });
 }
 
-// Log all environment variables for debugging
-console.log("Environment variables loaded:");
-console.log("DATABASE_URL:", process.env.DATABASE_URL);
-console.log("NODE_ENV:", process.env.NODE_ENV);
-
 import { serve } from "@hono/node-server";
 import { AppInstance } from "types/app";
 import { createApp } from "./app";
-import { db, initializeDatabase } from "./services/db";
+import { dbConnection, initializeDatabase } from "./services/db";
 import {
   cleanup,
   createHighlightBox,
@@ -33,52 +27,50 @@ async function getInstance(): Promise<AppInstance> {
     try {
       instance = await createApp();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       const errorStack = error instanceof Error ? error.stack : undefined;
-      
-      logger.error("Failed to create app instance:", { 
+
+      logger.error("Failed to create app instance:", {
         error: errorMessage,
         stack: errorStack,
         dirname: __dirname,
-        cwd: process.cwd()
+        cwd: process.cwd(),
       });
+      console.log(errorMessage);
       throw new Error(`Failed to initialize application: ${errorMessage}`);
     }
   }
   return instance;
 }
 
+/**
+ * Initialize the database connection
+ * @returns Promise<boolean> - true if connection was successful
+ */
+async function initializeDatabaseConnection(): Promise<boolean> {
+  logger.info("Initializing database connection...");
+
+  const dbInitialized = await initializeDatabase();
+
+  if (!dbInitialized) {
+    logger.error(
+      "Database connection failed. Application cannot continue without database.",
+    );
+    return false;
+  }
+  
+  return true;
+}
+
 async function startServer() {
   try {
     createSection("⚡ STARTING SERVER ⚡");
 
-    // Initialize database in production, but not in tests
-    if (process.env.NODE_ENV !== "test") {
-      logger.info("Initializing database connection...");
-      try {
-        const dbInitialized = await initializeDatabase();
-        if (dbInitialized) {
-          logger.info("Database connection established successfully");
-        } else {
-          logger.error("Database connection failed. Application cannot continue without database.");
-          
-          // Check if DATABASE_URL is set
-          if (!process.env.DATABASE_URL) {
-            logger.error("DATABASE_URL environment variable is not set");
-          } else {
-            logger.error("DATABASE_URL is set but connection failed. Check if the database server is running and accessible.");
-            logger.error("Make sure Docker is running and the PostgreSQL container is started.");
-          }
-          
-          // Exit the application
-          logger.error("Exiting application due to database connection failure");
-          process.exit(1);
-        }
-      } catch (dbError) {
-        logger.error("Error during database initialization:", dbError);
-        logger.error("Application cannot continue without database. Exiting...");
-        process.exit(1);
-      }
+    const dbConnected = await initializeDatabaseConnection();
+    if (!dbConnected) {
+      logger.error("Exiting application due to database connection failure");
+      process.exit(1);
     }
 
     const { app, context } = await getInstance();
@@ -150,7 +142,7 @@ async function startServer() {
           logger.info("Distribution service stopped");
         }
 
-        shutdownPromises.push(db.disconnect());
+        shutdownPromises.push(dbConnection.disconnect());
 
         await Promise.all(shutdownPromises);
         logger.info("Database connections closed");

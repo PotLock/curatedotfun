@@ -1,4 +1,4 @@
-import { db } from "../../services/db";
+import { feedRepository } from "../../services/db/repositories";
 import { HonoApp } from "../../types/app";
 import { serviceUnavailable } from "../../utils/error";
 import { logger } from "../../utils/logger";
@@ -26,7 +26,7 @@ router.get("/:feedId", async (c) => {
     return c.notFound();
   }
 
-  return c.json(await db.getSubmissionsByFeed(feedId));
+  return c.json(await feedRepository.getSubmissionsByFeed(feedId));
 });
 
 /**
@@ -44,7 +44,7 @@ router.post("/:feedId/process", async (c) => {
   }
 
   // Get approved submissions for this feed
-  const submissions = await db.getSubmissionsByFeed(feedId);
+  const submissions = await feedRepository.getSubmissionsByFeed(feedId);
   const approvedSubmissions = submissions.filter(
     (sub) => sub.status === "approved",
   );

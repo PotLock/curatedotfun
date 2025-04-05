@@ -1,5 +1,5 @@
 import { HonoApp } from "../../types/app";
-import { db } from "../../services/db";
+import { submissionRepository } from "../../services/db/repositories";
 
 // Create stats routes
 export const statsRoutes = HonoApp();
@@ -12,10 +12,10 @@ statsRoutes.get("/", async (c) => {
   const config = context.configService.getConfig();
 
   // Get posts count from database
-  const postsCount = await db.getPostsCount();
+  const postsCount = await submissionRepository.getPostsCount();
 
   // Get curators count from database
-  const curatorsCount = await db.getCuratorsCount();
+  const curatorsCount = await submissionRepository.getCuratorsCount();
 
   // Get other stats from config
   const feedsCount = config.feeds.length;
