@@ -2,7 +2,7 @@ import { HiExternalLink, HiChevronDown, HiChevronUp } from "react-icons/hi";
 import {
   FeedStatus,
   SubmissionStatus,
-  TwitterSubmissionWithFeedData,
+  SubmissionWithFeedData,
 } from "../types/twitter";
 import { getTweetUrl, handleApprove, handleReject } from "../lib/twitter";
 import { useBotId } from "../lib/config";
@@ -50,7 +50,7 @@ const StatusBadge = ({
   feedName,
   clickable = false,
 }: {
-  status: TwitterSubmissionWithFeedData["status"];
+  status: SubmissionWithFeedData["status"];
   feedId?: string;
   feedName?: string;
   clickable?: boolean;
@@ -254,7 +254,7 @@ const NotesSection = ({
 const ModerationActions = ({
   submission,
 }: {
-  submission: TwitterSubmissionWithFeedData;
+  submission: SubmissionWithFeedData;
 }) => {
   const botId = useBotId();
 
@@ -277,7 +277,7 @@ const ModerationActions = ({
 };
 
 interface FeedItemProps {
-  submission: TwitterSubmissionWithFeedData;
+  submission: SubmissionWithFeedData;
   statusFilter: "all" | SubmissionStatus;
 }
 

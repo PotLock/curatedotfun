@@ -1,8 +1,7 @@
 import {
   Moderation,
-  SubmissionStatus,
-  TwitterSubmission,
-  TwitterSubmissionWithFeedData,
+  Submission,
+  SubmissionWithFeedData,
 } from "../../../types/twitter";
 import * as queries from "../queries";
 import { executeOperation, withDatabaseErrorHandling } from "../transaction";
@@ -16,10 +15,18 @@ export class SubmissionRepository {
    *
    * @param submission The submission to save
    */
-  async saveSubmission(submission: TwitterSubmission): Promise<void> {
-    await executeOperation(async (db) => {
-      await queries.saveSubmission(db, submission);
-    }, true); // Write operation
+  async saveSubmission(submission: Submission): Promise<void> {
+    return withDatabaseErrorHandling(
+      async () => {
+        await executeOperation(async (db) => {
+          await queries.saveSubmission(db, submission);
+        }, true); // Write operation
+      },
+      {
+        operationName: "save submission",
+        additionalContext: { tweetId: submission.tweetId },
+      },
+    );
   }
 
   /**
@@ -28,46 +35,42 @@ export class SubmissionRepository {
    * @param moderation The moderation action to save
    */
   async saveModerationAction(moderation: Moderation): Promise<void> {
-    await executeOperation(async (db) => {
-      await queries.saveModerationAction(db, moderation);
-    }, true); // Write operation
+    return withDatabaseErrorHandling(
+      async () => {
+        await executeOperation(async (db) => {
+          await queries.saveModerationAction(db, moderation);
+        }, true); // Write operation
+      },
+      {
+        operationName: "save moderation action",
+        additionalContext: {
+          tweetId: moderation.tweetId,
+          feedId: moderation.feedId,
+          action: moderation.action,
+        },
+      },
+    );
   }
 
   /**
-   * Updates the status of a submission in a feed.
-   *
-   * @param submissionId The submission ID
-   * @param feedId The feed ID
-   * @param status The new status
-   * @param moderationResponseTweetId The moderation response tweet ID
-   */
-  async updateSubmissionFeedStatus(
-    submissionId: string,
-    feedId: string,
-    status: SubmissionStatus,
-    moderationResponseTweetId: string,
-  ): Promise<void> {
-    await executeOperation(async (db) => {
-      await queries.updateSubmissionFeedStatus(
-        db,
-        submissionId,
-        feedId,
-        status,
-        moderationResponseTweetId,
-      );
-    }, true); // Write operation
-  }
-
-  /**
-   * Gets a submission by tweet ID.
+   * Gets a submission by tweet ID along with its associated feeds.
    *
    * @param tweetId The tweet ID
-   * @returns The submission or null if not found
+   * @returns The submission with feeds or null if not found
    */
-  async getSubmission(tweetId: string): Promise<TwitterSubmission | null> {
-    return await executeOperation(async (db) => {
-      return await queries.getSubmission(db, tweetId);
-    }); // Read operation (default)
+  async getSubmission(tweetId: string): Promise<Submission | null> {
+    return withDatabaseErrorHandling(
+      async () => {
+        return await executeOperation(async (db) => {
+          return await queries.getSubmission(db, tweetId);
+        });
+      },
+      {
+        operationName: "get submission with feeds",
+        additionalContext: { tweetId },
+      },
+      null, // Default value if operation fails
+    );
   }
 
   /**
@@ -78,10 +81,22 @@ export class SubmissionRepository {
    */
   async getSubmissionByCuratorTweetId(
     curatorTweetId: string,
-  ): Promise<TwitterSubmission | null> {
-    return await executeOperation(async (db) => {
-      return await queries.getSubmissionByCuratorTweetId(db, curatorTweetId);
-    }); // Read operation
+  ): Promise<Submission | null> {
+    return withDatabaseErrorHandling(
+      async () => {
+        return await executeOperation(async (db) => {
+          return await queries.getSubmissionByCuratorTweetId(
+            db,
+            curatorTweetId,
+          );
+        }); // Read operation
+      },
+      {
+        operationName: "get submission by curator tweet ID",
+        additionalContext: { curatorTweetId },
+      },
+      null, // Default value if operation fails
+    );
   }
 
   /**
@@ -90,12 +105,19 @@ export class SubmissionRepository {
    * @param status Optional status filter
    * @returns Array of submissions with feed data
    */
-  async getAllSubmissions(
-    status?: string,
-  ): Promise<TwitterSubmissionWithFeedData[]> {
-    return await executeOperation(async (db) => {
-      return await queries.getAllSubmissions(db, status);
-    }); // Read operation
+  async getAllSubmissions(status?: string): Promise<SubmissionWithFeedData[]> {
+    return withDatabaseErrorHandling(
+      async () => {
+        return await executeOperation(async (db) => {
+          return await queries.getAllSubmissions(db, status);
+        }); // Read operation
+      },
+      {
+        operationName: "get all submissions",
+        additionalContext: status ? { status } : {},
+      },
+      [], // Default empty array if operation fails
+    );
   }
 
   /**
@@ -107,15 +129,24 @@ export class SubmissionRepository {
   async getDailySubmissionCount(userId: string): Promise<number> {
     const today = new Date().toISOString().split("T")[0];
 
-    // Clean up old entries first (write operation)
-    await executeOperation(async (db) => {
-      await queries.cleanupOldSubmissionCounts(db, today);
-    }, true);
+    return withDatabaseErrorHandling(
+      async () => {
+        // Clean up old entries first (write operation)
+        await executeOperation(async (db) => {
+          await queries.cleanupOldSubmissionCounts(db, today);
+        }, true);
 
-    // Then get the count (read operation)
-    return await executeOperation(async (db) => {
-      return await queries.getDailySubmissionCount(db, userId, today);
-    });
+        // Then get the count (read operation)
+        return await executeOperation(async (db) => {
+          return await queries.getDailySubmissionCount(db, userId, today);
+        });
+      },
+      {
+        operationName: "get daily submission count",
+        additionalContext: { userId, date: today },
+      },
+      0, // Default to 0 if operation fails
+    );
   }
 
   /**
@@ -124,9 +155,17 @@ export class SubmissionRepository {
    * @param userId The user ID
    */
   async incrementDailySubmissionCount(userId: string): Promise<void> {
-    await executeOperation(async (db) => {
-      await queries.incrementDailySubmissionCount(db, userId);
-    }, true); // Write operation
+    return withDatabaseErrorHandling(
+      async () => {
+        await executeOperation(async (db) => {
+          await queries.incrementDailySubmissionCount(db, userId);
+        }, true); // Write operation
+      },
+      {
+        operationName: "increment daily submission count",
+        additionalContext: { userId },
+      },
+    );
   }
 
   /**

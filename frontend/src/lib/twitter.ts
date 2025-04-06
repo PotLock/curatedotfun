@@ -1,4 +1,4 @@
-import { TwitterSubmissionWithFeedData } from "../types/twitter";
+import { SubmissionWithFeedData } from "../types/twitter";
 
 export const getTweetUrl = (tweetId: string, username: string) => {
   return `https://x.com/${username}/status/${tweetId}`;
@@ -12,7 +12,7 @@ const generateTweetId = () =>
   `${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
 export const handleApprove = async (
-  submission: TwitterSubmissionWithFeedData,
+  submission: SubmissionWithFeedData,
   botId: string,
 ) => {
   if (isDev()) {
@@ -51,7 +51,7 @@ export const handleApprove = async (
 };
 
 export const handleReject = async (
-  submission: TwitterSubmissionWithFeedData,
+  submission: SubmissionWithFeedData,
   botId: string,
 ) => {
   if (isDev()) {
@@ -97,7 +97,7 @@ export const getTwitterIntentUrl = (
   } & (
     | {
         action: "approve" | "reject";
-        submission: TwitterSubmissionWithFeedData;
+        submission: SubmissionWithFeedData;
       }
     | { action: "apply"; submission?: never }
   ),

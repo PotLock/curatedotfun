@@ -1,43 +1,107 @@
-import { describe, test, expect, beforeEach, mock } from "bun:test";
+import { describe, test, expect, beforeEach, mock, spyOn } from "bun:test";
 import { submissionRepository } from "../../../src/services/db/repositories";
 import * as transaction from "../../../src/services/db/transaction";
 import * as queries from "../../../src/services/db/queries";
-import { SubmissionStatus } from "../../../src/types/twitter";
+import { SubmissionStatus, Submission } from "../../../src/types/twitter";
 
-// Mock the transaction module
-mock.module("../../../src/services/db/transaction", () => ({
-  executeOperation: mock((callback, isWrite = false) =>
-    callback({ mockDb: true }),
-  ),
-  withDatabaseErrorHandling: mock(async (operation, options, defaultValue) => {
-    try {
-      return await operation();
-    } catch (error) {
-      if (defaultValue !== undefined) {
-        return defaultValue;
-      }
-      throw error;
+// Mock the drizzle function
+mock.module("drizzle-orm/node-postgres", () => ({
+  drizzle: (client) => ({ mockDb: true, client }),
+}));
+
+// Use spyOn to mock the transaction functions
+const executeOperationSpy = spyOn(
+  transaction,
+  "executeOperation",
+).mockImplementation(async (callback, isWrite = false) => {
+  // Make sure to await the callback to ensure it's executed
+  return await callback({ mockDb: true });
+});
+
+const executeTransactionSpy = spyOn(
+  transaction,
+  "executeTransaction",
+).mockImplementation(async (callback) => {
+  return await callback({ mockClient: true });
+});
+
+const withDatabaseErrorHandlingSpy = spyOn(
+  transaction,
+  "withDatabaseErrorHandling",
+).mockImplementation(async (operation, options, defaultValue) => {
+  try {
+    // Just directly call the operation function and return its result
+    return await operation();
+  } catch (error) {
+    // For error tests, return the default value if provided
+    if (defaultValue !== undefined) {
+      return defaultValue;
     }
-  }),
-}));
+    throw error;
+  }
+});
 
-// Mock the queries module
-mock.module("../../../src/services/db/queries", () => ({
-  saveSubmission: mock(),
-  saveModerationAction: mock(),
-  updateSubmissionFeedStatus: mock(),
-  getSubmission: mock(),
-  getSubmissionByCuratorTweetId: mock(),
-  getAllSubmissions: mock(),
-  cleanupOldSubmissionCounts: mock(),
-  getDailySubmissionCount: mock(),
-  incrementDailySubmissionCount: mock(),
-  getPostsCount: mock(),
-  getCuratorsCount: mock(),
-}));
+// Use spyOn to mock the query functions
+const saveSubmissionSpy = spyOn(queries, "saveSubmission").mockImplementation(
+  async () => {},
+);
+const saveModerationActionSpy = spyOn(
+  queries,
+  "saveModerationAction",
+).mockImplementation(async () => {});
+const updateSubmissionFeedStatusSpy = spyOn(
+  queries,
+  "updateSubmissionFeedStatus",
+).mockImplementation(async () => {});
+const getSubmissionSpy = spyOn(queries, "getSubmission").mockImplementation(
+  async () => null,
+);
+const getSubmissionByCuratorTweetIdSpy = spyOn(
+  queries,
+  "getSubmissionByCuratorTweetId",
+).mockImplementation(async () => null);
+const getAllSubmissionsSpy = spyOn(
+  queries,
+  "getAllSubmissions",
+).mockImplementation(async () => []);
+const cleanupOldSubmissionCountsSpy = spyOn(
+  queries,
+  "cleanupOldSubmissionCounts",
+).mockImplementation(async () => {});
+const getDailySubmissionCountSpy = spyOn(
+  queries,
+  "getDailySubmissionCount",
+).mockImplementation(async () => 0);
+const incrementDailySubmissionCountSpy = spyOn(
+  queries,
+  "incrementDailySubmissionCount",
+).mockImplementation(async () => {});
+const getPostsCountSpy = spyOn(queries, "getPostsCount").mockImplementation(
+  async () => 0,
+);
+const getCuratorsCountSpy = spyOn(
+  queries,
+  "getCuratorsCount",
+).mockImplementation(async () => 0);
 
 describe("SubmissionRepository", () => {
-  // No need for beforeEach reset as we're using fresh mocks for each test
+  beforeEach(() => {
+    // Reset all spies before each test
+    executeOperationSpy.mockClear();
+    executeTransactionSpy.mockClear();
+    withDatabaseErrorHandlingSpy.mockClear();
+    saveSubmissionSpy.mockClear();
+    saveModerationActionSpy.mockClear();
+    updateSubmissionFeedStatusSpy.mockClear();
+    getSubmissionSpy.mockClear();
+    getSubmissionByCuratorTweetIdSpy.mockClear();
+    getAllSubmissionsSpy.mockClear();
+    cleanupOldSubmissionCountsSpy.mockClear();
+    getDailySubmissionCountSpy.mockClear();
+    incrementDailySubmissionCountSpy.mockClear();
+    getPostsCountSpy.mockClear();
+    getCuratorsCountSpy.mockClear();
+  });
 
   describe("saveSubmission", () => {
     test("should call executeOperation with the correct parameters", async () => {
@@ -57,8 +121,8 @@ describe("SubmissionRepository", () => {
 
       await submissionRepository.saveSubmission(submission);
 
-      expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.saveSubmission).toHaveBeenCalledWith(
+      expect(executeOperationSpy).toHaveBeenCalled();
+      expect(saveSubmissionSpy).toHaveBeenCalledWith(
         { mockDb: true },
         submission,
       );
@@ -78,8 +142,8 @@ describe("SubmissionRepository", () => {
 
       await submissionRepository.saveModerationAction(moderation);
 
-      expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.saveModerationAction).toHaveBeenCalledWith(
+      expect(executeOperationSpy).toHaveBeenCalled();
+      expect(saveModerationActionSpy).toHaveBeenCalledWith(
         { mockDb: true },
         moderation,
       );
@@ -87,9 +151,23 @@ describe("SubmissionRepository", () => {
   });
 
   describe("getSubmission", () => {
-    test("should return submission when found", async () => {
+    test("should return submission with feeds when found", async () => {
       const tweetId = "123";
-      const mockSubmission = {
+      const mockFeeds = [
+        {
+          submissionId: tweetId,
+          feedId: "feed1",
+          status: SubmissionStatus.PENDING,
+        },
+        {
+          submissionId: tweetId,
+          feedId: "feed2",
+          status: SubmissionStatus.APPROVED,
+          moderationResponseTweetId: "789",
+        },
+      ];
+
+      const mockSubmission: Submission = {
         tweetId,
         userId: "user1",
         username: "testuser",
@@ -101,46 +179,63 @@ describe("SubmissionRepository", () => {
         submittedAt: new Date(),
         moderationHistory: [],
         curatorNotes: "Test notes",
+        feeds: mockFeeds,
       };
 
-      mock.module("../../../src/services/db/queries", () => ({
-        ...queries,
-        getSubmission: mock().mockResolvedValue(mockSubmission),
-      }));
+      getSubmissionSpy.mockResolvedValueOnce(mockSubmission);
 
       const result = await submissionRepository.getSubmission(tweetId);
 
-      expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.getSubmission).toHaveBeenCalledWith(
-        { mockDb: true },
-        tweetId,
-      );
+      expect(withDatabaseErrorHandlingSpy).toHaveBeenCalled();
+      expect(executeOperationSpy).toHaveBeenCalled();
+      expect(getSubmissionSpy).toHaveBeenCalledWith({ mockDb: true }, tweetId);
       expect(result).toEqual(mockSubmission);
     });
 
     test("should return null when submission not found", async () => {
       const tweetId = "123";
 
-      mock.module("../../../src/services/db/queries", () => ({
-        ...queries,
-        getSubmission: mock().mockResolvedValue(null),
-      }));
+      getSubmissionSpy.mockResolvedValueOnce(null);
 
       const result = await submissionRepository.getSubmission(tweetId);
 
-      expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.getSubmission).toHaveBeenCalledWith(
-        { mockDb: true },
-        tweetId,
-      );
+      expect(withDatabaseErrorHandlingSpy).toHaveBeenCalled();
+      expect(executeOperationSpy).toHaveBeenCalled();
+      expect(getSubmissionSpy).toHaveBeenCalledWith({ mockDb: true }, tweetId);
+      expect(result).toBeNull();
+    });
+
+    test("should handle database errors gracefully", async () => {
+      const tweetId = "123";
+
+      // Mock the executeOperation to throw an error
+      executeOperationSpy.mockRejectedValueOnce(new Error("Database error"));
+
+      const result = await submissionRepository.getSubmission(tweetId);
+
+      expect(withDatabaseErrorHandlingSpy).toHaveBeenCalled();
       expect(result).toBeNull();
     });
   });
 
   describe("getSubmissionByCuratorTweetId", () => {
-    test("should return submission when found", async () => {
+    test("should return submission with feeds when found", async () => {
       const curatorTweetId = "456";
-      const mockSubmission = {
+      const mockFeeds = [
+        {
+          submissionId: "123",
+          feedId: "feed1",
+          status: SubmissionStatus.PENDING,
+        },
+        {
+          submissionId: "123",
+          feedId: "feed2",
+          status: SubmissionStatus.APPROVED,
+          moderationResponseTweetId: "789",
+        },
+      ];
+
+      const mockSubmission: Submission = {
         tweetId: "123",
         userId: "user1",
         username: "testuser",
@@ -152,20 +247,19 @@ describe("SubmissionRepository", () => {
         submittedAt: new Date(),
         moderationHistory: [],
         curatorNotes: "Test notes",
+        feeds: mockFeeds,
       };
 
-      mock.module("../../../src/services/db/queries", () => ({
-        ...queries,
-        getSubmissionByCuratorTweetId: mock().mockResolvedValue(mockSubmission),
-      }));
+      // Set up the mock to return the mock submission
+      getSubmissionByCuratorTweetIdSpy.mockResolvedValueOnce(mockSubmission);
 
       const result =
         await submissionRepository.getSubmissionByCuratorTweetId(
           curatorTweetId,
         );
 
-      expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.getSubmissionByCuratorTweetId).toHaveBeenCalledWith(
+      expect(executeOperationSpy).toHaveBeenCalled();
+      expect(getSubmissionByCuratorTweetIdSpy).toHaveBeenCalledWith(
         { mockDb: true },
         curatorTweetId,
       );
@@ -175,18 +269,16 @@ describe("SubmissionRepository", () => {
     test("should return null when submission not found", async () => {
       const curatorTweetId = "456";
 
-      mock.module("../../../src/services/db/queries", () => ({
-        ...queries,
-        getSubmissionByCuratorTweetId: mock().mockResolvedValue(null),
-      }));
+      // Set up the mock to return null
+      getSubmissionByCuratorTweetIdSpy.mockResolvedValueOnce(null);
 
       const result =
         await submissionRepository.getSubmissionByCuratorTweetId(
           curatorTweetId,
         );
 
-      expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.getSubmissionByCuratorTweetId).toHaveBeenCalledWith(
+      expect(executeOperationSpy).toHaveBeenCalled();
+      expect(getSubmissionByCuratorTweetIdSpy).toHaveBeenCalledWith(
         { mockDb: true },
         curatorTweetId,
       );
@@ -213,15 +305,12 @@ describe("SubmissionRepository", () => {
         },
       ];
 
-      mock.module("../../../src/services/db/queries", () => ({
-        ...queries,
-        getAllSubmissions: mock().mockResolvedValue(mockSubmissions),
-      }));
+      getAllSubmissionsSpy.mockResolvedValueOnce(mockSubmissions);
 
       const result = await submissionRepository.getAllSubmissions();
 
-      expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.getAllSubmissions).toHaveBeenCalledWith(
+      expect(executeOperationSpy).toHaveBeenCalled();
+      expect(getAllSubmissionsSpy).toHaveBeenCalledWith(
         { mockDb: true },
         undefined,
       );
@@ -247,15 +336,12 @@ describe("SubmissionRepository", () => {
         },
       ];
 
-      mock.module("../../../src/services/db/queries", () => ({
-        ...queries,
-        getAllSubmissions: mock().mockResolvedValue(mockSubmissions),
-      }));
+      getAllSubmissionsSpy.mockResolvedValueOnce(mockSubmissions);
 
       const result = await submissionRepository.getAllSubmissions(status);
 
-      expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.getAllSubmissions).toHaveBeenCalledWith(
+      expect(executeOperationSpy).toHaveBeenCalled();
+      expect(getAllSubmissionsSpy).toHaveBeenCalledWith(
         { mockDb: true },
         status,
       );
@@ -268,17 +354,14 @@ describe("SubmissionRepository", () => {
       const userId = "user1";
       const count = 5;
 
-      mock.module("../../../src/services/db/queries", () => ({
-        ...queries,
-        getDailySubmissionCount: mock().mockResolvedValue(count),
-      }));
+      getDailySubmissionCountSpy.mockResolvedValueOnce(count);
 
       const result = await submissionRepository.getDailySubmissionCount(userId);
 
       // Don't check the exact number of calls as it may vary
-      expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.cleanupOldSubmissionCounts).toHaveBeenCalled();
-      expect(queries.getDailySubmissionCount).toHaveBeenCalledWith(
+      expect(executeOperationSpy).toHaveBeenCalled();
+      expect(cleanupOldSubmissionCountsSpy).toHaveBeenCalled();
+      expect(getDailySubmissionCountSpy).toHaveBeenCalledWith(
         { mockDb: true },
         userId,
         expect.any(String),
@@ -293,8 +376,8 @@ describe("SubmissionRepository", () => {
 
       await submissionRepository.incrementDailySubmissionCount(userId);
 
-      expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.incrementDailySubmissionCount).toHaveBeenCalledWith(
+      expect(executeOperationSpy).toHaveBeenCalled();
+      expect(incrementDailySubmissionCountSpy).toHaveBeenCalledWith(
         { mockDb: true },
         userId,
       );
@@ -305,27 +388,24 @@ describe("SubmissionRepository", () => {
     test("should return posts count", async () => {
       const count = 10;
 
-      mock.module("../../../src/services/db/queries", () => ({
-        ...queries,
-        getPostsCount: mock().mockResolvedValue(count),
-      }));
+      getPostsCountSpy.mockResolvedValueOnce(count);
 
       const result = await submissionRepository.getPostsCount();
 
-      expect(transaction.withDatabaseErrorHandling).toHaveBeenCalled();
-      expect(queries.getPostsCount).toHaveBeenCalledWith({ mockDb: true });
+      expect(withDatabaseErrorHandlingSpy).toHaveBeenCalled();
+      expect(getPostsCountSpy).toHaveBeenCalledWith({ mockDb: true });
       expect(result).toEqual(count);
     });
 
     test("should return default value on error", async () => {
-      mock.module("../../../src/services/db/queries", () => ({
-        ...queries,
-        getPostsCount: mock().mockRejectedValue(new Error("Database error")),
-      }));
+      // Set up the mock to throw an error
+      getPostsCountSpy.mockImplementationOnce(() => {
+        throw new Error("Database error");
+      });
 
       const result = await submissionRepository.getPostsCount();
 
-      expect(transaction.withDatabaseErrorHandling).toHaveBeenCalled();
+      expect(withDatabaseErrorHandlingSpy).toHaveBeenCalled();
       expect(result).toEqual(0); // Default value
     });
   });
@@ -334,27 +414,24 @@ describe("SubmissionRepository", () => {
     test("should return curators count", async () => {
       const count = 5;
 
-      mock.module("../../../src/services/db/queries", () => ({
-        ...queries,
-        getCuratorsCount: mock().mockResolvedValue(count),
-      }));
+      getCuratorsCountSpy.mockResolvedValueOnce(count);
 
       const result = await submissionRepository.getCuratorsCount();
 
-      expect(transaction.withDatabaseErrorHandling).toHaveBeenCalled();
-      expect(queries.getCuratorsCount).toHaveBeenCalledWith({ mockDb: true });
+      expect(withDatabaseErrorHandlingSpy).toHaveBeenCalled();
+      expect(getCuratorsCountSpy).toHaveBeenCalledWith({ mockDb: true });
       expect(result).toEqual(count);
     });
 
     test("should return default value on error", async () => {
-      mock.module("../../../src/services/db/queries", () => ({
-        ...queries,
-        getCuratorsCount: mock().mockRejectedValue(new Error("Database error")),
-      }));
+      // Set up the mock to throw an error
+      getCuratorsCountSpy.mockImplementationOnce(() => {
+        throw new Error("Database error");
+      });
 
       const result = await submissionRepository.getCuratorsCount();
 
-      expect(transaction.withDatabaseErrorHandling).toHaveBeenCalled();
+      expect(withDatabaseErrorHandlingSpy).toHaveBeenCalled();
       expect(result).toEqual(0); // Default value
     });
   });

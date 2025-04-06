@@ -103,6 +103,7 @@ describe("Database Integration", () => {
       userId: submission.userId,
       username: submission.username,
       content: submission.content,
+      feeds: [],
     });
   });
 

@@ -71,25 +71,35 @@
 
 ### In Progress
 - [ ] Comprehensive error handling solution
+  - [x] Database repositories error handling implemented
+  - [x] Transaction-based operations for data consistency
+  - [ ] Error handling for other services
 - [ ] Moving configuration to database
 - [ ] Completing test coverage
+  - [x] Tests for database error handling
+  - [x] Tests for transaction-based operations
+  - [ ] Tests for other services
 - [ ] Database protections for Web3Auth
 - [ ] Full migration to repository pattern for database operations
   - [x] Initial reorganization completed
-  - [ ] Update all service files to use repositories
+  - [x] Consolidated duplicate status update logic
+  - [x] Transaction-based operations for related data
+  - [x] Comprehensive error handling in repositories
+  - [ ] Update remaining service files to use repositories
   - [ ] Remove backward compatibility layer
-  - [ ] Add comprehensive tests for repositories
 - [ ] Recap functionality
 - [ ] Enhanced analytics
 - [ ] Additional distributor plugins
 
 ## Next Actions
-1. Implement comprehensive error handling solution
-   - Design error type hierarchy
-   - Implement error recovery mechanisms
-   - Enhance error logging
-   - Add graceful degradation
-   - Create user-friendly error messages
+1. Complete comprehensive error handling solution
+   - [x] Add error handling to database repositories
+   - [x] Implement transaction-based operations
+   - [x] Add default values for graceful degradation
+   - [x] Enhance error logging with context
+   - [ ] Design error type hierarchy for other services
+   - [ ] Implement error recovery mechanisms for other services
+   - [ ] Create user-friendly error messages
 
 2. Move configuration to database
    - Design database schema for configuration

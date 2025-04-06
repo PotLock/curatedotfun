@@ -2,18 +2,18 @@ import { Tweet } from "agent-twitter-client";
 import { AppConfig } from "../../types/config";
 import {
   Moderation,
+  Submission,
   SubmissionFeed,
   SubmissionStatus,
-  TwitterSubmission,
 } from "../../types/twitter";
 import { logger } from "../../utils/logger";
 import {
-  twitterRepository,
-  submissionRepository,
   feedRepository,
+  submissionRepository,
+  twitterRepository,
 } from "../db/repositories";
-import { TwitterService } from "../twitter/client";
 import { ProcessorService } from "../processor/processor.service";
+import { TwitterService } from "../twitter/client";
 
 export class SubmissionService {
   private checkInterval: NodeJS.Timeout | null = null;
@@ -222,12 +222,10 @@ export class SubmissionService {
       const existingSubmission = await submissionRepository.getSubmission(
         originalTweet.id!,
       );
-      const existingFeeds = existingSubmission
-        ? await feedRepository.getFeedsBySubmission(existingSubmission.tweetId)
-        : [];
+      const existingFeeds = existingSubmission?.feeds || [];
 
       // Create new submission if it doesn't exist
-      let submission: TwitterSubmission | undefined;
+      let submission: Submission | undefined;
       if (!existingSubmission) {
         const dailyCount =
           await submissionRepository.getDailySubmissionCount(userId);
@@ -275,7 +273,7 @@ export class SubmissionService {
       for (const feedId of feedIds) {
         const lowercaseFeedId = feedId.toLowerCase();
         const feed = this.config.feeds.find(
-          (f) => f.id.toLowerCase() === lowercaseFeedId,
+          (f: { id: string }) => f.id.toLowerCase() === lowercaseFeedId,
         );
         if (!feed) {
           logger.error(
@@ -422,13 +420,12 @@ export class SubmissionService {
     }
 
     // Get submission feeds to determine which feed is being moderated
-    const submissionFeeds = await feedRepository.getFeedsBySubmission(
-      submission.tweetId,
-    );
-    const pendingFeeds = submissionFeeds
-      .filter((feed) => feed.status === SubmissionStatus.PENDING)
+    const pendingFeeds = submission
+      .feeds!.filter((feed) => feed.status === SubmissionStatus.PENDING)
       .filter((feed) => {
-        const feedConfig = this.config.feeds.find((f) => f.id === feed.feedId);
+        const feedConfig = this.config.feeds.find(
+          (f: { id: string }) => f.id === feed.feedId,
+        );
         return feedConfig?.moderation.approvers.twitter.some(
           (approver) => approver.toLowerCase() === adminUsername.toLowerCase(),
         );
@@ -468,13 +465,15 @@ export class SubmissionService {
 
   private async processApproval(
     tweet: Tweet,
-    submission: TwitterSubmission,
+    submission: Submission,
     pendingFeeds: SubmissionFeed[],
   ): Promise<void> {
     try {
       // Process each pending feed
       for (const pendingFeed of pendingFeeds) {
-        const feed = this.config.feeds.find((f) => f.id === pendingFeed.feedId);
+        const feed = this.config.feeds.find(
+          (f: { id: string }) => f.id === pendingFeed.feedId,
+        );
         if (!feed) continue;
 
         // Only update if not already moderated
@@ -504,7 +503,7 @@ export class SubmissionService {
 
   private async processRejection(
     tweet: Tweet,
-    submission: TwitterSubmission,
+    submission: Submission,
     pendingFeeds: SubmissionFeed[],
   ): Promise<void> {
     try {

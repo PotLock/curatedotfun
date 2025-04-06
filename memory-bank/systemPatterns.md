@@ -47,18 +47,24 @@
 1. **PostgreSQL with Drizzle ORM**
    - Read/write separation with connection pools
    - Transaction support with retry logic
-   - Error handling and connection management
+   - Comprehensive error handling with context-rich logging
+   - Default values for graceful degradation
    - Repository pattern for domain-specific database operations
+   - Transaction-based operations for related data
    - Modular organization with clear separation of concerns
 
 2. **Database Service Structure**
    - Connection management (connection.ts)
    - Transaction utilities (transaction.ts)
+     * executeOperation - For single database operations
+     * executeTransaction - For multi-step operations requiring atomicity
+     * withDatabaseErrorHandling - For consistent error handling
    - Domain-specific repositories (repositories/)
      * Twitter repository
      * Submission repository
      * Feed repository
      * Leaderboard repository
+   - Consolidated status update logic
    - Backward compatibility layer for gradual migration
 
 3. **Development Environment**

@@ -1,6 +1,6 @@
 import { ActionArgs } from "@curatedotfun/types";
 import { PluginError, PluginExecutionError } from "../../types/errors";
-import { TwitterSubmission } from "../../types/twitter";
+import { Submission } from "../../types/twitter";
 import { logger } from "../../utils/logger";
 import { sanitizeJson } from "../../utils/sanitize";
 import { PluginService } from "../plugins/plugin.service";
@@ -9,7 +9,7 @@ import { DistributorConfig } from "./../../types/config";
 export class DistributionService {
   constructor(private pluginService: PluginService) {}
 
-  async distributeContent<T = TwitterSubmission>(
+  async distributeContent<T = Submission>(
     distributor: DistributorConfig,
     input: T,
   ): Promise<void> {

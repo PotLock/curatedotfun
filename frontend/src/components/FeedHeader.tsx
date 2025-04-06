@@ -1,16 +1,13 @@
 import StatusFilterButtons from "./StatusFilterButtons";
 import DownloadButton from "./DownloadButton";
-import {
-  TwitterSubmission,
-  TwitterSubmissionWithFeedData,
-} from "../types/twitter";
+import { Submission, SubmissionWithFeedData } from "../types/twitter";
 
 interface FeedHeaderProps {
   title: string;
   description: string;
-  items: TwitterSubmissionWithFeedData[];
-  statusFilter: "all" | TwitterSubmission["status"];
-  setStatusFilter: (status: "all" | TwitterSubmission["status"]) => void;
+  items: SubmissionWithFeedData[];
+  statusFilter: "all" | Submission["status"];
+  setStatusFilter: (status: "all" | Submission["status"]) => void;
   feedName?: string | undefined;
 }
 
