@@ -79,7 +79,7 @@ describe("Full Flow E2E", () => {
 
     // Verify the submission was created
     const submissionStatusResponse = await apiClient.get(
-      `/api/submission/single/${tweet.id}`,
+      `/api/submissions/single/${tweet.id}`,
     );
     expect(submissionStatusResponse.status).toBe(200);
     expect(submissionStatusResponse.data).toMatchObject({
@@ -98,7 +98,7 @@ describe("Full Flow E2E", () => {
 
     // Verify the submission was approved
     const approvedSubmissionResponse = await apiClient.get(
-      `/api/submission/single/${tweet.id}`,
+      `/api/submissions/single/${tweet.id}`,
     );
     expect(approvedSubmissionResponse.status).toBe(200);
     expect(approvedSubmissionResponse.data).toMatchObject({

@@ -76,7 +76,7 @@ describe("Approval Flow", () => {
 
     // Verify the submission was approved
     const submissionResponse = await apiClient.get(
-      `/api/submission/single/${tweet.id}`,
+      `/api/submissions/single/${tweet.id}`,
     );
     expect(submissionResponse.status).toBe(200);
     expect(submissionResponse.data).toMatchObject({
@@ -115,7 +115,7 @@ describe("Approval Flow", () => {
 
     // Verify the submission was rejected
     const submissionResponse = await apiClient.get(
-      `/api/submission/single/${tweet.id}`,
+      `/api/submissions/single/${tweet.id}`,
     );
     expect(submissionResponse.status).toBe(200);
     expect(submissionResponse.data).toMatchObject({
@@ -160,7 +160,7 @@ describe("Approval Flow", () => {
 
     // Verify the submission was not approved (still pending)
     const submissionResponse = await apiClient.get(
-      `/api/submission/single/${tweet.id}`,
+      `/api/submissions/single/${tweet.id}`,
     );
     expect(submissionResponse.status).toBe(200);
     expect(submissionResponse.data).toMatchObject({

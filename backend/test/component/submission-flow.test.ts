@@ -56,7 +56,7 @@ describe("Submission Flow", () => {
 
     // Verify the submission was saved
     const submissionResponse = await apiClient.get(
-      `/api/submission/single/${tweet.id}`,
+      `/api/submissions/single/${tweet.id}`,
     );
     expect(submissionResponse.status).toBe(200);
     expect(submissionResponse.data).toMatchObject({
@@ -80,9 +80,7 @@ describe("Submission Flow", () => {
 
     // Verify submissions were created for each feed
     for (const feedId of feedIds) {
-      const submissionsResponse = await apiClient.get(
-        `/api/feed/${feedId}/submissions`,
-      );
+      const submissionsResponse = await apiClient.get(`/api/feed/${feedId}`);
       expect(submissionsResponse.status).toBe(200);
 
       const submission = submissionsResponse.data.submissions.find(
@@ -119,7 +117,7 @@ describe("Submission Flow", () => {
 
     // Verify the submission was auto-approved
     const submissionResponse = await apiClient.get(
-      `/api/submission/single/${tweet.id}`,
+      `/api/submissions/single/${tweet.id}`,
     );
     expect(submissionResponse.status).toBe(200);
     expect(submissionResponse.data).toMatchObject({
