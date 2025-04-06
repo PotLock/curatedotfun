@@ -85,36 +85,6 @@ export class FeedRepository {
   }
 
   /**
-   * Gets a feed plugin.
-   *
-   * @param feedId The feed ID
-   * @param pluginId The plugin ID
-   * @returns The feed plugin or undefined if not found
-   */
-  async getFeedPlugin(feedId: string, pluginId: string) {
-    return await executeOperation(async (db) => {
-      return await queries.getFeedPlugin(db, feedId, pluginId);
-    }); // Read operation
-  }
-
-  /**
-   * Upserts a feed plugin.
-   *
-   * @param feedId The feed ID
-   * @param pluginId The plugin ID
-   * @param config The plugin configuration
-   */
-  async upsertFeedPlugin(
-    feedId: string,
-    pluginId: string,
-    config: Record<string, any>,
-  ): Promise<void> {
-    await executeOperation(async (db) => {
-      await queries.upsertFeedPlugin(db, feedId, pluginId, config);
-    }, true); // Write operation
-  }
-
-  /**
    * Updates the status of a submission in a feed.
    *
    * @param submissionId The submission ID

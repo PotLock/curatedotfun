@@ -1,6 +1,5 @@
 import {
   Moderation,
-  SubmissionFeed,
   SubmissionStatus,
   TwitterSubmission,
   TwitterSubmissionWithFeedData,

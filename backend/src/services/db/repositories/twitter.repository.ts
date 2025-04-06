@@ -1,4 +1,3 @@
-import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { TwitterCookie } from "../../../types/twitter";
 import * as twitterQueries from "../../twitter/queries";
 import { executeOperation, withDatabaseErrorHandling } from "../transaction";

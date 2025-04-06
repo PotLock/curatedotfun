@@ -31,8 +31,8 @@ function startServer() {
   // Start the server
   serverProcess = spawn("node", [mainJsPath], {
     stdio: "inherit",
-    env: { 
-      ...process.env, 
+    env: {
+      ...process.env,
       ...envVars,
       NODE_ENV: "development",
     },

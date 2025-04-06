@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, mock } from "bun:test";
-import { leaderboardRepository } from "../../../src/services/db/repositories/leaderboard.repository";
+import { leaderboardRepository } from "../../../src/services/db/repositories";
 import * as transaction from "../../../src/services/db/transaction";
 import * as queries from "../../../src/services/db/queries";
 

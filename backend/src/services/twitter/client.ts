@@ -1,7 +1,7 @@
 import { Scraper, SearchMode, Tweet } from "agent-twitter-client";
 import { TwitterCookie } from "types/twitter";
 import { logger } from "../../utils/logger";
-import { twitterRepository } from "../db/repositories/twitter.repository";
+import { twitterRepository } from "../db/repositories";
 
 export class TwitterService {
   private client: Scraper;

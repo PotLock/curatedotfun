@@ -641,45 +641,6 @@ export async function removeFromSubmissionFeed(
     .execute();
 }
 
-// Feed Plugin queries
-export async function getFeedPlugin(
-  db: NodePgDatabase<any>,
-  feedId: string,
-  pluginId: string,
-) {
-  const results = await db
-    .select()
-    .from(feedPlugins)
-    .where(
-      and(eq(feedPlugins.feedId, feedId), eq(feedPlugins.pluginId, pluginId)),
-    );
-
-  return results.length > 0 ? results[0] : null;
-}
-
-export async function upsertFeedPlugin(
-  db: NodePgDatabase<any>,
-  feedId: string,
-  pluginId: string,
-  config: Record<string, any>,
-): Promise<void> {
-  await db
-    .insert(feedPlugins)
-    .values({
-      feedId,
-      pluginId,
-      config: JSON.stringify(config),
-    })
-    .onConflictDoUpdate({
-      target: [feedPlugins.feedId, feedPlugins.pluginId],
-      set: {
-        config: JSON.stringify(config),
-        updatedAt: new Date(),
-      },
-    })
-    .execute();
-}
-
 export interface FeedSubmissionCount {
   feedId: string;
   count: number;

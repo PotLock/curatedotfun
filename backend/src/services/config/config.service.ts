@@ -18,7 +18,10 @@ export class ConfigService {
 
   private constructor() {
     if (isTest) {
-      this.configPath = path.resolve(process.cwd(), "test/curate.config.test.json");
+      this.configPath = path.resolve(
+        process.cwd(),
+        "test/curate.config.test.json",
+      );
     } else if (isProduction) {
       // Dockerfile
       this.configPath = path.resolve(process.cwd(), "../curate.config.json");

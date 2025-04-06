@@ -11,7 +11,7 @@ import { serve } from "@hono/node-server";
 import { isTest } from "services/config/config.service";
 import { AppInstance } from "types/app";
 import { createApp } from "./app";
-import { dbConnection, initializeDatabase } from "./services/db";
+import { dbConnection } from "./services/db";
 import {
   cleanup,
   createHighlightBox,
@@ -59,10 +59,14 @@ async function initializeDatabaseConnection(): Promise<boolean> {
     // Check if it's a DATABASE_URL error
     if (error instanceof Error && error.message.includes("DATABASE_URL")) {
       logger.error("DATABASE_URL environment variable is not set or invalid");
-      logger.error("Please check your .env file and ensure DATABASE_URL is correctly configured");
+      logger.error(
+        "Please check your .env file and ensure DATABASE_URL is correctly configured",
+      );
       logger.error(`Current working directory: ${process.cwd()}`);
     } else {
-      logger.error("Database connection failed. Application cannot continue without database.");
+      logger.error(
+        "Database connection failed. Application cannot continue without database.",
+      );
     }
     return false;
   }

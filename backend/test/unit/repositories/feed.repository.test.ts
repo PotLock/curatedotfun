@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, mock } from "bun:test";
-import { feedRepository } from "../../../src/services/db/repositories/feed.repository";
+import { feedRepository } from "../../../src/services/db/repositories";
 import * as transaction from "../../../src/services/db/transaction";
 import * as queries from "../../../src/services/db/queries";
 import { SubmissionStatus } from "../../../src/types/twitter";
@@ -18,8 +18,6 @@ mock.module("../../../src/services/db/queries", () => ({
   getFeedsBySubmission: mock(),
   removeFromSubmissionFeed: mock(),
   getSubmissionsByFeed: mock(),
-  getFeedPlugin: mock(),
-  upsertFeedPlugin: mock(),
   updateSubmissionFeedStatus: mock(),
 }));
 
@@ -151,73 +149,6 @@ describe("FeedRepository", () => {
         feedId,
       );
       expect(result).toEqual(mockSubmissions);
-    });
-  });
-
-  describe("getFeedPlugin", () => {
-    test("should return feed plugin when found", async () => {
-      const feedId = "feed1";
-      const pluginId = "plugin1";
-      const mockPlugin = {
-        feedId,
-        pluginId,
-        config: '{"key":"value"}',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      mock.module("../../../src/services/db/queries", () => ({
-        ...queries,
-        getFeedPlugin: mock().mockResolvedValue(mockPlugin),
-      }));
-
-      const result = await feedRepository.getFeedPlugin(feedId, pluginId);
-
-      expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.getFeedPlugin).toHaveBeenCalledWith(
-        { mockDb: true },
-        feedId,
-        pluginId,
-      );
-      expect(result).toEqual(mockPlugin);
-    });
-
-    test("should return null when plugin not found", async () => {
-      const feedId = "feed1";
-      const pluginId = "plugin1";
-
-      mock.module("../../../src/services/db/queries", () => ({
-        ...queries,
-        getFeedPlugin: mock().mockResolvedValue(null),
-      }));
-
-      const result = await feedRepository.getFeedPlugin(feedId, pluginId);
-
-      expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.getFeedPlugin).toHaveBeenCalledWith(
-        { mockDb: true },
-        feedId,
-        pluginId,
-      );
-      expect(result).toBeNull();
-    });
-  });
-
-  describe("upsertFeedPlugin", () => {
-    test("should call executeOperation with the correct parameters", async () => {
-      const feedId = "feed1";
-      const pluginId = "plugin1";
-      const config = { key: "value" };
-
-      await feedRepository.upsertFeedPlugin(feedId, pluginId, config);
-
-      expect(transaction.executeOperation).toHaveBeenCalled();
-      expect(queries.upsertFeedPlugin).toHaveBeenCalledWith(
-        { mockDb: true },
-        feedId,
-        pluginId,
-        config,
-      );
     });
   });
 

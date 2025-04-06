@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach, mock } from "bun:test";
-import { twitterRepository } from "../../../src/services/db/repositories/twitter.repository";
+import { twitterRepository } from "../../../src/services/db/repositories";
 import * as transaction from "../../../src/services/db/transaction";
 import * as twitterQueries from "../../../src/services/twitter/queries";
 

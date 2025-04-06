@@ -7,9 +7,11 @@ import {
   TwitterSubmission,
 } from "../../types/twitter";
 import { logger } from "../../utils/logger";
-import { twitterRepository } from "../db/repositories/twitter.repository";
-import { submissionRepository } from "../db/repositories/submission.repository";
-import { feedRepository } from "../db/repositories/feed.repository";
+import {
+  twitterRepository,
+  submissionRepository,
+  feedRepository,
+} from "../db/repositories";
 import { TwitterService } from "../twitter/client";
 import { ProcessorService } from "../processor/processor.service";
 
