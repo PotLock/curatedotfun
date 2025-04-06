@@ -69,7 +69,6 @@ services:
     extends: db-init
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres_test:5432/test
-      CONFIG_PATH: /app/test/curate.config.test.json
     depends_on:
       postgres_test:
         condition: service_healthy

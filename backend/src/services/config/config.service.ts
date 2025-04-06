@@ -10,41 +10,24 @@ import { hydrateConfigValues } from "../../utils/config";
 import { logger } from "../../utils/logger";
 
 export const isProduction = process.env.NODE_ENV === "production";
+export const isTest = process.env.NODE_ENV === "test";
 export class ConfigService {
   private static instance: ConfigService;
   private config: AppConfig | null = null;
   private configPath: string;
 
   private constructor() {
-    // Allow overriding config path with environment variable
-    if (process.env.CONFIG_PATH) {
-      this.configPath = process.env.CONFIG_PATH;
-      logger.info(`Using configuration from CONFIG_PATH: ${this.configPath}`);
+    if (isTest) {
+      this.configPath = path.resolve(process.cwd(), "test/curate.config.test.json");
     } else if (isProduction) {
-      this.configPath = path.resolve(process.cwd(), "curate.config.json");
-      logger.info("Using production configuration");
+      // Dockerfile
+      this.configPath = path.resolve(process.cwd(), "../curate.config.json");
     } else {
-      // Use test config in development mode
-      // First try to find it relative to the current file
-      const testConfigPath = path.resolve(
-        __dirname,
-        "../../../test/curate.config.test.json",
-      );
-
-      // Check if the file exists at this path
-      try {
-        fs.access(testConfigPath);
-        this.configPath = testConfigPath;
-      } catch (error) {
-        // Fallback to the old path
-        this.configPath = path.resolve(
-          process.cwd(),
-          "test/curate.config.test.json",
-        );
-      }
-
-      logger.info(`Using test configuration: ${this.configPath}`);
+      // Starting from root
+      this.configPath = path.resolve(process.cwd(), "./curate.config.json");
     }
+
+    logger.info(`Using configuration from: ${this.configPath}`);
   }
 
   public static getInstance(): ConfigService {
@@ -84,18 +67,6 @@ export class ConfigService {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to load raw config: ${message}`);
-    }
-  }
-
-  // Switch to a different config (if saving locally, wouldn't work in fly.io container)
-  public async updateConfig(newConfig: AppConfig): Promise<void> {
-    // saving this for later
-    try {
-      await fs.writeFile(this.configPath, JSON.stringify(newConfig, null, 2));
-      this.config = newConfig;
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to update config: ${message}`);
     }
   }
 

@@ -46,8 +46,8 @@ export class DatabaseConnection {
   private validateConnectionParams(): void {
     const dbUrl = process.env.DATABASE_URL;
 
-    if (!dbUrl) {
-      throw new Error("DATABASE_URL environment variable is required");
+    if (!dbUrl || dbUrl.trim() === "") {
+      throw new Error("DATABASE_URL environment variable is not set or empty");
     }
   }
 
@@ -102,30 +102,37 @@ export class DatabaseConnection {
       const errorMessage = e.message || String(e);
       const errorCode = (e as any).code;
 
-      logger.error("Failed to initialize database:", {
-        error: errorMessage,
-        code: errorCode,
-        stack: e.stack,
-        dirname: __dirname,
-        cwd: process.cwd(),
-      });
+      // Provide a single comprehensive error message
+      if (errorMessage.includes("DATABASE_URL")) {
+        // Don't log the stack trace for environment variable issues
+        // as it's not a code error but a configuration issue
+        logger.error("DATABASE_URL environment variable is not set or empty");
+      } else {
+        // For other database errors, log more details
+        logger.error("Failed to initialize database:", {
+          error: errorMessage,
+          code: errorCode,
+          stack: e.stack,
+        });
 
-      if (errorCode === "ECONNREFUSED") {
-        logger.error(
-          "Connection refused. Make sure the database server is running and accessible.",
-        );
-      } else if (errorCode === "ENOTFOUND") {
-        logger.error(
-          "Host not found. Check the hostname in your DATABASE_URL.",
-        );
-      } else if (errorCode === "28P01") {
-        logger.error(
-          "Authentication failed. Check your database username and password.",
-        );
-      } else if (errorCode === "3D000") {
-        logger.error(
-          "Database does not exist. Make sure the database has been created.",
-        );
+        // Provide helpful context based on error code
+        if (errorCode === "ECONNREFUSED") {
+          logger.error(
+            "Connection refused. Make sure the database server is running and accessible.",
+          );
+        } else if (errorCode === "ENOTFOUND") {
+          logger.error(
+            "Host not found. Check the hostname in your DATABASE_URL.",
+          );
+        } else if (errorCode === "28P01") {
+          logger.error(
+            "Authentication failed. Check your database username and password.",
+          );
+        } else if (errorCode === "3D000") {
+          logger.error(
+            "Database does not exist. Make sure the database has been created.",
+          );
+        }
       }
 
       throw e; // Re-throw the original error to allow proper handling upstream

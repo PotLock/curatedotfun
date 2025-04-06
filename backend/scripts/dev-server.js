@@ -2,10 +2,21 @@
 const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const dotenv = require("dotenv");
 
 // Path to the dist directory
 const distDir = path.join(__dirname, "../dist");
 const mainJsPath = path.join(distDir, "main.js");
+const envPath = path.join(__dirname, "../.env");
+
+// Load environment variables from .env file
+let envVars = {};
+if (fs.existsSync(envPath)) {
+  console.log(`📄 Loading environment variables from ${envPath}`);
+  envVars = dotenv.parse(fs.readFileSync(envPath));
+} else {
+  console.warn(`⚠️ No .env file found at ${envPath}`);
+}
 
 let serverProcess = null;
 
@@ -20,7 +31,11 @@ function startServer() {
   // Start the server
   serverProcess = spawn("node", [mainJsPath], {
     stdio: "inherit",
-    env: { ...process.env, NODE_ENV: "development" },
+    env: { 
+      ...process.env, 
+      ...envVars,
+      NODE_ENV: "development",
+    },
   });
 
   serverProcess.on("error", (error) => {

@@ -1,13 +1,14 @@
 import { config } from "dotenv";
 import path from "path";
 
-if (process.env.NODE_ENV === "test") {
+if (isTest) {
   config({ path: path.resolve(process.cwd(), "backend/.env.test") });
 } else {
   config({ path: path.resolve(process.cwd(), "backend/.env") });
 }
 
 import { serve } from "@hono/node-server";
+import { isTest } from "services/config/config.service";
 import { AppInstance } from "types/app";
 import { createApp } from "./app";
 import { dbConnection, initializeDatabase } from "./services/db";
@@ -51,16 +52,20 @@ async function getInstance(): Promise<AppInstance> {
 async function initializeDatabaseConnection(): Promise<boolean> {
   logger.info("Initializing database connection...");
 
-  const dbInitialized = await initializeDatabase();
-
-  if (!dbInitialized) {
-    logger.error(
-      "Database connection failed. Application cannot continue without database.",
-    );
+  try {
+    await dbConnection.connect();
+    return true;
+  } catch (error) {
+    // Check if it's a DATABASE_URL error
+    if (error instanceof Error && error.message.includes("DATABASE_URL")) {
+      logger.error("DATABASE_URL environment variable is not set or invalid");
+      logger.error("Please check your .env file and ensure DATABASE_URL is correctly configured");
+      logger.error(`Current working directory: ${process.cwd()}`);
+    } else {
+      logger.error("Database connection failed. Application cannot continue without database.");
+    }
     return false;
   }
-
-  return true;
 }
 
 async function startServer() {
