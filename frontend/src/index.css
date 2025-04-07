@@ -6,7 +6,7 @@
 
 @font-face {
   font-family: 'Londrina Solid';
-  src: url('../public/fonts/LondrinaSolid-NNS.ttf') format('truetype');
+  src: url('@fonts/LondrinaSolid-NNS.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }

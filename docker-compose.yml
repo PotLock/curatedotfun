@@ -64,7 +64,7 @@ services:
     volumes:
       - ./backend:/app
       - node_modules_cache:/app/node_modules  # Add persistent volume for node_modules, otherwise this messes with rspack bindings
-    command: sh -c "if [ ! -d /app/node_modules/.pnpm ]; then echo '📦 Installing dependencies...' && bun add -g pnpm && pnpm install; else echo '✅ Dependencies already installed, skipping'; fi && pnpm run db:migrate && pnpm run db:seed:dev"
+    command: sh -c "bun add -g pnpm && if [ ! -d /app/node_modules/.pnpm ]; then echo '📦 Installing dependencies...' && pnpm install; else echo '✅ Dependencies already installed, skipping'; fi && pnpm run db:migrate && pnpm run db:seed:dev"
     profiles: ["dev"]
 
   # Test-specific initialization
