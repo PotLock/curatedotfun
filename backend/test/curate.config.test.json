@@ -77,6 +77,7 @@
                   "plugin": "@curatedotfun/ai-transform",
                   "config": {
                     "prompt": "Create a structured summary of this content",
+                    "apiKey": "{OPENROUTER_API_KEY}",
                     "schema": {
                       "title": {
                         "type": "string",

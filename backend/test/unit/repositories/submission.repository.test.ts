@@ -363,8 +363,7 @@ describe("SubmissionRepository", () => {
       expect(cleanupOldSubmissionCountsSpy).toHaveBeenCalled();
       expect(getDailySubmissionCountSpy).toHaveBeenCalledWith(
         { mockDb: true },
-        userId,
-        expect.any(String),
+        userId
       );
       expect(result).toEqual(count);
     });

@@ -146,8 +146,6 @@ export class FeedRepository {
       async () => {
         return await executeTransaction(async (client) => {
           const db = drizzle(client);
-
-          // Update the status in a transaction to ensure consistency
           await queries.updateSubmissionFeedStatus(
             db,
             submissionId,
@@ -155,13 +153,6 @@ export class FeedRepository {
             status,
             moderationResponseTweetId,
           );
-
-          logger.info(`Updated submission status`, {
-            submissionId,
-            feedId,
-            status,
-            moderationResponseTweetId,
-          });
         });
       },
       {

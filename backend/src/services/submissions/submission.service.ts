@@ -496,7 +496,7 @@ export class SubmissionService {
     } catch (error) {
       logger.error(
         error,
-        `${submission.tweetId}: Failed to process approved submission`
+        `${submission.tweetId}: Failed to process approved submission`,
       );
     }
   }

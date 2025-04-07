@@ -44,7 +44,7 @@ export class MockTwitterService extends TwitterService {
         };
       },
       likeTweet: async (tweetId: string) => {
-        logger.info(`Mock: Liked tweet ${tweetId}`);
+        logger.info(`[MOCK]: Liked tweet ${tweetId}`);
         return true;
       },
       sendTweet: async (message: string, replyToId?: string) => {
@@ -92,7 +92,7 @@ export class MockTwitterService extends TwitterService {
     };
     this.mockTweets.push(fullTweet);
     logger.info(
-      `Mock: Added tweet "${fullTweet.text}" from @${fullTweet.username}${tweet.inReplyToStatusId ? ` as reply to ${tweet.inReplyToStatusId}` : ""}`,
+      `[MOCK]: Added tweet "${fullTweet.text}" from @${fullTweet.username}${tweet.inReplyToStatusId ? ` as reply to ${tweet.inReplyToStatusId}` : ""}`,
     );
     return fullTweet;
   }
@@ -103,7 +103,7 @@ export class MockTwitterService extends TwitterService {
 
   public clearMockTweets() {
     this.mockTweets = [];
-    logger.info("Mock: Cleared all tweets");
+    logger.info("[MOCK]: Cleared all tweets");
   }
 
   async initialize(): Promise<void> {

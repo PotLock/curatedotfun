@@ -59,7 +59,7 @@ The test environment is configured in `.env.test`. This file sets the database c
 
 ### Test Data
 
-The test database is seeded with a consistent set of test data defined in `setup/seed/seed.sql`. This includes:
+The test database is seeded with a consistent set of test data defined in `setup/seed-test.sql`. This includes:
 
 - Test feeds
 - Test submissions

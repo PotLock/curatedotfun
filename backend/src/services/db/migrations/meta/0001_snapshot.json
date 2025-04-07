@@ -78,12 +78,8 @@
           "name": "feed_plugins_feed_id_feeds_id_fk",
           "tableFrom": "feed_plugins",
           "tableTo": "feeds",
-          "columnsFrom": [
-            "feed_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["feed_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -91,10 +87,7 @@
       "compositePrimaryKeys": {
         "feed_plugins_feed_id_plugin_id_pk": {
           "name": "feed_plugins_feed_id_plugin_id_pk",
-          "columns": [
-            "feed_id",
-            "plugin_id"
-          ]
+          "columns": ["feed_id", "plugin_id"]
         }
       },
       "uniqueConstraints": {},
@@ -254,12 +247,8 @@
           "name": "moderation_history_tweet_id_submissions_tweet_id_fk",
           "tableFrom": "moderation_history",
           "tableTo": "submissions",
-          "columnsFrom": [
-            "tweet_id"
-          ],
-          "columnsTo": [
-            "tweet_id"
-          ],
+          "columnsFrom": ["tweet_id"],
+          "columnsTo": ["tweet_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -267,12 +256,8 @@
           "name": "moderation_history_feed_id_feeds_id_fk",
           "tableFrom": "moderation_history",
           "tableTo": "feeds",
-          "columnsFrom": [
-            "feed_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["feed_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -411,12 +396,8 @@
           "name": "submission_feeds_submission_id_submissions_tweet_id_fk",
           "tableFrom": "submission_feeds",
           "tableTo": "submissions",
-          "columnsFrom": [
-            "submission_id"
-          ],
-          "columnsTo": [
-            "tweet_id"
-          ],
+          "columnsFrom": ["submission_id"],
+          "columnsTo": ["tweet_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -424,12 +405,8 @@
           "name": "submission_feeds_feed_id_feeds_id_fk",
           "tableFrom": "submission_feeds",
           "tableTo": "feeds",
-          "columnsFrom": [
-            "feed_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["feed_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -437,10 +414,7 @@
       "compositePrimaryKeys": {
         "submission_feeds_submission_id_feed_id_pk": {
           "name": "submission_feeds_submission_id_feed_id_pk",
-          "columns": [
-            "submission_id",
-            "feed_id"
-          ]
+          "columns": ["submission_id", "feed_id"]
         }
       },
       "uniqueConstraints": {},
