@@ -2,8 +2,8 @@ import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import path from "path";
 import { apiRoutes } from "./routes/api";
-import { configureStaticRoutes, staticRoutes } from "./routes/static";
 import { mockTwitterService } from "./routes/api/test";
+import { configureStaticRoutes, staticRoutes } from "./routes/static";
 import { ConfigService, isProduction } from "./services/config/config.service";
 import { DistributionService } from "./services/distribution/distribution.service";
 import { PluginService } from "./services/plugins/plugin.service";
@@ -12,18 +12,12 @@ import { SubmissionService } from "./services/submissions/submission.service";
 import { TransformationService } from "./services/transformation/transformation.service";
 import { TwitterService } from "./services/twitter/client";
 import { AppContext, AppInstance, HonoApp } from "./types/app";
+import { getAllowedOrigins } from "./utils/config";
 import { errorHandler } from "./utils/error";
 
-const ALLOWED_ORIGINS = [
-  "http://localhost:3000",
-  "http://localhost:5173", // Dev server
-  "http://localhost:3001", // Local landing page
-  "https://curatedotfun-floral-sun-1539.fly.dev",
-  "https://www.curate.fun", // Landing page
-];
+const ALLOWED_ORIGINS = getAllowedOrigins();
 
 export async function createApp(): Promise<AppInstance> {
-  // Initialize services
   const configService = ConfigService.getInstance();
   await configService.loadConfig();
 
@@ -45,7 +39,8 @@ export async function createApp(): Promise<AppInstance> {
     });
     await twitterService.initialize();
   } else {
-    // use mock service
+    // Use mock service in test and development
+    // You can trigger the mock via the frontend's Test Panel
     twitterService = mockTwitterService;
     await twitterService.initialize();
   }
@@ -84,7 +79,14 @@ export async function createApp(): Promise<AppInstance> {
   app.use(
     "*",
     cors({
-      origin: ALLOWED_ORIGINS,
+      origin: (origin) => {
+        // Check if origin is in the allowed list
+        if (ALLOWED_ORIGINS.includes(origin)) {
+          return origin;
+        }
+        // Otherwise, allow same-origin requests (frontend)
+        return origin;
+      },
       allowMethods: ["GET", "POST"],
     }),
   );

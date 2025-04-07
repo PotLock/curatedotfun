@@ -22,12 +22,9 @@ export class ConfigService {
         process.cwd(),
         "test/curate.config.test.json",
       );
-    } else if (isProduction) {
-      // Dockerfile
-      this.configPath = path.resolve(process.cwd(), "../curate.config.json");
     } else {
-      // Starting from root
-      this.configPath = path.resolve(process.cwd(), "./curate.config.json");
+      // Dockerfile or dev
+      this.configPath = path.resolve(process.cwd(), "../curate.config.json");
     }
 
     logger.info(`Using configuration from: ${this.configPath}`);

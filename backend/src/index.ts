@@ -1,14 +1,8 @@
-import { config } from "dotenv";
-import path from "path";
+import { loadEnvConfig } from "./utils/config";
 
-if (isTest) {
-  config({ path: path.resolve(process.cwd(), "backend/.env.test") });
-} else {
-  config({ path: path.resolve(process.cwd(), "backend/.env") });
-}
+loadEnvConfig();
 
 import { serve } from "@hono/node-server";
-import { isTest } from "./services/config/config.service";
 import { AppInstance } from "types/app";
 import { createApp } from "./app";
 import { dbConnection } from "./services/db";
@@ -31,14 +25,13 @@ async function getInstance(): Promise<AppInstance> {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       const errorStack = error instanceof Error ? error.stack : undefined;
-
-      logger.error("Failed to create app instance:", {
+      logger.error(`Failed to create app instance: ${errorMessage}`, {
         error: errorMessage,
         stack: errorStack,
         dirname: __dirname,
         cwd: process.cwd(),
       });
-      console.log(errorMessage);
+      // console.error(errorMessage);
       throw new Error(`Failed to initialize application: ${errorMessage}`);
     }
   }

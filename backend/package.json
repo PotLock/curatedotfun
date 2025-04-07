@@ -4,7 +4,7 @@
   "scripts": {
     "build": "rspack build",
     "start": "node dist/main.js",
-    "dev": "concurrently \"NODE_ENV=development rspack build --watch\" \"wait-on -d 500 dist/main.js && node scripts/dev-server.js\"",
+    "dev": "NODE_ENV=development concurrently --kill-others-on-fail \"rspack build --watch\" \"wait-on -d 500 dist/main.js && node scripts/dev-server.js\"",
     "test": "bun test",
     "clean": "rm -rf dist coverage .turbo",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",

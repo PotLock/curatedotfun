@@ -172,16 +172,37 @@ This will install dependencies for all packages in the monorepo.
 
 ### Running the app
 
+Make sure [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or [Orbstack](https://orbstack.dev/) on MacOS) is running before starting the development servers.
+
 Start both frontend and backend development servers:
 
 ```bash
-npm run dev
+pnpm run dev
 ```
+
+This command:
+
+- Starts a PostgreSQL container for development
+- Initializes the database with migrations and seed data
+- Starts the frontend and backend development servers
+- Preserves your database data between runs
 
 This will launch:
 
 - Frontend at <http://localhost:5173>
 - Backend at <http://localhost:3000>
+
+For a fresh start with a clean database:
+
+```bash
+pnpm run dev:fresh
+```
+
+This command performs the same steps as `pnpm run dev` but removes any existing database volumes for a clean slate.
+
+When you're done, press Ctrl+C (or Cmd+C on Mac) to stop all services. The command will automatically clean up Docker containers while preserving your database data (unless you used the `dev:fresh` command).
+
+You can customize the development seed data by modifying `backend/scripts/seed-dev.ts`.
 
 ### Building for production
 
@@ -193,15 +214,28 @@ npm run build
 
 ### Deploying
 
-For deployment instructions, see our [Deployment Guide](https://docs.curate.fun/docs/developers/deployment).
+Start the application in production mode:
+
+```bash
+pnpm run start
+```
+
+For detailed deployment instructions, see our [Deployment Guide](https://docs.curate.fun/docs/developers/deployment).
 
 ### Running tests
 
 ```bash
-npm run test
+pnpm run test
 ```
 
-Tests are located in the backend's `src/__tests__` directory. Run them using `npm run test`.
+This command:
+
+- Starts a dedicated PostgreSQL container for testing
+- Initializes the test database with migrations and test seed data
+- Runs the test suite
+- Automatically cleans up all test containers and volumes when complete
+
+Tests are located in the backend's `test` directory. Test seed data is located in `backend/test/setup/seed-test.ts`.
 
 ## Configuration & Usage
 
