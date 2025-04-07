@@ -10,24 +10,27 @@ import { hydrateConfigValues } from "../../utils/config";
 import { logger } from "../../utils/logger";
 
 export const isProduction = process.env.NODE_ENV === "production";
+export const isTest = process.env.NODE_ENV === "test";
 export class ConfigService {
   private static instance: ConfigService;
   private config: AppConfig | null = null;
   private configPath: string;
 
   private constructor() {
-    if (isProduction) {
-      this.configPath = path.resolve(process.cwd(), "curate.config.json");
-      logger.info("Using production configuration");
-    } else {
-      // Use test config in development mode
+    if (isTest) {
       this.configPath = path.resolve(
         process.cwd(),
-        "backend/test/curate.config.test.json"
-        
+        "test/curate.config.test.json",
       );
-      logger.info("Using test configuration");
+    } else if (isProduction) {
+      // Dockerfile
+      this.configPath = path.resolve(process.cwd(), "../curate.config.json");
+    } else {
+      // Starting from root
+      this.configPath = path.resolve(process.cwd(), "./curate.config.json");
     }
+
+    logger.info(`Using configuration from: ${this.configPath}`);
   }
 
   public static getInstance(): ConfigService {
@@ -67,18 +70,6 @@ export class ConfigService {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to load raw config: ${message}`);
-    }
-  }
-
-  // Switch to a different config (if saving locally, wouldn't work in fly.io container)
-  public async updateConfig(newConfig: AppConfig): Promise<void> {
-    // saving this for later
-    try {
-      await fs.writeFile(this.configPath, JSON.stringify(newConfig, null, 2));
-      this.config = newConfig;
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to update config: ${message}`);
     }
   }
 

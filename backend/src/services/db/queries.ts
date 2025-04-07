@@ -1,22 +1,20 @@
 import { and, eq, sql } from "drizzle-orm";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import {
-  SubmissionFeed,
-  Moderation,
-  TwitterSubmission,
-  SubmissionStatus,
-  TwitterSubmissionWithFeedData,
   FeedStatus,
+  Moderation,
+  Submission,
+  SubmissionFeed,
+  SubmissionStatus,
+  SubmissionWithFeedData,
 } from "../../types/twitter";
 import {
-  feedPlugins,
   feeds,
   moderationHistory,
   submissionCounts,
   submissionFeeds,
   submissions,
 } from "./schema";
-import { DbQueryResult, DbFeedQueryResult, RawDbQueryResult } from "./types";
 
 export async function upsertFeeds(
   db: NodePgDatabase<any>,
@@ -103,7 +101,7 @@ export async function getFeedsBySubmission(
 
 export async function saveSubmission(
   db: NodePgDatabase<any>,
-  submission: TwitterSubmission,
+  submission: Submission,
 ): Promise<void> {
   await db
     .insert(submissions)
@@ -203,7 +201,7 @@ export async function updateSubmissionFeedStatus(
 export async function getSubmissionByCuratorTweetId(
   db: NodePgDatabase<any>,
   curatorTweetId: string,
-): Promise<TwitterSubmission | null> {
+): Promise<Submission | null> {
   const results = await db
     .select({
       s: {
@@ -258,6 +256,9 @@ export async function getSubmissionByCuratorTweetId(
       moderationResponseTweetId: r.m.moderationResponseTweetId ?? undefined,
     }));
 
+  // Get feeds for this submission
+  const feeds = await getFeedsBySubmission(db, results[0].s.tweetId);
+
   return {
     tweetId: results[0].s.tweetId,
     userId: results[0].s.userId,
@@ -272,13 +273,14 @@ export async function getSubmissionByCuratorTweetId(
       ? new Date(results[0].s.submittedAt)
       : null,
     moderationHistory: modHistory,
+    feeds,
   };
 }
 
 export async function getSubmission(
   db: NodePgDatabase<any>,
   tweetId: string,
-): Promise<TwitterSubmission | null> {
+): Promise<Submission | null> {
   const results = await db
     .select({
       s: {
@@ -333,6 +335,9 @@ export async function getSubmission(
       moderationResponseTweetId: r.m.moderationResponseTweetId ?? undefined,
     }));
 
+  // Get feeds for this submission
+  const feeds = await getFeedsBySubmission(db, tweetId);
+
   return {
     tweetId: results[0].s.tweetId,
     userId: results[0].s.userId,
@@ -347,13 +352,14 @@ export async function getSubmission(
       ? new Date(results[0].s.submittedAt)
       : null,
     moderationHistory: modHistory,
+    feeds,
   };
 }
 
 export async function getAllSubmissions(
   db: NodePgDatabase<any>,
   status?: string,
-): Promise<TwitterSubmissionWithFeedData[]> {
+): Promise<SubmissionWithFeedData[]> {
   // Build the query with or without status filter
   const queryBuilder = status
     ? db
@@ -453,7 +459,7 @@ export async function getAllSubmissions(
   const results = await queryBuilder.orderBy(moderationHistory.createdAt);
 
   // Group results by submission
-  const submissionMap = new Map<string, TwitterSubmissionWithFeedData>();
+  const submissionMap = new Map<string, SubmissionWithFeedData>();
   const feedStatusMap = new Map<string, Map<string, FeedStatus>>();
 
   for (const result of results) {
@@ -641,45 +647,6 @@ export async function removeFromSubmissionFeed(
     .execute();
 }
 
-// Feed Plugin queries
-export async function getFeedPlugin(
-  db: NodePgDatabase<any>,
-  feedId: string,
-  pluginId: string,
-) {
-  const results = await db
-    .select()
-    .from(feedPlugins)
-    .where(
-      and(eq(feedPlugins.feedId, feedId), eq(feedPlugins.pluginId, pluginId)),
-    );
-
-  return results.length > 0 ? results[0] : null;
-}
-
-export async function upsertFeedPlugin(
-  db: NodePgDatabase<any>,
-  feedId: string,
-  pluginId: string,
-  config: Record<string, any>,
-): Promise<void> {
-  await db
-    .insert(feedPlugins)
-    .values({
-      feedId,
-      pluginId,
-      config: JSON.stringify(config),
-    })
-    .onConflictDoUpdate({
-      target: [feedPlugins.feedId, feedPlugins.pluginId],
-      set: {
-        config: JSON.stringify(config),
-        updatedAt: new Date(),
-      },
-    })
-    .execute();
-}
-
 export interface FeedSubmissionCount {
   feedId: string;
   count: number;
@@ -850,12 +817,7 @@ export async function getLeaderboard(
 export async function getSubmissionsByFeed(
   db: NodePgDatabase<any>,
   feedId: string,
-): Promise<
-  (TwitterSubmission & {
-    status: SubmissionStatus;
-    moderationResponseTweetId?: string;
-  })[]
-> {
+): Promise<Submission[]> {
   const results = await db
     .select({
       s: {
@@ -896,7 +858,7 @@ export async function getSubmissionsByFeed(
     .orderBy(moderationHistory.createdAt);
 
   // Group results by submission
-  const submissionMap = new Map<string, TwitterSubmissionWithFeedData>();
+  const submissionMap = new Map<string, SubmissionWithFeedData>();
 
   for (const result of results) {
     if (!submissionMap.has(result.s.tweetId)) {

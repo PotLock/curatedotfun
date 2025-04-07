@@ -210,6 +210,58 @@ backend/
    - Clean Up All Mocks Before Every Test
    - Be Mindful About the Mocking Mechanism
    - Type your mocks
+   - Use spyOn for direct function mocking
+   - Prefer direct function mocking over module mocking when possible
+   - Ensure mocked functions properly handle async operations
+
+## Mocking Best Practices
+
+### Using spyOn for Direct Function Mocking
+
+When mocking functions that are imported directly, use `spyOn` to create a spy on the function:
+
+```typescript
+// Import the module containing the functions to mock
+import * as transaction from "../../../src/services/db/transaction";
+
+// Create a spy on the function
+const executeOperationSpy = spyOn(transaction, "executeOperation").mockImplementation(async (callback, isWrite = false) => {
+  // Implement the mock behavior
+  return await callback({ mockDb: true });
+});
+
+// In your test, you can then assert that the function was called
+expect(executeOperationSpy).toHaveBeenCalled();
+```
+
+### Handling Async Operations in Mocks
+
+When mocking functions that return promises, make sure to properly handle async operations:
+
+```typescript
+// For functions that return a value
+const getSubmissionSpy = spyOn(queries, "getSubmission").mockImplementation(async () => {
+  return { id: "123", name: "Test Submission" };
+});
+
+// For functions that might need to return different values in different tests
+getSubmissionSpy.mockResolvedValueOnce({ id: "123", name: "Test Submission" });
+
+// For functions that should throw an error
+getSubmissionSpy.mockRejectedValueOnce(new Error("Database error"));
+```
+
+### Cleaning Up Mocks Between Tests
+
+Always reset your mocks before each test to ensure test isolation:
+
+```typescript
+beforeEach(() => {
+  // Reset all spies before each test
+  executeOperationSpy.mockClear();
+  getSubmissionSpy.mockClear();
+});
+```
 
 ## Implementation Steps
 

@@ -22,6 +22,18 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data # dev persists volumes, so you don't lose your setup
     profiles: ["dev"]
+    
+  # Production-specific postgres config
+  postgres_prod:
+    extends: postgres
+    container_name: postgres_prod
+    environment:
+      POSTGRES_DB: curatedotfun
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    profiles: ["prod"]
 
   # Test-specific postgres config
   postgres_test:
@@ -62,6 +74,18 @@ services:
         condition: service_healthy
     command: sh -c "bun add -g pnpm && pnpm install && pnpm run db:migrate && pnpm run db:seed:test"
     profiles: ["test"]
+    
+  # Production-specific initialization
+  db-init-prod:
+    extends: db-init
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres_prod:5432/curatedotfun
+      NODE_ENV: production
+    depends_on:
+      postgres_prod:
+        condition: service_healthy
+    command: sh -c "bun add -g pnpm && pnpm install && pnpm run db:migrate"
+    profiles: ["prod"]
 
   # Application service
   app:
@@ -69,13 +93,11 @@ services:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      postgres:
+      postgres_prod:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres_dev:5432/curatedotfun
-    volumes:
-      - ./backend:/app/backend
-      - ./frontend:/app/frontend
+      DATABASE_URL: postgresql://postgres:postgres@postgres_prod:5432/curatedotfun
+      NODE_ENV: production
     env_file:
       - ./backend/.env
     ports:
@@ -84,3 +106,4 @@ services:
 
 volumes:
   postgres_data:
+  postgres_data_prod:

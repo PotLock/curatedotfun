@@ -65,8 +65,5 @@ USER app
 # Expose the port
 EXPOSE 3000
 
-# Set secure environment defaults
-ENV NODE_ENV=production
-
 # Start the application
 CMD ["pnpm", "run", "--dir", "backend", "start"]

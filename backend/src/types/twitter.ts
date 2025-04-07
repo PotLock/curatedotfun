@@ -5,7 +5,7 @@ export interface FeedStatus {
   moderationResponseTweetId?: string;
 }
 
-export interface TwitterSubmission {
+export interface Submission {
   tweetId: string;
   userId: string;
   username: string;
@@ -18,9 +18,9 @@ export interface TwitterSubmission {
   submittedAt: Date | null;
   moderationHistory: Moderation[];
   status?: SubmissionStatus;
+  feeds?: SubmissionFeed[];
 }
-
-export interface TwitterSubmissionWithFeedData extends TwitterSubmission {
+export interface SubmissionWithFeedData extends Omit<Submission, "feeds"> {
   status: SubmissionStatus;
   moderationResponseTweetId?: string;
   feedStatuses?: FeedStatus[];

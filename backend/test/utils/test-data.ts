@@ -105,7 +105,6 @@ export function createMockSubmission(overrides = {}) {
     curatorNotes: "",
     createdAt: new Date(),
     moderationHistory: [],
-    // Remove feedId and status as they're not part of TwitterSubmission
     ...overrides,
   };
 }

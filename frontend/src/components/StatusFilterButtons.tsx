@@ -1,8 +1,8 @@
-import { SubmissionStatus, TwitterSubmission } from "../types/twitter";
+import { SubmissionStatus, Submission } from "../types/twitter";
 
 interface StatusFilterButtonsProps {
-  statusFilter: "all" | TwitterSubmission["status"];
-  setStatusFilter: (status: "all" | TwitterSubmission["status"]) => void;
+  statusFilter: "all" | Submission["status"];
+  setStatusFilter: (status: "all" | Submission["status"]) => void;
 }
 
 const StatusFilterButtons = ({
