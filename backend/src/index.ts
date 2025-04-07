@@ -8,7 +8,7 @@ if (isTest) {
 }
 
 import { serve } from "@hono/node-server";
-import { isTest } from "services/config/config.service";
+import { isTest } from "./services/config/config.service";
 import { AppInstance } from "types/app";
 import { createApp } from "./app";
 import { dbConnection } from "./services/db";
