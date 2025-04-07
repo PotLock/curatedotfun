@@ -46,6 +46,7 @@ RUN addgroup -S app && adduser -S app -G app
 COPY --from=builder --chown=app:app /app/backend/dist ./backend/dist
 COPY --from=builder --chown=app:app /app/backend/package.json ./backend/package.json
 COPY --from=builder --chown=app:app /app/backend/drizzle.config.ts ./backend/drizzle.config.ts
+COPY --from=builder --chown=app:app /app/backend/src/services/db/migrations ./backend/src/services/db/migrations
 COPY --from=builder --chown=app:app /app/backend/src/services/db/schema.ts ./backend/src/services/db/schema.ts
 COPY --from=builder --chown=app:app /app/backend/src/services/twitter/schema.ts ./backend/src/services/twitter/schema.ts
 COPY --from=builder --chown=app:app /app/package.json ./
