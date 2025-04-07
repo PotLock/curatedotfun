@@ -579,18 +579,16 @@ export async function getAllSubmissions(
 
 export async function cleanupOldSubmissionCounts(
   db: NodePgDatabase<any>,
-  date: string,
 ): Promise<void> {
   await db
     .delete(submissionCounts)
-    .where(sql`${submissionCounts.lastResetDate} < ${sql.raw(`'${date}'`)}`)
+    .where(sql`${submissionCounts.lastResetDate} < CURRENT_DATE`)
     .execute();
 }
 
 export async function getDailySubmissionCount(
   db: NodePgDatabase<any>,
   userId: string,
-  date: string,
 ): Promise<number> {
   const results = await db
     .select({ count: submissionCounts.count })
@@ -598,7 +596,7 @@ export async function getDailySubmissionCount(
     .where(
       and(
         eq(submissionCounts.userId, userId),
-        eq(submissionCounts.lastResetDate, sql.raw(`'${date}'`)),
+        eq(submissionCounts.lastResetDate, sql`CURRENT_DATE`),
       ),
     );
 
@@ -609,23 +607,21 @@ export async function incrementDailySubmissionCount(
   db: NodePgDatabase<any>,
   userId: string,
 ): Promise<void> {
-  const today = new Date();
-
   await db
     .insert(submissionCounts)
     .values({
       userId,
       count: 1,
-      lastResetDate: today,
+      lastResetDate: sql`CURRENT_DATE`,
     })
     .onConflictDoUpdate({
       target: submissionCounts.userId,
       set: {
         count: sql`CASE 
-          WHEN ${submissionCounts.lastResetDate} < ${sql.raw(`'${today}'`)} THEN 1
+          WHEN ${submissionCounts.lastResetDate} < CURRENT_DATE THEN 1
           ELSE ${submissionCounts.count} + 1
         END`,
-        lastResetDate: today,
+        lastResetDate: sql`CURRENT_DATE`,
       },
     })
     .execute();

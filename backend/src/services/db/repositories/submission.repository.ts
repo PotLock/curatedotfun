@@ -127,23 +127,21 @@ export class SubmissionRepository {
    * @returns The daily submission count
    */
   async getDailySubmissionCount(userId: string): Promise<number> {
-    const today = new Date().toISOString().split("T")[0];
-
     return withDatabaseErrorHandling(
       async () => {
         // Clean up old entries first (write operation)
         await executeOperation(async (db) => {
-          await queries.cleanupOldSubmissionCounts(db, today);
+          await queries.cleanupOldSubmissionCounts(db);
         }, true);
 
         // Then get the count (read operation)
         return await executeOperation(async (db) => {
-          return await queries.getDailySubmissionCount(db, userId, today);
+          return await queries.getDailySubmissionCount(db, userId);
         });
       },
       {
         operationName: "get daily submission count",
-        additionalContext: { userId, date: today },
+        additionalContext: { userId },
       },
       0, // Default to 0 if operation fails
     );

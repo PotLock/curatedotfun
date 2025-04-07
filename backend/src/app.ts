@@ -53,6 +53,10 @@ export async function createApp(): Promise<AppInstance> {
       )
     : null;
 
+  if (submissionService) {
+    submissionService.initialize();
+  }
+
   const context: AppContext = {
     twitterService,
     submissionService,

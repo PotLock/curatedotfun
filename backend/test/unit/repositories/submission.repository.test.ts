@@ -364,7 +364,6 @@ describe("SubmissionRepository", () => {
       expect(getDailySubmissionCountSpy).toHaveBeenCalledWith(
         { mockDb: true },
         userId,
-        expect.any(String),
       );
       expect(result).toEqual(count);
     });

@@ -8,6 +8,13 @@
       "when": 1742922628639,
       "tag": "0000_parallel_magma",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1744050920872,
+      "tag": "0001_fixed_hulk",
+      "breakpoints": true
     }
   ]
 }

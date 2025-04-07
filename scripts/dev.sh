@@ -96,7 +96,8 @@ else
     
     # Run database initialization
     echo "🔄 Initializing database..."
-    docker-compose --profile dev run --rm db-init-dev
+    # Pass the FRESH environment variable to the db-init-dev service
+    docker-compose --profile dev run --rm -e FRESH=$FRESH db-init-dev
     
     # Check if database initialization was successful
     if [ $? -ne 0 ]; then

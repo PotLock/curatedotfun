@@ -367,7 +367,7 @@ export class SubmissionService {
         `${tweet.id}: Successfully processed submission for tweet ${originalTweet.id}`,
       );
     } catch (error) {
-      logger.error(`${tweet.id}: Error while handling submission:`, error);
+      logger.error(error, `${tweet.id}: Error while handling submission`);
     }
   }
 
@@ -495,8 +495,8 @@ export class SubmissionService {
       }
     } catch (error) {
       logger.error(
-        `${submission.tweetId}: Failed to process approved submission:`,
         error,
+        `${submission.tweetId}: Failed to process approved submission`,
       );
     }
   }

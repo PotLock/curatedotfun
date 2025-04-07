@@ -6,6 +6,7 @@ import {
   text,
   timestamp,
   serial,
+  date,
 } from "drizzle-orm/pg-core";
 
 // From exports/plugins
@@ -104,7 +105,7 @@ export const submissionCounts = table(
   {
     userId: text("user_id").primaryKey(),
     count: integer("count").notNull().default(0),
-    lastResetDate: timestamp("last_reset_date").notNull(),
+    lastResetDate: date("last_reset_date").notNull(),
     ...timestamps,
   },
   (table) => [index("submission_counts_date_idx").on(table.lastResetDate)],

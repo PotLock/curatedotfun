@@ -17,13 +17,13 @@ export class ConfigService {
   private configPath: string;
 
   private constructor() {
-    if (isTest) {
+    if (!isProduction) {
       this.configPath = path.resolve(
         process.cwd(),
         "test/curate.config.test.json",
       );
     } else {
-      // Dockerfile or dev
+      // Production environment
       this.configPath = path.resolve(process.cwd(), "../curate.config.json");
     }
 
