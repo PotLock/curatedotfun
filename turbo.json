@@ -28,9 +28,6 @@
     },
     "clean": {
       "cache": false
-    },
-    "db:migrate": {
-      "cache": false
     }
   }
 }
