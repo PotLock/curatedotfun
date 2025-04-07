@@ -200,6 +200,17 @@
 - Seed data scripts
 - Hot-reloading for development
 
+### Database Management
+- Drizzle ORM for type-safe database operations
+- Drizzle Kit for schema migrations
+- Database commands:
+  * `pnpm run db:generate` - Generate migrations from schema changes
+  * `pnpm run db:migrate` - Apply migrations to database
+  * `pnpm run db:check` - Check schema for issues
+  * `pnpm run db:studio` - Launch Drizzle Studio for database management
+  * `pnpm run db:seed:dev` - Seed development database
+  * `pnpm run db:seed:test` - Seed test database
+
 ### Testing Strategy
 - Unit Testing
   * Service tests
