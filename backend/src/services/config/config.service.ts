@@ -23,7 +23,7 @@ export class ConfigService {
         "test/curate.config.test.json",
       );
     } else {
-      // Dockerfile or dev
+      // Production environment
       this.configPath = path.resolve(process.cwd(), "../curate.config.json");
     }
 

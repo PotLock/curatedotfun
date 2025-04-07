@@ -67,13 +67,11 @@ export async function withDatabaseErrorHandling<T>(
     // Extract basic error properties
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
-
     // Extract PostgreSQL-specific error properties if they exist
     const errorDetails: Record<string, any> = {
       message: errorMessage,
       stack: errorStack,
     };
-
     // Handle PostgreSQL errors which often have additional properties
     if (error instanceof Error && typeof error === "object") {
       // Extract common PostgreSQL error properties
@@ -92,18 +90,15 @@ export async function withDatabaseErrorHandling<T>(
         "constraint",
         "severity",
       ];
-
       for (const prop of pgErrorProps) {
         if (prop in error) {
           errorDetails[prop] = (error as any)[prop];
         }
       }
-
       // Check for nested error objects
       if ("original" in error) {
         errorDetails.original = {};
         const original = (error as any).original;
-
         for (const prop of [...pgErrorProps, "message", "stack"]) {
           if (original && prop in original) {
             errorDetails.original[prop] = original[prop];
@@ -111,8 +106,7 @@ export async function withDatabaseErrorHandling<T>(
         }
       }
     }
-
-    logger.error(error, `Failed to ${options.operationName}`);
+    logger.error({ error: errorDetails }, `Failed to ${options.operationName}`);
 
     if (defaultValue !== undefined) {
       return defaultValue;
