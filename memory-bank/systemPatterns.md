@@ -19,11 +19,12 @@
    - DistributionService: Content distribution
    - Database Service: Data persistence with PostgreSQL and Drizzle ORM
    - PluginService: Dynamic plugin management
-   - TwitterService: Twitter API interaction
+   - TwitterService: Twitter API interaction (planned to be extracted as a source plugin)
+   - BaseService: Abstract base class for standardized service behavior (planned)
 
 3. **Plugin System**
    - Source plugins
-     * Twitter (primary content source)
+     * Twitter (primary content source, planned to be extracted from core)
      * Telegram (message monitoring - planned)
      * LinkedIn (planned integration)
    - Distributor plugins
@@ -99,16 +100,33 @@
    - Dependency injection
    - Extensible action handling
 
-4. **Observer Pattern**
+4. **BaseService Pattern (Planned)**
+   - Abstract base class for all services
+   - Standardized error handling with proper typing
+   - Consistent logging patterns
+   - Common utility methods
+   - Lifecycle management (initialize, shutdown)
+   - Health check capabilities
+   - Error recovery strategies
+   - Graceful degradation support
+
+5. **Observer Pattern**
    - Generic content source monitoring
    - Event-driven content processing
    - Configurable action handlers
 
-5. **Pipeline Pattern**
+6. **Pipeline Pattern**
    - Transformation pipeline with global and per-distributor transforms
    - Graceful error handling and recovery
    - Configurable transform chains
    - Type-safe transformation flow
+
+7. **Repository Pattern**
+   - Domain-specific database operations
+   - Abstraction over database implementation
+   - Consistent error handling
+   - Transaction support
+   - Type-safe queries
 
 ## Component Relationships
 
@@ -158,11 +176,30 @@ graph TD
     Type -->|Transform| TransformError[TransformError]
     Type -->|Processor| ProcessorError[ProcessorError]
     Type -->|Plugin| PluginError[PluginError]
+    Type -->|Service| ServiceError[ServiceError]
     TransformError --> Recovery[Error Recovery]
     ProcessorError --> Recovery
     PluginError --> Recovery
+    ServiceError --> Recovery
     Recovery --> Continue[Continue Processing]
     Recovery --> Fallback[Use Fallback]
+```
+
+### BaseService Pattern
+```mermaid
+graph TD
+    BaseService[BaseService] --> Initialize[Initialize]
+    BaseService --> ErrorHandling[Error Handling]
+    BaseService --> Logging[Logging]
+    BaseService --> Shutdown[Shutdown]
+    BaseService --> HealthCheck[Health Check]
+    
+    BaseService --> ConfigService[ConfigService]
+    BaseService --> SubmissionService[SubmissionService]
+    BaseService --> ProcessorService[ProcessorService]
+    BaseService --> DistributionService[DistributionService]
+    BaseService --> TwitterService[TwitterService]
+    BaseService --> PluginService[PluginService]
 ```
 
 ## Key Technical Decisions
@@ -189,7 +226,7 @@ graph TD
    - Hot-reloading capability
 
 4. **Configuration-Driven**
-   - JSON-based configuration
+   - JSON-based configuration (moving to database)
    - Runtime configuration updates
    - Environment variable support
    - Extensible action handling
@@ -201,6 +238,7 @@ graph TD
    - Optimized transformer-distributor flow
    - Comprehensive testing
    - Mock system for plugin validation
+   - BaseService pattern for standardization
 
 6. **Error Handling**
    - Granular error types
@@ -208,6 +246,7 @@ graph TD
    - Error recovery strategies
    - Detailed error logging
    - Error aggregation for multiple failures
+   - Standardized through BaseService
 
 7. **Task Scheduling**
    - Configuration-driven cron jobs
@@ -228,3 +267,10 @@ graph TD
    - Kubernetes configuration
    - Automated CI/CD pipeline
    - Environment-specific configurations
+
+10. **API Standardization**
+    - Consistent route naming (/feeds vs /feed)
+    - Standardized response formats
+    - Proper error handling
+    - Pagination support
+    - Comprehensive documentation

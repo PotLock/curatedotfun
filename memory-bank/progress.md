@@ -74,11 +74,19 @@
   - [x] Database repositories error handling implemented
   - [x] Transaction-based operations for data consistency
   - [ ] Error handling for other services
+  - [ ] BaseService pattern implementation
+  - [ ] Standardized error types and recovery mechanisms
 - [ ] Moving configuration to database
 - [ ] Completing test coverage
   - [x] Tests for database error handling
   - [x] Tests for transaction-based operations
   - [ ] Tests for other services
+- [ ] Technical debt reduction
+  - [ ] Route standardization (/feed vs /feeds)
+  - [ ] API response format standardization
+  - [ ] Twitter service extraction into source plugin
+  - [ ] BaseService implementation for all services
+  - [ ] Consistent error handling across the application
 - [ ] Database protections for Web3Auth
 - [ ] Full migration to repository pattern for database operations
   - [x] Initial reorganization completed
@@ -100,30 +108,43 @@
    - [ ] Design error type hierarchy for other services
    - [ ] Implement error recovery mechanisms for other services
    - [ ] Create user-friendly error messages
+   - [ ] Design and implement BaseService class
+   - [ ] Refactor services to extend BaseService
 
-2. Move configuration to database
-   - Design database schema for configuration
-   - Create migration scripts
-   - Implement configuration service
-   - Add versioning support
-   - Create admin interface
+2. Reduce technical debt
+   - [ ] Standardize route naming conventions (/feed vs /feeds)
+   - [ ] Standardize API response formats
+   - [ ] Extract Twitter service into a source plugin
+   - [ ] Implement BaseService pattern for all services
+   - [ ] Complete repository pattern implementation
 
-3. Complete test coverage
-   - Expand component tests
-   - Add integration tests
-   - Implement E2E tests
-   - Add performance tests
-   - Improve test infrastructure
+3. Move configuration to database
+   - [ ] Design database schema for configuration
+   - [ ] Create migration scripts
+   - [ ] Implement configuration service
+   - [ ] Add versioning support
+   - [ ] Create admin interface
 
-4. Implement database protections for Web3Auth
-   - Integrate Web3Auth
-   - Add database security measures
-   - Implement access control
-   - Add audit logging
-   - Ensure compliance with security best practices
+4. Complete test coverage
+   - [ ] Expand component tests
+   - [ ] Add integration tests
+   - [ ] Implement E2E tests
+   - [ ] Add performance tests
+   - [ ] Improve test infrastructure
+
+5. Implement database protections for Web3Auth
+   - [ ] Integrate Web3Auth
+   - [ ] Add database security measures
+   - [ ] Implement access control
+   - [ ] Add audit logging
+   - [ ] Ensure compliance with security best practices
 
 ## Known Issues
 - None critical - System is stable and operational
+- Route inconsistency between `/feed` and `/feeds` endpoints
+- Inconsistent error handling across services
+- Twitter service tightly coupled with core application
+- Inconsistent API response formats
 - Configuration management needs to be moved to database for better versioning and security
 - Error handling needs to be more comprehensive
 - Test coverage needs to be expanded

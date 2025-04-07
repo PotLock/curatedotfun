@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Focus
-Comprehensive Error Handling, Database Configuration, Test Coverage, and Security Enhancements
+Comprehensive Error Handling, Database Configuration, Test Coverage, Technical Debt Reduction, and Security Enhancements
 
 ### Background
 - Successfully operating with Node.js/Hono backend
@@ -17,6 +17,7 @@ Comprehensive Error Handling, Database Configuration, Test Coverage, and Securit
    - Enhancing error logging and monitoring
    - Creating user-friendly error messages
    - Implementing graceful degradation strategies
+   - Creating a BaseService class for standardized error handling
 
 2. **Moving Configuration to Database**
    - Migrating from JSON-based configuration to database storage
@@ -32,7 +33,14 @@ Comprehensive Error Handling, Database Configuration, Test Coverage, and Securit
    - Improving test infrastructure with Docker
    - Implementing performance testing
 
-4. **Database Security for Web3Auth**
+4. **Technical Debt Reduction**
+   - Standardizing route naming conventions (/feed vs /feeds)
+   - Implementing BaseService pattern for all services
+   - Extracting Twitter service into a source plugin
+   - Standardizing API response formats
+   - Completing repository pattern implementation
+
+5. **Database Security for Web3Auth**
    - Implementing secure authentication with Web3Auth
    - Adding database protections for user data
    - Creating proper access control mechanisms
@@ -48,6 +56,7 @@ Comprehensive Error Handling, Database Configuration, Test Coverage, and Securit
 - **Database security for user authentication**
 - **Test coverage for critical flows**
 - **Configuration management in database**
+- **Technical debt reduction for maintainability**
 
 ## Active Decisions
 
@@ -78,12 +87,18 @@ Comprehensive Error Handling, Database Configuration, Test Coverage, and Securit
    - Containerized application
    - Kubernetes orchestration
    - Environment-specific configurations
+6. **BaseService Pattern**
+   - Standardized error handling
+   - Consistent service lifecycle management
+   - Common utility methods
+   - Improved maintainability
 
 ### Plugin System
 - Runtime module federation for plugins
 - Type-safe plugin configuration
 - Hot-reloading support
 - Standardized interfaces for different plugin types
+- Twitter service to be extracted as a source plugin
 
 ### Content Flow
 - Twitter as primary content source
@@ -97,15 +112,21 @@ Comprehensive Error Handling, Database Configuration, Test Coverage, and Securit
    - ✅ Implemented transaction-based operations for data consistency
    - ✅ Added default values for graceful degradation
    - ✅ Enhanced error logging with context
+   - [ ] Design and implement BaseService pattern
+   - [ ] Standardize error handling across all services
 2. Moving configuration to database
 3. Completing test coverage
    - ✅ Added tests for error handling scenarios
    - ✅ Added tests for transaction-based operations
-4. Adding database protections for Web3Auth
-5. Enhancing monitoring and logging
+4. Reducing technical debt
+   - [ ] Standardize route naming conventions
+   - [ ] Extract Twitter service into a source plugin
+   - [ ] Standardize API response formats
+5. Adding database protections for Web3Auth
+6. Enhancing monitoring and logging
    - ✅ Improved database operation logging
-6. Improving performance and scalability
-7. Migrating to repository pattern for database operations
+7. Improving performance and scalability
+8. Migrating to repository pattern for database operations
    - ✅ Completed initial reorganization
    - ✅ Consolidated duplicate status update logic
    - ✅ Implemented transaction-based operations for related data
@@ -114,16 +135,21 @@ Comprehensive Error Handling, Database Configuration, Test Coverage, and Securit
 
 ## Next Steps
 1. Complete implementation of error handling framework for other services
+   - Design and implement BaseService class
+   - Refactor services to extend BaseService
+   - Standardize error types and recovery mechanisms
 2. Create database schema for configuration storage
 3. Develop migration plan for configuration
-4. Implement Web3Auth integration
-5. Add database security measures
-6. Expand test coverage for critical flows
-7. Further enhance monitoring and logging
-8. Complete full migration to repository pattern
-   - Update remaining service files to use repositories
-   - Remove backward compatibility layer
-   - Add more comprehensive tests for repositories
+4. Standardize route naming conventions (/feed vs /feeds)
+5. Begin extraction of Twitter service into a source plugin
+6. Implement Web3Auth integration
+7. Add database security measures
+8. Expand test coverage for critical flows
+9. Further enhance monitoring and logging
+10. Complete full migration to repository pattern
+    - Update remaining service files to use repositories
+    - Remove backward compatibility layer
+    - Add more comprehensive tests for repositories
 
 ## Validated Solutions
 1. Twitter-based submission and moderation
@@ -134,6 +160,7 @@ Comprehensive Error Handling, Database Configuration, Test Coverage, and Securit
 6. Docker containerization
 7. Railway deployment
 8. JSON sanitization at key points in the transformation pipeline
+9. Repository pattern for database operations
 
 ## Testing Strategy Implementation
 
