@@ -19,6 +19,7 @@
     "clean": "turbo run clean",
     "fmt": "prettier --write '**/*.{js,jsx,ts,tsx,json}'",
     "fmt:check": "prettier --check '**/*.{js,jsx,ts,tsx,json}'",
+    "db:migrate": "turbo run db:migrate --filter=@curatedotfun/backend",
     "prepare": "corepack enable"
   },
   "type": "module"
