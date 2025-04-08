@@ -8,307 +8,307 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from "@tanstack/react-router";
 
 // Import Routes
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as TestImport } from './routes/test'
-import { Route as SettingsImport } from './routes/settings'
-import { Route as LeaderboardImport } from './routes/leaderboard'
-import { Route as IndexImport } from './routes/index'
-import { Route as ProfileIndexImport } from './routes/profile/index'
-import { Route as FeedIndexImport } from './routes/feed/index'
-import { Route as ExploreIndexImport } from './routes/explore/index'
-import { Route as ProfileRootImport } from './routes/profile/_root'
-import { Route as FeedFeedIdImport } from './routes/feed/$feedId'
-import { Route as ExploreRootImport } from './routes/explore/_root'
+import { Route as rootRoute } from "./routes/__root";
+import { Route as TestImport } from "./routes/test";
+import { Route as SettingsImport } from "./routes/settings";
+import { Route as LeaderboardImport } from "./routes/leaderboard";
+import { Route as IndexImport } from "./routes/index";
+import { Route as ProfileIndexImport } from "./routes/profile/index";
+import { Route as FeedIndexImport } from "./routes/feed/index";
+import { Route as ExploreIndexImport } from "./routes/explore/index";
+import { Route as ProfileRootImport } from "./routes/profile/_root";
+import { Route as FeedFeedIdImport } from "./routes/feed/$feedId";
+import { Route as ExploreRootImport } from "./routes/explore/_root";
 
 // Create Virtual Routes
 
-const ProfileImport = createFileRoute('/profile')()
-const ExploreImport = createFileRoute('/explore')()
+const ProfileImport = createFileRoute("/profile")();
+const ExploreImport = createFileRoute("/explore")();
 
 // Create/Update Routes
 
 const ProfileRoute = ProfileImport.update({
-  id: '/profile',
-  path: '/profile',
+  id: "/profile",
+  path: "/profile",
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const ExploreRoute = ExploreImport.update({
-  id: '/explore',
-  path: '/explore',
+  id: "/explore",
+  path: "/explore",
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const TestRoute = TestImport.update({
-  id: '/test',
-  path: '/test',
+  id: "/test",
+  path: "/test",
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const SettingsRoute = SettingsImport.update({
-  id: '/settings',
-  path: '/settings',
+  id: "/settings",
+  path: "/settings",
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const LeaderboardRoute = LeaderboardImport.update({
-  id: '/leaderboard',
-  path: '/leaderboard',
+  id: "/leaderboard",
+  path: "/leaderboard",
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const IndexRoute = IndexImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const ProfileIndexRoute = ProfileIndexImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => ProfileRoute,
-} as any)
+} as any);
 
 const FeedIndexRoute = FeedIndexImport.update({
-  id: '/feed/',
-  path: '/feed/',
+  id: "/feed/",
+  path: "/feed/",
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const ExploreIndexRoute = ExploreIndexImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => ExploreRoute,
-} as any)
+} as any);
 
 const ProfileRootRoute = ProfileRootImport.update({
-  id: '/_root',
+  id: "/_root",
   getParentRoute: () => ProfileRoute,
-} as any)
+} as any);
 
 const FeedFeedIdRoute = FeedFeedIdImport.update({
-  id: '/feed/$feedId',
-  path: '/feed/$feedId',
+  id: "/feed/$feedId",
+  path: "/feed/$feedId",
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const ExploreRootRoute = ExploreRootImport.update({
-  id: '/_root',
+  id: "/_root",
   getParentRoute: () => ExploreRoute,
-} as any)
+} as any);
 
 // Populate the FileRoutesByPath interface
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/leaderboard': {
-      id: '/leaderboard'
-      path: '/leaderboard'
-      fullPath: '/leaderboard'
-      preLoaderRoute: typeof LeaderboardImport
-      parentRoute: typeof rootRoute
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsImport
-      parentRoute: typeof rootRoute
-    }
-    '/test': {
-      id: '/test'
-      path: '/test'
-      fullPath: '/test'
-      preLoaderRoute: typeof TestImport
-      parentRoute: typeof rootRoute
-    }
-    '/explore': {
-      id: '/explore'
-      path: '/explore'
-      fullPath: '/explore'
-      preLoaderRoute: typeof ExploreImport
-      parentRoute: typeof rootRoute
-    }
-    '/explore/_root': {
-      id: '/explore/_root'
-      path: '/explore'
-      fullPath: '/explore'
-      preLoaderRoute: typeof ExploreRootImport
-      parentRoute: typeof ExploreRoute
-    }
-    '/feed/$feedId': {
-      id: '/feed/$feedId'
-      path: '/feed/$feedId'
-      fullPath: '/feed/$feedId'
-      preLoaderRoute: typeof FeedFeedIdImport
-      parentRoute: typeof rootRoute
-    }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileImport
-      parentRoute: typeof rootRoute
-    }
-    '/profile/_root': {
-      id: '/profile/_root'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRootImport
-      parentRoute: typeof ProfileRoute
-    }
-    '/explore/': {
-      id: '/explore/'
-      path: '/'
-      fullPath: '/explore/'
-      preLoaderRoute: typeof ExploreIndexImport
-      parentRoute: typeof ExploreImport
-    }
-    '/feed/': {
-      id: '/feed/'
-      path: '/feed'
-      fullPath: '/feed'
-      preLoaderRoute: typeof FeedIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/profile/': {
-      id: '/profile/'
-      path: '/'
-      fullPath: '/profile/'
-      preLoaderRoute: typeof ProfileIndexImport
-      parentRoute: typeof ProfileImport
-    }
+    "/": {
+      id: "/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof IndexImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/leaderboard": {
+      id: "/leaderboard";
+      path: "/leaderboard";
+      fullPath: "/leaderboard";
+      preLoaderRoute: typeof LeaderboardImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/settings": {
+      id: "/settings";
+      path: "/settings";
+      fullPath: "/settings";
+      preLoaderRoute: typeof SettingsImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/test": {
+      id: "/test";
+      path: "/test";
+      fullPath: "/test";
+      preLoaderRoute: typeof TestImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/explore": {
+      id: "/explore";
+      path: "/explore";
+      fullPath: "/explore";
+      preLoaderRoute: typeof ExploreImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/explore/_root": {
+      id: "/explore/_root";
+      path: "/explore";
+      fullPath: "/explore";
+      preLoaderRoute: typeof ExploreRootImport;
+      parentRoute: typeof ExploreRoute;
+    };
+    "/feed/$feedId": {
+      id: "/feed/$feedId";
+      path: "/feed/$feedId";
+      fullPath: "/feed/$feedId";
+      preLoaderRoute: typeof FeedFeedIdImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/profile": {
+      id: "/profile";
+      path: "/profile";
+      fullPath: "/profile";
+      preLoaderRoute: typeof ProfileImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/profile/_root": {
+      id: "/profile/_root";
+      path: "/profile";
+      fullPath: "/profile";
+      preLoaderRoute: typeof ProfileRootImport;
+      parentRoute: typeof ProfileRoute;
+    };
+    "/explore/": {
+      id: "/explore/";
+      path: "/";
+      fullPath: "/explore/";
+      preLoaderRoute: typeof ExploreIndexImport;
+      parentRoute: typeof ExploreImport;
+    };
+    "/feed/": {
+      id: "/feed/";
+      path: "/feed";
+      fullPath: "/feed";
+      preLoaderRoute: typeof FeedIndexImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/profile/": {
+      id: "/profile/";
+      path: "/";
+      fullPath: "/profile/";
+      preLoaderRoute: typeof ProfileIndexImport;
+      parentRoute: typeof ProfileImport;
+    };
   }
 }
 
 // Create and export the route tree
 
 interface ExploreRouteChildren {
-  ExploreRootRoute: typeof ExploreRootRoute
-  ExploreIndexRoute: typeof ExploreIndexRoute
+  ExploreRootRoute: typeof ExploreRootRoute;
+  ExploreIndexRoute: typeof ExploreIndexRoute;
 }
 
 const ExploreRouteChildren: ExploreRouteChildren = {
   ExploreRootRoute: ExploreRootRoute,
   ExploreIndexRoute: ExploreIndexRoute,
-}
+};
 
 const ExploreRouteWithChildren =
-  ExploreRoute._addFileChildren(ExploreRouteChildren)
+  ExploreRoute._addFileChildren(ExploreRouteChildren);
 
 interface ProfileRouteChildren {
-  ProfileRootRoute: typeof ProfileRootRoute
-  ProfileIndexRoute: typeof ProfileIndexRoute
+  ProfileRootRoute: typeof ProfileRootRoute;
+  ProfileIndexRoute: typeof ProfileIndexRoute;
 }
 
 const ProfileRouteChildren: ProfileRouteChildren = {
   ProfileRootRoute: ProfileRootRoute,
   ProfileIndexRoute: ProfileIndexRoute,
-}
+};
 
 const ProfileRouteWithChildren =
-  ProfileRoute._addFileChildren(ProfileRouteChildren)
+  ProfileRoute._addFileChildren(ProfileRouteChildren);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/leaderboard': typeof LeaderboardRoute
-  '/settings': typeof SettingsRoute
-  '/test': typeof TestRoute
-  '/explore': typeof ExploreRootRoute
-  '/feed/$feedId': typeof FeedFeedIdRoute
-  '/profile': typeof ProfileRootRoute
-  '/explore/': typeof ExploreIndexRoute
-  '/feed': typeof FeedIndexRoute
-  '/profile/': typeof ProfileIndexRoute
+  "/": typeof IndexRoute;
+  "/leaderboard": typeof LeaderboardRoute;
+  "/settings": typeof SettingsRoute;
+  "/test": typeof TestRoute;
+  "/explore": typeof ExploreRootRoute;
+  "/feed/$feedId": typeof FeedFeedIdRoute;
+  "/profile": typeof ProfileRootRoute;
+  "/explore/": typeof ExploreIndexRoute;
+  "/feed": typeof FeedIndexRoute;
+  "/profile/": typeof ProfileIndexRoute;
 }
 
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/leaderboard': typeof LeaderboardRoute
-  '/settings': typeof SettingsRoute
-  '/test': typeof TestRoute
-  '/explore': typeof ExploreIndexRoute
-  '/feed/$feedId': typeof FeedFeedIdRoute
-  '/profile': typeof ProfileIndexRoute
-  '/feed': typeof FeedIndexRoute
+  "/": typeof IndexRoute;
+  "/leaderboard": typeof LeaderboardRoute;
+  "/settings": typeof SettingsRoute;
+  "/test": typeof TestRoute;
+  "/explore": typeof ExploreIndexRoute;
+  "/feed/$feedId": typeof FeedFeedIdRoute;
+  "/profile": typeof ProfileIndexRoute;
+  "/feed": typeof FeedIndexRoute;
 }
 
 export interface FileRoutesById {
-  __root__: typeof rootRoute
-  '/': typeof IndexRoute
-  '/leaderboard': typeof LeaderboardRoute
-  '/settings': typeof SettingsRoute
-  '/test': typeof TestRoute
-  '/explore': typeof ExploreRouteWithChildren
-  '/explore/_root': typeof ExploreRootRoute
-  '/feed/$feedId': typeof FeedFeedIdRoute
-  '/profile': typeof ProfileRouteWithChildren
-  '/profile/_root': typeof ProfileRootRoute
-  '/explore/': typeof ExploreIndexRoute
-  '/feed/': typeof FeedIndexRoute
-  '/profile/': typeof ProfileIndexRoute
+  __root__: typeof rootRoute;
+  "/": typeof IndexRoute;
+  "/leaderboard": typeof LeaderboardRoute;
+  "/settings": typeof SettingsRoute;
+  "/test": typeof TestRoute;
+  "/explore": typeof ExploreRouteWithChildren;
+  "/explore/_root": typeof ExploreRootRoute;
+  "/feed/$feedId": typeof FeedFeedIdRoute;
+  "/profile": typeof ProfileRouteWithChildren;
+  "/profile/_root": typeof ProfileRootRoute;
+  "/explore/": typeof ExploreIndexRoute;
+  "/feed/": typeof FeedIndexRoute;
+  "/profile/": typeof ProfileIndexRoute;
 }
 
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
-    | '/'
-    | '/leaderboard'
-    | '/settings'
-    | '/test'
-    | '/explore'
-    | '/feed/$feedId'
-    | '/profile'
-    | '/explore/'
-    | '/feed'
-    | '/profile/'
-  fileRoutesByTo: FileRoutesByTo
+    | "/"
+    | "/leaderboard"
+    | "/settings"
+    | "/test"
+    | "/explore"
+    | "/feed/$feedId"
+    | "/profile"
+    | "/explore/"
+    | "/feed"
+    | "/profile/";
+  fileRoutesByTo: FileRoutesByTo;
   to:
-    | '/'
-    | '/leaderboard'
-    | '/settings'
-    | '/test'
-    | '/explore'
-    | '/feed/$feedId'
-    | '/profile'
-    | '/feed'
+    | "/"
+    | "/leaderboard"
+    | "/settings"
+    | "/test"
+    | "/explore"
+    | "/feed/$feedId"
+    | "/profile"
+    | "/feed";
   id:
-    | '__root__'
-    | '/'
-    | '/leaderboard'
-    | '/settings'
-    | '/test'
-    | '/explore'
-    | '/explore/_root'
-    | '/feed/$feedId'
-    | '/profile'
-    | '/profile/_root'
-    | '/explore/'
-    | '/feed/'
-    | '/profile/'
-  fileRoutesById: FileRoutesById
+    | "__root__"
+    | "/"
+    | "/leaderboard"
+    | "/settings"
+    | "/test"
+    | "/explore"
+    | "/explore/_root"
+    | "/feed/$feedId"
+    | "/profile"
+    | "/profile/_root"
+    | "/explore/"
+    | "/feed/"
+    | "/profile/";
+  fileRoutesById: FileRoutesById;
 }
 
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  LeaderboardRoute: typeof LeaderboardRoute
-  SettingsRoute: typeof SettingsRoute
-  TestRoute: typeof TestRoute
-  ExploreRoute: typeof ExploreRouteWithChildren
-  FeedFeedIdRoute: typeof FeedFeedIdRoute
-  ProfileRoute: typeof ProfileRouteWithChildren
-  FeedIndexRoute: typeof FeedIndexRoute
+  IndexRoute: typeof IndexRoute;
+  LeaderboardRoute: typeof LeaderboardRoute;
+  SettingsRoute: typeof SettingsRoute;
+  TestRoute: typeof TestRoute;
+  ExploreRoute: typeof ExploreRouteWithChildren;
+  FeedFeedIdRoute: typeof FeedFeedIdRoute;
+  ProfileRoute: typeof ProfileRouteWithChildren;
+  FeedIndexRoute: typeof FeedIndexRoute;
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -320,11 +320,11 @@ const rootRouteChildren: RootRouteChildren = {
   FeedFeedIdRoute: FeedFeedIdRoute,
   ProfileRoute: ProfileRouteWithChildren,
   FeedIndexRoute: FeedIndexRoute,
-}
+};
 
 export const routeTree = rootRoute
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
 
 /* ROUTE_MANIFEST_START
 {
