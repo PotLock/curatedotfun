@@ -29,6 +29,7 @@ export async function upsertFeeds(
           name: feed.name,
           description: feed.description,
           createdAt: new Date(),
+          updatedAt: new Date(),
         })
         .onConflictDoUpdate({
           target: feeds.id,
@@ -74,6 +75,9 @@ export async function saveSubmissionToFeed(
       submissionId,
       feedId,
       status,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      moderationResponseTweetId: null,
     })
     .onConflictDoNothing()
     .execute();
@@ -613,6 +617,8 @@ export async function incrementDailySubmissionCount(
       userId,
       count: 1,
       lastResetDate: sql`CURRENT_DATE`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     })
     .onConflictDoUpdate({
       target: submissionCounts.userId,
@@ -690,124 +696,117 @@ export async function getLeaderboard(
   db: NodePgDatabase<any>,
   timeRange: string = "all",
 ): Promise<LeaderboardEntry[]> {
-  // Calculate date range based on timeRange
-  let dateFilter = "";
-  const now = new Date();
+  // Use PostgreSQL's date functions for more efficient filtering
+  let dateCondition;
 
-  if (timeRange === "month") {
-    // First day of current month
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    dateFilter = `AND s.created_at >= '${firstDayOfMonth.toISOString()}'`;
-  } else if (timeRange === "week") {
-    // Start of current week (Sunday)
-    const firstDayOfWeek = new Date(now);
-    const day = now.getDay(); // 0 for Sunday, 1 for Monday, etc.
-    firstDayOfWeek.setDate(now.getDate() - day);
-    firstDayOfWeek.setHours(0, 0, 0, 0);
-    dateFilter = `AND s.created_at >= '${firstDayOfWeek.toISOString()}'`;
-  } else if (timeRange === "today") {
-    // Start of today
-    const startOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-    );
-    dateFilter = `AND s.created_at >= '${startOfDay.toISOString()}'`;
+  switch (timeRange) {
+    case "month":
+      // First day of current month using PostgreSQL's date_trunc
+      dateCondition = sql`AND s.created_at >= date_trunc('month', CURRENT_DATE)`;
+      break;
+    case "week":
+      // Start of current week (Sunday) using PostgreSQL's date_trunc
+      dateCondition = sql`AND s.created_at >= date_trunc('week', CURRENT_DATE)`;
+      break;
+    case "today":
+      // Start of today using PostgreSQL's date_trunc
+      dateCondition = sql`AND s.created_at >= date_trunc('day', CURRENT_DATE)`;
+      break;
+    default:
+      // No date filter for "all"
+      dateCondition = sql``;
+      break;
   }
 
-  interface CuratorRow {
-    curatorId: string;
-    curatorUsername: string;
-    submissionCount: number;
-    approvalCount: number;
-    rejectionCount: number;
-  }
-
-  const curatorsResult = await db.execute(sql`
-    SELECT 
-      s.curator_id AS curatorId,
-      s.curator_username AS curatorUsername,
-      COUNT(DISTINCT s.tweet_id) AS submissionCount,
-      COUNT(DISTINCT CASE WHEN mh.action = 'approve' THEN s.tweet_id END) AS approvalCount,
-      COUNT(DISTINCT CASE WHEN mh.action = 'reject' THEN s.tweet_id END) AS rejectionCount
-    FROM 
-      submissions s
-    LEFT JOIN 
-      moderation_history mh ON s.tweet_id = mh.tweet_id
-    WHERE 
-      1=1 ${sql.raw(dateFilter)}
-    GROUP BY 
-      s.curator_id, s.curator_username
-    ORDER BY 
-      submissioncount DESC
-  `);
-
-  const curators = curatorsResult.rows.map((row: any) => ({
-    curatorId: String(row.curatorId),
-    curatorUsername: String(row.curatorUsername),
-    submissionCount: Number(row.submissionCount),
-    approvalCount: Number(row.approvalCount),
-    rejectionCount: Number(row.rejectionCount),
-  }));
-
-  // Get total submissions per feed
-  const feedTotalsResult = await db.execute(sql`
-    SELECT 
-      feed_id AS feedid,
-      COUNT(DISTINCT submission_id) AS totalcount
-    FROM 
-      submission_feeds
-    GROUP BY 
-      feed_id
-  `);
-
-  // Create a map for quick lookup of feed totals
-  const feedTotalsMap = new Map<string, number>();
-  for (const row of feedTotalsResult.rows) {
-    feedTotalsMap.set(String(row.feedid), Number(row.totalcount));
-  }
-
-  // For each curator, get their submissions per feed
-  const result: LeaderboardEntry[] = [];
-
-  for (const curator of curators) {
-    const curatorFeedsResult = await db.execute(sql`
+  // Use a single query with Common Table Expressions (CTEs) for better performance
+  const result = await db.execute(sql`
+    WITH feed_totals AS (
+      -- Get total submissions per feed
       SELECT 
+        feed_id AS feedid,
+        COUNT(DISTINCT submission_id) AS totalcount
+      FROM 
+        submission_feeds
+      GROUP BY 
+        feed_id
+    ),
+    curator_stats AS (
+      -- Get curator statistics
+      SELECT 
+        s.curator_id AS curatorid,
+        s.curator_username AS curatorusername,
+        COUNT(DISTINCT s.tweet_id) AS submissioncount,
+        COUNT(DISTINCT CASE WHEN mh.action = 'approve' THEN s.tweet_id END) AS approvalcount,
+        COUNT(DISTINCT CASE WHEN mh.action = 'reject' THEN s.tweet_id END) AS rejectioncount
+      FROM 
+        submissions s
+      LEFT JOIN 
+        moderation_history mh ON s.tweet_id = mh.tweet_id
+      WHERE 
+        1=1 ${dateCondition}
+      GROUP BY 
+        s.curator_id, s.curator_username
+    ),
+    curator_feeds AS (
+      -- Get feed submissions per curator
+      SELECT 
+        s.curator_id AS curatorid,
         sf.feed_id AS feedid,
-        COUNT(DISTINCT sf.submission_id) AS count
+        COUNT(DISTINCT sf.submission_id) AS count,
+        ft.totalcount
       FROM 
         submission_feeds sf
       JOIN 
         submissions s ON sf.submission_id = s.tweet_id
+      JOIN 
+        feed_totals ft ON sf.feed_id = ft.feedid
       WHERE 
-        s.curator_id = ${curator.curatorId}
+        1=1 ${dateCondition}
       GROUP BY 
-        sf.feed_id
-    `);
+        s.curator_id, sf.feed_id, ft.totalcount
+    )
+    -- Combine all data with JSON aggregation
+    SELECT 
+      cs.curatorid,
+      cs.curatorusername,
+      cs.submissioncount,
+      cs.approvalcount,
+      cs.rejectioncount,
+      COALESCE(
+        json_agg(
+          json_build_object(
+            'feedId', cf.feedid, 
+            'count', cf.count, 
+            'totalInFeed', cf.totalcount
+          ) ORDER BY cf.count DESC
+        ) FILTER (WHERE cf.feedid IS NOT NULL),
+        '[]'
+      ) AS feedsubmissions
+    FROM 
+      curator_stats cs
+    LEFT JOIN 
+      curator_feeds cf ON cs.curatorid = cf.curatorid
+    GROUP BY 
+      cs.curatorid, cs.curatorusername, cs.submissioncount, cs.approvalcount, cs.rejectioncount
+    ORDER BY 
+      cs.submissioncount DESC
+  `);
 
-    // Convert to FeedSubmissionCount array with total counts
-    const feedSubmissions: FeedSubmissionCount[] = curatorFeedsResult.rows.map(
-      (row) => ({
-        feedId: String(row.feedid),
-        count: Number(row.count),
-        totalInFeed: feedTotalsMap.get(String(row.feedid)) || 0,
-      }),
-    );
-
-    // Sort by count (highest first)
-    feedSubmissions.sort((a, b) => b.count - a.count);
-
-    result.push({
-      curatorId: curator.curatorId,
-      curatorUsername: curator.curatorUsername,
-      submissionCount: curator.submissionCount,
-      approvalCount: curator.approvalCount,
-      rejectionCount: curator.rejectionCount,
-      feedSubmissions,
-    });
-  }
-
-  return result;
+  // Map the results to the expected format
+  return result.rows.map((row: any) => ({
+    curatorId: String(row.curatorid),
+    curatorUsername: String(row.curatorusername),
+    submissionCount: Number(row.submissioncount),
+    approvalCount: Number(row.approvalcount),
+    rejectionCount: Number(row.rejectioncount),
+    feedSubmissions: Array.isArray(row.feedsubmissions)
+      ? row.feedsubmissions.map((fs: any) => ({
+          feedId: String(fs.feedId),
+          count: Number(fs.count),
+          totalInFeed: Number(fs.totalInFeed),
+        }))
+      : [],
+  }));
 }
 
 export async function getSubmissionsByFeed(

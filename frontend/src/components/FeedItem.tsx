@@ -8,9 +8,7 @@ import { getTweetUrl, handleApprove, handleReject } from "../lib/twitter";
 import { useBotId } from "../lib/config";
 import { useState, useRef, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleString();
-};
+import { formatDate } from "../utils/datetime";
 
 // Reusable Components
 const UserLink = ({ username }: { username: string }) => (
