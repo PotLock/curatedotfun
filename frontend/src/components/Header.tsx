@@ -78,7 +78,7 @@ const Header = () => {
             <Link to="/leaderboard">
               <Button variant={"ghost"}>Leaderboard</Button>
             </Link>
-            <Link to="/test">
+            <Link to="/create-feed">
               <Button variant={"ghost"}>Submit Content</Button>
             </Link>
           </div>
@@ -159,7 +159,7 @@ const Header = () => {
                 </Button>
               </Link>
               <Link
-                to="/test"
+                to="/create-feed"
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full"
               >

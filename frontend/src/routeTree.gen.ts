@@ -19,6 +19,7 @@ import { Route as LeaderboardImport } from "./routes/leaderboard";
 import { Route as IndexImport } from "./routes/index";
 import { Route as FeedIndexImport } from "./routes/feed/index";
 import { Route as ExploreIndexImport } from "./routes/explore/index";
+import { Route as CreateFeedIndexImport } from "./routes/create-feed/index";
 import { Route as FeedFeedIdImport } from "./routes/feed/$feedId";
 import { Route as ExploreRootImport } from "./routes/explore/_root";
 
@@ -68,6 +69,12 @@ const ExploreIndexRoute = ExploreIndexImport.update({
   id: "/",
   path: "/",
   getParentRoute: () => ExploreRoute,
+} as any);
+
+const CreateFeedIndexRoute = CreateFeedIndexImport.update({
+  id: "/create-feed/",
+  path: "/create-feed/",
+  getParentRoute: () => rootRoute,
 } as any);
 
 const FeedFeedIdRoute = FeedFeedIdImport.update({
@@ -134,6 +141,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof FeedFeedIdImport;
       parentRoute: typeof rootRoute;
     };
+    "/create-feed/": {
+      id: "/create-feed/";
+      path: "/create-feed";
+      fullPath: "/create-feed";
+      preLoaderRoute: typeof CreateFeedIndexImport;
+      parentRoute: typeof rootRoute;
+    };
     "/explore/": {
       id: "/explore/";
       path: "/";
@@ -173,6 +187,7 @@ export interface FileRoutesByFullPath {
   "/test": typeof TestRoute;
   "/explore": typeof ExploreRootRoute;
   "/feed/$feedId": typeof FeedFeedIdRoute;
+  "/create-feed": typeof CreateFeedIndexRoute;
   "/explore/": typeof ExploreIndexRoute;
   "/feed": typeof FeedIndexRoute;
 }
@@ -184,6 +199,7 @@ export interface FileRoutesByTo {
   "/test": typeof TestRoute;
   "/explore": typeof ExploreIndexRoute;
   "/feed/$feedId": typeof FeedFeedIdRoute;
+  "/create-feed": typeof CreateFeedIndexRoute;
   "/feed": typeof FeedIndexRoute;
 }
 
@@ -196,6 +212,7 @@ export interface FileRoutesById {
   "/explore": typeof ExploreRouteWithChildren;
   "/explore/_root": typeof ExploreRootRoute;
   "/feed/$feedId": typeof FeedFeedIdRoute;
+  "/create-feed/": typeof CreateFeedIndexRoute;
   "/explore/": typeof ExploreIndexRoute;
   "/feed/": typeof FeedIndexRoute;
 }
@@ -209,6 +226,7 @@ export interface FileRouteTypes {
     | "/test"
     | "/explore"
     | "/feed/$feedId"
+    | "/create-feed"
     | "/explore/"
     | "/feed";
   fileRoutesByTo: FileRoutesByTo;
@@ -219,6 +237,7 @@ export interface FileRouteTypes {
     | "/test"
     | "/explore"
     | "/feed/$feedId"
+    | "/create-feed"
     | "/feed";
   id:
     | "__root__"
@@ -229,6 +248,7 @@ export interface FileRouteTypes {
     | "/explore"
     | "/explore/_root"
     | "/feed/$feedId"
+    | "/create-feed/"
     | "/explore/"
     | "/feed/";
   fileRoutesById: FileRoutesById;
@@ -241,6 +261,7 @@ export interface RootRouteChildren {
   TestRoute: typeof TestRoute;
   ExploreRoute: typeof ExploreRouteWithChildren;
   FeedFeedIdRoute: typeof FeedFeedIdRoute;
+  CreateFeedIndexRoute: typeof CreateFeedIndexRoute;
   FeedIndexRoute: typeof FeedIndexRoute;
 }
 
@@ -251,6 +272,7 @@ const rootRouteChildren: RootRouteChildren = {
   TestRoute: TestRoute,
   ExploreRoute: ExploreRouteWithChildren,
   FeedFeedIdRoute: FeedFeedIdRoute,
+  CreateFeedIndexRoute: CreateFeedIndexRoute,
   FeedIndexRoute: FeedIndexRoute,
 };
 
@@ -270,6 +292,7 @@ export const routeTree = rootRoute
         "/test",
         "/explore",
         "/feed/$feedId",
+        "/create-feed/",
         "/feed/"
       ]
     },
@@ -298,6 +321,9 @@ export const routeTree = rootRoute
     },
     "/feed/$feedId": {
       "filePath": "feed/$feedId.tsx"
+    },
+    "/create-feed/": {
+      "filePath": "create-feed/index.tsx"
     },
     "/explore/": {
       "filePath": "explore/index.tsx",
