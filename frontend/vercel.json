@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "https://curatedotfun-floral-sun-1539.fly.dev/$1"
+      "destination": "https://curatedotfun-production.up.railway.app/feed/$1"
     }
   ]
 }
