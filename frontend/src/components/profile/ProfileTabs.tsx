@@ -9,6 +9,8 @@ import {
 import { ProfileOverview } from "./overview";
 import { ProfileContent } from "./content";
 import { MyFeeds } from "./my-feeds";
+import { ProfilePoints } from "./points";
+import { ProfileActivity } from "./activity";
 
 // Tab data structure
 const TABS = [
@@ -34,13 +36,13 @@ const TABS = [
     value: "points",
     label: "Points",
     icon: Award,
-    component: () => <p>Points</p>,
+    component: ProfilePoints,
   },
   {
     value: "activity",
     label: "Activity",
     icon: Activity,
-    component: () => <p>Activity</p>,
+    component: ProfileActivity,
   },
 ];
 
