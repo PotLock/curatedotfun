@@ -586,7 +586,7 @@ export async function cleanupOldSubmissionCounts(
 ): Promise<void> {
   await db
     .delete(submissionCounts)
-    .where(sql`${submissionCounts.lastResetDate} < CURRENT_DATE`)
+    .where(sql`${submissionCounts.lastResetDate}::date < CURRENT_DATE`)
     .execute();
 }
 
@@ -600,7 +600,7 @@ export async function getDailySubmissionCount(
     .where(
       and(
         eq(submissionCounts.userId, userId),
-        eq(submissionCounts.lastResetDate, sql`CURRENT_DATE`),
+        eq(sql`${submissionCounts.lastResetDate}::date`, sql`CURRENT_DATE`),
       ),
     );
 
@@ -624,7 +624,7 @@ export async function incrementDailySubmissionCount(
       target: submissionCounts.userId,
       set: {
         count: sql`CASE 
-          WHEN ${submissionCounts.lastResetDate} < CURRENT_DATE THEN 1
+          WHEN ${submissionCounts.lastResetDate}::date < CURRENT_DATE THEN 1
           ELSE ${submissionCounts.count} + 1
         END`,
         lastResetDate: sql`CURRENT_DATE`,
