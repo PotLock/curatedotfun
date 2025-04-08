@@ -217,7 +217,7 @@ export async function getSubmissionByCuratorTweetId(
         curatorId: submissions.curatorId,
         curatorUsername: submissions.curatorUsername,
         curatorTweetId: submissions.curatorTweetId,
-        createdAt: submissions.createdAt,
+        createdAt: sql<string>`${submissions.createdAt}::text`,
         submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
       },
       m: {
@@ -296,7 +296,7 @@ export async function getSubmission(
         curatorId: submissions.curatorId,
         curatorUsername: submissions.curatorUsername,
         curatorTweetId: submissions.curatorTweetId,
-        createdAt: submissions.createdAt,
+        createdAt: sql<string>`${submissions.createdAt}::text`,
         submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
       },
       m: {
@@ -377,7 +377,7 @@ export async function getAllSubmissions(
             curatorId: submissions.curatorId,
             curatorUsername: submissions.curatorUsername,
             curatorTweetId: submissions.curatorTweetId,
-            createdAt: submissions.createdAt,
+            createdAt: sql<string>`${submissions.createdAt}::text`,
             submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
           },
           m: {
@@ -424,7 +424,7 @@ export async function getAllSubmissions(
             curatorId: submissions.curatorId,
             curatorUsername: submissions.curatorUsername,
             curatorTweetId: submissions.curatorTweetId,
-            createdAt: submissions.createdAt,
+            createdAt: sql<string>`${submissions.createdAt}::text`,
             submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
           },
           m: {
@@ -824,7 +824,7 @@ export async function getSubmissionsByFeed(
         curatorId: submissions.curatorId,
         curatorUsername: submissions.curatorUsername,
         curatorTweetId: submissions.curatorTweetId,
-        createdAt: submissions.createdAt,
+        createdAt: sql<string>`${submissions.createdAt}::text`,
         submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
       },
       sf: {
