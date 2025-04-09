@@ -68,15 +68,17 @@ export default function CurationFormSteps() {
           ))}
         </div>
       </div>
-      <div className=" border p-6 rounded-lg flex flex-col gap-8">
-        <div className="flex flex-col gap-1 w-full">
-          <h2 className="text-2xl font-bold mb-2">
-            {steps[currentStep].title}
-          </h2>
-          <p className="text-sm text-[#64748B] mb-6">
-            {steps[currentStep].description}
-          </p>
-        </div>
+      <div className="border p-6 rounded-lg flex flex-col gap-8">
+        {currentStep === 0 && (
+          <div className="flex flex-col gap-1 w-full">
+            <h2 className="text-2xl font-bold mb-2">
+              {steps[currentStep].title}
+            </h2>
+            <p className="text-sm text-[#64748B] mb-6">
+              {steps[currentStep].description}
+            </p>
+          </div>
+        )}
 
         {/* Step form content */}
         <div className="">{steps[currentStep].component}</div>
