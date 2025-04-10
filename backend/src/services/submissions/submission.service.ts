@@ -199,16 +199,6 @@ export class SubmissionService {
         ),
       );
 
-      // If no feeds specified, reject submission
-      if (feedIds.length === 0) {
-        // await this.twitterService.replyToTweet(
-        //   tweet.id,
-        //   `Please specify at least one valid feed using hashtags (e.g. #grants, #ethereum, #near)`,
-        // );
-        logger.error(`${tweet.id}: Provided invalid feeds, ${feedIds}`);
-        return;
-      }
-
       // Fetch original tweet
       const originalTweet = await this.twitterService.getTweet(inReplyToId);
       if (!originalTweet) {
@@ -270,7 +260,7 @@ export class SubmissionService {
       }
 
       // Process each feed
-      for (const feedId of feedIds) {
+      for (const feedId of [...feedIds, "all"]) {
         const lowercaseFeedId = feedId.toLowerCase();
         const feed = this.config.feeds.find(
           (f: { id: string }) => f.id.toLowerCase() === lowercaseFeedId,
