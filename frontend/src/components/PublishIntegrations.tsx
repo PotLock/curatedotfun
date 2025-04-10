@@ -4,11 +4,11 @@ import { Button } from "./ui/button";
 
 export default function PublishingIntegrations() {
   const [telegramEnabled, setTelegramEnabled] = useState(false);
-
+  const [threadId, setThreadId] = useState("");
   return (
     <div className="border border-gray-200 rounded-lg ">
-      <div className="flex items-center justify-between p-4 bg-blue-50">
-        <div className="flex items-center gap-3 ">
+      <div className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-blue-50 gap-4 md:gap-0">
+        <div className="flex flex-col md:flex-row md:items-center gap-3">
           <div className="p-2 rounded-lg">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -40,13 +40,13 @@ export default function PublishingIntegrations() {
               </defs>
             </svg>
           </div>
-          <div>
+          <div className="flex-1">
             <p className="text-lg font-semibold font-">Telegram</p>
             <p className="text-sm text-gray-500">
               Publish Content to Telegram channels or groups
             </p>
           </div>
-          <div className="px-3 py-2 flex gap-[4px] bg-white border font-sans border-neutral-600 rounded-md text-sm font-medium">
+          <div className="px-3 py-2 flex gap-[4px] bg-white border font-sans border-neutral-600 rounded-md text-sm font-medium self-start md:self-auto">
             <div>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -73,7 +73,7 @@ export default function PublishingIntegrations() {
             150 $CURATE
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 self-end md:self-auto">
           <Switch
             checked={telegramEnabled}
             onCheckedChange={setTelegramEnabled}
@@ -82,12 +82,12 @@ export default function PublishingIntegrations() {
       </div>
       <div className=" ">
         {telegramEnabled && (
-          <div className=" space-y-6 border-t pt-6 p-4 bg-white">
+          <div className="space-y-4 md:space-y-6 border-t pt-4 md:pt-6 p-4 bg-white">
             <div className="space-y-2">
               <label className="text-sm font-medium">Bot Token</label>
               <input
                 type="text"
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full p-2 border border-gray-300 rounded-md text-sm md:text-base"
                 placeholder="Enter your bot token"
               />
               <p className="text-xs text-gray-500">
@@ -99,7 +99,7 @@ export default function PublishingIntegrations() {
               <label className="text-sm font-medium">Channel ID</label>
               <input
                 type="text"
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full p-2 border border-gray-300 rounded-md text-sm md:text-base"
                 placeholder="Enter channel username or ID"
               />
               <p className="text-xs text-gray-500">
@@ -113,19 +113,22 @@ export default function PublishingIntegrations() {
               </label>
               <input
                 type="text"
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full p-2 border border-gray-300 rounded-md text-sm md:text-base"
                 placeholder="Enter thread ID if applicable"
+                value={threadId}
+                onChange={(e) => setThreadId(e.target.value)}
               />
             </div>
 
-            <div className="flex justify-between pt-4">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-0 md:justify-between pt-4">
               <Button
                 variant="outline"
                 onClick={() => setTelegramEnabled(false)}
+                className="order-2 md:order-1"
               >
                 Close
               </Button>
-              <Button>Save</Button>
+              <Button className="order-1 md:order-2">Save</Button>
             </div>
           </div>
         )}

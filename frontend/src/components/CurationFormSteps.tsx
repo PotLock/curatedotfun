@@ -50,17 +50,20 @@ export default function CurationFormSteps() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto py-8">
+    <div className="w-full md:max-w-4xl mx-auto py-4 md:py-8 px-4 md:px-0">
       <div className="flex flex-col gap-1">
         <div className="text-sm font-medium text-black">
           Step {currentStep + 1} of {steps.length}
         </div>
         <Progress value={progressValue} />
-        <div className="flex justify-between mb-6">
+        <div className="flex justify-between mb-6 overflow-x-auto pb-2">
           {steps.map((step, index) => (
-            <div key={index} className="flex flex-col items-center">
+            <div
+              key={index}
+              className="flex flex-col items-center min-w-[100px] px-2"
+            >
               <span
-                className={`text-sm ${index === currentStep ? "font-bold" : ""}`}
+                className={`text-sm text-center ${index === currentStep ? "font-bold" : ""}`}
               >
                 {step.title}
               </span>
@@ -68,13 +71,13 @@ export default function CurationFormSteps() {
           ))}
         </div>
       </div>
-      <div className="border p-6 rounded-lg flex flex-col gap-8">
+      <div className="border p-3 md:p-6 rounded-lg flex flex-col gap-4 md:gap-8">
         {currentStep === 0 && (
           <div className="flex flex-col gap-1 w-full">
-            <h2 className="text-2xl font-bold mb-2">
+            <h2 className="text-xl md:text-2xl font-bold mb-2">
               {steps[currentStep].title}
             </h2>
-            <p className="text-sm text-[#64748B] mb-6">
+            <p className="text-sm text-[#64748B] mb-3 md:mb-6">
               {steps[currentStep].description}
             </p>
           </div>
@@ -87,6 +90,7 @@ export default function CurationFormSteps() {
             variant="outline"
             onClick={handlePrevious}
             disabled={currentStep === 0}
+            className="text-sm md:text-base"
           >
             Previous
           </Button>
@@ -94,13 +98,12 @@ export default function CurationFormSteps() {
           <Button
             onClick={handleNext}
             disabled={currentStep === steps.length - 1}
+            className="text-sm md:text-base"
           >
             Next
           </Button>
         </div>
       </div>
-
-      {/* Navigation buttons */}
     </div>
   );
 }

@@ -12,16 +12,18 @@ const StepHeader = ({
   title: string;
   description: string;
 }) => (
-  <div className="flex items-start flex-col gap-3">
-    <div className="flex gap-3 items-center">
-      <div className="flex-1 text-[#737373] text-base leading-6 font-londrina border border-neutral-500 rounded-md py-1 px-3 max-w-fit">
+  <div className="flex items-start flex-col gap-2 md:gap-3">
+    <div className="flex gap-2 md:gap-3 items-center">
+      <div className="flex-1 text-[#737373] text-sm md:text-base leading-6 font-londrina border border-neutral-500 rounded-md py-1 px-2 md:px-3 max-w-fit">
         {number}
       </div>
-      <h2 className="text-2xl leading-7 font-medium font-londrina text-[#737373]">
+      <h2 className="text-xl md:text-2xl leading-7 font-medium font-londrina text-[#737373]">
         {title}
       </h2>
     </div>
-    <p className="text-sm leading-7 text-[#64748b]">{description}</p>
+    <p className="text-xs md:text-sm leading-5 md:leading-7 text-[#64748b]">
+      {description}
+    </p>
   </div>
 );
 
@@ -65,15 +67,15 @@ const steps: Step[] = [
 // Fixed function name (was CurationFormSteps)
 export default function CurationSettingsForm() {
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-4 md:gap-8">
       {steps.map((step) => (
-        <div className="flex flex-col gap-5" key={step.id}>
+        <div className="flex flex-col gap-3 md:gap-5" key={step.id}>
           <StepHeader
             number={step.id}
             title={step.title}
             description={step.description}
           />
-          <div>{step.component}</div>
+          <div className="overflow-x-auto">{step.component}</div>
         </div>
       ))}
     </div>

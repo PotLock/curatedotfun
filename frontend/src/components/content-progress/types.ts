@@ -13,3 +13,10 @@ export interface Step {
   icon: ReactNode;
   content: ReactNode;
 }
+
+export interface TemplateElement {
+  id: string;
+  title: string;
+  description: string;
+  template: string;
+}

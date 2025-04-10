@@ -1,13 +1,7 @@
 import React from "react";
 import { Map, Newspaper, Sparkles } from "lucide-react";
-
+import { TemplateElement } from "./types";
 // Define the TemplateElement interface if it's missing from the types file
-export interface TemplateElement {
-  id: string;
-  title: string;
-  description: string;
-  template: string;
-}
 
 // Template elements data
 export const templateElements: TemplateElement[] = [

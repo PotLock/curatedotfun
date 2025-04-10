@@ -100,7 +100,7 @@ export default function ContentProgress() {
         ),
       },
       {
-        ...stepDefinitions[0],
+        ...stepDefinitions[1],
         content: (
           <Tabs
             defaultValue="visual"
@@ -152,7 +152,9 @@ export default function ContentProgress() {
 
   return (
     <div
-      className={`${!showSteps ? "py-14 px-64 bg-gray-50" : "p-0 bg-white"}`}
+      // className={`${!showSteps ? "py-14 px-64 bg-gray-50" : "p-0 bg-white"}`}
+
+      className={` ${!showSteps ? "py-14 px-8 md:px-16 lg:px-32 xl:px-64 bg-gray-50" : "p-0 bg-white"}`}
     >
       {!showSteps ? (
         <EmptyState onAddFirstStep={handleButtonClick} />

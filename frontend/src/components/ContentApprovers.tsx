@@ -12,6 +12,12 @@ export default function ContentApprovers() {
     setApprovers(approvers.filter((approver) => approver.id !== id));
   };
 
+  const handleAddApprover = () => {
+    const newId =
+      approvers.length > 0 ? Math.max(...approvers.map((a) => a.id)) + 1 : 1;
+    setApprovers([...approvers, { id: newId, name: "", handle: "" }]);
+  };
+
   return (
     <div className="border border-gray-200 rounded-md p-4">
       <div className="flex justify-between items-start mb-4">
@@ -21,7 +27,12 @@ export default function ContentApprovers() {
             Generate Twitter threads from curated content
           </p>
         </div>
-        <Button variant="outline" size="sm" className="flex items-center gap-1">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleAddApprover}
+          className="flex items-center gap-1"
+        >
           <Plus size={16} />
           Add Approver
         </Button>
