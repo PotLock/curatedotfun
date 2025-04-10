@@ -100,11 +100,42 @@ export default function ContentProgress() {
         ),
       },
       {
-        ...stepDefinitions[1],
+        ...stepDefinitions[0],
         content: (
-          <div className="py-4 px-2 text-gray-500">
-            Advanced mapping configuration will go here
-          </div>
+          <Tabs
+            defaultValue="visual"
+            className="w-full mt-4"
+            value={activeTab}
+            onValueChange={setActiveTab}
+          >
+            <TabsList className="mb-4 w-full bg-[#F1F5F9]">
+              <TabsTrigger
+                value="visual"
+                className="flex items-center gap-2 w-full bg-[#F1F5F9]"
+              >
+                Visual Editor
+              </TabsTrigger>
+              <TabsTrigger
+                value="json"
+                className="flex items-center gap-2 w-full"
+              >
+                JSON Editor
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="visual">
+              <VisualEditor
+                selectedElements={selectedElements}
+                onElementToggle={handleElementToggle}
+                onSwitchToJson={switchToJsonEditor}
+              />
+            </TabsContent>
+            <TabsContent value="json">
+              <JsonEditor
+                jsonContent={jsonContent}
+                onContentChange={setJsonContent}
+              />
+            </TabsContent>
+          </Tabs>
         ),
       },
       {

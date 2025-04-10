@@ -1,4 +1,6 @@
+import ContentApprovers from "./ContentApprovers";
 import ContentProgress from "./ContentProgress";
+import PublishingIntegrations from "./PublishIntegrations";
 
 // Extracted component for step headers
 const StepHeader = ({
@@ -76,14 +78,6 @@ export default function CurationSettingsForm() {
       ))}
     </div>
   );
-}
-
-function PublishingIntegrations() {
-  return <div>Publishing Integrations</div>;
-}
-
-function ContentApprovers() {
-  return <div>Content Approvers</div>;
 }
 
 function SubmissionRules() {
