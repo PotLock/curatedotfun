@@ -39,6 +39,21 @@
   },
   "feeds": [
     {
+      "id": "all",
+      "name": "All",
+      "description": "All submissions",
+      "moderation": {
+        "approvers": {
+          "twitter": []
+        }
+      },
+      "outputs": {
+        "stream": {
+          "enabled": false
+        }
+      }
+    },
+    {
       "id": "grants",
       "name": "Crypto Grant Wire",
       "description": "Blockchain grant updates",
