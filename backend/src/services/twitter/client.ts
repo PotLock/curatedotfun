@@ -1,7 +1,7 @@
 import { Scraper, SearchMode, Tweet } from "agent-twitter-client";
 import { TwitterCookie } from "types/twitter";
 import { logger } from "../../utils/logger";
-import { db } from "../db";
+import { twitterRepository } from "../db/repositories";
 
 export class TwitterService {
   private client: Scraper;
@@ -68,7 +68,10 @@ export class TwitterService {
           httpOnly: cookie.httpOnly,
           sameSite: cookie.sameSite as "Strict" | "Lax" | "None" | undefined,
         }));
-        db.setTwitterCookies(this.config.username, formattedCookies);
+        await twitterRepository.setTwitterCookies(
+          this.config.username,
+          formattedCookies,
+        );
         logger.info("Successfully logged in to Twitter");
         return true;
       }
@@ -93,7 +96,7 @@ export class TwitterService {
       );
       await this.client.setCookies(cookieStrings);
       // Store cookies in database
-      db.setTwitterCookies(this.config.username, cookies);
+      await twitterRepository.setTwitterCookies(this.config.username, cookies);
       // Verify the cookies work
       if (!(await this.client.isLoggedIn())) {
         throw new Error("Failed to verify cookies after setting");
@@ -106,7 +109,7 @@ export class TwitterService {
   }
 
   getCookies() {
-    return db.getTwitterCookies(this.twitterUsername);
+    return twitterRepository.getTwitterCookies(this.twitterUsername);
   }
 
   async initialize() {
@@ -125,14 +128,16 @@ export class TwitterService {
       // First try to use cached cookies
       if (await this.loadCachedCookies()) {
         logger.info("Successfully initialized using cached cookies");
-        this.lastCheckedTweetId = db.getTwitterCacheValue("last_tweet_id");
+        this.lastCheckedTweetId =
+          await twitterRepository.getTwitterCacheValue("last_tweet_id");
         return;
       }
 
       // If cached cookies failed or don't exist, try fresh login with retries
       for (let attempt = 0; attempt < 3; attempt++) {
         if (await this.performLogin()) {
-          this.lastCheckedTweetId = db.getTwitterCacheValue("last_tweet_id");
+          this.lastCheckedTweetId =
+            await twitterRepository.getTwitterCacheValue("last_tweet_id");
           return;
         }
 
@@ -233,7 +238,7 @@ export class TwitterService {
 
   setLastCheckedTweetId(tweetId: string) {
     this.lastCheckedTweetId = tweetId;
-    db.setTwitterCacheValue("last_tweet_id", tweetId);
+    twitterRepository.setTwitterCacheValue("last_tweet_id", tweetId);
     logger.info(`Last checked tweet ID updated to: ${tweetId}`);
   }
 

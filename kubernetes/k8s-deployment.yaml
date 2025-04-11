@@ -1,0 +1,263 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-test
+spec:
+  selector:
+    app: postgres-test
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  selector:
+    app: redis
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rss-service
+spec:
+  selector:
+    app: rss-service
+  ports:
+    - protocol: TCP
+      port: 4001
+      targetPort: 4001
+  type: LoadBalancer
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+            - name: POSTGRES_DB
+              value: "curatedotfun"
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgres-storage
+          readinessProbe:
+            exec:
+              command: [ "pg_isready", "-U", "postgres" ]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+#
+#---
+#apiVersion: apps/v1
+#kind: Deployment
+#metadata:
+#  name: postgres-test
+#spec:
+#  replicas: 1
+#  selector:
+#    matchLabels:
+#      app: postgres-test
+#  template:
+#    metadata:
+#      labels:
+#        app: postgres-test
+#    spec:
+#      containers:
+#        - name: postgres-test
+#          image: postgres:15
+#          env:
+#            - name: POSTGRES_USER
+#              value: "postgres"
+#            - name: POSTGRES_PASSWORD
+#              value: "postgres"
+#            - name: POSTGRES_DB
+#              value: "test"
+#          ports:
+#            - containerPort: 5432
+#          readinessProbe:
+#            exec:
+#              command: ["pg_isready", "-U", "postgres"]
+#            initialDelaySeconds: 5
+#            periodSeconds: 5
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:alpine
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - mountPath: /data
+              name: redis-storage
+          args: [ "redis-server", "--appendonly", "yes" ]
+      volumes:
+        - name: redis-storage
+          persistentVolumeClaim:
+            claimName: redis-pvc
+
+
+#
+#---
+#apiVersion: apps/v1
+#kind: Deployment
+#metadata:
+#  name: rss-service
+#spec:
+#  replicas: 1
+#  selector:
+#    matchLabels:
+#      app: rss-service
+#  template:
+#    metadata:
+#      labels:
+#        app: rss-service
+#    spec:
+#      containers:
+#        - name: rss-service
+#          image: your-rss-service-image:latest  # Replace with your actual image
+#          ports:
+#            - containerPort: 4001
+#          env:
+#            - name: NODE_ENV
+#              value: "production"
+#            - name: API_SECRET
+#              value: "change-this-to-a-secure-random-string"
+#            - name: REDIS_HOST
+#              value: "redis"
+#            - name: REDIS_PORT
+#              value: "6379"
+#            - name: CONTAINER_RUNTIME
+#              value: "true"
+#          readinessProbe:
+#            httpGet:
+#              path: /health
+#              port: 4001
+#            initialDelaySeconds: 10
+#            periodSeconds: 5
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curate-app
+spec:
+  replicas: 1  # Run two instances for availability
+  selector:
+    matchLabels:
+      app: curate-app
+  template:
+    metadata:
+      labels:
+        app: curate-app
+    spec:
+      initContainers:
+        - name: run-migrations
+          image: ghcr.io/elliotbraem/efizzybot:fe498dcbfed9692a2eaae900c3da066596e6af97
+          workingDir: /app/backend
+          command: [ "pnpm", "exec", "drizzle-kit", "migrate", "--config", "drizzle.config.ts" ]
+      containers:
+        - name: curate-app
+          image: ghcr.io/elliotbraem/efizzybot:fe498dcbfed9692a2eaae900c3da066596e6af97
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: app-secrets  # Load all environment variables from secret
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://postgres:postgres@postgres:5432/curatedotfun"
+            - name: NODE_ENV
+              value: "production"
+          readinessProbe:
+            httpGet:
+              path: /health  # Ensure the app has a /health endpoint
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10

@@ -2,19 +2,20 @@ import {
   index,
   integer,
   primaryKey,
-  sqliteTable as table,
+  pgTable as table,
   text,
-} from "drizzle-orm/sqlite-core";
+  timestamp,
+  serial,
+  date,
+} from "drizzle-orm/pg-core";
 
 // From exports/plugins
 export * from "../twitter/schema";
 
 // Reusable timestamp columns
 const timestamps = {
-  createdAt: text("created_at")
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
-  updatedAt: text("updated_at").$defaultFn(() => new Date().toISOString()),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 };
 
 export const SubmissionStatus = {
@@ -80,7 +81,7 @@ export const submissionFeeds = table(
 export const moderationHistory = table(
   "moderation_history",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     tweetId: text("tweet_id")
       .notNull()
       .references(() => submissions.tweetId, { onDelete: "cascade" }),
@@ -104,7 +105,7 @@ export const submissionCounts = table(
   {
     userId: text("user_id").primaryKey(),
     count: integer("count").notNull().default(0),
-    lastResetDate: text("last_reset_date").notNull(),
+    lastResetDate: date("last_reset_date").notNull(),
     ...timestamps,
   },
   (table) => [index("submission_counts_date_idx").on(table.lastResetDate)],

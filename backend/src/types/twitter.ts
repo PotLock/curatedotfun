@@ -5,7 +5,7 @@ export interface FeedStatus {
   moderationResponseTweetId?: string;
 }
 
-export interface TwitterSubmission {
+export interface Submission {
   tweetId: string;
   userId: string;
   username: string;
@@ -14,13 +14,13 @@ export interface TwitterSubmission {
   content: string;
   curatorNotes: string | null;
   curatorTweetId: string;
-  createdAt: string;
-  submittedAt: string | null;
+  createdAt: Date;
+  submittedAt: Date | null;
   moderationHistory: Moderation[];
   status?: SubmissionStatus;
+  feeds?: SubmissionFeed[];
 }
-
-export interface TwitterSubmissionWithFeedData extends TwitterSubmission {
+export interface SubmissionWithFeedData extends Omit<Submission, "feeds"> {
   status: SubmissionStatus;
   moderationResponseTweetId?: string;
   feedStatuses?: FeedStatus[];

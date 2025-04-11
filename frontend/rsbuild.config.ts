@@ -2,6 +2,7 @@ import { defineConfig } from "@rsbuild/core";
 import { pluginReact } from "@rsbuild/plugin-react";
 import { TanStackRouterRspack } from "@tanstack/router-plugin/rspack";
 import { pluginNodePolyfill } from "@rsbuild/plugin-node-polyfill";
+import path from "path";
 
 export default defineConfig({
   plugins: [
@@ -16,6 +17,14 @@ export default defineConfig({
   html: {
     template: "./index.html",
   },
+  source: {
+    alias: {
+      "@fonts": path.resolve(__dirname, "public/fonts"),
+    },
+  },
+  output: {
+    assetPrefix: "/",
+  },
   tools: {
     rspack: {
       plugins: [TanStackRouterRspack()],
@@ -26,6 +35,13 @@ export default defineConfig({
             type: "asset/resource",
             generator: {
               filename: "fonts/[name][ext]",
+            },
+          },
+          {
+            test: /\.(png|jpg|jpeg|gif|svg|ico)$/i,
+            type: "asset/resource",
+            generator: {
+              filename: "images/[name][ext]",
             },
           },
         ],
@@ -44,6 +60,7 @@ export default defineConfig({
     },
   },
   dev: {
+    assetPrefix: "/",
     writeToDisk: true,
   },
 });

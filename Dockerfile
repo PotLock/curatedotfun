@@ -1,86 +1,70 @@
-# Build stage
-FROM node:20 AS builder
+# Base stage with common dependencies
+FROM node:18-alpine AS base
+
+# Install pnpm
+RUN npm install -g pnpm turbo
+
+# Builder stage for pruning the monorepo
+FROM base AS pruner
 WORKDIR /app
 
-# Install build dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    python3 \
-    make \
-    g++ \
-    && rm -rf /var/lib/apt/lists/* && \
-    apt-get clean
+COPY . .
 
-# Copy package files for dependency installation
-COPY package.json ./
-COPY frontend/package.json ./frontend/
-COPY backend/package.json ./backend/
-COPY backend/drizzle.config.ts ./backend/
+# Disable telemetry and prune the monorepo to include only what's needed
+RUN turbo telemetry disable
+# Prune the monorepo to include only backend and frontend
+RUN turbo prune --scope=@curatedotfun/backend --scope=@curatedotfun/frontend --docker
 
-# Install dependencies
-RUN cd frontend && npm install
-RUN cd backend && npm install
+# Builder stage for installing dependencies and building
+FROM base AS builder
+WORKDIR /app
 
-# Copy source code after dependency installation
-COPY frontend ./frontend
-COPY backend ./backend
-COPY curate.config.json ./
+# Copy pruned package.json files and workspace config
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=pruner /app/turbo.json ./turbo.json
+COPY --from=pruner /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
-# Build backend (rspack will copy frontend dist to backend/dist/public)
+# Install dependencies using pnpm workspaces
+RUN pnpm install --frozen-lockfile
+
+# Copy source code from pruned monorepo
+COPY --from=pruner /app/out/full/ .
+
+# Build the application using turbo (which will respect the dependencies in turbo.json)
 ENV NODE_ENV="production"
-# Build frontend first since backend depends on it
-RUN cd frontend && npm run build
-# Then build backend which will copy frontend dist
-RUN cd backend && npm run build
+RUN pnpm run build
 
 # Production stage
-FROM node:20-slim AS production
+FROM node:18-alpine AS production
 WORKDIR /app
 
-# Install LiteFS and runtime dependencies
-RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
-    fuse3 \
-    sqlite3 \
-    python3 \
-    make \
-    g++ \
-    awscli \
-    && rm -rf /var/lib/apt/lists/* && \
-    apt-get clean
+# Create a non-root user for security
+RUN addgroup -S app && adduser -S app -G app
 
-# Copy LiteFS binary
-COPY --from=flyio/litefs:0.5 /usr/local/bin/litefs /usr/local/bin/litefs
+# Copy only the necessary files from the builder stage
+COPY --from=builder --chown=app:app /app/backend/dist ./backend/dist
+COPY --from=builder --chown=app:app /app/backend/package.json ./backend/package.json
+COPY --from=builder --chown=app:app /app/backend/drizzle.config.ts ./backend/drizzle.config.ts
+COPY --from=builder --chown=app:app /app/backend/src/services/db/migrations ./backend/src/services/db/migrations
+COPY --from=builder --chown=app:app /app/backend/src/services/db/schema.ts ./backend/src/services/db/schema.ts
+COPY --from=builder --chown=app:app /app/backend/src/services/twitter/schema.ts ./backend/src/services/twitter/schema.ts
+COPY --from=builder --chown=app:app /app/package.json ./
+COPY --from=builder --chown=app:app /app/pnpm-lock.yaml ./
+COPY --from=builder --chown=app:app /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --chown=app:app curate.config.json ./
 
-# Create directories for mounts with correct permissions
-RUN mkdir -p /litefs /var/lib/litefs && \
-    chown -R node:node /litefs /var/lib/litefs
+# Install pnpm
+RUN npm install -g pnpm
 
-# Create volume mount points
-ENV DATABASE_URL="file:/litefs/db"
+# Install only production dependencies
+RUN cd backend && pnpm install --prod --frozen-lockfile
 
-# Copy application files
-COPY --from=builder --chown=node:node /app/backend/dist ./backend/dist
-COPY --from=builder --chown=node:node /app/backend/package.json ./backend/package.json
-COPY --from=builder --chown=node:node /app/backend/drizzle.config.ts ./backend/drizzle.config.ts
-COPY --from=builder --chown=node:node /app/backend/src ./backend/src
-COPY --chown=node:node curate.config.json ./
-COPY --chown=node:node package.json ./
-
-# Install production dependencies
-RUN cd backend && npm install && npm rebuild better-sqlite3
-
-# Copy LiteFS configuration
-COPY --chown=node:node litefs.yml /etc/litefs.yml
+# Use the non-root user
+USER app
 
 # Expose the port
 EXPOSE 3000
 
-# Set secure environment defaults
-ENV NODE_ENV=production \
-    NPM_CONFIG_LOGLEVEL=warn
-
-# Start LiteFS (runs app with distributed file system for SQLite)
-ENTRYPOINT ["litefs", "mount"]
+# Start the application
+CMD ["pnpm", "run", "--dir", "backend", "start"]

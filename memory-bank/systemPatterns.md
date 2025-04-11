@@ -19,7 +19,7 @@
    - ProcessorService: Orchestrates transformation pipeline
    - TransformationService: Handles content transformations
    - DistributionService: Content distribution
-   - Database Service: Data persistence
+   - Database Service: Data persistence with PostgreSQL and Drizzle ORM
    - PluginService: Dynamic plugin management
    - TwitterService: Twitter API interaction
 
@@ -38,11 +38,48 @@
      - Simple Transform (Basic formatting)
      - Object Transform (Data mapping and transformation)
    - Plugin Features
-     - Runtime loading and hot-reloading
-     - Type-safe configuration
-     - Custom endpoint registration
-     - Scheduled task integration
-     - Development toolkit with mocks
+     * Runtime loading via module federation
+     * Type-safe configuration
+     * Custom endpoint registration
+     * Scheduled task integration
+     * Development toolkit with mocks
+
+### Database Architecture
+
+1. **PostgreSQL with Drizzle ORM**
+   - Read/write separation with connection pools
+   - Transaction support with retry logic
+   - Comprehensive error handling with context-rich logging
+   - Default values for graceful degradation
+   - Repository pattern for domain-specific database operations
+   - Transaction-based operations for related data
+   - Modular organization with clear separation of concerns
+
+2. **Database Service Structure**
+   - Connection management (connection.ts)
+   - Transaction utilities (transaction.ts)
+     * executeOperation - For single database operations
+     * executeTransaction - For multi-step operations requiring atomicity
+     * withDatabaseErrorHandling - For consistent error handling
+   - Domain-specific repositories (repositories/)
+     * Twitter repository
+     * Submission repository
+     * Feed repository
+     * Leaderboard repository
+   - Consolidated status update logic
+   - Backward compatibility layer for gradual migration
+
+3. **Development Environment**
+   - Docker Compose for local development
+   - PostgreSQL container with persistent volume
+   - Automatic migrations on startup
+   - Seed data scripts from SQLite
+
+4. **Testing Environment**
+   - Isolated test databases
+   - Automated cleanup between test runs
+   - Mock system for unit tests
+   - Transaction rollbacks for test isolation
 
 ### Design Patterns
 
@@ -140,55 +177,64 @@ graph TD
 
 ## Key Technical Decisions
 
-1. **Hono Framework**
+1. **PostgreSQL Database**
+   - Scalable relational database
+   - Read/write separation capability
+   - Connection pooling for performance
+   - Drizzle ORM for type-safe queries
+   - Docker-based development environment
 
+2. **Hono Framework**
    - High performance
    - Built-in TypeScript support
    - Middleware ecosystem
    - Process endpoint for content handling
    - Dynamic endpoint registration
 
-2. **Plugin Architecture**
-
-   - Module federation for runtime loading
+3. **Module Federation Plugin System**
+   - Runtime plugin loading without rebuilds
    - Type-safe plugin interfaces
    - Easy plugin development
    - Comprehensive testing support
    - Hot-reloading capability
 
-3. **Configuration-Driven**
-
+4. **Configuration-Driven**
    - JSON-based configuration
    - Runtime configuration updates
    - Environment variable support
    - Extensible action handling
    - Easy forking and customization
 
-4. **Service Architecture**
-
+5. **Service Architecture**
    - Platform-agnostic services
    - Clear service boundaries
    - Optimized transformer-distributor flow
    - Comprehensive testing
    - Mock system for plugin validation
 
-5. **Error Handling**
-
+6. **Error Handling**
    - Granular error types
    - Graceful degradation
    - Error recovery strategies
    - Detailed error logging
    - Error aggregation for multiple failures
 
-6. **Task Scheduling**
-
+7. **Task Scheduling**
    - Configuration-driven cron jobs
    - Recap generation scheduling
    - Plugin-specific scheduled tasks
    - Reliable execution tracking
 
-7. **Hybrid Runtime Approach**
-   - Node.js for production stability
-   - Bun for development speed
-   - Consistent package management
-   - Optimized build process
+8. **Build System**
+   - RSPack for optimized builds
+   - Module federation support
+   - Fast development experience
+   - Efficient bundling
+   - TypeScript integration
+
+9. **Deployment Architecture**
+   - Docker containerization
+   - Railway platform deployment
+   - Kubernetes configuration
+   - Automated CI/CD pipeline
+   - Environment-specific configurations

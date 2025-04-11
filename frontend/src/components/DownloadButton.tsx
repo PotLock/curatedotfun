@@ -1,21 +1,16 @@
 import { useState } from "react";
-import {
-  TwitterSubmission,
-  TwitterSubmissionWithFeedData,
-} from "../types/twitter";
+import { Submission, SubmissionWithFeedData } from "../types/twitter";
 import { Modal } from "./Modal";
 
 interface DownloadButtonProps {
-  items: TwitterSubmissionWithFeedData[];
+  items: SubmissionWithFeedData[];
   feedName?: string | undefined;
 }
 
 const DownloadButton = ({ items, feedName = "all" }: DownloadButtonProps) => {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
-  const handleDownload = (
-    selectedStatus: "all" | TwitterSubmission["status"],
-  ) => {
+  const handleDownload = (selectedStatus: "all" | Submission["status"]) => {
     const itemsToDownload = items.filter(
       (item) => selectedStatus === "all" || item.status === selectedStatus,
     );

@@ -1,12 +1,16 @@
-import "dotenv/config";
+import { loadEnvConfig } from "./utils/config";
+
+loadEnvConfig();
+
 import { serve } from "@hono/node-server";
-import { AppInstance, createApp } from "./app";
+import { AppInstance } from "types/app";
+import { createApp } from "./app";
+import { dbConnection } from "./services/db";
 import {
   cleanup,
-  failSpinner,
+  createHighlightBox,
+  createSection,
   logger,
-  startSpinner,
-  succeedSpinner,
 } from "./utils/logger";
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -18,16 +22,58 @@ async function getInstance(): Promise<AppInstance> {
     try {
       instance = await createApp();
     } catch (error) {
-      logger.error("Failed to create app instance:", error);
-      throw new Error("Failed to initialize application");
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      logger.error(`Failed to create app instance: ${errorMessage}`, {
+        error: errorMessage,
+        stack: errorStack,
+        dirname: __dirname,
+        cwd: process.cwd(),
+      });
+      // console.error(errorMessage);
+      throw new Error(`Failed to initialize application: ${errorMessage}`);
     }
   }
   return instance;
 }
 
+/**
+ * Initialize the database connection
+ * @returns Promise<boolean> - true if connection was successful
+ */
+async function initializeDatabaseConnection(): Promise<boolean> {
+  logger.info("Initializing database connection...");
+
+  try {
+    await dbConnection.connect();
+    return true;
+  } catch (error) {
+    // Check if it's a DATABASE_URL error
+    if (error instanceof Error && error.message.includes("DATABASE_URL")) {
+      logger.error("DATABASE_URL environment variable is not set or invalid");
+      logger.error(
+        "Please check your .env file and ensure DATABASE_URL is correctly configured",
+      );
+      logger.error(`Current working directory: ${process.cwd()}`);
+    } else {
+      logger.error(
+        "Database connection failed. Application cannot continue without database.",
+      );
+    }
+    return false;
+  }
+}
+
 async function startServer() {
   try {
-    startSpinner("server", "Starting server...");
+    createSection("⚡ STARTING SERVER ⚡");
+
+    const dbConnected = await initializeDatabaseConnection();
+    if (!dbConnected) {
+      logger.error("Exiting application due to database connection failure");
+      process.exit(1);
+    }
 
     const { app, context } = await getInstance();
 
@@ -51,56 +97,73 @@ async function startServer() {
       port: PORT,
     });
 
-    succeedSpinner("server", `Server running on port ${PORT}`);
+    // Create a multi-line message for the highlight box
+    const serverMessage = [
+      `🚀 SERVER RUNNING 🚀`,
+      ``,
+      `📡 Available at:`,
+      `http://localhost:${PORT}`,
+      ``,
+      `✨ Ready and accepting connections`,
+    ].join("\n");
+
+    createHighlightBox(serverMessage);
+
+    createSection("SERVICES");
 
     // Start checking for mentions only if Twitter service is available
     if (context.submissionService) {
-      startSpinner("submission-monitor", "Starting submission monitoring...");
       await context.submissionService.startMentionsCheck();
-      succeedSpinner("submission-monitor", "Submission monitoring started");
     }
 
     // Graceful shutdown handler
     const gracefulShutdown = async (signal: string) => {
-      startSpinner("shutdown", `Shutting down gracefully (${signal})...`);
+      createSection("🛑 SHUTTING DOWN 🛑");
+      logger.info(`Graceful shutdown initiated (${signal})`);
+
       try {
         // Wait for server to close
         await new Promise<void>((resolve, reject) => {
           server.close((err) => (err ? reject(err) : resolve()));
         });
+        logger.info("HTTP server closed");
 
         const shutdownPromises = [];
-        if (context.twitterService)
+        if (context.twitterService) {
           shutdownPromises.push(context.twitterService.stop());
-        if (context.submissionService)
+          logger.info("Twitter service stopped");
+        }
+
+        if (context.submissionService) {
           shutdownPromises.push(context.submissionService.stop());
-        if (context.distributionService)
+          logger.info("Submission service stopped");
+        }
+
+        if (context.distributionService) {
           shutdownPromises.push(context.distributionService.shutdown());
+          logger.info("Distribution service stopped");
+        }
+
+        shutdownPromises.push(dbConnection.disconnect());
 
         await Promise.all(shutdownPromises);
-        succeedSpinner("shutdown", "Shutdown complete");
+        logger.info("Database connections closed");
 
         // Reset instance for clean restart
         instance = null;
 
+        logger.info("Shutdown complete");
         process.exit(0);
       } catch (error) {
-        failSpinner("shutdown", "Error during shutdown");
-        logger.error("Shutdown", error);
+        logger.error("Error during shutdown:", error);
         process.exit(1);
       }
     };
 
     // Handle manual shutdown (Ctrl+C)
     process.once("SIGINT", () => gracefulShutdown("SIGINT"));
-
-    logger.info("🚀 Server is running and ready");
   } catch (error) {
-    // Handle any initialization errors
-    ["server", "submission-monitor"].forEach((key) => {
-      failSpinner(key, `Failed during ${key}`);
-    });
-    logger.error("Startup", error);
+    logger.error("Error during startup:", error);
     cleanup();
     process.exit(1);
   }

@@ -2,23 +2,26 @@
   "name": "curatedotfun",
   "version": "1.0.0",
   "devDependencies": {
+    "@types/node": "^22.13.13",
     "concurrently": "^9.1.2",
     "prettier": "^3.3.3",
     "turbo": "latest"
   },
+  "packageManager": "pnpm@10.8.0+sha512.0e82714d1b5b43c74610193cb20734897c1d00de89d0e18420aebc5977fa13d780a9cb05734624e81ebd81cc876cd464794850641c48b9544326b5622ca29971",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"cd backend && bun run dev\" \"cd frontend && bun run dev\"",
+    "dev": "./scripts/dev.sh",
+    "dev:fresh": "./scripts/dev.sh --fresh",
     "build": "turbo run build",
-    "start": "cd backend && npm run start",
-    "db:up": "cd backend && npm run db:up",
-    "db:push": "cd backend && npm run db:push",
-    "db:migrate": "cd backend && npm run db:migrate",
+    "start": "docker-compose --profile prod up -d --build postgres_prod && docker-compose --profile prod run --rm db-init-prod && docker-compose --profile prod up -d --build app",
+    "test": "docker-compose --profile test up -d postgres_test && docker-compose --profile test run --rm db-init-test && turbo run test --filter=@curatedotfun/backend || true && docker-compose --profile test down -v",
+    "test:ci": "turbo run test --filter=@curatedotfun/backend",
     "lint": "turbo run lint",
-    "deploy:init": "fly launch && fly consul attach",
-    "deploy": "fly deploy",
+    "clean": "turbo run clean",
     "fmt": "prettier --write '**/*.{js,jsx,ts,tsx,json}'",
-    "fmt:check": "prettier --check '**/*.{js,jsx,ts,tsx,json}'"
+    "fmt:check": "prettier --check '**/*.{js,jsx,ts,tsx,json}'",
+    "db:migrate": "cd backend && pnpm db:migrate",
+    "prepare": "corepack enable"
   },
   "type": "module",
   "packageManager": "bun@1.2.5"

@@ -122,7 +122,7 @@ export class TwitterSourcePlugin {
           ) {
             throw new Error("Invalid tweetId format");
           }
-          await this.twitterService.setLastCheckedTweetId(body.tweetId);
+          this.twitterService.setLastCheckedTweetId(body.tweetId);
           return { success: true };
         },
       },

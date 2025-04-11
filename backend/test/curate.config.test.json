@@ -1,0 +1,247 @@
+{
+  "global": {
+    "botId": "test_bot",
+    "defaultStatus": "pending",
+    "maxSubmissionsPerUser": 100,
+    "blacklist": {
+      "twitter": []
+    }
+  },
+  "plugins": {
+    "@curatedotfun/telegram": {
+      "type": "distributor",
+      "url": "https://unpkg.com/@curatedotfun/telegram@latest/dist/remoteEntry.js"
+    },
+    "@curatedotfun/notion": {
+      "type": "distributor",
+      "url": "https://unpkg.com/@curatedotfun/notion@latest/dist/remoteEntry.js"
+    },
+    "@curatedotfun/simple-transform": {
+      "type": "transformer",
+      "url": "https://unpkg.com/@curatedotfun/simple-transform@latest/dist/remoteEntry.js"
+    },
+    "@curatedotfun/object-transform": {
+      "type": "transformer",
+      "url": "https://unpkg.com/@curatedotfun/object-transform@latest/dist/remoteEntry.js"
+    },
+    "@curatedotfun/ai-transform": {
+      "type": "transformer",
+      "url": "https://unpkg.com/@curatedotfun/ai-transform@latest/dist/remoteEntry.js"
+    }
+  },
+  "feeds": [
+    {
+      "id": "test",
+      "name": "Test Feed",
+      "description": "Main feed for testing basic functionality",
+      "moderation": {
+        "approvers": {
+          "twitter": ["test_curator", "test_admin"]
+        }
+      },
+      "outputs": {
+        "stream": {
+          "enabled": true,
+          "transform": [
+            {
+              "plugin": "@curatedotfun/object-transform",
+              "config": {
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "content": "{{content}}",
+                  "author": "{{username}}",
+                  "notes": "{{curator.notes}}"
+                }
+              }
+            }
+          ],
+          "distribute": [
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "🔥 {{content}}\n\n{{#notes}}📝 {{.}}{{/notes}}\n\n👤 {{author}}\n\n🔗 {{source}}"
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "@test_curation"
+              }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/ai-transform",
+                  "config": {
+                    "prompt": "Create a structured summary of this content",
+                    "apiKey": "{OPENROUTER_API_KEY}",
+                    "schema": {
+                      "title": {
+                        "type": "string",
+                        "description": "A catchy headline summarizing the content (max 80 chars)"
+                      },
+                      "summary": {
+                        "type": "string",
+                        "description": "A concise summary of the content and curator notes (max 280 chars)"
+                      },
+                      "keyPoints": {
+                        "type": "string",
+                        "description": "3-5 bullet points highlighting main ideas, one per line"
+                      },
+                      "category": {
+                        "type": "string",
+                        "description": "The inferred topic category (e.g., DeFi, NFTs, Layer2)"
+                      },
+                      "sentiment": {
+                        "type": "string",
+                        "description": "The overall sentiment (positive, neutral, or negative)"
+                      }
+                    },
+                    "outputFormat": "json"
+                  }
+                },
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "📢 {{title}}\n\n{{summary}}\n\n🎯 Key Points:\n{{keyPoints}}\n\n🏷️ {{category}} ({{sentiment}})\n\n🔗 {{source}}"
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "@test_curation"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "multi",
+      "name": "Multi-Approver Test",
+      "description": "Testing multiple approver scenarios",
+      "moderation": {
+        "approvers": {
+          "twitter": ["curator1", "curator2", "curator3"]
+        }
+      },
+      "outputs": {
+        "stream": {
+          "enabled": true,
+          "transform": [
+            {
+              "plugin": "@curatedotfun/object-transform",
+              "config": {
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "text": "{{content}}",
+                  "author": "{{firstName}} {{lastName}}",
+                  "notes": "{{#curator.notes}}{{.}}{{/curator.notes}}"
+                }
+              }
+            }
+          ],
+          "distribute": [
+            {
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "@test_curation"
+              },
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "✨ Multi-Approved Content ✨\n\n{{text}}\n\n{{#notes}}💭 {{.}}{{/notes}}\n\n👥 Approved by multiple curators\n\n🔗 {{source}}"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "edge",
+      "name": "Edge Cases",
+      "description": "Testing edge cases and error scenarios",
+      "moderation": {
+        "approvers": {
+          "twitter": ["edge_curator"]
+        }
+      },
+      "outputs": {
+        "stream": {
+          "enabled": true,
+          "transform": [
+            {
+              "plugin": "@curatedotfun/object-transform",
+              "config": {
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "text": "{{content}}",
+                  "author": "{{firstName}} {{lastName}}",
+                  "notes": "{{#curator.notes}}{{.}}{{/curator.notes}}"
+                }
+              }
+            }
+          ]
+        },
+        "recap": {
+          "enabled": true,
+          "schedule": "*/5 * * * *",
+          "transform": [
+            {
+              "plugin": "@curatedotfun/ai-transform",
+              "config": {
+                "prompt": "Create a daily summary of these posts",
+                "schema": {
+                  "summary": {
+                    "type": "string",
+                    "description": "A high-level overview of the day's content (2-3 paragraphs)"
+                  },
+                  "highlights": {
+                    "type": "string",
+                    "description": "5-7 key highlights from individual posts, one per line"
+                  },
+                  "trends": {
+                    "type": "string",
+                    "description": "2-3 emerging trends or patterns noticed"
+                  },
+                  "recommendations": {
+                    "type": "string",
+                    "description": "3-4 actionable suggestions for readers"
+                  },
+                  "engagement": {
+                    "type": "string",
+                    "description": "Analysis of which posts performed best and why"
+                  }
+                },
+                "outputFormat": "json"
+              }
+            },
+            {
+              "plugin": "@curatedotfun/simple-transform",
+              "config": {
+                "template": "📅 Daily Edge Cases Recap\n\n{{summary}}\n\n🌟 Highlights:\n{{highlights}}\n\n📈 Trends:\n{{trends}}\n\n💡 Recommendations:\n{{recommendations}}\n\n📊 Engagement Insights:\n{{engagement}}"
+              }
+            }
+          ],
+          "distribute": [
+            {
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "@test_curation"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

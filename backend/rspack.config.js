@@ -9,9 +9,10 @@ module.exports = {
   mode: isProduction ? "production" : "development",
   target: "async-node",
   devtool: "source-map",
+  watch: !isProduction,
   externals: {
-    "better-sqlite3": "commonjs better-sqlite3",
     bufferutil: "commonjs bufferutil",
+    "pg-native": "commonjs pg-native",
   },
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -55,5 +56,5 @@ module.exports = {
     //       },
     //     }
     //   })
-  ],
+  ].filter(Boolean),
 };

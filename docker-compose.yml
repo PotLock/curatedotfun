@@ -1,0 +1,113 @@
+services:
+  # DB service (shared configuration)
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Dev-specific postgres config
+  postgres_dev:
+    extends: postgres
+    container_name: postgres_dev
+    environment:
+      POSTGRES_DB: curatedotfun
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # dev persists volumes, so you don't lose your setup
+    profiles: ["dev"]
+    
+  # Production-specific postgres config
+  postgres_prod:
+    extends: postgres
+    container_name: postgres_prod
+    environment:
+      POSTGRES_DB: curatedotfun
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    profiles: ["prod"]
+
+  # Test-specific postgres config
+  postgres_test:
+    extends: postgres
+    container_name: postgres_test
+    environment:
+      POSTGRES_DB: test
+    ports:
+      - "54321:5432"
+    # No volume for a fresh DB each time
+    profiles: ["test"]
+
+  # DB initialization (shared configuration)
+  db-init:
+    image: oven/bun:latest # we need bun to run the .ts scripts
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+
+    # Development-specific initialization
+  db-init-dev:
+    extends: db-init
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres_dev:5432/curatedotfun
+    depends_on:
+      postgres_dev:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - node_modules_cache:/app/node_modules  # Add persistent volume for node_modules, otherwise this messes with rspack bindings
+    command: sh -c "bun add -g pnpm && if [ ! -d /app/node_modules/.pnpm ]; then echo '📦 Installing dependencies...' && pnpm install; else echo '✅ Dependencies already installed, skipping'; fi && pnpm run db:migrate && pnpm run db:seed:dev"
+    profiles: ["dev"]
+
+  # Test-specific initialization
+  db-init-test:
+    extends: db-init
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres_test:5432/test
+    depends_on:
+      postgres_test:
+        condition: service_healthy
+    command: sh -c "bun add -g pnpm && pnpm install && pnpm run db:migrate && pnpm run db:seed:test"
+    profiles: ["test"]
+    
+  # Production-specific initialization
+  db-init-prod:
+    extends: db-init
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres_prod:5432/curatedotfun
+      NODE_ENV: production
+    depends_on:
+      postgres_prod:
+        condition: service_healthy
+    command: sh -c "bun add -g pnpm && pnpm install && pnpm run db:migrate"
+    profiles: ["prod"]
+
+  # Application service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      postgres_prod:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres_prod:5432/curatedotfun
+      NODE_ENV: production
+    env_file:
+      - ./backend/.env
+    ports:
+      - "3000:3000"
+    profiles: ["prod"] # we can run the app profile to test a production run
+
+volumes:
+  postgres_data:
+  postgres_data_prod:
+  node_modules_cache:  # Add persistent volume for node_modules

@@ -6,6 +6,7 @@
 .pnp.js
 .yarn/install-state.gz
 /.unlighthouse
+**/.pnpm-store
 
 # testing
 /coverage
@@ -47,3 +48,6 @@ next-env.d.ts
 .turbo
 package-lock.json
 bun.lockb
+
+# JetBrains
+.idea/

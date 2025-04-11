@@ -1,35 +1,35 @@
 import { and, eq, sql } from "drizzle-orm";
-import { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import {
-  SubmissionFeed,
-  Moderation,
-  TwitterSubmission,
-  SubmissionStatus,
-  TwitterSubmissionWithFeedData,
   FeedStatus,
+  Moderation,
+  Submission,
+  SubmissionFeed,
+  SubmissionStatus,
+  SubmissionWithFeedData,
 } from "../../types/twitter";
 import {
-  feedPlugins,
   feeds,
   moderationHistory,
   submissionCounts,
   submissionFeeds,
   submissions,
 } from "./schema";
-import { DbQueryResult, DbFeedQueryResult } from "./types";
 
-export function upsertFeeds(
-  db: BetterSQLite3Database,
+export async function upsertFeeds(
+  db: NodePgDatabase<any>,
   feedsToUpsert: { id: string; name: string; description?: string }[],
-) {
-  db.transaction(() => {
+): Promise<void> {
+  await db.transaction(async (tx) => {
     for (const feed of feedsToUpsert) {
-      db.insert(feeds)
+      await tx
+        .insert(feeds)
         .values({
           id: feed.id,
           name: feed.name,
           description: feed.description,
-          createdAt: new Date().toISOString(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
         })
         .onConflictDoUpdate({
           target: feeds.id,
@@ -38,55 +38,56 @@ export function upsertFeeds(
             description: feed.description,
           },
         })
-        .run();
+        .execute();
     }
   });
 }
 
-export function saveSubmissionToFeed(
-  db: BetterSQLite3Database,
+export async function saveSubmissionToFeed(
+  db: NodePgDatabase<any>,
   submissionId: string,
   feedId: string,
   status: SubmissionStatus = SubmissionStatus.PENDING,
-) {
+): Promise<void> {
   // Check if submission exists
-  const submission = db
+  const submissions_result = await db
     .select({ id: submissions.tweetId })
     .from(submissions)
-    .where(eq(submissions.tweetId, submissionId))
-    .get();
+    .where(eq(submissions.tweetId, submissionId));
 
-  if (!submission) {
+  if (!submissions_result.length) {
     throw new Error(`Submission with ID ${submissionId} does not exist`);
   }
 
   // Check if feed exists
-  const feed = db
+  const feeds_result = await db
     .select({ id: feeds.id })
     .from(feeds)
-    .where(eq(feeds.id, feedId))
-    .get();
+    .where(eq(feeds.id, feedId));
 
-  if (!feed) {
+  if (!feeds_result.length) {
     throw new Error(`Feed with ID ${feedId} does not exist`);
   }
 
-  return db
+  await db
     .insert(submissionFeeds)
     .values({
       submissionId,
       feedId,
       status,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      moderationResponseTweetId: null,
     })
     .onConflictDoNothing()
-    .run();
+    .execute();
 }
 
-export function getFeedsBySubmission(
-  db: BetterSQLite3Database,
+export async function getFeedsBySubmission(
+  db: NodePgDatabase<any>,
   submissionId: string,
-): SubmissionFeed[] {
-  const results = db
+): Promise<SubmissionFeed[]> {
+  const results = await db
     .select({
       submissionId: submissionFeeds.submissionId,
       feedId: submissionFeeds.feedId,
@@ -94,8 +95,7 @@ export function getFeedsBySubmission(
       moderationResponseTweetId: submissionFeeds.moderationResponseTweetId,
     })
     .from(submissionFeeds)
-    .where(eq(submissionFeeds.submissionId, submissionId))
-    .all();
+    .where(eq(submissionFeeds.submissionId, submissionId));
 
   return results.map((result) => ({
     ...result,
@@ -103,11 +103,11 @@ export function getFeedsBySubmission(
   }));
 }
 
-export function saveSubmission(
-  db: BetterSQLite3Database,
-  submission: TwitterSubmission,
-) {
-  return db
+export async function saveSubmission(
+  db: NodePgDatabase<any>,
+  submission: Submission,
+): Promise<void> {
+  await db
     .insert(submissions)
     .values({
       tweetId: submission.tweetId,
@@ -118,17 +118,19 @@ export function saveSubmission(
       curatorId: submission.curatorId,
       curatorUsername: submission.curatorUsername,
       curatorTweetId: submission.curatorTweetId,
-      createdAt: submission.createdAt,
-      submittedAt: submission.submittedAt,
-    })
-    .run();
+      createdAt: new Date(submission.createdAt),
+      submittedAt: submission.submittedAt
+        ? new Date(submission.submittedAt)
+        : null,
+    } as any)
+    .execute();
 }
 
-export function saveModerationAction(
-  db: BetterSQLite3Database,
+export async function saveModerationAction(
+  db: NodePgDatabase<any>,
   moderation: Moderation,
-) {
-  return db
+): Promise<void> {
+  await db
     .insert(moderationHistory)
     .values({
       tweetId: moderation.tweetId,
@@ -136,16 +138,16 @@ export function saveModerationAction(
       adminId: moderation.adminId,
       action: moderation.action,
       note: moderation.note,
-      createdAt: moderation.timestamp.toISOString(),
-    })
-    .run();
+      createdAt: moderation.timestamp,
+    } as any)
+    .execute();
 }
 
-export function getModerationHistory(
-  db: BetterSQLite3Database,
+export async function getModerationHistory(
+  db: NodePgDatabase<any>,
   tweetId: string,
-): Moderation[] {
-  const results = db
+): Promise<Moderation[]> {
+  const results = await db
     .select({
       tweetId: moderationHistory.tweetId,
       feedId: moderationHistory.feedId,
@@ -164,8 +166,7 @@ export function getModerationHistory(
       ),
     )
     .where(eq(moderationHistory.tweetId, tweetId))
-    .orderBy(moderationHistory.createdAt)
-    .all();
+    .orderBy(moderationHistory.createdAt);
 
   return results.map((result) => ({
     tweetId: result.tweetId,
@@ -173,24 +174,24 @@ export function getModerationHistory(
     adminId: result.adminId,
     action: result.action as "approve" | "reject",
     note: result.note,
-    timestamp: new Date(result.createdAt),
+    timestamp: result.createdAt,
     moderationResponseTweetId: result.moderationResponseTweetId ?? undefined,
   }));
 }
 
-export function updateSubmissionFeedStatus(
-  db: BetterSQLite3Database,
+export async function updateSubmissionFeedStatus(
+  db: NodePgDatabase<any>,
   submissionId: string,
   feedId: string,
   status: SubmissionStatus,
   moderationResponseTweetId: string,
-) {
-  return db
+): Promise<void> {
+  await db
     .update(submissionFeeds)
     .set({
       status,
       moderationResponseTweetId,
-      updatedAt: new Date().toISOString(),
+      updatedAt: new Date(),
     })
     .where(
       and(
@@ -198,14 +199,14 @@ export function updateSubmissionFeedStatus(
         eq(submissionFeeds.feedId, feedId),
       ),
     )
-    .run();
+    .execute();
 }
 
-export function getSubmissionByCuratorTweetId(
-  db: BetterSQLite3Database,
+export async function getSubmissionByCuratorTweetId(
+  db: NodePgDatabase<any>,
   curatorTweetId: string,
-): TwitterSubmission | null {
-  const results = db
+): Promise<Submission | null> {
+  const results = await db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -216,8 +217,8 @@ export function getSubmissionByCuratorTweetId(
         curatorId: submissions.curatorId,
         curatorUsername: submissions.curatorUsername,
         curatorTweetId: submissions.curatorTweetId,
-        createdAt: submissions.createdAt,
-        submittedAt: sql<string>`COALESCE(${submissions.submittedAt}, ${submissions.createdAt})`,
+        createdAt: sql<string>`${submissions.createdAt}::text`,
+        submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
       },
       m: {
         tweetId: moderationHistory.tweetId,
@@ -242,23 +243,25 @@ export function getSubmissionByCuratorTweetId(
       ),
     )
     .where(eq(submissions.curatorTweetId, curatorTweetId))
-    .orderBy(moderationHistory.createdAt)
-    .all() as DbQueryResult[];
+    .orderBy(moderationHistory.createdAt);
 
   if (!results.length) return null;
 
   // Group moderation history
   const modHistory: Moderation[] = results
-    .filter((r: DbQueryResult) => r.m && r.m.adminId !== null)
-    .map((r: DbQueryResult) => ({
+    .filter((r: any) => r.m && r.m.adminId !== null)
+    .map((r: any) => ({
       tweetId: results[0].s.tweetId,
       feedId: r.m.feedId!,
       adminId: r.m.adminId!,
       action: r.m.action as "approve" | "reject",
       note: r.m.note,
-      timestamp: new Date(r.m.createdAt!),
+      timestamp: r.m.createdAt!,
       moderationResponseTweetId: r.m.moderationResponseTweetId ?? undefined,
     }));
+
+  // Get feeds for this submission
+  const feeds = await getFeedsBySubmission(db, results[0].s.tweetId);
 
   return {
     tweetId: results[0].s.tweetId,
@@ -269,17 +272,20 @@ export function getSubmissionByCuratorTweetId(
     curatorId: results[0].s.curatorId,
     curatorUsername: results[0].s.curatorUsername,
     curatorTweetId: results[0].s.curatorTweetId,
-    createdAt: results[0].s.createdAt,
-    submittedAt: results[0].s.submittedAt,
+    createdAt: new Date(results[0].s.createdAt),
+    submittedAt: results[0].s.submittedAt
+      ? new Date(results[0].s.submittedAt)
+      : null,
     moderationHistory: modHistory,
+    feeds,
   };
 }
 
-export function getSubmission(
-  db: BetterSQLite3Database,
+export async function getSubmission(
+  db: NodePgDatabase<any>,
   tweetId: string,
-): TwitterSubmission | null {
-  const results = db
+): Promise<Submission | null> {
+  const results = await db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -290,8 +296,8 @@ export function getSubmission(
         curatorId: submissions.curatorId,
         curatorUsername: submissions.curatorUsername,
         curatorTweetId: submissions.curatorTweetId,
-        createdAt: submissions.createdAt,
-        submittedAt: sql<string>`COALESCE(${submissions.submittedAt}, ${submissions.createdAt})`,
+        createdAt: sql<string>`${submissions.createdAt}::text`,
+        submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
       },
       m: {
         tweetId: moderationHistory.tweetId,
@@ -316,23 +322,25 @@ export function getSubmission(
       ),
     )
     .where(eq(submissions.tweetId, tweetId))
-    .orderBy(moderationHistory.createdAt)
-    .all() as DbQueryResult[];
+    .orderBy(moderationHistory.createdAt);
 
   if (!results.length) return null;
 
   // Group moderation history
   const modHistory: Moderation[] = results
-    .filter((r: DbQueryResult) => r.m && r.m.adminId !== null)
-    .map((r: DbQueryResult) => ({
+    .filter((r: any) => r.m && r.m.adminId !== null)
+    .map((r: any) => ({
       tweetId,
       feedId: r.m.feedId!,
       adminId: r.m.adminId!,
       action: r.m.action as "approve" | "reject",
       note: r.m.note,
-      timestamp: new Date(r.m.createdAt!),
+      timestamp: r.m.createdAt!,
       moderationResponseTweetId: r.m.moderationResponseTweetId ?? undefined,
     }));
+
+  // Get feeds for this submission
+  const feeds = await getFeedsBySubmission(db, tweetId);
 
   return {
     tweetId: results[0].s.tweetId,
@@ -343,16 +351,19 @@ export function getSubmission(
     curatorId: results[0].s.curatorId,
     curatorUsername: results[0].s.curatorUsername,
     curatorTweetId: results[0].s.curatorTweetId,
-    createdAt: results[0].s.createdAt,
-    submittedAt: results[0].s.submittedAt,
+    createdAt: new Date(results[0].s.createdAt),
+    submittedAt: results[0].s.submittedAt
+      ? new Date(results[0].s.submittedAt)
+      : null,
     moderationHistory: modHistory,
+    feeds,
   };
 }
 
-export function getAllSubmissions(
-  db: BetterSQLite3Database,
+export async function getAllSubmissions(
+  db: NodePgDatabase<any>,
   status?: string,
-): TwitterSubmissionWithFeedData[] {
+): Promise<SubmissionWithFeedData[]> {
   // Build the query with or without status filter
   const queryBuilder = status
     ? db
@@ -366,8 +377,8 @@ export function getAllSubmissions(
             curatorId: submissions.curatorId,
             curatorUsername: submissions.curatorUsername,
             curatorTweetId: submissions.curatorTweetId,
-            createdAt: submissions.createdAt,
-            submittedAt: sql<string>`COALESCE(${submissions.submittedAt}, ${submissions.createdAt})`,
+            createdAt: sql<string>`${submissions.createdAt}::text`,
+            submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
           },
           m: {
             tweetId: moderationHistory.tweetId,
@@ -413,8 +424,8 @@ export function getAllSubmissions(
             curatorId: submissions.curatorId,
             curatorUsername: submissions.curatorUsername,
             curatorTweetId: submissions.curatorTweetId,
-            createdAt: submissions.createdAt,
-            submittedAt: sql<string>`COALESCE(${submissions.submittedAt}, ${submissions.createdAt})`,
+            createdAt: sql<string>`${submissions.createdAt}::text`,
+            submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
           },
           m: {
             tweetId: moderationHistory.tweetId,
@@ -449,10 +460,10 @@ export function getAllSubmissions(
         )
         .leftJoin(feeds, eq(submissionFeeds.feedId, feeds.id));
 
-  const results = queryBuilder.orderBy(moderationHistory.createdAt).all();
+  const results = await queryBuilder.orderBy(moderationHistory.createdAt);
 
   // Group results by submission
-  const submissionMap = new Map<string, TwitterSubmissionWithFeedData>();
+  const submissionMap = new Map<string, SubmissionWithFeedData>();
   const feedStatusMap = new Map<string, Map<string, FeedStatus>>();
 
   for (const result of results) {
@@ -467,8 +478,10 @@ export function getAllSubmissions(
         curatorId: result.s.curatorId,
         curatorUsername: result.s.curatorUsername,
         curatorTweetId: result.s.curatorTweetId,
-        createdAt: result.s.createdAt,
-        submittedAt: result.s.submittedAt,
+        createdAt: new Date(result.s.createdAt),
+        submittedAt: result.s.submittedAt
+          ? new Date(result.s.submittedAt)
+          : null,
         moderationHistory: [],
         status: status
           ? (status as SubmissionStatus)
@@ -489,7 +502,7 @@ export function getAllSubmissions(
         adminId: result.m.adminId,
         action: result.m.action as "approve" | "reject",
         note: result.m.note,
-        timestamp: new Date(result.m.createdAt!),
+        timestamp: result.m.createdAt!,
         moderationResponseTweetId:
           result.m.moderationResponseTweetId ?? undefined,
       });
@@ -568,67 +581,64 @@ export function getAllSubmissions(
   return Array.from(submissionMap.values());
 }
 
-export function cleanupOldSubmissionCounts(
-  db: BetterSQLite3Database,
-  date: string,
-) {
-  return db
+export async function cleanupOldSubmissionCounts(
+  db: NodePgDatabase<any>,
+): Promise<void> {
+  await db
     .delete(submissionCounts)
-    .where(sql`${submissionCounts.lastResetDate} < ${date}`)
-    .run();
+    .where(sql`${submissionCounts.lastResetDate}::date < CURRENT_DATE`)
+    .execute();
 }
 
-export function getDailySubmissionCount(
-  db: BetterSQLite3Database,
+export async function getDailySubmissionCount(
+  db: NodePgDatabase<any>,
   userId: string,
-  date: string,
-): number {
-  const result = db
+): Promise<number> {
+  const results = await db
     .select({ count: submissionCounts.count })
     .from(submissionCounts)
     .where(
       and(
         eq(submissionCounts.userId, userId),
-        eq(submissionCounts.lastResetDate, date),
+        eq(sql`${submissionCounts.lastResetDate}::date`, sql`CURRENT_DATE`),
       ),
-    )
-    .get();
+    );
 
-  return result?.count ?? 0;
+  return results.length > 0 ? results[0].count : 0;
 }
 
-export function incrementDailySubmissionCount(
-  db: BetterSQLite3Database,
+export async function incrementDailySubmissionCount(
+  db: NodePgDatabase<any>,
   userId: string,
-) {
-  const today = new Date().toISOString().split("T")[0];
-
-  return db
+): Promise<void> {
+  await db
     .insert(submissionCounts)
     .values({
       userId,
       count: 1,
-      lastResetDate: today,
+      lastResetDate: sql`CURRENT_DATE`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     })
     .onConflictDoUpdate({
       target: submissionCounts.userId,
       set: {
         count: sql`CASE 
-          WHEN ${submissionCounts.lastResetDate} < ${today} THEN 1
+          WHEN ${submissionCounts.lastResetDate}::date < CURRENT_DATE THEN 1
           ELSE ${submissionCounts.count} + 1
         END`,
-        lastResetDate: today,
+        lastResetDate: sql`CURRENT_DATE`,
       },
     })
-    .run();
+    .execute();
 }
 
-export function removeFromSubmissionFeed(
-  db: BetterSQLite3Database,
+export async function removeFromSubmissionFeed(
+  db: NodePgDatabase<any>,
   submissionId: string,
   feedId: string,
-) {
-  return db
+): Promise<void> {
+  await db
     .delete(submissionFeeds)
     .where(
       and(
@@ -636,45 +646,7 @@ export function removeFromSubmissionFeed(
         eq(submissionFeeds.feedId, feedId),
       ),
     )
-    .run();
-}
-
-// Feed Plugin queries
-export function getFeedPlugin(
-  db: BetterSQLite3Database,
-  feedId: string,
-  pluginId: string,
-) {
-  return db
-    .select()
-    .from(feedPlugins)
-    .where(
-      and(eq(feedPlugins.feedId, feedId), eq(feedPlugins.pluginId, pluginId)),
-    )
-    .get();
-}
-
-export function upsertFeedPlugin(
-  db: BetterSQLite3Database,
-  feedId: string,
-  pluginId: string,
-  config: Record<string, any>,
-) {
-  return db
-    .insert(feedPlugins)
-    .values({
-      feedId,
-      pluginId,
-      config: JSON.stringify(config),
-    })
-    .onConflictDoUpdate({
-      target: [feedPlugins.feedId, feedPlugins.pluginId],
-      set: {
-        config: JSON.stringify(config),
-        updatedAt: new Date().toISOString(),
-      },
-    })
-    .run();
+    .execute();
 }
 
 export interface FeedSubmissionCount {
@@ -696,160 +668,152 @@ export interface CountResult {
   count: number;
 }
 
-export function getPostsCount(db: BetterSQLite3Database): number {
+export async function getPostsCount(db: NodePgDatabase<any>): Promise<number> {
   // Count approved submissions
-  const result = db.get(sql`
+  const result = await db.execute(sql`
     SELECT COUNT(DISTINCT submission_id) as count
     FROM submission_feeds
     WHERE status = 'approved'
-  `) as CountResult | undefined;
+  `);
 
-  return result?.count || 0;
+  return result.rows.length > 0 ? Number(result.rows[0].count) : 0;
 }
 
-export function getCuratorsCount(db: BetterSQLite3Database): number {
+export async function getCuratorsCount(
+  db: NodePgDatabase<any>,
+): Promise<number> {
   // Count unique curator IDs
-  const result = db.get(sql`
+  const result = await db.execute(sql`
     SELECT COUNT(DISTINCT curator_id) as count
     FROM submissions
     WHERE curator_id IS NOT NULL
-  `) as CountResult | undefined;
+  `);
 
-  return result?.count || 0;
+  return result.rows.length > 0 ? Number(result.rows[0].count) : 0;
 }
 
-export function getLeaderboard(
-  db: BetterSQLite3Database,
+export async function getLeaderboard(
+  db: NodePgDatabase<any>,
   timeRange: string = "all",
-): LeaderboardEntry[] {
-  // Calculate date range based on timeRange
-  let dateFilter = "";
-  const now = new Date();
+): Promise<LeaderboardEntry[]> {
+  // Use PostgreSQL's date functions for more efficient filtering
+  let dateCondition;
 
-  if (timeRange === "month") {
-    // First day of current month
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    dateFilter = `AND s.created_at >= '${firstDayOfMonth.toISOString()}'`;
-  } else if (timeRange === "week") {
-    // Start of current week (Sunday)
-    const firstDayOfWeek = new Date(now);
-    const day = now.getDay(); // 0 for Sunday, 1 for Monday, etc.
-    firstDayOfWeek.setDate(now.getDate() - day);
-    firstDayOfWeek.setHours(0, 0, 0, 0);
-    dateFilter = `AND s.created_at >= '${firstDayOfWeek.toISOString()}'`;
-  } else if (timeRange === "today") {
-    // Start of today
-    const startOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-    );
-    dateFilter = `AND s.created_at >= '${startOfDay.toISOString()}'`;
+  switch (timeRange) {
+    case "month":
+      // First day of current month using PostgreSQL's date_trunc
+      dateCondition = sql`AND s.created_at >= date_trunc('month', CURRENT_DATE)`;
+      break;
+    case "week":
+      // Start of current week (Sunday) using PostgreSQL's date_trunc
+      dateCondition = sql`AND s.created_at >= date_trunc('week', CURRENT_DATE)`;
+      break;
+    case "today":
+      // Start of today using PostgreSQL's date_trunc
+      dateCondition = sql`AND s.created_at >= date_trunc('day', CURRENT_DATE)`;
+      break;
+    default:
+      // No date filter for "all"
+      dateCondition = sql``;
+      break;
   }
 
-  interface CuratorRow {
-    curatorId: string;
-    curatorUsername: string;
-    submissionCount: number;
-    approvalCount: number;
-    rejectionCount: number;
-  }
-
-  const curators = db.all(sql`
-    SELECT 
-      s.curator_id AS curatorId,
-      s.curator_username AS curatorUsername,
-      COUNT(DISTINCT s.tweet_id) AS submissionCount,
-      COUNT(DISTINCT CASE WHEN mh.action = 'approve' THEN s.tweet_id END) AS approvalCount,
-      COUNT(DISTINCT CASE WHEN mh.action = 'reject' THEN s.tweet_id END) AS rejectionCount
-    FROM 
-      submissions s
-    LEFT JOIN 
-      moderation_history mh ON s.tweet_id = mh.tweet_id
-    WHERE 
-      1=1 ${sql.raw(dateFilter)}
-    GROUP BY 
-      s.curator_id, s.curator_username
-    ORDER BY 
-      submissionCount DESC
-  `) as unknown as CuratorRow[];
-
-  // Step 2: Get total submissions per feed
-  interface FeedTotalRow {
-    feedId: string;
-    totalCount: number;
-  }
-
-  const feedTotals = db.all(sql`
-    SELECT 
-      feed_id AS feedId,
-      COUNT(DISTINCT submission_id) AS totalCount
-    FROM 
-      submission_feeds
-    GROUP BY 
-      feed_id
-  `) as unknown as FeedTotalRow[];
-
-  // Create a map for quick lookup of feed totals
-  const feedTotalsMap = new Map<string, number>();
-  for (const feed of feedTotals) {
-    feedTotalsMap.set(feed.feedId, feed.totalCount);
-  }
-
-  // Step 3: For each curator, get their submissions per feed
-  const result: LeaderboardEntry[] = [];
-
-  for (const curator of curators) {
-    interface CuratorFeedRow {
-      feedId: string;
-      count: number;
-    }
-
-    const curatorFeeds = db.all(sql`
+  // Use a single query with Common Table Expressions (CTEs) for better performance
+  const result = await db.execute(sql`
+    WITH feed_totals AS (
+      -- Get total submissions per feed
       SELECT 
-        sf.feed_id AS feedId,
-        COUNT(DISTINCT sf.submission_id) AS count
+        feed_id AS feedid,
+        COUNT(DISTINCT submission_id) AS totalcount
+      FROM 
+        submission_feeds
+      GROUP BY 
+        feed_id
+    ),
+    curator_stats AS (
+      -- Get curator statistics
+      SELECT 
+        s.curator_id AS curatorid,
+        s.curator_username AS curatorusername,
+        COUNT(DISTINCT s.tweet_id) AS submissioncount,
+        COUNT(DISTINCT CASE WHEN mh.action = 'approve' THEN s.tweet_id END) AS approvalcount,
+        COUNT(DISTINCT CASE WHEN mh.action = 'reject' THEN s.tweet_id END) AS rejectioncount
+      FROM 
+        submissions s
+      LEFT JOIN 
+        moderation_history mh ON s.tweet_id = mh.tweet_id
+      WHERE 
+        1=1 ${dateCondition}
+      GROUP BY 
+        s.curator_id, s.curator_username
+    ),
+    curator_feeds AS (
+      -- Get feed submissions per curator
+      SELECT 
+        s.curator_id AS curatorid,
+        sf.feed_id AS feedid,
+        COUNT(DISTINCT sf.submission_id) AS count,
+        ft.totalcount
       FROM 
         submission_feeds sf
       JOIN 
         submissions s ON sf.submission_id = s.tweet_id
+      JOIN 
+        feed_totals ft ON sf.feed_id = ft.feedid
       WHERE 
-        s.curator_id = ${curator.curatorId}
+        1=1 ${dateCondition}
       GROUP BY 
-        sf.feed_id
-    `) as unknown as CuratorFeedRow[];
+        s.curator_id, sf.feed_id, ft.totalcount
+    )
+    -- Combine all data with JSON aggregation
+    SELECT 
+      cs.curatorid,
+      cs.curatorusername,
+      cs.submissioncount,
+      cs.approvalcount,
+      cs.rejectioncount,
+      COALESCE(
+        json_agg(
+          json_build_object(
+            'feedId', cf.feedid, 
+            'count', cf.count, 
+            'totalInFeed', cf.totalcount
+          ) ORDER BY cf.count DESC
+        ) FILTER (WHERE cf.feedid IS NOT NULL),
+        '[]'
+      ) AS feedsubmissions
+    FROM 
+      curator_stats cs
+    LEFT JOIN 
+      curator_feeds cf ON cs.curatorid = cf.curatorid
+    GROUP BY 
+      cs.curatorid, cs.curatorusername, cs.submissioncount, cs.approvalcount, cs.rejectioncount
+    ORDER BY 
+      cs.submissioncount DESC
+  `);
 
-    // Convert to FeedSubmissionCount array with total counts
-    const feedSubmissions: FeedSubmissionCount[] = curatorFeeds.map((feed) => ({
-      feedId: feed.feedId,
-      count: feed.count,
-      totalInFeed: feedTotalsMap.get(feed.feedId) || 0,
-    }));
-
-    // Sort by count (highest first)
-    feedSubmissions.sort((a, b) => b.count - a.count);
-
-    result.push({
-      curatorId: curator.curatorId,
-      curatorUsername: curator.curatorUsername,
-      submissionCount: curator.submissionCount,
-      approvalCount: curator.approvalCount,
-      rejectionCount: curator.rejectionCount,
-      feedSubmissions,
-    });
-  }
-
-  return result;
+  // Map the results to the expected format
+  return result.rows.map((row: any) => ({
+    curatorId: String(row.curatorid),
+    curatorUsername: String(row.curatorusername),
+    submissionCount: Number(row.submissioncount),
+    approvalCount: Number(row.approvalcount),
+    rejectionCount: Number(row.rejectioncount),
+    feedSubmissions: Array.isArray(row.feedsubmissions)
+      ? row.feedsubmissions.map((fs: any) => ({
+          feedId: String(fs.feedId),
+          count: Number(fs.count),
+          totalInFeed: Number(fs.totalInFeed),
+        }))
+      : [],
+  }));
 }
 
-export function getSubmissionsByFeed(
-  db: BetterSQLite3Database,
+export async function getSubmissionsByFeed(
+  db: NodePgDatabase<any>,
   feedId: string,
-): (TwitterSubmission & {
-  status: SubmissionStatus;
-  moderationResponseTweetId?: string;
-})[] {
-  const results = db
+): Promise<Submission[]> {
+  const results = await db
     .select({
       s: {
         tweetId: submissions.tweetId,
@@ -860,8 +824,8 @@ export function getSubmissionsByFeed(
         curatorId: submissions.curatorId,
         curatorUsername: submissions.curatorUsername,
         curatorTweetId: submissions.curatorTweetId,
-        createdAt: submissions.createdAt,
-        submittedAt: sql<string>`COALESCE(${submissions.submittedAt}, ${submissions.createdAt})`,
+        createdAt: sql<string>`${submissions.createdAt}::text`,
+        submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
       },
       sf: {
         status: submissionFeeds.status,
@@ -886,11 +850,10 @@ export function getSubmissionsByFeed(
       eq(submissions.tweetId, moderationHistory.tweetId),
     )
     .where(eq(submissionFeeds.feedId, feedId))
-    .orderBy(moderationHistory.createdAt)
-    .all() as DbFeedQueryResult[];
+    .orderBy(moderationHistory.createdAt);
 
   // Group results by submission
-  const submissionMap = new Map<string, TwitterSubmissionWithFeedData>();
+  const submissionMap = new Map<string, SubmissionWithFeedData>();
 
   for (const result of results) {
     if (!submissionMap.has(result.s.tweetId)) {
@@ -903,8 +866,10 @@ export function getSubmissionsByFeed(
         curatorId: result.s.curatorId,
         curatorUsername: result.s.curatorUsername,
         curatorTweetId: result.s.curatorTweetId,
-        createdAt: result.s.createdAt,
-        submittedAt: result.s.submittedAt,
+        createdAt: new Date(result.s.createdAt),
+        submittedAt: result.s.submittedAt
+          ? new Date(result.s.submittedAt)
+          : null,
         moderationHistory: [],
         status: result.sf.status,
         moderationResponseTweetId:
@@ -917,10 +882,10 @@ export function getSubmissionsByFeed(
       submission.moderationHistory.push({
         tweetId: result.s.tweetId,
         feedId: result.m.feedId!,
-        adminId: result.m.adminId,
+        adminId: result.m.adminId!,
         action: result.m.action as "approve" | "reject",
         note: result.m.note,
-        timestamp: new Date(result.m.createdAt!),
+        timestamp: result.m.createdAt!,
         moderationResponseTweetId:
           result.m.moderationResponseTweetId ?? undefined,
       });

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import FeedList from "../../components/FeedList";
 import Layout from "../../components/Layout";
 import { useState } from "react";
-import { TwitterSubmission } from "../../types/twitter";
+import { Submission } from "../../types/twitter";
 import { useFeedConfig, useFeedItems } from "../../lib/api";
 import { useBotId } from "../../lib/config";
 import { getTwitterIntentUrl } from "../../lib/twitter";
@@ -19,7 +19,7 @@ function FeedPage() {
   const { data: items = [] } = useFeedItems(feedId);
   const botId = useBotId();
   const [statusFilter, setStatusFilter] = useState<
-    "all" | TwitterSubmission["status"]
+    "all" | Submission["status"]
   >("all");
 
   const sidebarContent = (

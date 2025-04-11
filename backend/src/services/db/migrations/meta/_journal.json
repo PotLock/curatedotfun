@@ -1,27 +1,19 @@
 {
-  "version": "5",
-  "dialect": "sqlite",
-  "id": "sqlite",
+  "version": "7",
+  "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
-      "version": "6",
-      "when": 1737000087540,
-      "tag": "0000_slim_christian_walker",
+      "version": "7",
+      "when": 1742922628639,
+      "tag": "0000_parallel_magma",
       "breakpoints": true
     },
     {
       "idx": 1,
-      "version": "6",
-      "when": 1737065889507,
-      "tag": "0001_colorful_zaran",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1737163062577,
-      "tag": "0002_schema_updates",
+      "version": "7",
+      "when": 1744050920872,
+      "tag": "0001_fixed_hulk",
       "breakpoints": true
     }
   ]

@@ -101,23 +101,63 @@ cp .env.example .env
 
 3. Start development server:
 
+Make sure [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or [Orbstack](https://orbstack.dev/) on MacOS) is running before starting the development server.
+
 ```bash
-bun run dev
+# From the root directory
+pnpm run dev
 ```
+
+This command:
+
+- Starts a PostgreSQL container for development
+- Initializes the database with migrations and seed data
+- Starts the backend server in watch mode
+- Preserves your database data between runs
+
+For a fresh start with a clean database:
+
+```bash
+# From the root directory
+pnpm run dev:fresh
+```
+
+This command performs the same steps as `pnpm run dev` but removes any existing database volumes for a clean slate.
+
+When you're done, press Ctrl+C (or Cmd+C on Mac) to stop all services. The command will automatically clean up Docker containers while preserving your database data (unless you used the `dev:fresh` command).
+
+4. Modifying seed data:
+
+Development seed data is located in `backend/scripts/seed-dev.ts`. You can modify this file to customize the initial data loaded into your development database.
+
+5. Production deployment:
+
+```bash
+# From the root directory
+pnpm run start
+```
+
+This command starts the application in production mode with a PostgreSQL database.
+
+For detailed deployment instructions, see the [Deployment Guide](https://docs.curate.fun/docs/developers/deployment).
 
 ### Testing
 
 Run the test suite:
 
 ```bash
-bun test
+# From the root directory
+pnpm run test
 ```
 
-Run tests in watch mode during development:
+This command:
 
-```bash
-bun test --watch
-```
+- Starts a dedicated PostgreSQL container for testing
+- Initializes the test database with migrations and test seed data
+- Runs the test suite
+- Automatically cleans up all test containers and volumes when complete
+
+Test seed data is located in `backend/test/setup/seed-test.ts`. You can modify this file to customize the test data.
 
 API documentation is available at `/swagger` when running the development server.
 

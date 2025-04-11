@@ -78,7 +78,7 @@ curate.fun solves these problems by:
 ### Platform Management
 
 - Configuration-driven feed management
-- Plugin-based architecture
+- Plugin-based architecture with module federation
 - Extensible transformation system
 - Comprehensive admin interface
 

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import type { AppConfig, FeedConfig } from "../types/config";
-import type { TwitterSubmissionWithFeedData } from "../types/twitter";
+import type { SubmissionWithFeedData } from "../types/twitter";
 
 export function useFeedConfig(feedId: string) {
   return useQuery<FeedConfig>({
@@ -16,7 +16,7 @@ export function useFeedConfig(feedId: string) {
 }
 
 export function useFeedItems(feedId: string) {
-  return useQuery<TwitterSubmissionWithFeedData[]>({
+  return useQuery<SubmissionWithFeedData[]>({
     queryKey: ["feed-items", feedId],
     queryFn: async () => {
       const response = await fetch(`/api/feed/${feedId}`);
@@ -135,9 +135,9 @@ export interface TransformedInfiniteData<T> {
 export function useAllSubmissions(limit: number = 20, status?: string) {
   // Use infinite query for direct pagination from the backend
   return useInfiniteQuery<
-    PaginatedResponse<TwitterSubmissionWithFeedData>,
+    PaginatedResponse<SubmissionWithFeedData>,
     Error,
-    TransformedInfiniteData<TwitterSubmissionWithFeedData>,
+    TransformedInfiniteData<SubmissionWithFeedData>,
     [string, string | undefined],
     number
   >({

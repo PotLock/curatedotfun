@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import FeedList from "../../components/FeedList";
 import Layout from "../../components/Layout";
 import { useState } from "react";
-import { TwitterSubmission } from "../../types/twitter";
+import { Submission } from "../../types/twitter";
 import { useBotId } from "../../lib/config";
 import { useAllSubmissions } from "../../lib/api";
 import FeedHeader from "../../components/FeedHeader";
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/feed/")({
 function FeedIndexPage() {
   const botId = useBotId();
   const [statusFilter, setStatusFilter] = useState<
-    "all" | TwitterSubmission["status"]
+    "all" | Submission["status"]
   >("all");
 
   // Fetch submissions with infinite scroll
