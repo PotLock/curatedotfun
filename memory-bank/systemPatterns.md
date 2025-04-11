@@ -5,6 +5,7 @@
 ### Core Components
 
 1. **Server Layer (Hono)**
+
    - REST API endpoints
    - Static file serving
    - CORS and security middleware
@@ -12,6 +13,7 @@
    - Process endpoint for content processing
 
 2. **Service Layer**
+
    - ConfigService: Configuration management
    - SubmissionService: Platform-agnostic submission handling
    - ProcessorService: Orchestrates transformation pipeline
@@ -23,18 +25,18 @@
 
 3. **Plugin System**
    - Source plugins
-     * Twitter (primary content source)
-     * Telegram (message monitoring - planned)
-     * LinkedIn (planned integration)
+     - Twitter (primary content source)
+     - Telegram (message monitoring - planned)
+     - LinkedIn (planned integration)
    - Distributor plugins
-     * Telegram (@curatedotfun/telegram)
-     * RSS (@curatedotfun/rss)
-     * Notion (@curatedotfun/notion)
-     * NEAR Social (@curatedotfun/near-social)
+     - Telegram (@curatedotfun/telegram)
+     - RSS (@curatedotfun/rss)
+     - Notion (@curatedotfun/notion)
+     - NEAR Social (@curatedotfun/near-social)
    - Transformer plugins
-     * AI Transform (AI-powered content enhancement)
-     * Simple Transform (Basic formatting)
-     * Object Transform (Data mapping and transformation)
+     - AI Transform (AI-powered content enhancement)
+     - Simple Transform (Basic formatting)
+     - Object Transform (Data mapping and transformation)
    - Plugin Features
      * Runtime loading via module federation
      * Type-safe configuration
@@ -82,10 +84,12 @@
 ### Design Patterns
 
 1. **Singleton Pattern**
+
    - Used in ConfigService and PluginService for global configuration
    - Ensures consistent state across the application
 
 2. **Plugin Pattern**
+
    - Module federation for runtime plugin loading
    - Standardized plugin interfaces
    - Type-safe plugin configuration
@@ -93,6 +97,7 @@
    - Plugin caching and invalidation
 
 3. **Service Pattern**
+
    - Clear service boundaries and responsibilities
    - Platform-agnostic design
    - Encapsulated business logic
@@ -100,6 +105,7 @@
    - Extensible action handling
 
 4. **Observer Pattern**
+
    - Generic content source monitoring
    - Event-driven content processing
    - Configurable action handlers
@@ -113,6 +119,7 @@
 ## Component Relationships
 
 ### Configuration Flow
+
 ```mermaid
 graph TD
     Config[ConfigService] --> Twitter[TwitterService]
@@ -122,6 +129,7 @@ graph TD
 ```
 
 ### Content Flow
+
 ```mermaid
 graph LR
     Twitter[TwitterService] --> Submission[SubmissionService]
@@ -134,6 +142,7 @@ graph LR
 ```
 
 ### Plugin System
+
 ```mermaid
 graph TD
     PluginService[PluginService] --> Load[Load Plugins]
@@ -152,6 +161,7 @@ graph TD
 ```
 
 ### Error Handling Flow
+
 ```mermaid
 graph TD
     Error[Error Occurs] --> Type{Error Type}

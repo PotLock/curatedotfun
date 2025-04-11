@@ -1,10 +1,19 @@
 import { defineConfig } from "@rsbuild/core";
 import { pluginReact } from "@rsbuild/plugin-react";
 import { TanStackRouterRspack } from "@tanstack/router-plugin/rspack";
+import { pluginNodePolyfill } from "@rsbuild/plugin-node-polyfill";
 import path from "path";
 
 export default defineConfig({
-  plugins: [pluginReact()],
+  plugins: [
+    pluginReact(),
+    pluginNodePolyfill({
+      globals: {
+        Buffer: true,
+        process: true,
+      },
+    }),
+  ],
   html: {
     template: "./index.html",
   },
