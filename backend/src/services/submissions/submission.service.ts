@@ -350,21 +350,14 @@ export class SubmissionService {
               SubmissionStatus.APPROVED,
               tweet.id!,
             );
-
+          } 
             if (feed.outputs.stream?.enabled) {
               await this.processorService.process(
                 existingSubmission || submission!,
                 feed.outputs.stream,
               );
             }
-          } else {
-            if (feed.outputs.stream?.enabled) {
-              await this.processorService.process(
-                existingSubmission || submission!,
-                feed.outputs.stream,
-              );
-            }
-          }
+          
         }
       }
 

@@ -10,7 +10,7 @@
   "plugins": {
     "@curatedotfun/telegram": {
       "type": "distributor",
-      "url": "http://localhost:3007/remoteEntry.js"
+      "url": "https://unpkg.com/@curatedotfun/telegram@latest/dist/remoteEntry.js"
     },
     "@curatedotfun/notion": {
       "type": "distributor",
@@ -23,6 +23,10 @@
     "@curatedotfun/object-transform": {
       "type": "transformer",
       "url": "https://unpkg.com/@curatedotfun/object-transform@latest/dist/remoteEntry.js"
+    },
+    "@curatedotfun/ai-transform": {
+      "type": "transformer",
+      "url": "https://unpkg.com/@curatedotfun/ai-transform@latest/dist/remoteEntry.js"
     }
   },
   "feeds": [
@@ -64,11 +68,41 @@
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
-                "channelId": "-1002680817250"
+                "channelId": "@test_curation"
               }
             },
             {
               "transform": [
+                {
+                  "plugin": "@curatedotfun/ai-transform",
+                  "config": {
+                    "prompt": "Create a structured summary of this content",
+                    "apiKey": "{OPENROUTER_API_KEY}",
+                    "schema": {
+                      "title": {
+                        "type": "string",
+                        "description": "A catchy headline summarizing the content (max 80 chars)"
+                      },
+                      "summary": {
+                        "type": "string",
+                        "description": "A concise summary of the content and curator notes (max 280 chars)"
+                      },
+                      "keyPoints": {
+                        "type": "string",
+                        "description": "3-5 bullet points highlighting main ideas, one per line"
+                      },
+                      "category": {
+                        "type": "string",
+                        "description": "The inferred topic category (e.g., DeFi, NFTs, Layer2)"
+                      },
+                      "sentiment": {
+                        "type": "string",
+                        "description": "The overall sentiment (positive, neutral, or negative)"
+                      }
+                    },
+                    "outputFormat": "json"
+                  }
+                },
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
@@ -79,7 +113,7 @@
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
-                "channelId": "-1002680817250"
+                "channelId": "@test_curation"
               }
             }
           ]

@@ -51,3 +51,4 @@ bun.lockb
 
 # JetBrains
 .idea/
+backend/test/curate.config.test.json
