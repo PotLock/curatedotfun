@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import { useWeb3Auth } from "../hooks/use-web3-auth";
 import { Button } from "./ui/button";
 import {
@@ -12,9 +11,11 @@ import {
 
 import { ChevronDown, CircleUserRound, CreditCard, LogOut } from "lucide-react";
 import { AuthUserInfo } from "../types/web3auth";
+
 export default function UserMenu() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
+  const [imageError, setImageError] = useState(false);
 
   const { isInitialized, isLoggedIn, login, logout, getUserInfo } =
     useWeb3Auth();
@@ -24,6 +25,8 @@ export default function UserMenu() {
       try {
         const info = await getUserInfo();
         setUserInfo(info);
+        // Reset image error state when we get new user info
+        setImageError(false);
         console.log("User Info:", info);
       } catch (error) {
         console.error("Error fetching user info:", error);
@@ -36,6 +39,44 @@ export default function UserMenu() {
       setUserInfo({});
     }
   }, [isLoggedIn, getUserInfo]);
+
+  // Profile image component with error handling
+  const ProfileImage = ({ size = "small" }) => {
+    const handleImageError = () => {
+      console.log("Image failed to load:", userInfo?.profileImage);
+      setImageError(true);
+    };
+
+    // Debug image URL
+    useEffect(() => {
+      if (userInfo?.profileImage) {
+        console.log("Attempting to load profile image:", userInfo.profileImage);
+      }
+    }, [userInfo]);
+
+    if (imageError || !userInfo?.profileImage) {
+      return (
+        <CircleUserRound className={size === "small" ? "h-7 w-7" : "h-6 w-6"} />
+      );
+    }
+
+    return (
+      <img
+        className="rounded-full"
+        style={{
+          height: size === "small" ? "28px" : "24px",
+          width: size === "small" ? "28px" : "24px",
+          objectFit: "cover", // Add this to ensure image fits properly
+        }}
+        alt="Profile Image"
+        src={userInfo.profileImage}
+        onError={handleImageError}
+        loading="eager" // Make image loading priority high
+        referrerPolicy="no-referrer" // Help with potential CORS issues
+      />
+    );
+  };
+
   return (
     <>
       {isInitialized && isLoggedIn && userInfo ? (
@@ -43,11 +84,7 @@ export default function UserMenu() {
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="hidden md:flex">
               <div className="flex gap-1 items-center justify-center">
-                <img
-                  className="rounded-full h-7 w-7"
-                  alt="Profile Image"
-                  src={userInfo.profileImage}
-                />
+                <ProfileImage size="small" />
                 <p className="text-sm font-medium leading-6 hidden sm:block">
                   {(userInfo as { name?: string }).name ||
                     (userInfo as { email?: string }).email}
@@ -63,13 +100,7 @@ export default function UserMenu() {
           <DropdownMenuContent className="w-56 mt-4">
             <DropdownMenuItem>
               <div className="flex gap-2 w-full items-start">
-                <img
-                  src={userInfo.profileImage}
-                  alt="Profile Image"
-                  height={24}
-                  width={24}
-                  className="rounded-full"
-                />
+                <ProfileImage />
                 <div>
                   <p className="text-sm font-semibold leading-5">
                     {(userInfo as { name?: string }).name}
