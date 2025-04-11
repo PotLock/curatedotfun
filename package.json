@@ -23,6 +23,5 @@
     "db:migrate": "cd backend && pnpm db:migrate",
     "prepare": "corepack enable"
   },
-  "type": "module",
-  "packageManager": "bun@1.2.5"
+  "type": "module"
 }
