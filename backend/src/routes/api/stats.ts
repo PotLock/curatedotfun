@@ -1,4 +1,4 @@
-import { HonoApp } from "../../types/app";
+import { HonoApp } from "../../app";
 import { submissionRepository } from "../../services/db/repositories";
 
 // Create stats routes

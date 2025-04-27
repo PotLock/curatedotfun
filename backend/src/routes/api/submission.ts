@@ -2,7 +2,7 @@ import {
   submissionRepository,
   feedRepository,
 } from "../../services/db/repositories";
-import { HonoApp } from "../../types/app";
+import { HonoApp } from "../../app";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { SubmissionStatus } from "../../types/twitter";

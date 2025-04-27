@@ -1,4 +1,4 @@
-import { HonoApp } from "../../types/app";
+import { HonoApp } from "../../app";
 import { PluginService } from "../../services/plugins/plugin.service";
 
 // Create plugin routes

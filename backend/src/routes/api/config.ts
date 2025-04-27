@@ -1,4 +1,4 @@
-import { HonoApp } from "../../types/app";
+import { HonoApp } from "../../app";
 import { logger } from "../../utils/logger";
 
 // Create config routes

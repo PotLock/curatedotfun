@@ -1,5 +1,5 @@
 import { feedRepository } from "../../services/db/repositories";
-import { HonoApp } from "../../types/app";
+import { HonoApp } from "../../app";
 import { serviceUnavailable } from "../../utils/error";
 import { logger } from "../../utils/logger";
 

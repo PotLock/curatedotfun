@@ -1,6 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { HonoApp } from "../../types/app";
+import { HonoApp } from "../../app";
 import { serviceUnavailable } from "../../utils/error";
 import { logger } from "../../utils/logger";
 

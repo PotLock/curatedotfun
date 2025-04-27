@@ -1,4 +1,4 @@
-import { HonoApp } from "../../types/app";
+import { HonoApp } from "../../app";
 import { leaderboardRepository } from "../../services/db/repositories";
 
 // Create leaderboard routes

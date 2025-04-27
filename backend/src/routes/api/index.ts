@@ -1,5 +1,5 @@
 import { isProduction } from "../../services/config/config.service";
-import { HonoApp } from "../../types/app";
+import { HonoApp } from "../../app";
 import configRoutes from "./config";
 import feedRoutes from "./feed";
 import leaderboardRoutes from "./leaderboard";

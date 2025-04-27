@@ -3,8 +3,7 @@ import { loadEnvConfig } from "./utils/config";
 loadEnvConfig();
 
 import { serve } from "@hono/node-server";
-import { AppInstance } from "types/app";
-import { createApp } from "./app";
+import { createApp, type AppInstance } from "./app";
 import { dbConnection } from "./services/db";
 import {
   cleanup,
