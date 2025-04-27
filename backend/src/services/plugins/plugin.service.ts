@@ -31,19 +31,6 @@ export interface PluginCache<T extends PluginType, P extends BotPlugin> {
   };
   lastLoaded: Date;
 }
-
-export interface PluginEndpoint {
-  // move to types
-  path: string;
-  method: "GET" | "POST" | "PUT" | "DELETE";
-  handler: (ctx: import("hono").Context) => Promise<Response>;
-}
-
-interface PluginWithEndpoints extends BotPlugin<Record<string, unknown>> {
-  // move to types
-  getEndpoints?: () => PluginEndpoint[];
-}
-
 interface RemoteConfig {
   name: string;
   entry: string;
@@ -88,7 +75,6 @@ export class PluginService {
   private static instance: PluginService;
   private remotes: Map<string, RemoteState> = new Map();
   private instances: Map<string, InstanceState<PluginType>> = new Map();
-  private endpoints: Map<string, PluginEndpoint[]> = new Map();
   private app: Hono | null = null;
   private configService: ConfigService;
 
@@ -112,17 +98,6 @@ export class PluginService {
       PluginService.instance = new PluginService();
     }
     return PluginService.instance;
-  }
-
-  /**
-   * Sets the Elysia app instance for endpoint registration
-   */
-  public setApp(app: Hono) {
-    this.app = app;
-    // Register any pending endpoints
-    for (const [name, endpoints] of this.endpoints) {
-      this.registerEndpoints(name, endpoints);
-    }
   }
 
   /**
@@ -211,23 +186,6 @@ export class PluginService {
           >[T];
           await newInstance.initialize(config.config);
 
-          // // Validate instance implements required interface
-          // if (!this.validatePluginInterface<T, TInput, TOutput, TConfig>(newInstance, config.type)) {
-          //   throw new PluginInitError(
-          //     name,
-          //     new Error(
-          //       `Plugin does not implement required ${config.type} interface`,
-          //     ),
-          //   );
-          // }
-
-          // Register endpoints if available
-          if (this.app && (newInstance as PluginWithEndpoints).getEndpoints) {
-            const endpoints = (newInstance as PluginWithEndpoints)
-              .getEndpoints!();
-            this.registerEndpoints(normalizedName, endpoints);
-          }
-
           // Cache successful instance
           const instanceState: InstanceState<T> = {
             instance: newInstance as PluginTypeMap<
@@ -252,8 +210,6 @@ export class PluginService {
 
             if (instance.authFailures >= this.maxAuthFailures) {
               logger.error(`Plugin ${name} disabled due to auth failures`);
-              // Clean up endpoints before disabling
-              this.unregisterEndpoints(normalizedName);
               throw new PluginError(
                 `Plugin ${name} disabled after ${instance.authFailures} auth failures`,
               );
@@ -273,9 +229,6 @@ export class PluginService {
         }
       }
 
-      // If we get here, all retries failed
-      // Clean up failed remote
-      this.unregisterEndpoints(normalizedName);
       throw lastError || new PluginError(`Failed to initialize plugin ${name}`);
     } catch (error) {
       logger.error(`Plugin error: ${name}`, { error });
@@ -336,8 +289,6 @@ export class PluginService {
     } catch (error) {
       remote.status = "failed";
       remote.lastError = error as Error;
-      // Clean up failed remote
-      this.unregisterEndpoints(remote.config.name);
       throw error;
     }
   }
@@ -365,12 +316,9 @@ export class PluginService {
           });
         }
       }
-      // Clean up endpoints for each instance
-      this.unregisterEndpoints(state.remoteName);
     }
 
     this.instances.clear();
-    this.endpoints.clear();
     this.remotes.clear();
 
     if (errors.length > 0) {
@@ -378,102 +326,6 @@ export class PluginService {
         errors,
         `Some plugins failed to shutdown properly`,
       );
-    }
-  }
-
-  /**
-   * Registers plugin endpoints with the Elysia app
-   */
-  private registerEndpoints(name: string, endpoints: PluginEndpoint[]): void {
-    if (!this.app) {
-      this.endpoints.set(name, endpoints);
-      return;
-    }
-
-    // Remove any existing endpoints first
-    this.unregisterEndpoints(name);
-
-    for (const endpoint of endpoints) {
-      const path = `/plugin/${name}${endpoint.path}`;
-      logger.info(`Registering endpoint: ${endpoint.method} ${path}`);
-
-      switch (endpoint.method) {
-        case "GET":
-          this.app.get(path, endpoint.handler);
-          break;
-        case "POST":
-          this.app.post(path, endpoint.handler);
-          break;
-        case "PUT":
-          this.app.put(path, endpoint.handler);
-          break;
-        case "DELETE":
-          this.app.delete(path, endpoint.handler);
-          break;
-      }
-    }
-
-    // Store new endpoints
-    this.endpoints.set(name, endpoints);
-  }
-
-  /**
-   * Unregisters all endpoints for a plugin
-   */
-  private unregisterEndpoints(name: string): void {
-    if (!this.app) {
-      this.endpoints.delete(name);
-      return;
-    }
-
-    const endpoints = this.endpoints.get(name);
-    if (endpoints) {
-      for (const endpoint of endpoints) {
-        const path = `/plugin/${name}${endpoint.path}`;
-        logger.info(`Unregistering endpoint: ${endpoint.method} ${path}`);
-        // Note: Elysia doesn't provide a direct way to unregister routes
-        // The routes will be overwritten if registered again
-        // or cleared when the app is cleaned up
-      }
-    }
-    this.endpoints.delete(name);
-  }
-
-  /**
-   * Validates that a plugin instance implements the required interface
-   */
-  private validatePluginInterface<
-    T extends PluginType,
-    TInput = unknown,
-    TOutput = unknown,
-    TConfig extends Record<string, unknown> = Record<string, unknown>,
-  >(
-    instance: BotPlugin<TConfig>,
-    type: T,
-  ): instance is PluginTypeMap<TInput, TOutput, TConfig>[T] {
-    if (!instance || typeof instance !== "object") return false;
-    if (typeof instance.initialize !== "function") return false;
-    if (instance.type !== type) return false;
-
-    switch (type) {
-      case "distributor":
-        return (
-          typeof (instance as DistributorPlugin<TInput, TConfig>).distribute ===
-          "function"
-        );
-      case "transformer": {
-        const transformer = instance as TransformerPlugin<
-          TInput,
-          TOutput,
-          TConfig
-        >;
-        return (
-          typeof transformer.transform === "function" &&
-          transformer.type === "transformer"
-        );
-      }
-      default:
-        return false;
     }
   }
 

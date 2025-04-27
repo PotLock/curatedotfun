@@ -1,6 +1,5 @@
 import { TwitterService } from "../../../twitter/client";
 import { logger } from "../../../../utils/logger";
-import { PluginEndpoint } from "services/plugins/plugin.service";
 
 interface TwitterConfig extends Record<string, unknown> {
   username: string;
@@ -93,40 +92,6 @@ export class TwitterSourcePlugin {
       throw new Error("Twitter service not initialized");
     }
     // Implementation will be added when we refactor the submission service
-  }
-
-  getEndpoints(): PluginEndpoint[] {
-    return [
-      {
-        path: "/last-tweet-id",
-        method: "GET",
-        handler: async () => {
-          if (!this.twitterService) {
-            throw new Error("Twitter service not available");
-          }
-          const lastTweetId = this.twitterService.getLastCheckedTweetId();
-          return { lastTweetId };
-        },
-      },
-      {
-        path: "/last-tweet-id",
-        method: "POST",
-        handler: async ({ body }: { body: { tweetId: string } }) => {
-          if (!this.twitterService) {
-            throw new Error("Twitter service not available");
-          }
-          if (
-            !body?.tweetId ||
-            typeof body.tweetId !== "string" ||
-            !body.tweetId.match(/^\d+$/)
-          ) {
-            throw new Error("Invalid tweetId format");
-          }
-          this.twitterService.setLastCheckedTweetId(body.tweetId);
-          return { success: true };
-        },
-      },
-    ];
   }
 }
 
