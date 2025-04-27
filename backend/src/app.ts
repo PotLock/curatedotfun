@@ -11,9 +11,48 @@ import { ProcessorService } from "./services/processor/processor.service";
 import { SubmissionService } from "./services/submissions/submission.service";
 import { TransformationService } from "./services/transformation/transformation.service";
 import { TwitterService } from "./services/twitter/client";
-import { AppContext, AppInstance, HonoApp } from "./types/app";
 import { getAllowedOrigins } from "./utils/config";
 import { errorHandler } from "./utils/error";
+import { Hono } from "hono";
+
+/**
+ * Application context shared across routes
+ */
+export interface AppContext {
+  twitterService: TwitterService | null;
+  submissionService: SubmissionService | null;
+  distributionService: DistributionService | null;
+  processorService: ProcessorService | null;
+  configService: ConfigService;
+}
+
+/**
+ * Application instance returned by createApp
+ */
+export interface AppInstance {
+  app: HonoAppType;
+  context: AppContext;
+}
+
+/**
+ * Type for Hono app with AppContext
+ */
+export type HonoAppType = Hono<{
+  Variables: {
+    context: AppContext;
+  };
+}>;
+
+/**
+ * Factory function to create a new Hono app with AppContext
+ */
+export const HonoApp = (): HonoAppType => {
+  return new Hono<{
+    Variables: {
+      context: AppContext;
+    };
+  }>();
+};
 
 const ALLOWED_ORIGINS = getAllowedOrigins();
 
