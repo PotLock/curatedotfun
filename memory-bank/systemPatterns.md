@@ -73,7 +73,6 @@
    - Docker Compose for local development
    - PostgreSQL container with persistent volume
    - Automatic migrations on startup
-   - Seed data scripts from SQLite
 
 4. **Testing Environment**
    - Isolated test databases

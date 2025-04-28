@@ -12,8 +12,7 @@
     "db:check": "drizzle-kit check",
     "db:studio": "drizzle-kit studio",
     "db:seed:dev": "bun ./scripts/seed-dev.ts",
-    "db:seed:test": "bun ./test/setup/seed-test.ts",
-    "db:migrate-sqlite-to-pg": "bun ./scripts/migrate-sqlite-to-postgres.js"
+    "db:seed:test": "bun ./test/setup/seed-test.ts"
   },
   "browserslist": {
     "production": [
