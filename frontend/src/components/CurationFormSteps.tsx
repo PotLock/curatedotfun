@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Progress } from "./ui/progress";
 import { Button } from "./ui/button";
 import BasicInformationForm from "./BasicInformationForm";
 import CurationSettingsForm from "./CurationSettingsForm";
+import { AuthUserInfo } from "../types/web3auth";
+import { useWeb3Auth } from "../hooks/use-web3-auth";
 
 // Define step content types
 type Step = {
@@ -48,6 +50,29 @@ export default function CurationFormSteps() {
       setCurrentStep(currentStep - 1);
     }
   };
+
+  const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
+
+  const { isInitialized, isLoggedIn, login, logout, getUserInfo } =
+    useWeb3Auth();
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const info = await getUserInfo();
+        setUserInfo(info);
+        console.log("User Info:", info);
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+      }
+    };
+
+    if (isLoggedIn) {
+      fetchUserInfo();
+    } else {
+      setUserInfo({});
+    }
+  }, [isLoggedIn, getUserInfo]);
 
   return (
     <div className="w-full md:max-w-4xl mx-auto py-4 md:py-8 px-4 md:px-0">
@@ -97,7 +122,7 @@ export default function CurationFormSteps() {
 
           <Button
             onClick={handleNext}
-            disabled={currentStep === steps.length - 1}
+            disabled={currentStep === steps.length - 1 || !isLoggedIn}
             className="text-sm md:text-base"
           >
             Next
