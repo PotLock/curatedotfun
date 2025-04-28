@@ -4,7 +4,7 @@ export const Route = createFileRoute("/")({
   beforeLoad: async () => {
     // Redirect to the feed index page
     throw redirect({
-      to: "/feed",
+      to: "/submissions",
     });
   },
   component: Index,

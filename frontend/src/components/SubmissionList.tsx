@@ -6,6 +6,11 @@ interface SubmissionListProps {
   statusFilter: "all" | Submission["status"];
   botId: string | undefined;
   feedId?: string | undefined;
+  /**
+   * Layout style for the list of items
+   * @default "flex" - Items will be displayed in a vertical flex container
+   */
+  layout?: "flex" | "grid";
 }
 
 const SubmissionList = ({
@@ -13,6 +18,7 @@ const SubmissionList = ({
   statusFilter,
   botId,
   feedId,
+  layout = "flex",
 }: SubmissionListProps) => {
   // Filter items based on feed statuses if available
   const filteredItems = items.filter((item) => {
@@ -42,22 +48,29 @@ const SubmissionList = ({
     );
   }
 
+  // Sort items by submission date (newest first)
+  const sortedItems = filteredItems.sort(
+    (a, b) =>
+      new Date(b.submittedAt!).getTime() - new Date(a.submittedAt!).getTime(),
+  );
+
+  // Render the list with appropriate layout
   return (
-    <>
-      {filteredItems
-        .sort(
-          (a, b) =>
-            new Date(b.submittedAt!).getTime() -
-            new Date(a.submittedAt!).getTime(),
-        )
-        .map((item) => (
-          <FeedItem
-            key={item.tweetId}
-            submission={item}
-            statusFilter={statusFilter || "all"}
-          />
-        ))}
-    </>
+    <div
+      className={
+        layout === "grid"
+          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          : "flex flex-col space-y-4"
+      }
+    >
+      {sortedItems.map((item) => (
+        <FeedItem
+          key={item.tweetId}
+          submission={item}
+          statusFilter={statusFilter || "all"}
+        />
+      ))}
+    </div>
   );
 };
 

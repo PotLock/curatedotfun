@@ -11,8 +11,6 @@ This directory contains tests for the curate.fun backend. The tests are organize
 
 ## PostgreSQL Testing
 
-The project has migrated from SQLite to PostgreSQL for testing. This provides a more realistic testing environment that matches production.
-
 ### Setup
 
 The PostgreSQL testing environment is set up using Docker Compose. The `docker-compose.yml` file in the `setup` directory defines a PostgreSQL container that is used for testing.

@@ -58,7 +58,6 @@ backend/
    - `testcontainers` - For programmatic container management
 
 3. **Database**:
-   - Continue using the existing database library (better-sqlite3)
    - Add `pg` for PostgreSQL testing
 
 4. **HTTP Testing**:

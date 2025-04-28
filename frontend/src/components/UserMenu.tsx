@@ -11,11 +11,12 @@ import {
 
 import { ChevronDown, CircleUserRound, CreditCard, LogOut } from "lucide-react";
 import { AuthUserInfo } from "../types/web3auth";
-
+import { useNavigate } from "@tanstack/react-router";
 export default function UserMenu() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
   const [imageError, setImageError] = useState(false);
+  const navigate = useNavigate();
 
   const { isInitialized, isLoggedIn, login, logout, getUserInfo } =
     useWeb3Auth();
@@ -112,11 +113,16 @@ export default function UserMenu() {
               </div>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout}>
+            <DropdownMenuItem
+              className="cursor-pointer hover:bg-gray-100"
+              onClick={() => {
+                navigate({ to: "/profile" });
+              }}
+            >
               <CircleUserRound />
               <span>Profile</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={logout}>
+            <DropdownMenuItem>
               <CreditCard />
               <span>Wallet</span>
             </DropdownMenuItem>
