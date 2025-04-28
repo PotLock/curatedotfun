@@ -1,34 +1,3 @@
-// import { ReactNode } from "react";
-// import TopCurators from "./TopCurators";
-// import { useParams } from "@tanstack/react-router";
-
-// interface LayoutProps {
-//   children: ReactNode;
-//   feedId?: string;
-// }
-
-// const FeedLayout = ({ children, feedId }: LayoutProps) => {
-//   //   const params = useParams();
-//   const currentFeedId = feedId;
-
-//   // Title text changes based on whether we have a specific feed or not
-//   const titleText = currentFeedId ? `Top Curators` : "Top Curators";
-//   return (
-//     <div className="grid grid-cols-12 gap-6 w-full min-w-0 max-w-[1440px] mx-auto items-start">
-//       <div className="col-span-9">{children}</div>
-//       <div className="col-span-3">
-//         <div>
-//           <h3 className="leading-10 text-2xl font-normal">{titleText}</h3>
-//           {/* Default content for right sidebar */}
-//           <TopCurators feedId={currentFeedId} limit={5} />
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default FeedLayout;
-
 import { ReactNode, useState } from "react";
 import TopCurators from "./TopCurators";
 import { X } from "lucide-react";
