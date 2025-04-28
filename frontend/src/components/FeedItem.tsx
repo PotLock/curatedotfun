@@ -301,7 +301,7 @@ export const FeedItem = ({ submission }: FeedItemProps) => {
     >
       <div className="flex flex-col gap-3 w-full justify-between items-center">
         <div className="flex w-full justify-between items-center">
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex md:flex-row flex-col items-center justify-center gap-2">
             <div>
               <p className="text-[--card-foreground] text-nowrap text-base font-semibold leading-4">
                 Web3Plug (murica/acc)

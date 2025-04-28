@@ -1,13 +1,39 @@
+import { useEffect, useState } from "react";
+import { AuthUserInfo } from "../../types/web3auth";
+import { useWeb3Auth } from "../../hooks/use-web3-auth";
 export function ProfileHeader() {
+  const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
+
+  const { isInitialized, isLoggedIn, login, logout, getUserInfo } =
+    useWeb3Auth();
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const info = await getUserInfo();
+        setUserInfo(info);
+        console.log("User Info:", info);
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+      }
+    };
+
+    if (isLoggedIn) {
+      fetchUserInfo();
+    } else {
+      setUserInfo({});
+    }
+  }, [isLoggedIn, getUserInfo]);
+
   return (
     <div className="flex flex-col md:flex-row w-full items-center gap-6 md:gap-10 p-4 md:p-6 border border-neutral-300 rounded-md light">
       <img
         className="size-24 md:size-28 rounded-full shrink-0 mx-auto md:mx-0"
-        src="/images/web3-plug.png"
+        src={userInfo?.profileImage}
       />
       <div className="flex flex-col gap-2.5 items-center md:items-start text-center md:text-left">
         <div className="flex flex-col">
-          <h2 className="text-lg md:text-xl">Web3Plug (murica/acc) 🇺🇸</h2>
+          <h2 className="text-lg md:text-xl">{userInfo?.name}</h2>
           <div className="flex items-center gap-2 justify-center md:justify-start">
             <img
               className="rounded-lg size-5 md:size-6"

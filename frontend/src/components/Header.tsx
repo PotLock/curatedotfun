@@ -22,11 +22,13 @@ import {
 } from "lucide-react";
 import { AuthUserInfo } from "../types/web3auth";
 import UserMenu from "./UserMenu";
+import { useNavigate } from "@tanstack/react-router";
 
 const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const navigate = useNavigate();
 
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
 
@@ -71,15 +73,15 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex gap-3 flex-shrink-0">
-            <Link to="/explore">
+            {/* <Link to="/explore">
               <Button variant={"ghost"}>Feeds</Button>
-            </Link>
+            </Link> */}
 
             <Link to="/leaderboard">
               <Button variant={"ghost"}>Leaderboard</Button>
             </Link>
             <Link to="/create-feed">
-              <Button variant={"ghost"}>Submit Content</Button>
+              <Button variant={"ghost"}>Create</Button>
             </Link>
           </div>
         </div>{" "}
@@ -134,7 +136,7 @@ const Header = () => {
 
           <div className="flex flex-col items-center justify-between h-full gap-4 p-4 mb-6">
             <div className="flex flex-col gap-4 p-4 mt-4">
-              <Link
+              {/* <Link
                 to="/explore"
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full"
@@ -145,9 +147,9 @@ const Header = () => {
                 >
                   Feeds
                 </Button>
-              </Link>
+              </Link> */}
               <Link
-                to="/"
+                to="/leaderboard"
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full"
               >
@@ -167,7 +169,7 @@ const Header = () => {
                   variant="ghost"
                   className="w-full justify-center text-lg py-4"
                 >
-                  Submit Content
+                  Create
                 </Button>
               </Link>
             </div>
@@ -216,7 +218,11 @@ const Header = () => {
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        navigate({ to: "/profile" });
+                      }}
+                    >
                       <CircleUserRound />
                       <span>Profile</span>
                     </DropdownMenuItem>

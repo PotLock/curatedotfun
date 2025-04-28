@@ -10,10 +10,7 @@ import { Status } from "../../components/StatusFilter";
 import { Sort } from "../../components/Sort";
 
 import { StatusFilterType, useFilterStore } from "../../store/useFilterStore";
-import {
-  SubmissionStatus,
-  TwitterSubmissionWithFeedData,
-} from "../../types/twitter";
+import { SubmissionStatus, SubmissionWithFeedData } from "../../types/twitter";
 
 import { useFeedFilterStore } from "../../store/useFeedFilterStore";
 
@@ -32,6 +29,7 @@ type FeedSectionProps = {
   botId: string;
   showAll?: boolean;
   showSort?: boolean;
+  layout: "flex" | "grid";
   actionButton?: {
     label: string;
     onClick?: () => void;
@@ -40,7 +38,7 @@ type FeedSectionProps = {
   setStatusFilter: (status: StatusFilterType) => void;
 };
 
-const FeedSection = ({
+export const FeedSection = ({
   title,
   items,
   fetchNextPage,
@@ -49,6 +47,7 @@ const FeedSection = ({
   status,
   statusFilter,
   botId,
+  layout,
 
   setStatusFilter,
 
@@ -56,7 +55,7 @@ const FeedSection = ({
   showSort = false,
   actionButton,
 }: FeedSectionProps) => (
-  <div className="w-full mx-auto py-4 md:p-4 gap-6 flex flex-col">
+  <div className="w-full  mx-auto py-4 md:p-4 gap-6 flex flex-col">
     <div className="flex items-center justify-between">
       <h2 className="md:text-2xl text-lg leading-5 md:leading-10">{title}</h2>
       <div className="flex gap-3">
@@ -71,7 +70,7 @@ const FeedSection = ({
       </div>
     </div>
     <InfiniteFeed
-      items={items as TwitterSubmissionWithFeedData[]}
+      items={items as SubmissionWithFeedData[]}
       fetchNextPage={fetchNextPage}
       hasNextPage={hasNextPage}
       isFetchingNextPage={isFetchingNextPage}
@@ -80,11 +79,12 @@ const FeedSection = ({
       loadingMessage="Loading more submissions..."
       noMoreItemsMessage="No more submissions to load"
       initialLoadingMessage="Loading submissions..."
-      renderItems={(items: TwitterSubmissionWithFeedData[]) => (
+      renderItems={(items: SubmissionWithFeedData[]) => (
         <SubmissionList
           items={items}
           statusFilter={statusFilter as "all" | SubmissionStatus}
           botId={botId}
+          layout={layout}
         />
       )}
     />
@@ -173,6 +173,7 @@ function ExplorePage() {
           botId={botId}
           showAll={false}
           showSort={true}
+          layout={"flex"}
         />
 
         {/* Feeds Section */}
@@ -186,6 +187,7 @@ function ExplorePage() {
           statusFilter={feedStatusFilter || ""}
           setStatusFilter={setFeedStatusFilter}
           botId={botId}
+          layout={"flex"}
           actionButton={{
             label: "View All Feeds",
           }}

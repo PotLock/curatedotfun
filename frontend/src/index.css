@@ -8,7 +8,7 @@
 
 @plugin 'tailwindcss-animate';
 
-@custom-variant dark (&:is(.dark *));
+/* @custom-variant dark (&:is(.dark *)); */
 
 @font-face {
   font-family: 'Londrina Solid';
@@ -129,7 +129,7 @@
 
 @layer base {
   body {
-    @apply bg-white font-sans antialiased;
+    @apply bg-white font-sans antialiased max-w-[1440px] mx-auto;
   }
 
   h1,
