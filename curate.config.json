@@ -371,15 +371,14 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "🐉  NEAR: *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
+                    "template": "*[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
-                "channelId": "-1002472938420",
-                "messageThreadId": "8"
+                "channelId": "@NearHacks"
               }
             },
             {
