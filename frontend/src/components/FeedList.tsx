@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { FaChevronRight } from "react-icons/fa";
 import type { FeedConfig } from "../types/config";
 
-const FeedList = ({ selectedFeedId }: { selectedFeedId?: string }) => {
+const FeedList = () => {
   const { data: feeds = [] } = useQuery<FeedConfig[]>({
     queryKey: ["feeds"],
     queryFn: async () => {
@@ -35,7 +34,7 @@ const FeedList = ({ selectedFeedId }: { selectedFeedId?: string }) => {
           feeds.map((feed) => (
             <Link
               key={feed.id}
-              to="/submissions/$feedId"
+              to="/feed/$feedId"
               params={{ feedId: feed.id }}
               className="flex flex-col gap-3 w-full "
             >
