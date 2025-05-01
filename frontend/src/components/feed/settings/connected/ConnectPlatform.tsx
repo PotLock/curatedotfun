@@ -1,16 +1,16 @@
-import { capitalize } from "../../../../../utils/string";
+import { capitalize } from "../../../../utils/string";
 import { Platform, PlatformName } from "@crosspost/types";
 import { Twitter } from "lucide-react";
 import React from "react";
-import { useToast } from "../../../../../hooks/use-toast";
-import { useConnectAccount } from "../../../../../store/platformAccountsStore";
-import { Button } from "../../../../ui/button";
+import { useToast } from "../../../../hooks/use-toast";
+import { useConnectAccount } from "../../../../store/platformAccountsStore";
+import { Button } from "../../../ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../../../../ui/tooltip";
+} from "../../../ui/tooltip";
 
 interface ConnectPlatformProps {
   platform: PlatformName;
@@ -50,7 +50,7 @@ export function ConnectPlatform({
     try {
       console.log("platform", platform);
       await connectAccount.mutateAsync({
-        platform: platform as any,
+        platform: platform as PlatformName,
       });
 
       loadingToast.update({

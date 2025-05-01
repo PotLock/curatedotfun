@@ -1,14 +1,14 @@
-import { capitalize } from "../../../../../utils/string";
+import { capitalize } from "../../../../utils/string";
 import { ConnectedAccount, PlatformName } from "@crosspost/types";
 import { RefreshCw, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "../../../../../hooks/use-toast";
+import { toast } from "../../../../hooks/use-toast";
 import {
   useDisconnectAccount,
   usePlatformAccountsStore,
   useRefreshAccount,
-} from "../../../../../store/platformAccountsStore";
-import { Button } from "../../../../ui/button";
+} from "../../../../store/platformAccountsStore";
+import { Button } from "../../../ui/button";
 import { AccountItem } from "./AccountItem";
 
 interface PlatformAccountProps {

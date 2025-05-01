@@ -80,7 +80,7 @@ const Header = () => {
             <Link to="/leaderboard">
               <Button variant={"ghost"}>Leaderboard</Button>
             </Link>
-            <Link to="/create-feed">
+            <Link to="/create/feed">
               <Button variant={"ghost"}>Create</Button>
             </Link>
           </div>
@@ -161,7 +161,7 @@ const Header = () => {
                 </Button>
               </Link>
               <Link
-                to="/create-feed"
+                to="/create/feed"
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full"
               >

@@ -1,12 +1,17 @@
+import { createFileRoute } from "@tanstack/react-router";
 import { Platform } from "@crosspost/sdk";
-import { Button } from "../../../ui/button";
-import { ConnectPlatformDialog } from "./components/ConnectPlatformDialog";
+import { Button } from "../../../../components/ui/button";
+import { ConnectPlatformDialog } from "../../../../components/feed/settings/connected/ConnectPlatformDialog";
 import { useConnectedAccounts } from "../../../../store/platformAccountsStore";
-import { PlatformAccountItem } from "./components/PlatformAccount";
+import { PlatformAccountItem } from "../../../../components/feed/settings/connected/PlatformAccount";
 
 const SUPPORTED_PLATFORMS = [Platform.TWITTER];
 
-export default function ConnectedAccounts() {
+export const Route = createFileRoute("/feed/$feedId/settings/connected")({
+  component: ConnectedAccounts,
+});
+
+function ConnectedAccounts() {
   const { data: connectedAccounts } = useConnectedAccounts();
 
   return (

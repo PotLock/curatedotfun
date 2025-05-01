@@ -1,8 +1,8 @@
-import { Avatar, AvatarImage, AvatarFallback } from "../../../../ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
 import { Twitter } from "lucide-react";
 
 import { ConnectedAccount, Platform } from "@crosspost/types";
-import { capitalize } from "../../../../../utils/string";
+import { capitalize } from "../../../../utils/string";
 
 interface ProfileCardProps {
   account: ConnectedAccount;

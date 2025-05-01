@@ -1,4 +1,3 @@
-import { Platform } from "@crosspost/types";
 import {
   Dialog,
   DialogContent,
@@ -6,12 +5,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../../../../ui/dialog";
+} from "../../../ui/dialog";
 import { ConnectPlatform } from "./ConnectPlatform";
-import { useConnectedAccounts } from "../../../../../store/platformAccountsStore";
+import { useConnectedAccounts } from "../../../../store/platformAccountsStore";
 import { PlatformAccountItem } from "./PlatformAccount";
-
-const SUPPORTED_PLATFORMS = [Platform.TWITTER];
+import { SUPPORTED_PLATFORMS } from "@crosspost/sdk";
 
 interface ConnectPlatformDialogProps {
   children: React.ReactNode;

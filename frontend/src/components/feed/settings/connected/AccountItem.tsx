@@ -1,6 +1,6 @@
-import { ConnectedAccount } from "@crosspost/types";
+import type { ConnectedAccount } from "@crosspost/types";
 import React from "react";
-import { Button } from "../../../../ui/button";
+import { Button } from "../../../ui/button";
 import { ProfileCard } from "./ProfileCard";
 
 export interface AccountItemProps {

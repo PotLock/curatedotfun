@@ -1,11 +1,9 @@
-import { useState, useEffect } from "react";
-import { useAllSubmissions, useFeedItems } from "../lib/api";
-import { useBotId } from "../lib/config";
+import { Filter, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 import InfiniteFeed from "../components/InfiniteFeed";
 import SubmissionList from "../components/SubmissionList";
-import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
-import { Filter, Search } from "lucide-react";
+import { Input } from "../components/ui/input";
 import {
   Select,
   SelectContent,
@@ -13,16 +11,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import { useFeedItems } from "../lib/api";
+import { useBotId } from "../lib/config";
 import {
-  useFeedFilterStore,
-  StatusFilterType,
   SortOrderType,
+  StatusFilterType,
+  useFeedFilterStore,
 } from "../store/useFeedFilterStore";
-import { useParams } from "@tanstack/react-router";
 
 interface SubmissionsComponentProps {
   className?: string;
-  feedId?: string;
+  feedId: string;
   title?: string;
 }
 
@@ -32,10 +31,6 @@ export default function RecentSubmissions({
   title,
 }: SubmissionsComponentProps) {
   const botId = useBotId();
-
-  const params = useParams({ from: "/submissions/$feedId" });
-
-  const currentFeedId = feedId || params.feedId;
 
   // Get global filter state from Zustand
   const { statusFilter, sortOrder, setStatusFilter } = useFeedFilterStore();
@@ -227,7 +222,7 @@ export default function RecentSubmissions({
             items={items}
             statusFilter={statusFilter}
             botId={botId}
-            feedId={currentFeedId}
+            feedId={feedId}
           />
         )}
       />

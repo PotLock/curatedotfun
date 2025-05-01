@@ -1,118 +1,158 @@
-import { createFileRoute } from "@tanstack/react-router";
-import FeedList from "../../components/FeedList";
-import Layout from "../../components/Layout";
-import { useState } from "react";
-import { Submission } from "../../types/twitter";
-import { useFeedConfig, useFeedItems } from "../../lib/api";
-import { useBotId } from "../../lib/config";
-import { getTwitterIntentUrl } from "../../lib/twitter";
-import FeedHeader from "../../components/FeedHeader";
-import SubmissionList from "../../components/SubmissionList";
+import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
+import { useFeedConfig } from "../../lib/api";
+import { Badge } from "../../components/ui/badge";
+import Header from "../../components/Header";
+import FeedLayout from "../../components/FeedLayout";
+import {
+  Award,
+  Coins,
+  ListFilter,
+  Newspaper,
+  Settings2,
+  UsersRound,
+  Vote,
+} from "lucide-react";
+
+const TABS = [
+  {
+    to: "/feed/$feedId/",
+    label: "Content",
+    icon: Newspaper,
+  },
+  {
+    to: "/feed/$feedId/curation",
+    label: "Curation",
+    icon: ListFilter,
+  },
+  {
+    to: "/feed/$feedId/proposals",
+    label: "Proposals",
+    icon: Vote,
+  },
+  {
+    to: "/feed/$feedId/token",
+    label: "Token",
+    icon: Coins,
+  },
+  {
+    to: "/feed/$feedId/points",
+    label: "Points",
+    icon: Award,
+  },
+  {
+    to: "/feed/$feedId/members",
+    label: "Members",
+    icon: UsersRound,
+  },
+  {
+    to: "/feed/$feedId/settings",
+    label: "Settings",
+    icon: Settings2,
+  },
+];
 
 export const Route = createFileRoute("/feed/$feedId")({
-  component: FeedPage,
+  component: FeedPageLayout,
 });
 
-function FeedPage() {
+function FeedPageLayout() {
   const { feedId } = Route.useParams();
   const { data: feed } = useFeedConfig(feedId);
-  const { data: items = [] } = useFeedItems(feedId);
-  const botId = useBotId();
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | Submission["status"]
-  >("all");
-
-  const sidebarContent = (
-    <div className="p-2">
-      <FeedList selectedFeedId={feedId} />
-    </div>
-  );
-
-  const rightPanelContent = feed && (
-    <div className="space-y-8 max-w-full overflow-x-hidden">
-      {/* Moderation Box */}
-      <div className="p-1">
-        <h3 className="text-2xl mb-4">Moderation</h3>
-        <div className="space-y-4">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-medium">Approvers</h4>
-              <a
-                href={getTwitterIntentUrl({ action: "apply", botId, feedId })}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-black rounded-md border-2 border-black shadow-sharp hover:shadow-sharp-hover transition-all duration-200 translate-x-0 translate-y-0 hover:-translate-x-0.5 hover:-translate-y-0.5 text-sm font-medium"
-              >
-                apply
-              </a>
-            </div>
-            <ul className="space-y-2">
-              {feed.moderation.approvers.twitter.map((handle) => (
-                <li key={handle}>
-                  <a
-                    href={`https://twitter.com/${handle}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center px-3 py-2 bg-white border-2 border-black shadow-sharp hover:shadow-sharp-hover transition-shadow duration-200 translate-x-0 translate-y-0 hover:-translate-x-0.5 hover:-translate-y-0.5 text-sm font-mono w-full"
-                  >
-                    <span className="bg-blue-400 text-white text-xs px-1.5 py-0.5 rounded mr-2">
-                      Twitter
-                    </span>
-                    @{handle}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Stream Box */}
-      <div className="p-1">
-        <h3 className="heading-3 mb-4">Stream</h3>
-        <div className="space-y-4">
-          <div className="p-4 bg-white border-2 border-black shadow-sharp hover:shadow-sharp-hover transition-shadow duration-200 translate-x-0 translate-y-0 hover:-translate-x-0.5 hover:-translate-y-0.5">
-            <p className="text-center font-mono text-gray-500">
-              Coming soon...
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Recap Box */}
-      <div className="p-1">
-        <h3 className="heading-3 mb-4">Recap</h3>
-        <div className="space-y-4">
-          <div className="p-4 bg-white border-2 border-black shadow-sharp hover:shadow-sharp-hover transition-shadow duration-200 translate-x-0 translate-y-0 hover:-translate-x-0.5 hover:-translate-y-0.5">
-            <p className="text-center font-mono text-gray-500">
-              Coming soon...
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
-    <Layout sidebar={sidebarContent} rightPanel={rightPanelContent}>
-      <div className="space-y-4">
-        <FeedHeader
-          title={feed?.name || "Loading..."}
-          description={feed?.description || "No description available"}
-          items={items}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          feedName={feed?.name}
-        />
-        <SubmissionList
-          items={items}
-          statusFilter={statusFilter}
-          botId={botId}
-          feedId={feedId}
-        />
+    <div className="max-w-[1440px] mx-auto w-full">
+      <Header />
+      {/* Header with back button and feed title */}
+      <div className="flex flex-col px-4 sm:px-6 md:px-[70px] py-4 sm:py-[30px] gap-4 sm:gap-[30px]">
+        <div className="flex flex-col gap-4 sm:gap-6 p-4 sm:p-6 rounded-md border border-neutral-400 bg-white">
+          <div className="flex flex-col sm:flex-row sm:gap-[40px] gap-4 items-center sm:items-start w-full border-b border-1 border-dashed border-black pb-4">
+            <img
+              src="/images/feed-image.png"
+              alt="Feed Image"
+              className="h-[80px] w-[80px] sm:h-[108px] sm:w-[108px]"
+            />
+            <div className="flex flex-col gap-2 sm:gap-3 text-center sm:text-left">
+              <div className="flex flex-col sm:flex-row sm:gap-[10px] gap-2 items-center">
+                <h3 className="leading-8 sm:leading-10 text-xl sm:text-2xl font-[900]">
+                  {feed?.name || `Feed: ${feedId}`}
+                </h3>
+                <Badge>#{feed?.id}</Badge>
+              </div>
+              <p className="text-sm sm:text-base leading-[20px] sm:leading-[22px] text-neutral-800">
+                {feed?.description ||
+                  "View and manage all content for this feed"}
+              </p>
+            </div>
+          </div>
+          <div className="flex sm:flex-row sm:items-center sm:justify-between w-full gap-2">
+            <div className="flex  sm:flex-row items-center gap-2 w-full">
+              <p>Curating from:</p>
+              <Badge className="flex gap-1 text-black border border-stone-500 rounded-md bg-stone-50 shadow-none">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                >
+                  <path
+                    d="M5.47681 2.1748L8.34204 5.96094L8.4729 6.13379L8.6145 5.9707L11.9094 2.1748H13.4788L9.28638 6.99902L9.1936 7.10645L9.27954 7.21973L14.3137 13.873H10.6301L7.46997 9.73828L7.34009 9.56836L7.19849 9.72949L3.55688 13.873H1.9856L6.49829 8.70117L6.59302 8.59375L6.5061 8.47949L1.68774 2.1748H5.47681ZM3.57642 3.25781L10.9661 12.9229L11.0188 12.9922H12.5813L12.3704 12.7109L5.08813 3.0459L5.0354 2.97559H3.36157L3.57642 3.25781Z"
+                    stroke="#57534E"
+                    strokeWidth="0.350493"
+                  />
+                </svg>
+                Twitter
+              </Badge>
+            </div>
+            <div className="flex flex-shrink-0 sm:flex-row items-center gap-2 sm:gap-3 w-full sm:w-full">
+              <p className="flex flex-shrink-0 flex-1">Posting to:</p>
+              <Badge className="flex gap-1 text-black border border-stone-500 rounded-md bg-stone-50 shadow-none">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                >
+                  <path
+                    d="M5.47681 2.1748L8.34204 5.96094L8.4729 6.13379L8.6145 5.9707L11.9094 2.1748H13.4788L9.28638 6.99902L9.1936 7.10645L9.27954 7.21973L14.3137 13.873H10.6301L7.46997 9.73828L7.34009 9.56836L7.19849 9.72949L3.55688 13.873H1.9856L6.49829 8.70117L6.59302 8.59375L6.5061 8.47949L1.68774 2.1748H5.47681ZM3.57642 3.25781L10.9661 12.9229L11.0188 12.9922H12.5813L12.3704 12.7109L5.08813 3.0459L5.0354 2.97559H3.36157L3.57642 3.25781Z"
+                    stroke="#57534E"
+                    strokeWidth="0.350493"
+                  />
+                </svg>
+                Twitter
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="overflow-x-auto w-full border-b border-gray-200">
+          <div className="flex space-x-1">
+            {TABS.map(({ to, label, icon: Icon }) => (
+              <Link
+                key={label}
+                to={to}
+                params={{ feedId }} // Pass feedId as param
+                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap"
+                activeProps={{
+                  className:
+                    "flex items-center space-x-2 px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-500 -mb-px",
+                }}
+              >
+                <Icon strokeWidth={1} size={20} />
+                <span>{label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <FeedLayout feedId={feedId}>
+          <Outlet />
+        </FeedLayout>
       </div>
-    </Layout>
+    </div>
   );
 }
 
-export default FeedPage;
+export default FeedPageLayout;
