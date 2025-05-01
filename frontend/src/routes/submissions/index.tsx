@@ -103,13 +103,7 @@ function SubmissionsIndexPage() {
 
   // Apply filters
   const applyFilters = () => {
-    // Update global filter state
     setStatusFilter(localStatusFilter);
-    // Update other global filters (would need to add these to the store)
-    // setSortOrder(localSortOrder);
-    // setPlatform(localPlatform);
-
-    // Close the filter panel
     setShowFilters(false);
   };
 

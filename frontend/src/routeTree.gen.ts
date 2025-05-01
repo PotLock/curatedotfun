@@ -21,11 +21,18 @@ import { Route as SubmissionsIndexImport } from "./routes/submissions/index";
 import { Route as ProfileIndexImport } from "./routes/profile/index";
 import { Route as FeedIndexImport } from "./routes/feed/index";
 import { Route as ExploreIndexImport } from "./routes/explore/index";
-import { Route as CreateFeedIndexImport } from "./routes/create-feed/index";
-import { Route as SubmissionsFeedIdImport } from "./routes/submissions/$feedId";
 import { Route as ProfileRootImport } from "./routes/profile/_root";
 import { Route as FeedFeedIdImport } from "./routes/feed/$feedId";
 import { Route as ExploreRootImport } from "./routes/explore/_root";
+import { Route as CreateFeedImport } from "./routes/create/feed";
+import { Route as FeedFeedIdIndexImport } from "./routes/feed/$feedId/index";
+import { Route as FeedFeedIdTokenImport } from "./routes/feed/$feedId/token";
+import { Route as FeedFeedIdProposalsImport } from "./routes/feed/$feedId/proposals";
+import { Route as FeedFeedIdPointsImport } from "./routes/feed/$feedId/points";
+import { Route as FeedFeedIdMembersImport } from "./routes/feed/$feedId/members";
+import { Route as FeedFeedIdCurationImport } from "./routes/feed/$feedId/curation";
+import { Route as FeedFeedIdSettingsIndexImport } from "./routes/feed/$feedId/settings/index";
+import { Route as FeedFeedIdSettingsConnectedImport } from "./routes/feed/$feedId/settings/connected";
 
 // Create Virtual Routes
 
@@ -94,18 +101,6 @@ const ExploreIndexRoute = ExploreIndexImport.update({
   getParentRoute: () => ExploreRoute,
 } as any);
 
-const CreateFeedIndexRoute = CreateFeedIndexImport.update({
-  id: "/create-feed/",
-  path: "/create-feed/",
-  getParentRoute: () => rootRoute,
-} as any);
-
-const SubmissionsFeedIdRoute = SubmissionsFeedIdImport.update({
-  id: "/submissions/$feedId",
-  path: "/submissions/$feedId",
-  getParentRoute: () => rootRoute,
-} as any);
-
 const ProfileRootRoute = ProfileRootImport.update({
   id: "/_root",
   getParentRoute: () => ProfileRoute,
@@ -121,6 +116,61 @@ const ExploreRootRoute = ExploreRootImport.update({
   id: "/_root",
   getParentRoute: () => ExploreRoute,
 } as any);
+
+const CreateFeedRoute = CreateFeedImport.update({
+  id: "/create/feed",
+  path: "/create/feed",
+  getParentRoute: () => rootRoute,
+} as any);
+
+const FeedFeedIdIndexRoute = FeedFeedIdIndexImport.update({
+  id: "/",
+  path: "/",
+  getParentRoute: () => FeedFeedIdRoute,
+} as any);
+
+const FeedFeedIdTokenRoute = FeedFeedIdTokenImport.update({
+  id: "/token",
+  path: "/token",
+  getParentRoute: () => FeedFeedIdRoute,
+} as any);
+
+const FeedFeedIdProposalsRoute = FeedFeedIdProposalsImport.update({
+  id: "/proposals",
+  path: "/proposals",
+  getParentRoute: () => FeedFeedIdRoute,
+} as any);
+
+const FeedFeedIdPointsRoute = FeedFeedIdPointsImport.update({
+  id: "/points",
+  path: "/points",
+  getParentRoute: () => FeedFeedIdRoute,
+} as any);
+
+const FeedFeedIdMembersRoute = FeedFeedIdMembersImport.update({
+  id: "/members",
+  path: "/members",
+  getParentRoute: () => FeedFeedIdRoute,
+} as any);
+
+const FeedFeedIdCurationRoute = FeedFeedIdCurationImport.update({
+  id: "/curation",
+  path: "/curation",
+  getParentRoute: () => FeedFeedIdRoute,
+} as any);
+
+const FeedFeedIdSettingsIndexRoute = FeedFeedIdSettingsIndexImport.update({
+  id: "/settings/",
+  path: "/settings/",
+  getParentRoute: () => FeedFeedIdRoute,
+} as any);
+
+const FeedFeedIdSettingsConnectedRoute =
+  FeedFeedIdSettingsConnectedImport.update({
+    id: "/settings/connected",
+    path: "/settings/connected",
+    getParentRoute: () => FeedFeedIdRoute,
+  } as any);
 
 // Populate the FileRoutesByPath interface
 
@@ -152,6 +202,13 @@ declare module "@tanstack/react-router" {
       path: "/test";
       fullPath: "/test";
       preLoaderRoute: typeof TestImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/create/feed": {
+      id: "/create/feed";
+      path: "/create/feed";
+      fullPath: "/create/feed";
+      preLoaderRoute: typeof CreateFeedImport;
       parentRoute: typeof rootRoute;
     };
     "/explore": {
@@ -189,20 +246,6 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof ProfileRootImport;
       parentRoute: typeof ProfileRoute;
     };
-    "/submissions/$feedId": {
-      id: "/submissions/$feedId";
-      path: "/submissions/$feedId";
-      fullPath: "/submissions/$feedId";
-      preLoaderRoute: typeof SubmissionsFeedIdImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/create-feed/": {
-      id: "/create-feed/";
-      path: "/create-feed";
-      fullPath: "/create-feed";
-      preLoaderRoute: typeof CreateFeedIndexImport;
-      parentRoute: typeof rootRoute;
-    };
     "/explore/": {
       id: "/explore/";
       path: "/";
@@ -231,6 +274,62 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof SubmissionsIndexImport;
       parentRoute: typeof rootRoute;
     };
+    "/feed/$feedId/curation": {
+      id: "/feed/$feedId/curation";
+      path: "/curation";
+      fullPath: "/feed/$feedId/curation";
+      preLoaderRoute: typeof FeedFeedIdCurationImport;
+      parentRoute: typeof FeedFeedIdImport;
+    };
+    "/feed/$feedId/members": {
+      id: "/feed/$feedId/members";
+      path: "/members";
+      fullPath: "/feed/$feedId/members";
+      preLoaderRoute: typeof FeedFeedIdMembersImport;
+      parentRoute: typeof FeedFeedIdImport;
+    };
+    "/feed/$feedId/points": {
+      id: "/feed/$feedId/points";
+      path: "/points";
+      fullPath: "/feed/$feedId/points";
+      preLoaderRoute: typeof FeedFeedIdPointsImport;
+      parentRoute: typeof FeedFeedIdImport;
+    };
+    "/feed/$feedId/proposals": {
+      id: "/feed/$feedId/proposals";
+      path: "/proposals";
+      fullPath: "/feed/$feedId/proposals";
+      preLoaderRoute: typeof FeedFeedIdProposalsImport;
+      parentRoute: typeof FeedFeedIdImport;
+    };
+    "/feed/$feedId/token": {
+      id: "/feed/$feedId/token";
+      path: "/token";
+      fullPath: "/feed/$feedId/token";
+      preLoaderRoute: typeof FeedFeedIdTokenImport;
+      parentRoute: typeof FeedFeedIdImport;
+    };
+    "/feed/$feedId/": {
+      id: "/feed/$feedId/";
+      path: "/";
+      fullPath: "/feed/$feedId/";
+      preLoaderRoute: typeof FeedFeedIdIndexImport;
+      parentRoute: typeof FeedFeedIdImport;
+    };
+    "/feed/$feedId/settings/connected": {
+      id: "/feed/$feedId/settings/connected";
+      path: "/settings/connected";
+      fullPath: "/feed/$feedId/settings/connected";
+      preLoaderRoute: typeof FeedFeedIdSettingsConnectedImport;
+      parentRoute: typeof FeedFeedIdImport;
+    };
+    "/feed/$feedId/settings/": {
+      id: "/feed/$feedId/settings/";
+      path: "/settings";
+      fullPath: "/feed/$feedId/settings";
+      preLoaderRoute: typeof FeedFeedIdSettingsIndexImport;
+      parentRoute: typeof FeedFeedIdImport;
+    };
   }
 }
 
@@ -248,6 +347,32 @@ const ExploreRouteChildren: ExploreRouteChildren = {
 
 const ExploreRouteWithChildren =
   ExploreRoute._addFileChildren(ExploreRouteChildren);
+
+interface FeedFeedIdRouteChildren {
+  FeedFeedIdCurationRoute: typeof FeedFeedIdCurationRoute;
+  FeedFeedIdMembersRoute: typeof FeedFeedIdMembersRoute;
+  FeedFeedIdPointsRoute: typeof FeedFeedIdPointsRoute;
+  FeedFeedIdProposalsRoute: typeof FeedFeedIdProposalsRoute;
+  FeedFeedIdTokenRoute: typeof FeedFeedIdTokenRoute;
+  FeedFeedIdIndexRoute: typeof FeedFeedIdIndexRoute;
+  FeedFeedIdSettingsConnectedRoute: typeof FeedFeedIdSettingsConnectedRoute;
+  FeedFeedIdSettingsIndexRoute: typeof FeedFeedIdSettingsIndexRoute;
+}
+
+const FeedFeedIdRouteChildren: FeedFeedIdRouteChildren = {
+  FeedFeedIdCurationRoute: FeedFeedIdCurationRoute,
+  FeedFeedIdMembersRoute: FeedFeedIdMembersRoute,
+  FeedFeedIdPointsRoute: FeedFeedIdPointsRoute,
+  FeedFeedIdProposalsRoute: FeedFeedIdProposalsRoute,
+  FeedFeedIdTokenRoute: FeedFeedIdTokenRoute,
+  FeedFeedIdIndexRoute: FeedFeedIdIndexRoute,
+  FeedFeedIdSettingsConnectedRoute: FeedFeedIdSettingsConnectedRoute,
+  FeedFeedIdSettingsIndexRoute: FeedFeedIdSettingsIndexRoute,
+};
+
+const FeedFeedIdRouteWithChildren = FeedFeedIdRoute._addFileChildren(
+  FeedFeedIdRouteChildren,
+);
 
 interface ProfileRouteChildren {
   ProfileRootRoute: typeof ProfileRootRoute;
@@ -267,15 +392,22 @@ export interface FileRoutesByFullPath {
   "/leaderboard": typeof LeaderboardRoute;
   "/settings": typeof SettingsRoute;
   "/test": typeof TestRoute;
+  "/create/feed": typeof CreateFeedRoute;
   "/explore": typeof ExploreRootRoute;
-  "/feed/$feedId": typeof FeedFeedIdRoute;
+  "/feed/$feedId": typeof FeedFeedIdRouteWithChildren;
   "/profile": typeof ProfileRootRoute;
-  "/submissions/$feedId": typeof SubmissionsFeedIdRoute;
-  "/create-feed": typeof CreateFeedIndexRoute;
   "/explore/": typeof ExploreIndexRoute;
   "/feed": typeof FeedIndexRoute;
   "/profile/": typeof ProfileIndexRoute;
   "/submissions": typeof SubmissionsIndexRoute;
+  "/feed/$feedId/curation": typeof FeedFeedIdCurationRoute;
+  "/feed/$feedId/members": typeof FeedFeedIdMembersRoute;
+  "/feed/$feedId/points": typeof FeedFeedIdPointsRoute;
+  "/feed/$feedId/proposals": typeof FeedFeedIdProposalsRoute;
+  "/feed/$feedId/token": typeof FeedFeedIdTokenRoute;
+  "/feed/$feedId/": typeof FeedFeedIdIndexRoute;
+  "/feed/$feedId/settings/connected": typeof FeedFeedIdSettingsConnectedRoute;
+  "/feed/$feedId/settings": typeof FeedFeedIdSettingsIndexRoute;
 }
 
 export interface FileRoutesByTo {
@@ -283,13 +415,19 @@ export interface FileRoutesByTo {
   "/leaderboard": typeof LeaderboardRoute;
   "/settings": typeof SettingsRoute;
   "/test": typeof TestRoute;
+  "/create/feed": typeof CreateFeedRoute;
   "/explore": typeof ExploreIndexRoute;
-  "/feed/$feedId": typeof FeedFeedIdRoute;
   "/profile": typeof ProfileIndexRoute;
-  "/submissions/$feedId": typeof SubmissionsFeedIdRoute;
-  "/create-feed": typeof CreateFeedIndexRoute;
   "/feed": typeof FeedIndexRoute;
   "/submissions": typeof SubmissionsIndexRoute;
+  "/feed/$feedId/curation": typeof FeedFeedIdCurationRoute;
+  "/feed/$feedId/members": typeof FeedFeedIdMembersRoute;
+  "/feed/$feedId/points": typeof FeedFeedIdPointsRoute;
+  "/feed/$feedId/proposals": typeof FeedFeedIdProposalsRoute;
+  "/feed/$feedId/token": typeof FeedFeedIdTokenRoute;
+  "/feed/$feedId": typeof FeedFeedIdIndexRoute;
+  "/feed/$feedId/settings/connected": typeof FeedFeedIdSettingsConnectedRoute;
+  "/feed/$feedId/settings": typeof FeedFeedIdSettingsIndexRoute;
 }
 
 export interface FileRoutesById {
@@ -298,17 +436,24 @@ export interface FileRoutesById {
   "/leaderboard": typeof LeaderboardRoute;
   "/settings": typeof SettingsRoute;
   "/test": typeof TestRoute;
+  "/create/feed": typeof CreateFeedRoute;
   "/explore": typeof ExploreRouteWithChildren;
   "/explore/_root": typeof ExploreRootRoute;
-  "/feed/$feedId": typeof FeedFeedIdRoute;
+  "/feed/$feedId": typeof FeedFeedIdRouteWithChildren;
   "/profile": typeof ProfileRouteWithChildren;
   "/profile/_root": typeof ProfileRootRoute;
-  "/submissions/$feedId": typeof SubmissionsFeedIdRoute;
-  "/create-feed/": typeof CreateFeedIndexRoute;
   "/explore/": typeof ExploreIndexRoute;
   "/feed/": typeof FeedIndexRoute;
   "/profile/": typeof ProfileIndexRoute;
   "/submissions/": typeof SubmissionsIndexRoute;
+  "/feed/$feedId/curation": typeof FeedFeedIdCurationRoute;
+  "/feed/$feedId/members": typeof FeedFeedIdMembersRoute;
+  "/feed/$feedId/points": typeof FeedFeedIdPointsRoute;
+  "/feed/$feedId/proposals": typeof FeedFeedIdProposalsRoute;
+  "/feed/$feedId/token": typeof FeedFeedIdTokenRoute;
+  "/feed/$feedId/": typeof FeedFeedIdIndexRoute;
+  "/feed/$feedId/settings/connected": typeof FeedFeedIdSettingsConnectedRoute;
+  "/feed/$feedId/settings/": typeof FeedFeedIdSettingsIndexRoute;
 }
 
 export interface FileRouteTypes {
@@ -318,45 +463,65 @@ export interface FileRouteTypes {
     | "/leaderboard"
     | "/settings"
     | "/test"
+    | "/create/feed"
     | "/explore"
     | "/feed/$feedId"
     | "/profile"
-    | "/submissions/$feedId"
-    | "/create-feed"
     | "/explore/"
     | "/feed"
     | "/profile/"
-    | "/submissions";
+    | "/submissions"
+    | "/feed/$feedId/curation"
+    | "/feed/$feedId/members"
+    | "/feed/$feedId/points"
+    | "/feed/$feedId/proposals"
+    | "/feed/$feedId/token"
+    | "/feed/$feedId/"
+    | "/feed/$feedId/settings/connected"
+    | "/feed/$feedId/settings";
   fileRoutesByTo: FileRoutesByTo;
   to:
     | "/"
     | "/leaderboard"
     | "/settings"
     | "/test"
+    | "/create/feed"
     | "/explore"
-    | "/feed/$feedId"
     | "/profile"
-    | "/submissions/$feedId"
-    | "/create-feed"
     | "/feed"
-    | "/submissions";
+    | "/submissions"
+    | "/feed/$feedId/curation"
+    | "/feed/$feedId/members"
+    | "/feed/$feedId/points"
+    | "/feed/$feedId/proposals"
+    | "/feed/$feedId/token"
+    | "/feed/$feedId"
+    | "/feed/$feedId/settings/connected"
+    | "/feed/$feedId/settings";
   id:
     | "__root__"
     | "/"
     | "/leaderboard"
     | "/settings"
     | "/test"
+    | "/create/feed"
     | "/explore"
     | "/explore/_root"
     | "/feed/$feedId"
     | "/profile"
     | "/profile/_root"
-    | "/submissions/$feedId"
-    | "/create-feed/"
     | "/explore/"
     | "/feed/"
     | "/profile/"
-    | "/submissions/";
+    | "/submissions/"
+    | "/feed/$feedId/curation"
+    | "/feed/$feedId/members"
+    | "/feed/$feedId/points"
+    | "/feed/$feedId/proposals"
+    | "/feed/$feedId/token"
+    | "/feed/$feedId/"
+    | "/feed/$feedId/settings/connected"
+    | "/feed/$feedId/settings/";
   fileRoutesById: FileRoutesById;
 }
 
@@ -365,11 +530,10 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute;
   SettingsRoute: typeof SettingsRoute;
   TestRoute: typeof TestRoute;
+  CreateFeedRoute: typeof CreateFeedRoute;
   ExploreRoute: typeof ExploreRouteWithChildren;
-  FeedFeedIdRoute: typeof FeedFeedIdRoute;
+  FeedFeedIdRoute: typeof FeedFeedIdRouteWithChildren;
   ProfileRoute: typeof ProfileRouteWithChildren;
-  SubmissionsFeedIdRoute: typeof SubmissionsFeedIdRoute;
-  CreateFeedIndexRoute: typeof CreateFeedIndexRoute;
   FeedIndexRoute: typeof FeedIndexRoute;
   SubmissionsIndexRoute: typeof SubmissionsIndexRoute;
 }
@@ -379,11 +543,10 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   SettingsRoute: SettingsRoute,
   TestRoute: TestRoute,
+  CreateFeedRoute: CreateFeedRoute,
   ExploreRoute: ExploreRouteWithChildren,
-  FeedFeedIdRoute: FeedFeedIdRoute,
+  FeedFeedIdRoute: FeedFeedIdRouteWithChildren,
   ProfileRoute: ProfileRouteWithChildren,
-  SubmissionsFeedIdRoute: SubmissionsFeedIdRoute,
-  CreateFeedIndexRoute: CreateFeedIndexRoute,
   FeedIndexRoute: FeedIndexRoute,
   SubmissionsIndexRoute: SubmissionsIndexRoute,
 };
@@ -402,11 +565,10 @@ export const routeTree = rootRoute
         "/leaderboard",
         "/settings",
         "/test",
+        "/create/feed",
         "/explore",
         "/feed/$feedId",
         "/profile",
-        "/submissions/$feedId",
-        "/create-feed/",
         "/feed/",
         "/submissions/"
       ]
@@ -423,6 +585,9 @@ export const routeTree = rootRoute
     "/test": {
       "filePath": "test.tsx"
     },
+    "/create/feed": {
+      "filePath": "create/feed.tsx"
+    },
     "/explore": {
       "filePath": "explore",
       "children": [
@@ -435,7 +600,17 @@ export const routeTree = rootRoute
       "parent": "/explore"
     },
     "/feed/$feedId": {
-      "filePath": "feed/$feedId.tsx"
+      "filePath": "feed/$feedId.tsx",
+      "children": [
+        "/feed/$feedId/curation",
+        "/feed/$feedId/members",
+        "/feed/$feedId/points",
+        "/feed/$feedId/proposals",
+        "/feed/$feedId/token",
+        "/feed/$feedId/",
+        "/feed/$feedId/settings/connected",
+        "/feed/$feedId/settings/"
+      ]
     },
     "/profile": {
       "filePath": "profile",
@@ -447,12 +622,6 @@ export const routeTree = rootRoute
     "/profile/_root": {
       "filePath": "profile/_root.tsx",
       "parent": "/profile"
-    },
-    "/submissions/$feedId": {
-      "filePath": "submissions/$feedId.tsx"
-    },
-    "/create-feed/": {
-      "filePath": "create-feed/index.tsx"
     },
     "/explore/": {
       "filePath": "explore/index.tsx",
@@ -467,6 +636,38 @@ export const routeTree = rootRoute
     },
     "/submissions/": {
       "filePath": "submissions/index.tsx"
+    },
+    "/feed/$feedId/curation": {
+      "filePath": "feed/$feedId/curation.tsx",
+      "parent": "/feed/$feedId"
+    },
+    "/feed/$feedId/members": {
+      "filePath": "feed/$feedId/members.tsx",
+      "parent": "/feed/$feedId"
+    },
+    "/feed/$feedId/points": {
+      "filePath": "feed/$feedId/points.tsx",
+      "parent": "/feed/$feedId"
+    },
+    "/feed/$feedId/proposals": {
+      "filePath": "feed/$feedId/proposals.tsx",
+      "parent": "/feed/$feedId"
+    },
+    "/feed/$feedId/token": {
+      "filePath": "feed/$feedId/token.tsx",
+      "parent": "/feed/$feedId"
+    },
+    "/feed/$feedId/": {
+      "filePath": "feed/$feedId/index.tsx",
+      "parent": "/feed/$feedId"
+    },
+    "/feed/$feedId/settings/connected": {
+      "filePath": "feed/$feedId/settings/connected.tsx",
+      "parent": "/feed/$feedId"
+    },
+    "/feed/$feedId/settings/": {
+      "filePath": "feed/$feedId/settings/index.tsx",
+      "parent": "/feed/$feedId"
     }
   }
 }
