@@ -2537,7 +2537,13 @@
       "description": "News about the Stablecoins Ecoystem",
       "moderation": {
         "approvers": {
-          "twitter": ["stablewatchHQ", "potlock_", "plugrel", "potlock_intern", "Piotr_Saczuk"]
+          "twitter": [
+            "stablewatchHQ",
+            "potlock_",
+            "plugrel",
+            "potlock_intern",
+            "Piotr_Saczuk"
+          ]
         }
       },
       "outputs": {
