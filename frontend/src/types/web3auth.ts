@@ -1,5 +1,6 @@
 import { Web3Auth } from "@web3auth/modal";
 import { IProvider } from "@web3auth/base";
+import { Account, KeyPair } from "near-api-js";
 
 export type AuthUserInfo = {
   email?: string;
@@ -28,6 +29,12 @@ export type AuthUserInfo = {
   isMfaEnabled?: boolean;
 };
 
+export interface NearAccountInfo {
+  account: Account;
+  accountId: string;
+  keyPair: KeyPair;
+}
+
 export interface Web3AuthContextType {
   web3auth: Web3Auth | null;
   provider: IProvider | null;
@@ -36,4 +43,5 @@ export interface Web3AuthContextType {
   login: () => Promise<void>;
   logout: () => Promise<void>;
   getUserInfo(): Promise<Partial<AuthUserInfo>>;
+  getNearAccount(): Promise<NearAccountInfo>;
 }

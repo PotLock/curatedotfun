@@ -4,11 +4,14 @@ import {
   IProvider,
   WEB3AUTH_NETWORK,
   ADAPTER_EVENTS,
-  getEvmChainConfig,
+  CHAIN_NAMESPACES,
 } from "@web3auth/base";
-import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider";
+import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
 import { Web3Auth } from "@web3auth/modal";
 import { Web3AuthContext } from "../hooks/use-web3-auth";
+import { connect, KeyPair, keyStores, utils } from "near-api-js";
+import { getED25519Key } from "@web3auth/base-provider";
+import { NearAccountInfo } from "../types/web3auth";
 
 interface Web3AuthProviderProps {
   children: ReactNode;
@@ -24,25 +27,50 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
     const init = async () => {
       try {
         const clientId = import.meta.env.PUBLIC_WEB3_CLIENT_ID;
+        const network = import.meta.env.PUBLIC_NETWORK;
 
         if (!clientId) {
           throw new Error("PUBLIC_WEB3_CLIENT_ID is not set");
         }
-
-        const chainConfig = getEvmChainConfig(11155111, clientId);
-
-        if (!chainConfig) {
-          throw new Error("Chain config not found");
+        
+        if (!network) {
+          throw new Error("PUBLIC_NETWORK is not set");
         }
+
+        let rpcTarget = "";
+        let blockExplorerUrl = "";
+        let chainId = "";
+
+        if (network.toLowerCase() === "testnet") {
+          chainId = "0x4e454153";
+          rpcTarget = "https://testnet.aurora.dev";
+          blockExplorerUrl = "https://explorer.testnet.aurora.dev";
+        } else if (network.toLowerCase() === "mainnet") {
+          chainId = "0x4e454152";
+          rpcTarget = "https://mainnet.aurora.dev";
+          blockExplorerUrl = "https://explorer.mainnet.aurora.dev";
+        }
+
+        const chainConfig = {
+          chainNamespace: CHAIN_NAMESPACES.OTHER,
+          chainId,
+          rpcTarget,
+          displayName: "Near",
+          blockExplorerUrl,
+          ticker: "NEAR",
+          tickerName: "NEAR",
+        };
+
+        const privateKeyProvider = new CommonPrivateKeyProvider({
+          config: { chainConfig },
+        });
 
         // Create Web3Auth instance
         const web3AuthInstance = new Web3Auth({
           clientId,
           web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
           chainConfig,
-          privateKeyProvider: new EthereumPrivateKeyProvider({
-            config: { chainConfig },
-          }),
+          privateKeyProvider,
         });
 
         // Subscribe to authentication events
@@ -116,6 +144,83 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
     return userInfo;
   };
 
+  const getNearAccount = async (): Promise<NearAccountInfo> => {
+    if (!web3auth?.provider) {
+      throw new Error("Provider not initialized");
+    }
+
+    const network = import.meta.env.PUBLIC_NETWORK;
+    if (!network) {
+      throw new Error("PUBLIC_NETWORK is not set");
+    }
+
+    try {
+      let rpcTarget = "";
+      let blockExplorerUrl = "";
+      let walletUrl = "";
+      let helperUrl = "";
+
+      if (network.toLowerCase() === "testnet") {
+        rpcTarget = "https://rpc.testnet.near.org";
+        blockExplorerUrl = "https://explorer.testnet.near.org";
+        walletUrl = "https://wallet.testnet.near.org";
+        helperUrl = "https://helper.testnet.near.org";
+      } else if (network.toLowerCase() === "mainnet") {
+        rpcTarget = "https://rpc.mainnet.near.org";
+        blockExplorerUrl = "https://explorer.near.org";
+        walletUrl = "https://wallet.near.org";
+        helperUrl = "https://helper.mainnet.near.org";
+      }
+
+      // Get private key from Web3Auth
+      const privateKey = await web3auth.provider.request({ method: "private_key" });
+      if (!privateKey) {
+        throw new Error("Failed to get private key from Web3Auth");
+      }
+      
+      // Convert the secp256k1 key to ed25519 key
+      const privateKeyEd25519 = getED25519Key(privateKey as string).sk.toString("hex");
+      
+      // Convert the private key to Buffer
+      const privateKeyEd25519Buffer = Buffer.from(privateKeyEd25519, "hex");
+      
+      // Convert the private key to base58
+      const bs58encode = utils.serialize.base_encode(privateKeyEd25519Buffer);
+      
+      // Convert the base58 private key to KeyPair
+      const keyPair = KeyPair.fromString(`ed25519:${bs58encode}`);
+      
+      // Get public key and derive account ID
+      const publicKey = keyPair.getPublicKey();
+      const accountId = Buffer.from(publicKey.data).toString("hex");
+
+      // Setup NEAR connection with retry logic
+      const myKeyStore = new keyStores.InMemoryKeyStore();
+      await myKeyStore.setKey(network, accountId, keyPair);
+      
+      const connectionConfig = {
+        networkId: network,
+        keyStore: myKeyStore,
+        nodeUrl: rpcTarget,
+        walletUrl,
+        helperUrl,
+        explorerUrl: blockExplorerUrl,
+        headers: {},
+      };
+
+      const nearConnection = await connect(connectionConfig);
+      
+      // Verify account exists and is accessible
+      const account = await nearConnection.account(accountId);
+      await account.state();
+      
+      return { account, accountId, keyPair };
+    } catch (error) {
+      console.error("NEAR account initialization error:", error);
+      throw new Error("Failed to initialize NEAR account: " + (error instanceof Error ? error.message : "Unknown error"));
+    }
+  };
+
   return (
     <Web3AuthContext.Provider
       value={{
@@ -126,6 +231,7 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
         login,
         logout,
         getUserInfo,
+        getNearAccount,
       }}
     >
       {children}
