@@ -8,6 +8,8 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
+import { createFileRoute } from "@tanstack/react-router";
+
 // Import Routes
 
 import { Route as rootRoute } from "./routes/__root";
@@ -15,10 +17,34 @@ import { Route as TestImport } from "./routes/test";
 import { Route as SettingsImport } from "./routes/settings";
 import { Route as LeaderboardImport } from "./routes/leaderboard";
 import { Route as IndexImport } from "./routes/index";
+import { Route as SubmissionsIndexImport } from "./routes/submissions/index";
+import { Route as ProfileIndexImport } from "./routes/profile/index";
 import { Route as FeedIndexImport } from "./routes/feed/index";
+import { Route as ExploreIndexImport } from "./routes/explore/index";
+import { Route as CreateFeedIndexImport } from "./routes/create-feed/index";
+import { Route as SubmissionsFeedIdImport } from "./routes/submissions/$feedId";
+import { Route as ProfileRootImport } from "./routes/profile/_root";
 import { Route as FeedFeedIdImport } from "./routes/feed/$feedId";
+import { Route as ExploreRootImport } from "./routes/explore/_root";
+
+// Create Virtual Routes
+
+const ProfileImport = createFileRoute("/profile")();
+const ExploreImport = createFileRoute("/explore")();
 
 // Create/Update Routes
+
+const ProfileRoute = ProfileImport.update({
+  id: "/profile",
+  path: "/profile",
+  getParentRoute: () => rootRoute,
+} as any);
+
+const ExploreRoute = ExploreImport.update({
+  id: "/explore",
+  path: "/explore",
+  getParentRoute: () => rootRoute,
+} as any);
 
 const TestRoute = TestImport.update({
   id: "/test",
@@ -44,16 +70,56 @@ const IndexRoute = IndexImport.update({
   getParentRoute: () => rootRoute,
 } as any);
 
+const SubmissionsIndexRoute = SubmissionsIndexImport.update({
+  id: "/submissions/",
+  path: "/submissions/",
+  getParentRoute: () => rootRoute,
+} as any);
+
+const ProfileIndexRoute = ProfileIndexImport.update({
+  id: "/",
+  path: "/",
+  getParentRoute: () => ProfileRoute,
+} as any);
+
 const FeedIndexRoute = FeedIndexImport.update({
   id: "/feed/",
   path: "/feed/",
   getParentRoute: () => rootRoute,
 } as any);
 
+const ExploreIndexRoute = ExploreIndexImport.update({
+  id: "/",
+  path: "/",
+  getParentRoute: () => ExploreRoute,
+} as any);
+
+const CreateFeedIndexRoute = CreateFeedIndexImport.update({
+  id: "/create-feed/",
+  path: "/create-feed/",
+  getParentRoute: () => rootRoute,
+} as any);
+
+const SubmissionsFeedIdRoute = SubmissionsFeedIdImport.update({
+  id: "/submissions/$feedId",
+  path: "/submissions/$feedId",
+  getParentRoute: () => rootRoute,
+} as any);
+
+const ProfileRootRoute = ProfileRootImport.update({
+  id: "/_root",
+  getParentRoute: () => ProfileRoute,
+} as any);
+
 const FeedFeedIdRoute = FeedFeedIdImport.update({
   id: "/feed/$feedId",
   path: "/feed/$feedId",
   getParentRoute: () => rootRoute,
+} as any);
+
+const ExploreRootRoute = ExploreRootImport.update({
+  id: "/_root",
+  getParentRoute: () => ExploreRoute,
 } as any);
 
 // Populate the FileRoutesByPath interface
@@ -88,12 +154,61 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof TestImport;
       parentRoute: typeof rootRoute;
     };
+    "/explore": {
+      id: "/explore";
+      path: "/explore";
+      fullPath: "/explore";
+      preLoaderRoute: typeof ExploreImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/explore/_root": {
+      id: "/explore/_root";
+      path: "/explore";
+      fullPath: "/explore";
+      preLoaderRoute: typeof ExploreRootImport;
+      parentRoute: typeof ExploreRoute;
+    };
     "/feed/$feedId": {
       id: "/feed/$feedId";
       path: "/feed/$feedId";
       fullPath: "/feed/$feedId";
       preLoaderRoute: typeof FeedFeedIdImport;
       parentRoute: typeof rootRoute;
+    };
+    "/profile": {
+      id: "/profile";
+      path: "/profile";
+      fullPath: "/profile";
+      preLoaderRoute: typeof ProfileImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/profile/_root": {
+      id: "/profile/_root";
+      path: "/profile";
+      fullPath: "/profile";
+      preLoaderRoute: typeof ProfileRootImport;
+      parentRoute: typeof ProfileRoute;
+    };
+    "/submissions/$feedId": {
+      id: "/submissions/$feedId";
+      path: "/submissions/$feedId";
+      fullPath: "/submissions/$feedId";
+      preLoaderRoute: typeof SubmissionsFeedIdImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/create-feed/": {
+      id: "/create-feed/";
+      path: "/create-feed";
+      fullPath: "/create-feed";
+      preLoaderRoute: typeof CreateFeedIndexImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/explore/": {
+      id: "/explore/";
+      path: "/";
+      fullPath: "/explore/";
+      preLoaderRoute: typeof ExploreIndexImport;
+      parentRoute: typeof ExploreImport;
     };
     "/feed/": {
       id: "/feed/";
@@ -102,18 +217,65 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof FeedIndexImport;
       parentRoute: typeof rootRoute;
     };
+    "/profile/": {
+      id: "/profile/";
+      path: "/";
+      fullPath: "/profile/";
+      preLoaderRoute: typeof ProfileIndexImport;
+      parentRoute: typeof ProfileImport;
+    };
+    "/submissions/": {
+      id: "/submissions/";
+      path: "/submissions";
+      fullPath: "/submissions";
+      preLoaderRoute: typeof SubmissionsIndexImport;
+      parentRoute: typeof rootRoute;
+    };
   }
 }
 
 // Create and export the route tree
+
+interface ExploreRouteChildren {
+  ExploreRootRoute: typeof ExploreRootRoute;
+  ExploreIndexRoute: typeof ExploreIndexRoute;
+}
+
+const ExploreRouteChildren: ExploreRouteChildren = {
+  ExploreRootRoute: ExploreRootRoute,
+  ExploreIndexRoute: ExploreIndexRoute,
+};
+
+const ExploreRouteWithChildren =
+  ExploreRoute._addFileChildren(ExploreRouteChildren);
+
+interface ProfileRouteChildren {
+  ProfileRootRoute: typeof ProfileRootRoute;
+  ProfileIndexRoute: typeof ProfileIndexRoute;
+}
+
+const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileRootRoute: ProfileRootRoute,
+  ProfileIndexRoute: ProfileIndexRoute,
+};
+
+const ProfileRouteWithChildren =
+  ProfileRoute._addFileChildren(ProfileRouteChildren);
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
   "/leaderboard": typeof LeaderboardRoute;
   "/settings": typeof SettingsRoute;
   "/test": typeof TestRoute;
+  "/explore": typeof ExploreRootRoute;
   "/feed/$feedId": typeof FeedFeedIdRoute;
+  "/profile": typeof ProfileRootRoute;
+  "/submissions/$feedId": typeof SubmissionsFeedIdRoute;
+  "/create-feed": typeof CreateFeedIndexRoute;
+  "/explore/": typeof ExploreIndexRoute;
   "/feed": typeof FeedIndexRoute;
+  "/profile/": typeof ProfileIndexRoute;
+  "/submissions": typeof SubmissionsIndexRoute;
 }
 
 export interface FileRoutesByTo {
@@ -121,8 +283,13 @@ export interface FileRoutesByTo {
   "/leaderboard": typeof LeaderboardRoute;
   "/settings": typeof SettingsRoute;
   "/test": typeof TestRoute;
+  "/explore": typeof ExploreIndexRoute;
   "/feed/$feedId": typeof FeedFeedIdRoute;
+  "/profile": typeof ProfileIndexRoute;
+  "/submissions/$feedId": typeof SubmissionsFeedIdRoute;
+  "/create-feed": typeof CreateFeedIndexRoute;
   "/feed": typeof FeedIndexRoute;
+  "/submissions": typeof SubmissionsIndexRoute;
 }
 
 export interface FileRoutesById {
@@ -131,8 +298,17 @@ export interface FileRoutesById {
   "/leaderboard": typeof LeaderboardRoute;
   "/settings": typeof SettingsRoute;
   "/test": typeof TestRoute;
+  "/explore": typeof ExploreRouteWithChildren;
+  "/explore/_root": typeof ExploreRootRoute;
   "/feed/$feedId": typeof FeedFeedIdRoute;
+  "/profile": typeof ProfileRouteWithChildren;
+  "/profile/_root": typeof ProfileRootRoute;
+  "/submissions/$feedId": typeof SubmissionsFeedIdRoute;
+  "/create-feed/": typeof CreateFeedIndexRoute;
+  "/explore/": typeof ExploreIndexRoute;
   "/feed/": typeof FeedIndexRoute;
+  "/profile/": typeof ProfileIndexRoute;
+  "/submissions/": typeof SubmissionsIndexRoute;
 }
 
 export interface FileRouteTypes {
@@ -142,18 +318,45 @@ export interface FileRouteTypes {
     | "/leaderboard"
     | "/settings"
     | "/test"
+    | "/explore"
     | "/feed/$feedId"
-    | "/feed";
+    | "/profile"
+    | "/submissions/$feedId"
+    | "/create-feed"
+    | "/explore/"
+    | "/feed"
+    | "/profile/"
+    | "/submissions";
   fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/leaderboard" | "/settings" | "/test" | "/feed/$feedId" | "/feed";
+  to:
+    | "/"
+    | "/leaderboard"
+    | "/settings"
+    | "/test"
+    | "/explore"
+    | "/feed/$feedId"
+    | "/profile"
+    | "/submissions/$feedId"
+    | "/create-feed"
+    | "/feed"
+    | "/submissions";
   id:
     | "__root__"
     | "/"
     | "/leaderboard"
     | "/settings"
     | "/test"
+    | "/explore"
+    | "/explore/_root"
     | "/feed/$feedId"
-    | "/feed/";
+    | "/profile"
+    | "/profile/_root"
+    | "/submissions/$feedId"
+    | "/create-feed/"
+    | "/explore/"
+    | "/feed/"
+    | "/profile/"
+    | "/submissions/";
   fileRoutesById: FileRoutesById;
 }
 
@@ -162,8 +365,13 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute;
   SettingsRoute: typeof SettingsRoute;
   TestRoute: typeof TestRoute;
+  ExploreRoute: typeof ExploreRouteWithChildren;
   FeedFeedIdRoute: typeof FeedFeedIdRoute;
+  ProfileRoute: typeof ProfileRouteWithChildren;
+  SubmissionsFeedIdRoute: typeof SubmissionsFeedIdRoute;
+  CreateFeedIndexRoute: typeof CreateFeedIndexRoute;
   FeedIndexRoute: typeof FeedIndexRoute;
+  SubmissionsIndexRoute: typeof SubmissionsIndexRoute;
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -171,8 +379,13 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   SettingsRoute: SettingsRoute,
   TestRoute: TestRoute,
+  ExploreRoute: ExploreRouteWithChildren,
   FeedFeedIdRoute: FeedFeedIdRoute,
+  ProfileRoute: ProfileRouteWithChildren,
+  SubmissionsFeedIdRoute: SubmissionsFeedIdRoute,
+  CreateFeedIndexRoute: CreateFeedIndexRoute,
   FeedIndexRoute: FeedIndexRoute,
+  SubmissionsIndexRoute: SubmissionsIndexRoute,
 };
 
 export const routeTree = rootRoute
@@ -189,8 +402,13 @@ export const routeTree = rootRoute
         "/leaderboard",
         "/settings",
         "/test",
+        "/explore",
         "/feed/$feedId",
-        "/feed/"
+        "/profile",
+        "/submissions/$feedId",
+        "/create-feed/",
+        "/feed/",
+        "/submissions/"
       ]
     },
     "/": {
@@ -205,11 +423,50 @@ export const routeTree = rootRoute
     "/test": {
       "filePath": "test.tsx"
     },
+    "/explore": {
+      "filePath": "explore",
+      "children": [
+        "/explore/_root",
+        "/explore/"
+      ]
+    },
+    "/explore/_root": {
+      "filePath": "explore/_root.tsx",
+      "parent": "/explore"
+    },
     "/feed/$feedId": {
       "filePath": "feed/$feedId.tsx"
     },
+    "/profile": {
+      "filePath": "profile",
+      "children": [
+        "/profile/_root",
+        "/profile/"
+      ]
+    },
+    "/profile/_root": {
+      "filePath": "profile/_root.tsx",
+      "parent": "/profile"
+    },
+    "/submissions/$feedId": {
+      "filePath": "submissions/$feedId.tsx"
+    },
+    "/create-feed/": {
+      "filePath": "create-feed/index.tsx"
+    },
+    "/explore/": {
+      "filePath": "explore/index.tsx",
+      "parent": "/explore"
+    },
     "/feed/": {
       "filePath": "feed/index.tsx"
+    },
+    "/profile/": {
+      "filePath": "profile/index.tsx",
+      "parent": "/profile"
+    },
+    "/submissions/": {
+      "filePath": "submissions/index.tsx"
     }
   }
 }

@@ -3,6 +3,7 @@
 ## Current Status
 
 ### Working
+
 - Frontend application with React and TanStack Router
 - Backend with Node.js/Hono
 - Plugin system with module federation
@@ -15,6 +16,7 @@
 ### Platform Features
 
 #### Core System ✓
+
 - [x] Content submission via Twitter
 - [x] Trusted curator moderation
 - [x] Content processing pipeline
@@ -24,6 +26,7 @@
 - [x] Database storage and retrieval
 
 #### Distribution ✓
+
 - [x] Telegram channel distribution
 - [x] RSS feed generation
 - [x] Notion database integration
@@ -31,6 +34,7 @@
 - [x] Custom formatting per feed
 
 #### Transformation ✓
+
 - [x] Simple text transformation
 - [x] Object mapping transformation
 - [x] AI-powered content enhancement
@@ -38,6 +42,7 @@
 - [x] JSON sanitization throughout pipeline
 
 #### Frontend ✓
+
 - [x] Feed management interface
 - [x] Submission viewing and filtering
 - [x] Moderation information display
@@ -51,13 +56,6 @@
   - [x] Optimized task configuration
   - [x] Integration testing setup
   - [x] Docker optimization
-- [x] PostgreSQL migration from SQLite
-  - [x] Docker-based development environment
-  - [x] Migration scripts
-  - [x] Database service implementation
-  - [x] Repository pattern implementation
-  - [x] Modular database service architecture
-  - [x] Testing infrastructure with isolated test databases
 - [x] Docker containerization
   - [x] Multi-stage build process
   - [x] Optimized images
@@ -123,6 +121,7 @@
    - Ensure compliance with security best practices
 
 ## Known Issues
+
 - None critical - System is stable and operational
 - Configuration management needs to be moved to database for better versioning and security
 - Error handling needs to be more comprehensive
@@ -130,6 +129,7 @@
 - Database security needs to be enhanced for Web3Auth integration
 
 ## Feed Status
+
 - Active feeds: Multiple (Ethereum, NEAR, Solana, Grants, AI, etc.)
 - Curator networks: Established for all active feeds
 - Distribution channels: Operational for all active feeds
