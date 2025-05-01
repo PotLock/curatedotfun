@@ -6,7 +6,10 @@ import {
   ADAPTER_EVENTS,
   CHAIN_NAMESPACES,
 } from "@web3auth/base";
-import { CommonPrivateKeyProvider, getED25519Key } from "@web3auth/base-provider";
+import {
+  CommonPrivateKeyProvider,
+  getED25519Key,
+} from "@web3auth/base-provider";
 import { Web3Auth } from "@web3auth/modal";
 import { Web3AuthContext } from "../hooks/use-web3-auth";
 import { connect, KeyPair, keyStores, utils } from "near-api-js";
