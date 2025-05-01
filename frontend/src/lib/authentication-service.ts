@@ -122,7 +122,9 @@ export async function authenticate(
   requestDetails?: string,
 ): Promise<NearAuthData> {
   if (!web3auth || !getNearAccount) {
-    throw new Error("Web3Auth and getNearAccount are required for authentication");
+    throw new Error(
+      "Web3Auth and getNearAccount are required for authentication",
+    );
   }
 
   // Get NEAR account from Web3Auth context
@@ -169,6 +171,8 @@ export async function authenticate(
     };
   } catch (error) {
     console.error("Authentication error:", error);
-    throw new Error("Failed to authenticate with Web3Auth: " + getErrorMessage(error));
+    throw new Error(
+      "Failed to authenticate with Web3Auth: " + getErrorMessage(error),
+    );
   }
 }

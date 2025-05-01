@@ -68,7 +68,10 @@ export async function createAuthorizationPayload(
     };
   } catch (error) {
     console.error("Authorization payload creation error:", error);
-    throw new Error("Failed to create authorization payload: " + (error instanceof Error ? error.message : "Unknown error"));
+    throw new Error(
+      "Failed to create authorization payload: " +
+        (error instanceof Error ? error.message : "Unknown error"),
+    );
   }
 }
 
@@ -131,7 +134,6 @@ export async function unauthorize(): Promise<void> {
   });
 
   try {
-
     localStorage.removeItem("crosspost:authorized");
     authorizationEvents.emit(AUTHORIZATION_EVENTS.AUTHORIZATION_REVOKED);
 

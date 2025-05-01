@@ -32,7 +32,7 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
         if (!clientId) {
           throw new Error("PUBLIC_WEB3_CLIENT_ID is not set");
         }
-        
+
         if (!network) {
           throw new Error("PUBLIC_NETWORK is not set");
         }
@@ -173,23 +173,27 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
       }
 
       // Get private key from Web3Auth
-      const privateKey = await web3auth.provider.request({ method: "private_key" });
+      const privateKey = await web3auth.provider.request({
+        method: "private_key",
+      });
       if (!privateKey) {
         throw new Error("Failed to get private key from Web3Auth");
       }
-      
+
       // Convert the secp256k1 key to ed25519 key
-      const privateKeyEd25519 = getED25519Key(privateKey as string).sk.toString("hex");
-      
+      const privateKeyEd25519 = getED25519Key(privateKey as string).sk.toString(
+        "hex",
+      );
+
       // Convert the private key to Buffer
       const privateKeyEd25519Buffer = Buffer.from(privateKeyEd25519, "hex");
-      
+
       // Convert the private key to base58
       const bs58encode = utils.serialize.base_encode(privateKeyEd25519Buffer);
-      
+
       // Convert the base58 private key to KeyPair
       const keyPair = KeyPair.fromString(`ed25519:${bs58encode}`);
-      
+
       // Get public key and derive account ID
       const publicKey = keyPair.getPublicKey();
       const accountId = Buffer.from(publicKey.data).toString("hex");
@@ -197,7 +201,7 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
       // Setup NEAR connection with retry logic
       const myKeyStore = new keyStores.InMemoryKeyStore();
       await myKeyStore.setKey(network, accountId, keyPair);
-      
+
       const connectionConfig = {
         networkId: network,
         keyStore: myKeyStore,
@@ -209,15 +213,18 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
       };
 
       const nearConnection = await connect(connectionConfig);
-      
+
       // Verify account exists and is accessible
       const account = await nearConnection.account(accountId);
       await account.state();
-      
+
       return { account, accountId, keyPair };
     } catch (error) {
       console.error("NEAR account initialization error:", error);
-      throw new Error("Failed to initialize NEAR account: " + (error instanceof Error ? error.message : "Unknown error"));
+      throw new Error(
+        "Failed to initialize NEAR account: " +
+          (error instanceof Error ? error.message : "Unknown error"),
+      );
     }
   };
 

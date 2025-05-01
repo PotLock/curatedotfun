@@ -48,7 +48,7 @@ export function ConnectPlatform({
     });
 
     try {
-        console.log('platform', platform);
+      console.log("platform", platform);
       await connectAccount.mutateAsync({
         platform: platform as any,
       });
