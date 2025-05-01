@@ -72,7 +72,7 @@ importers:
         specifier: ^8.1.1
         version: 8.2.0
       pg:
-        specifier: ^8.14.1
+        specifier: ^8.15.6
         version: 8.15.6
       pino:
         specifier: ^9.6.0
@@ -181,6 +181,9 @@ importers:
         specifier: ^1.114.15
         version: 1.117.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@web3auth/base':
+        specifier: ^9.7.0
+        version: 9.7.0(@babel/runtime@7.27.0)
+      '@web3auth/base-provider':
         specifier: ^9.7.0
         version: 9.7.0(@babel/runtime@7.27.0)
       '@web3auth/ethereum-provider':
