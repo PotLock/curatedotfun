@@ -31,7 +31,8 @@ function SubmissionsIndexPage() {
   const botId = useBotId();
 
   // Get global filter state from Zustand
-  const { statusFilter, sortOrder, setStatusFilter } = useFeedFilterStore();
+  const { statusFilter, sortOrder, setStatusFilter, setSortOrder } =
+    useFeedFilterStore();
 
   // Local filter state (before applying)
   const [localStatusFilter, setLocalStatusFilter] =
@@ -70,7 +71,7 @@ function SubmissionsIndexPage() {
     const dateB = new Date(b.submittedAt || 0).getTime();
     return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
   });
-
+  
   // Filter items based on search query
   const filteredItems =
     debouncedSearchQuery.trim() !== ""
@@ -104,6 +105,7 @@ function SubmissionsIndexPage() {
   // Apply filters
   const applyFilters = () => {
     setStatusFilter(localStatusFilter);
+    setSortOrder(localSortOrder);
     setShowFilters(false);
   };
 
