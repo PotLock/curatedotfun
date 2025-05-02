@@ -1609,7 +1609,7 @@
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
-                "channelId": "@@afrobeats_party"
+                "channelId": "@afrobeats_party"
               }
             }
           ]
@@ -1685,7 +1685,7 @@
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
-                "channelId": "@@webfsn"
+                "channelId": "@webfsn"
               }
             }
           ]
