@@ -77,7 +77,7 @@ const TopCurators = ({ feedId, limit = 10 }: TopCuratorsProps) => {
               <div className="flex justify-between w-full items-center">
                 <div className="flex flex-col">
                   <p className="text-xs font-black">
-                    {curator.name ? curator.name : "Web3Plug (murica/acc)"}
+                    {curator?.name ? curator.name : "Web3Plug (murica/acc)"}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     @{curator.curatorUsername}
@@ -109,7 +109,7 @@ const TopCurators = ({ feedId, limit = 10 }: TopCuratorsProps) => {
                         viewBox="0 0 11 10"
                         fill="none"
                       >
-                        <g clip-path="url(#clip0_1032_8263)">
+                        <g clipPath="url(#clip0_1032_8263)">
                           <path
                             d="M7.4659 3.32994C8.12994 3.32994 8.76678 3.59373 9.23633 4.06327C9.70587 4.53282 9.96966 5.16966 9.96966 5.8337V8.75476H8.30049V5.8337C8.30049 5.61235 8.21256 5.40007 8.05604 5.24356C7.89952 5.08704 7.68724 4.99911 7.4659 4.99911C7.24455 4.99911 7.03227 5.08704 6.87575 5.24356C6.71924 5.40007 6.63131 5.61235 6.63131 5.8337V8.75476H4.96213V5.8337C4.96213 5.16966 5.22592 4.53282 5.69547 4.06327C6.16501 3.59373 6.80186 3.32994 7.4659 3.32994Z"
                             stroke="#0F172A"
