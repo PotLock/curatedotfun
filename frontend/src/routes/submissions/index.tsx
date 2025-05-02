@@ -71,7 +71,7 @@ function SubmissionsIndexPage() {
     const dateB = new Date(b.submittedAt || 0).getTime();
     return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
   });
-  
+
   // Filter items based on search query
   const filteredItems =
     debouncedSearchQuery.trim() !== ""
