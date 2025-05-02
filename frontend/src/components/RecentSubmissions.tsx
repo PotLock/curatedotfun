@@ -33,8 +33,7 @@ export default function RecentSubmissions({
   const botId = useBotId();
 
   // Get global filter state from Zustand
-  const { statusFilter, sortOrder, setStatusFilter, setSortOrder } =
-    useFeedFilterStore();
+  const { statusFilter, sortOrder, setStatusFilter } = useFeedFilterStore();
 
   // Local filter state (before applying)
   const [localStatusFilter, setLocalStatusFilter] =
@@ -59,7 +58,7 @@ export default function RecentSubmissions({
   // Fetch submissions with infinite scroll
   //   const ITEMS_PER_PAGE = 20;
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
-    useFeedItems(feedId || "");
+    useFeedItems(feedId);
 
   // const { data: items = [] } = useFeedItems(feedId);
 
@@ -98,12 +97,12 @@ export default function RecentSubmissions({
   };
 
   // Apply filters
-  // Then in applyFilters:
   const applyFilters = () => {
     // Update global filter state
     setStatusFilter(localStatusFilter);
-    setSortOrder(localSortOrder);
-    // setPlatform(localPlatform); // If you need this functionality
+    // Update other global filters (would need to add these to the store)
+    // setSortOrder(localSortOrder);
+    // setPlatform(localPlatform);
 
     // Close the filter panel
     setShowFilters(false);
@@ -216,11 +215,7 @@ export default function RecentSubmissions({
         isFetchingNextPage={isFetchingNextPage}
         status={status}
         loadingMessage="Loading more submissions..."
-        noMoreItemsMessage={
-          debouncedSearchQuery.trim() !== ""
-            ? "End of search results"
-            : "No more submissions to load"
-        }
+        noMoreItemsMessage="No more submissions to load"
         initialLoadingMessage="Loading submissions..."
         renderItems={(items) => (
           <SubmissionList

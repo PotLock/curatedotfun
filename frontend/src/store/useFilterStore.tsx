@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import { Submission } from "../types/twitter";
+import { TwitterSubmission } from "../types/twitter";
 
-export type StatusFilterType = "all" | Submission["status"];
+export type StatusFilterType = "all" | TwitterSubmission["status"];
 export type SortOrderType = "newest" | "oldest";
 
 interface FilterState {

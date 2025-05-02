@@ -62,7 +62,7 @@ function InfiniteFeed<T>({
   const itemsToRender = showAll ? items : items.slice(0, 3);
 
   return (
-    <div className="grid grid-cols-1 gap-4">
+    <div className="grid grid-col-1 gap-4">
       {renderItems(itemsToRender)}
 
       {/* Loading indicator and observer target - only shown when showAll is true */}
