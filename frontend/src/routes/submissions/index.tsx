@@ -86,11 +86,7 @@ function SubmissionsIndexPage() {
         )
       : sortedItems;
 
-  const sidebarContent = (
-    <div className="">
-      <FeedList />
-    </div>
-  );
+  const sidebarContent = <FeedList />;
 
   // Handle search input changes
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {

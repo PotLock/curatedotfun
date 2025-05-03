@@ -22,7 +22,9 @@ const SubmissionsLayout = ({ children, leftSidebar, feedId }: LayoutProps) => {
   const defaultRightSidebar = (
     <div className="max-w-full overflow-x-hidden">
       <div>
-        <h3 className="text-[32px] font-normal leading-[63px]">{titleText}</h3>
+        <h3 className="text-[32px] font-normal leading-[63px] md:block hidden">
+          {titleText}
+        </h3>
         <TopCurators feedId={feedId} />
       </div>
     </div>
