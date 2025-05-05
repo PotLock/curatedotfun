@@ -82,12 +82,7 @@ export class SubmissionService {
 
   private async initializeFeeds(): Promise<void> {
     try {
-      const feedsToUpsert = this.config.feeds.map((feed) => ({
-        id: feed.id,
-        name: feed.name,
-        description: feed.description,
-      }));
-      await feedRepository.upsertFeeds(feedsToUpsert);
+      await feedRepository.upsertFeeds(this.config.feeds);
     } catch (error) {
       logger.error("Failed to initialize feeds:", error);
       throw error;
