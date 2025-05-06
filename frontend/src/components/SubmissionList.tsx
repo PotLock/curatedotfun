@@ -41,7 +41,7 @@ const SubmissionList = ({
       <div className="flex flex-col justify-center items-center p-8 space-y-2">
         <p className="text-gray-500">No items found</p>
         <p className="text-gray-400 text-sm">
-          comment with "!submit @{botId} #{`${feedId || "feedId"}`}" to start
+          comment with "!submit @{botId} #{feedId || "feedId"}" to start
           curating
         </p>
       </div>
