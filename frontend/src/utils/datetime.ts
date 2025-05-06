@@ -53,7 +53,7 @@ export const formatDate = (dateInput: string | Date) => {
     } else if (weeksDiff < 4) {
       return `${weeksDiff}w ago`;
     } else if (monthsDiff < 12) {
-      return `${monthsDiff}m ago`;
+      return `${monthsDiff}mo ago`;
     } else {
       return `${yearsDiff}y ago`;
     }
