@@ -31,7 +31,8 @@ function SubmissionsIndexPage() {
   const botId = useBotId();
 
   // Get global filter state from Zustand
-  const { statusFilter, sortOrder, setStatusFilter } = useFeedFilterStore();
+  const { statusFilter, sortOrder, setStatusFilter, setSortOrder } =
+    useFeedFilterStore();
 
   // Local filter state (before applying)
   const [localStatusFilter, setLocalStatusFilter] =
@@ -104,6 +105,7 @@ function SubmissionsIndexPage() {
   // Apply filters
   const applyFilters = () => {
     setStatusFilter(localStatusFilter);
+    setSortOrder(localSortOrder);
     setShowFilters(false);
   };
 
@@ -146,30 +148,30 @@ function SubmissionsIndexPage() {
         )}
 
         {showFilters && (
-          <div className=" p-4 border rounded-md w-full gap-3 flex flex-col">
-            <div className="flex md:flex-row flex-col w-full justify-between items-center gap-6">
-              <div className="w-full">
-                <p className="text-sm font-medium">Sort By</p>
+          <div className="p-4 border rounded-md w-full flex flex-col gap-3">
+            <div className="w-full flex flex-col md:flex-row gap-6">
+              <div className="w-full md:w-1/3">
+                <p className="text-sm font-medium mb-2">Sort By</p>
                 <Select
                   value={localSortOrder}
                   onValueChange={(val) =>
                     setLocalSortOrder(val as SortOrderType)
                   }
                 >
-                  <SelectTrigger className="bg-white">
+                  <SelectTrigger className="bg-white w-full">
                     <SelectValue placeholder="Most Recent" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="w-full">
                     <SelectItem value="newest">Most Recent</SelectItem>
                     <SelectItem value="oldest">Oldest</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="w-full">
-                <p className=" text-sm font-medium">Platform</p>
+              <div className="w-full md:w-1/3">
+                <p className="text-sm font-medium mb-2">Platform</p>
                 <Select value={localPlatform} onValueChange={setLocalPlatform}>
-                  <SelectTrigger className="bg-white">
+                  <SelectTrigger className="bg-white w-full">
                     <SelectValue placeholder="Twitter" />
                   </SelectTrigger>
                   <SelectContent>
@@ -180,15 +182,15 @@ function SubmissionsIndexPage() {
                 </Select>
               </div>
 
-              <div className="w-full">
-                <p className=" text-sm font-medium">Status</p>
+              <div className="w-full md:w-1/3">
+                <p className="text-sm font-medium mb-2">Status</p>
                 <Select
                   value={localStatusFilter}
                   onValueChange={(val) =>
                     setLocalStatusFilter(val as StatusFilterType)
                   }
                 >
-                  <SelectTrigger className="bg-white">
+                  <SelectTrigger className="bg-white w-full">
                     <SelectValue placeholder="All" />
                   </SelectTrigger>
                   <SelectContent>
@@ -201,7 +203,7 @@ function SubmissionsIndexPage() {
               </div>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end mt-4">
               <Button
                 className="bg-black text-white hover:bg-gray-800"
                 onClick={applyFilters}

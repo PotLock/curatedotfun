@@ -58,8 +58,17 @@ export default function RecentSubmissions({
 
   // Fetch submissions with infinite scroll
   //   const ITEMS_PER_PAGE = 20;
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
-    useFeedItems(feedId || "");
+  // const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
+  //   useFeedItems(feedId || "");
+
+  const ITEMS_PER_PAGE = 20;
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage = false,
+    isFetchingNextPage = false,
+    status,
+  } = useFeedItems(feedId, ITEMS_PER_PAGE, statusFilter);
 
   // const { data: items = [] } = useFeedItems(feedId);
 
@@ -212,8 +221,8 @@ export default function RecentSubmissions({
       <InfiniteFeed
         items={filteredItems}
         fetchNextPage={fetchNextPage}
-        hasNextPage={hasNextPage && debouncedSearchQuery.trim() === ""}
-        isFetchingNextPage={isFetchingNextPage}
+        hasNextPage={!!hasNextPage && debouncedSearchQuery.trim() === ""}
+        isFetchingNextPage={!!isFetchingNextPage}
         status={status}
         loadingMessage="Loading more submissions..."
         noMoreItemsMessage={

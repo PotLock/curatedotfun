@@ -84,7 +84,7 @@ function FeedPageLayout() {
               </p>
             </div>
           </div>
-          <div className="flex sm:flex-row sm:items-center sm:justify-between w-full gap-2">
+          <div className="flex sm:flex-row sm:items-center justify-between sm:justify-between w-full gap-2">
             <div className="flex  sm:flex-row items-center gap-2 w-full">
               <p>Curating from:</p>
               <Badge className="flex gap-1 text-black border border-stone-500 rounded-md bg-stone-50 shadow-none">
@@ -104,8 +104,8 @@ function FeedPageLayout() {
                 Twitter
               </Badge>
             </div>
-            <div className="flex flex-shrink-0 sm:flex-row items-center gap-2 sm:gap-3 w-full sm:w-full">
-              <p className="flex flex-shrink-0 flex-1">Posting to:</p>
+            <div className="flex  sm:flex-row items-center gap-2 justify-end sm:gap-3 w-full sm:w-full">
+              <p className="flex">Posting to:</p>
               <Badge className="flex gap-1 text-black border border-stone-500 rounded-md bg-stone-50 shadow-none">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

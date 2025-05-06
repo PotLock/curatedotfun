@@ -9,7 +9,7 @@ kubectl apply -f k8s-deployment.yaml
 ```
 
 ```bash
-kubectl get pods 
+kubectl get pods
 ```
 
 ```bash

@@ -15,17 +15,54 @@ export function useFeedConfig(feedId: string) {
   });
 }
 
-export function useFeedItems(feedId: string) {
-  return useQuery<SubmissionWithFeedData[]>({
-    queryKey: ["feed-items", feedId],
-    queryFn: async () => {
-      const response = await fetch(`/api/feed/${feedId}`);
+// export function useFeedItems(feedId: string) {
+//   return useQuery<SubmissionWithFeedData[]>({
+//     queryKey: ["feed-items", feedId],
+//     queryFn: async () => {
+//       const response = await fetch(`/api/feed/${feedId}`);
+export function useFeedItems(
+  feedId: string,
+  limit: number = 20,
+  status?: string,
+) {
+  return useInfiniteQuery<
+    PaginatedResponse<SubmissionWithFeedData>,
+    Error,
+    TransformedInfiniteData<SubmissionWithFeedData>,
+    [string, string, string | undefined],
+    number
+  >({
+    queryKey: ["feed-items-paginated", feedId, status],
+    queryFn: async ({ pageParam = 0 }) => {
+      const statusParam = status ? `status=${status}` : "";
+      const pageParamStr = `page=${pageParam}`;
+      const limitParam = `limit=${limit}`;
+
+      // Build query string with available parameters
+      const queryParams = [statusParam, pageParamStr, limitParam]
+        .filter((param) => param !== "")
+        .join("&");
+
+      const url = `/api/feed/${feedId}?${queryParams}`;
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch feed items");
       }
       return response.json();
     },
     // Poll every 10 seconds
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage || !lastPage.pagination) return undefined;
+      return lastPage.pagination.hasNextPage
+        ? lastPage.pagination.page + 1
+        : undefined;
+    },
+    select: (data) => ({
+      pages: data.pages,
+      pageParams: data.pageParams,
+      items: data.pages.flatMap((page) => (Array.isArray(page) ? page : [])),
+    }),
     refetchInterval: 10000,
     // Refetch on window focus
     refetchOnWindowFocus: true,
