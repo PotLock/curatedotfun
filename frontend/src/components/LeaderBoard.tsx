@@ -1,44 +1,52 @@
 import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
-import { useLeaderboard, LeaderboardEntry, useAppConfig } from "../lib/api";
+import { LeaderboardEntry, useAppConfig } from "../lib/api";
+import { Link } from "@tanstack/react-router";
 
-export default function Leaderboard() {
+interface LeaderboardSearch {
+  feed: string;
+  timeframe: string;
+}
+
+export default function Leaderboard(
+{ 
+  search, 
+  leaderboard, 
+  isLoading, 
+  error 
+}: { 
+  search: LeaderboardSearch, 
+  leaderboard: LeaderboardEntry[], 
+  isLoading: boolean, 
+  error: Error | null 
+}) {
+
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
   const [showFeedDropdown, setShowFeedDropdown] = useState<boolean>(false);
   const [showTimeDropdown, setShowTimeDropdown] = useState<boolean>(false);
-  const [selectedFeed, setSelectedFeed] = useState<string>("All Feeds");
-  const [selectedTime, setSelectedTime] = useState<string>("All Time");
-
-  // Map UI time options to API timeRange values
-  const getTimeRangeParam = (timeOption: string): string | undefined => {
-    switch (timeOption) {
-      case "All Time":
-        return undefined;
-      case "This Month":
-        return "month";
-      case "This Week":
-        return "week";
-      case "Today":
-        return "today";
-      default:
-        return undefined;
-    }
-  };
-
-  const timeRangeParam = getTimeRangeParam(selectedTime);
-  const {
-    data: leaderboard,
-    isLoading,
-    error,
-  } = useLeaderboard(timeRangeParam);
   const { data: config } = useAppConfig();
   const feedDropdownRef = useRef<HTMLDivElement>(null);
   const timeDropdownRef = useRef<HTMLDivElement>(null);
 
-  const timeOptions = ["All Time", "This Month", "This Week", "Today"];
+  const timeOptions = [
+    { label: "All Time", value: "all" },
+    { label: "This Month", value: "month" },
+    { label: "This Week", value: "week" },
+    { label: "Today", value: "today" },
+  ];
+
   const feeds = useMemo(() => {
-    return ["All Feeds", ...(config?.feeds.map((feed) => feed.name) || [])];
+    return [
+      {
+        label: "All Feeds",
+        value: "all feeds",
+      },
+      ...(config?.feeds.map((feed) => ({
+        label: feed.name,
+        value: feed.id,
+      })) || []).filter(feed => feed.value !== "all"),
+    ];
   }, [config]);
 
   useEffect(() => {
@@ -71,16 +79,12 @@ export default function Leaderboard() {
     setSearchQuery(e.target.value);
   };
 
-  // const removeSpecialChars = (str: string): string => {
-  //   return str.replace(/[^a-zA-Z0-9]/g, " ");
-  // };
-
   const filteredLeaderboard = leaderboard?.filter((item) => {
     const searchTerm = searchQuery?.toLowerCase();
     const feedFilter =
-      selectedFeed === "All Feeds"
+      search.feed === "all feeds"
         ? true
-        : item.feedSubmissions?.some((feed) => feed.feedId === selectedFeed);
+        : item.feedSubmissions?.some((feed) => feed.feedId === search.feed);
 
     const matchesSearch =
       !searchTerm ||
@@ -90,6 +94,17 @@ export default function Leaderboard() {
       );
 
     return feedFilter && matchesSearch;
+  });
+
+  // Map the filtered items to include their original index
+  const filteredLeaderboardWithRanks = filteredLeaderboard?.map((item) => {
+    const originalIndex = leaderboard?.findIndex(
+      (entry) => entry.curatorId === item.curatorId
+    );
+    return {
+      ...item,
+      originalRank: originalIndex !== undefined ? originalIndex + 1 : 0,
+    };
   });
 
   return (
@@ -122,30 +137,31 @@ export default function Leaderboard() {
               aria-haspopup="listbox"
               aria-controls="feed-dropdown"
             >
-              <span className="text-[#111111] text-sm">{selectedFeed}</span>
+              <span className="text-[#111111] text-sm">{feeds.find(feed => feed.value === search.feed)?.label}</span>
               <ChevronDown className="h-4 w-4 text-[#64748b]" />
             </button>
             {showFeedDropdown && (
               <div
                 id="feed-dropdown"
                 role="listbox"
-                className="absolute top-full left-0 mt-1 w-full bg-white border border-neutral-200 rounded-md shadow-lg z-20"
+                className="absolute top-full flex flex-col left-0 mt-1 w-full bg-white border border-neutral-200 rounded-md shadow-lg z-20"
               >
                 {feeds.map((feed, index) => (
-                  <button
+                  <Link
                     key={index}
+                    to="/leaderboard"
+                    search={{ feed: feed.value, timeframe: search.timeframe }}
                     role="option"
-                    aria-selected={selectedFeed === feed}
+                    aria-selected={search.feed === feed.value}
                     onClick={() => {
-                      setSelectedFeed(feed);
                       setShowFeedDropdown(false);
                     }}
                     className={`w-full px-4 py-2 text-left hover:bg-neutral-100 text-sm ${
-                      selectedFeed === feed ? "bg-neutral-100" : ""
+                      search.feed === feed.value ? "bg-neutral-100" : ""
                     }`}
                   >
-                    {feed}
-                  </button>
+                    {feed.label}
+                  </Link>
                 ))}
               </div>
             )}
@@ -158,30 +174,31 @@ export default function Leaderboard() {
               aria-haspopup="listbox"
               aria-controls="time-dropdown"
             >
-              <span className="text-[#111111] text-sm">{selectedTime}</span>
+              <span className="text-[#111111] text-sm">{timeOptions.find(option => option.value === search.timeframe)?.label}</span>
               <ChevronDown className="h-4 w-4 text-[#64748b]" />
             </button>
             {showTimeDropdown && (
               <div
                 id="time-dropdown"
                 role="listbox"
-                className="absolute top-full left-0 mt-1 w-full bg-white border border-neutral-200 rounded-md shadow-lg z-20"
+                className="absolute top-full flex flex-col left-0 mt-1 w-full bg-white border border-neutral-200 rounded-md shadow-lg z-20"
               >
                 {timeOptions.map((time) => (
-                  <button
-                    key={time}
+                  <Link
+                    key={time.value}
+                    to="/leaderboard"
+                    search={{ feed: search.feed.toLowerCase(), timeframe: time.value }}
                     role="option"
-                    aria-selected={selectedTime === time}
+                    aria-selected={search.timeframe === time.label}
                     onClick={() => {
-                      setSelectedTime(time);
                       setShowTimeDropdown(false);
                     }}
                     className={`w-full px-4 py-2 text-left hover:bg-neutral-100 text-sm ${
-                      selectedTime === time ? "bg-neutral-100" : ""
+                      search.timeframe === time.label ? "bg-neutral-100" : ""
                     }`}
                   >
-                    {time}
-                  </button>
+                    {time.label}
+                  </Link>
                 ))}
               </div>
             )}
@@ -238,28 +255,28 @@ export default function Leaderboard() {
                   </td>
                 </tr>
               )}
-              {filteredLeaderboard?.map((item: LeaderboardEntry, index) => (
+              {filteredLeaderboardWithRanks?.map((item: LeaderboardEntry & { originalRank: number }, index) => (
                 <tr
                   key={item.curatorId}
                   className="border-b border-[#e5e5e5] hover:bg-[#f9fafb]"
                 >
                   <td className="py-4 px-2 align-top">
                     <div className="flex items-center w-[35px]">
-                      {index + 1 === 1 && (
+                      {item.originalRank === 1 && (
                         <img
                           src="/icons/star-gold.svg"
                           className="h-5 w-5 mr-1"
                           alt="Gold star - 1st place"
                         />
                       )}
-                      {index + 1 === 2 && (
+                      {item.originalRank === 2 && (
                         <img
                           src="/icons/star-silver.svg"
                           className="h-5 w-5 mr-1"
                           alt="Silver star - 2nd place"
                         />
                       )}
-                      {index + 1 === 3 && (
+                      {item.originalRank === 3 && (
                         <img
                           src="/icons/star-bronze.svg"
                           className="h-5 w-5 mr-1"
@@ -268,7 +285,7 @@ export default function Leaderboard() {
                       )}
                       <div className="flex w-full text-right justify-end">
                         <span className="text-[#111111] font-medium">
-                          {index + 1}
+                          {item.originalRank}
                         </span>
                       </div>
                     </div>
