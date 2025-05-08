@@ -8,19 +8,17 @@ interface LeaderboardSearch {
   timeframe: string;
 }
 
-export default function Leaderboard(
-{ 
-  search, 
-  leaderboard, 
-  isLoading, 
-  error 
-}: { 
-  search: LeaderboardSearch, 
-  leaderboard: LeaderboardEntry[], 
-  isLoading: boolean, 
-  error: Error | null 
+export default function Leaderboard({
+  search,
+  leaderboard,
+  isLoading,
+  error,
+}: {
+  search: LeaderboardSearch;
+  leaderboard: LeaderboardEntry[];
+  isLoading: boolean;
+  error: Error | null;
 }) {
-
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
   const [showFeedDropdown, setShowFeedDropdown] = useState<boolean>(false);
@@ -42,10 +40,12 @@ export default function Leaderboard(
         label: "All Feeds",
         value: "all feeds",
       },
-      ...(config?.feeds.map((feed) => ({
-        label: feed.name,
-        value: feed.id,
-      })) || []).filter(feed => feed.value !== "all"),
+      ...(
+        config?.feeds.map((feed) => ({
+          label: feed.name,
+          value: feed.id,
+        })) || []
+      ).filter((feed) => feed.value !== "all"),
     ];
   }, [config]);
 
@@ -99,7 +99,7 @@ export default function Leaderboard(
   // Map the filtered items to include their original index
   const filteredLeaderboardWithRanks = filteredLeaderboard?.map((item) => {
     const originalIndex = leaderboard?.findIndex(
-      (entry) => entry.curatorId === item.curatorId
+      (entry) => entry.curatorId === item.curatorId,
     );
     return {
       ...item,
@@ -137,7 +137,9 @@ export default function Leaderboard(
               aria-haspopup="listbox"
               aria-controls="feed-dropdown"
             >
-              <span className="text-[#111111] text-sm">{feeds.find(feed => feed.value === search.feed)?.label}</span>
+              <span className="text-[#111111] text-sm">
+                {feeds.find((feed) => feed.value === search.feed)?.label}
+              </span>
               <ChevronDown className="h-4 w-4 text-[#64748b]" />
             </button>
             {showFeedDropdown && (
@@ -174,7 +176,13 @@ export default function Leaderboard(
               aria-haspopup="listbox"
               aria-controls="time-dropdown"
             >
-              <span className="text-[#111111] text-sm">{timeOptions.find(option => option.value === search.timeframe)?.label}</span>
+              <span className="text-[#111111] text-sm">
+                {
+                  timeOptions.find(
+                    (option) => option.value === search.timeframe,
+                  )?.label
+                }
+              </span>
               <ChevronDown className="h-4 w-4 text-[#64748b]" />
             </button>
             {showTimeDropdown && (
@@ -187,7 +195,10 @@ export default function Leaderboard(
                   <Link
                     key={time.value}
                     to="/leaderboard"
-                    search={{ feed: search.feed.toLowerCase(), timeframe: time.value }}
+                    search={{
+                      feed: search.feed.toLowerCase(),
+                      timeframe: time.value,
+                    }}
                     role="option"
                     aria-selected={search.timeframe === time.label}
                     onClick={() => {
@@ -255,42 +266,43 @@ export default function Leaderboard(
                   </td>
                 </tr>
               )}
-              {filteredLeaderboardWithRanks?.map((item: LeaderboardEntry & { originalRank: number }, index) => (
-                <tr
-                  key={item.curatorId}
-                  className="border-b border-[#e5e5e5] hover:bg-[#f9fafb]"
-                >
-                  <td className="py-4 px-2 align-top">
-                    <div className="flex items-center w-[35px]">
-                      {item.originalRank === 1 && (
-                        <img
-                          src="/icons/star-gold.svg"
-                          className="h-5 w-5 mr-1"
-                          alt="Gold star - 1st place"
-                        />
-                      )}
-                      {item.originalRank === 2 && (
-                        <img
-                          src="/icons/star-silver.svg"
-                          className="h-5 w-5 mr-1"
-                          alt="Silver star - 2nd place"
-                        />
-                      )}
-                      {item.originalRank === 3 && (
-                        <img
-                          src="/icons/star-bronze.svg"
-                          className="h-5 w-5 mr-1"
-                          alt="Bronze star - 3rd place"
-                        />
-                      )}
-                      <div className="flex w-full text-right justify-end">
-                        <span className="text-[#111111] font-medium">
-                          {item.originalRank}
-                        </span>
+              {filteredLeaderboardWithRanks?.map(
+                (item: LeaderboardEntry & { originalRank: number }, index) => (
+                  <tr
+                    key={item.curatorId}
+                    className="border-b border-[#e5e5e5] hover:bg-[#f9fafb]"
+                  >
+                    <td className="py-4 px-2 align-top">
+                      <div className="flex items-center w-[35px]">
+                        {item.originalRank === 1 && (
+                          <img
+                            src="/icons/star-gold.svg"
+                            className="h-5 w-5 mr-1"
+                            alt="Gold star - 1st place"
+                          />
+                        )}
+                        {item.originalRank === 2 && (
+                          <img
+                            src="/icons/star-silver.svg"
+                            className="h-5 w-5 mr-1"
+                            alt="Silver star - 2nd place"
+                          />
+                        )}
+                        {item.originalRank === 3 && (
+                          <img
+                            src="/icons/star-bronze.svg"
+                            className="h-5 w-5 mr-1"
+                            alt="Bronze star - 3rd place"
+                          />
+                        )}
+                        <div className="flex w-full text-right justify-end">
+                          <span className="text-[#111111] font-medium">
+                            {item.originalRank}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  {/* <td className="py-4 px-2 align-top">
+                    </td>
+                    {/* <td className="py-4 px-2 align-top">
                     <div className="flex items-start">
                       <HexagonAvatar />
                       <span className="font-medium text-[#111111] capitalize">
@@ -298,92 +310,94 @@ export default function Leaderboard(
                       </span>
                     </div>
                   </td> */}
-                  <td className="py-4 px-2 align-top">
-                    <div className="flex items-start gap-2">
-                      <div>
-                        <a
-                          href={`https://x.com/${item.curatorUsername}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-start gap-2 hover:underline"
-                        >
-                          <span className="font-medium text-[#111111]">
-                            @{item.curatorUsername}
-                          </span>
-                        </a>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-2 align-top">
-                    <div className="flex items-start">
-                      {item.submissionCount > 0
-                        ? `${Math.round((item.approvalCount / item.submissionCount) * 100)}%`
-                        : "0%"}
-                    </div>
-                  </td>
-                  <td className="py-4 px-2 align-top">
-                    <div className="flex items-start text-[#111111] font-medium">
-                      {item.submissionCount}
-                    </div>
-                  </td>
-                  <td className="py-4 px-2 align-top">
-                    <div className="flex flex-col">
+                    <td className="py-4 px-2 align-top">
                       <div className="flex items-start gap-2">
+                        <div>
+                          <a
+                            href={`https://x.com/${item.curatorUsername}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-start gap-2 hover:underline"
+                          >
+                            <span className="font-medium text-[#111111]">
+                              @{item.curatorUsername}
+                            </span>
+                          </a>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-2 align-top">
+                      <div className="flex items-start">
+                        {item.submissionCount > 0
+                          ? `${Math.round((item.approvalCount / item.submissionCount) * 100)}%`
+                          : "0%"}
+                      </div>
+                    </td>
+                    <td className="py-4 px-2 align-top">
+                      <div className="flex items-start text-[#111111] font-medium">
+                        {item.submissionCount}
+                      </div>
+                    </td>
+                    <td className="py-4 px-2 align-top">
+                      <div className="flex flex-col">
+                        <div className="flex items-start gap-2">
+                          {item.feedSubmissions &&
+                            item.feedSubmissions.length > 0 && (
+                              <div className="flex items-center justify-between gap-1 border border-neutral-400 px-2 py-1 rounded-md w-[150px]">
+                                <span className="text-sm">
+                                  #{item.feedSubmissions[0].feedId}
+                                </span>
+                                <span className="text-sm">
+                                  {item.feedSubmissions[0].count}/
+                                  {item.feedSubmissions[0].totalInFeed}
+                                </span>
+                              </div>
+                            )}
+
+                          {item.feedSubmissions &&
+                            item.feedSubmissions.length > 1 && (
+                              <button
+                                onClick={() => toggleRow(index)}
+                                className="w-8 h-8 flex items-center justify-center border border-neutral-400 rounded-md transition-colors"
+                              >
+                                {expandedRows.includes(index) ? (
+                                  <ChevronUp className="h-5 w-5" />
+                                ) : (
+                                  <span className="text-xs">
+                                    +{item.feedSubmissions.length - 1}
+                                  </span>
+                                )}
+                              </button>
+                            )}
+                        </div>
+
                         {item.feedSubmissions &&
-                          item.feedSubmissions.length > 0 && (
-                            <div className="flex items-center justify-between gap-1 border border-neutral-400 px-2 py-1 rounded-md w-[150px]">
-                              <span className="text-sm">
-                                #{item.feedSubmissions[0].feedId}
-                              </span>
-                              <span className="text-sm">
-                                {item.feedSubmissions[0].count}/
-                                {item.feedSubmissions[0].totalInFeed}
-                              </span>
+                          expandedRows.includes(index) && (
+                            <div className="flex flex-col gap-2 mt-2 pl-0">
+                              {item.feedSubmissions
+                                .slice(1)
+                                .map((feed, feedIndex) => (
+                                  <div
+                                    key={feedIndex}
+                                    className="flex items-center"
+                                  >
+                                    <div className="flex items-center gap-1 border border-neutral-400 px-2 py-1 rounded-md justify-between w-[150px]">
+                                      <span className="text-sm">
+                                        #{feed.feedId}
+                                      </span>
+                                      <span className="text-sm">
+                                        {feed.count}/{feed.totalInFeed}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
                             </div>
                           )}
-
-                        {item.feedSubmissions &&
-                          item.feedSubmissions.length > 1 && (
-                            <button
-                              onClick={() => toggleRow(index)}
-                              className="w-8 h-8 flex items-center justify-center border border-neutral-400 rounded-md transition-colors"
-                            >
-                              {expandedRows.includes(index) ? (
-                                <ChevronUp className="h-5 w-5" />
-                              ) : (
-                                <span className="text-xs">
-                                  +{item.feedSubmissions.length - 1}
-                                </span>
-                              )}
-                            </button>
-                          )}
                       </div>
-
-                      {item.feedSubmissions && expandedRows.includes(index) && (
-                        <div className="flex flex-col gap-2 mt-2 pl-0">
-                          {item.feedSubmissions
-                            .slice(1)
-                            .map((feed, feedIndex) => (
-                              <div
-                                key={feedIndex}
-                                className="flex items-center"
-                              >
-                                <div className="flex items-center gap-1 border border-neutral-400 px-2 py-1 rounded-md justify-between w-[150px]">
-                                  <span className="text-sm">
-                                    #{feed.feedId}
-                                  </span>
-                                  <span className="text-sm">
-                                    {feed.count}/{feed.totalInFeed}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                ),
+              )}
             </tbody>
           </table>
         </div>
