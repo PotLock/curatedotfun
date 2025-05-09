@@ -31,7 +31,8 @@ function SubmissionsIndexPage() {
   const botId = useBotId();
 
   // Get global filter state from Zustand
-  const { statusFilter, sortOrder, setStatusFilter } = useFeedFilterStore();
+  const { statusFilter, sortOrder, setStatusFilter, setSortOrder } =
+    useFeedFilterStore();
 
   // Local filter state (before applying)
   const [localStatusFilter, setLocalStatusFilter] =
@@ -85,11 +86,7 @@ function SubmissionsIndexPage() {
         )
       : sortedItems;
 
-  const sidebarContent = (
-    <div className="">
-      <FeedList />
-    </div>
-  );
+  const sidebarContent = <FeedList />;
 
   // Handle search input changes
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,6 +101,7 @@ function SubmissionsIndexPage() {
   // Apply filters
   const applyFilters = () => {
     setStatusFilter(localStatusFilter);
+    setSortOrder(localSortOrder);
     setShowFilters(false);
   };
 

@@ -48,12 +48,6 @@ const SubmissionList = ({
     );
   }
 
-  // Sort items by submission date (newest first)
-  const sortedItems = filteredItems.sort(
-    (a, b) =>
-      new Date(b.submittedAt!).getTime() - new Date(a.submittedAt!).getTime(),
-  );
-
   // Render the list with appropriate layout
   return (
     <div
@@ -63,7 +57,7 @@ const SubmissionList = ({
           : "flex flex-col space-y-4"
       }
     >
-      {sortedItems.map((item) => (
+      {filteredItems.map((item) => (
         <FeedItem
           key={item.tweetId}
           submission={item}

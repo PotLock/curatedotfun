@@ -17,7 +17,9 @@ const FeedList = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex justify-start items-start gap-6 ">
-        <h1 className=" text-[32px] leading-[63px] font-normal ">Feeds</h1>
+        <h1 className=" text-[32px] leading-[63px] font-normal md:block hidden">
+          Feeds
+        </h1>
         {/* {feeds.length > 0 && (
           <span className="md:hidden text-gray-400 flex items-center">
             <span className="mr-1">scroll</span>

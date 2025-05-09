@@ -33,7 +33,8 @@ export default function RecentSubmissions({
   const botId = useBotId();
 
   // Get global filter state from Zustand
-  const { statusFilter, sortOrder, setStatusFilter } = useFeedFilterStore();
+  const { statusFilter, sortOrder, setStatusFilter, setSortOrder } =
+    useFeedFilterStore();
 
   // Local filter state (before applying)
   const [localStatusFilter, setLocalStatusFilter] =
@@ -56,11 +57,14 @@ export default function RecentSubmissions({
   }, [searchQuery]);
 
   // Fetch submissions with infinite scroll
-  //   const ITEMS_PER_PAGE = 20;
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
-    useFeedItems(feedId);
-
-  // const { data: items = [] } = useFeedItems(feedId);
+  const ITEMS_PER_PAGE = 20;
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage = false,
+    isFetchingNextPage = false,
+    status,
+  } = useFeedItems(feedId, ITEMS_PER_PAGE, statusFilter);
 
   // Get the items from the transformed data
   const items = data?.items || [];
@@ -101,7 +105,7 @@ export default function RecentSubmissions({
     // Update global filter state
     setStatusFilter(localStatusFilter);
     // Update other global filters (would need to add these to the store)
-    // setSortOrder(localSortOrder);
+    setSortOrder(localSortOrder);
     // setPlatform(localPlatform);
 
     // Close the filter panel
@@ -211,8 +215,8 @@ export default function RecentSubmissions({
       <InfiniteFeed
         items={filteredItems}
         fetchNextPage={fetchNextPage}
-        hasNextPage={hasNextPage && debouncedSearchQuery.trim() === ""}
-        isFetchingNextPage={isFetchingNextPage}
+        hasNextPage={!!hasNextPage && debouncedSearchQuery.trim() === ""}
+        isFetchingNextPage={!!isFetchingNextPage}
         status={status}
         loadingMessage="Loading more submissions..."
         noMoreItemsMessage="No more submissions to load"
