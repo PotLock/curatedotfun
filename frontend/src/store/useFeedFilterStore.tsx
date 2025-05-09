@@ -11,6 +11,7 @@ interface FilterState {
 
   // Actions
   setStatusFilter: (status: StatusFilterType) => void;
+  setSortOrder: (order: SortOrderType) => void;
 }
 
 export const useFeedFilterStore = create<FilterState>((set) => ({
@@ -20,4 +21,5 @@ export const useFeedFilterStore = create<FilterState>((set) => ({
 
   // Actions
   setStatusFilter: (status) => set({ statusFilter: status }),
+  setSortOrder: (order: SortOrderType) => set({ sortOrder: order }),
 }));

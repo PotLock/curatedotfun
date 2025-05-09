@@ -15,11 +15,6 @@ export function useFeedConfig(feedId: string) {
   });
 }
 
-// export function useFeedItems(feedId: string) {
-//   return useQuery<SubmissionWithFeedData[]>({
-//     queryKey: ["feed-items", feedId],
-//     queryFn: async () => {
-//       const response = await fetch(`/api/feed/${feedId}`);
 export function useFeedItems(
   feedId: string,
   limit: number = 20,
@@ -50,7 +45,6 @@ export function useFeedItems(
       }
       return response.json();
     },
-    // Poll every 10 seconds
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
       if (!lastPage || !lastPage.pagination) return undefined;
@@ -64,9 +58,7 @@ export function useFeedItems(
       items: data.pages.flatMap((page) => (Array.isArray(page) ? page : [])),
     }),
     refetchInterval: 10000,
-    // Refetch on window focus
     refetchOnWindowFocus: true,
-    // Refetch when regaining network connection
     refetchOnReconnect: true,
   });
 }
@@ -200,7 +192,7 @@ export function useAllSubmissions(limit: number = 20, status?: string) {
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
-      // Use the pagination metadata to determine if there's a next page
+      if (!lastPage || !lastPage.pagination) return undefined;
       return lastPage.pagination.hasNextPage
         ? lastPage.pagination.page + 1
         : undefined;
@@ -209,8 +201,9 @@ export function useAllSubmissions(limit: number = 20, status?: string) {
     select: (data) => ({
       pages: data.pages,
       pageParams: data.pageParams,
-      // Add a flattened items array for easier access
-      items: data.pages.flatMap((page) => page.items),
+      items: data.pages.flatMap((page) =>
+        Array.isArray(page.items) ? page.items : [],
+      ),
     }),
     // Poll every 10 seconds
     refetchInterval: 10000,

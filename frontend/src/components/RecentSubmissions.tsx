@@ -33,7 +33,8 @@ export default function RecentSubmissions({
   const botId = useBotId();
 
   // Get global filter state from Zustand
-  const { statusFilter, sortOrder, setStatusFilter } = useFeedFilterStore();
+  const { statusFilter, sortOrder, setStatusFilter, setSortOrder } =
+    useFeedFilterStore();
 
   // Local filter state (before applying)
   const [localStatusFilter, setLocalStatusFilter] =
@@ -56,10 +57,6 @@ export default function RecentSubmissions({
   }, [searchQuery]);
 
   // Fetch submissions with infinite scroll
-  //   const ITEMS_PER_PAGE = 20;
-  // const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
-  //   useFeedItems(feedId || "");
-
   const ITEMS_PER_PAGE = 20;
   const {
     data,
@@ -68,8 +65,6 @@ export default function RecentSubmissions({
     isFetchingNextPage = false,
     status,
   } = useFeedItems(feedId, ITEMS_PER_PAGE, statusFilter);
-
-  // const { data: items = [] } = useFeedItems(feedId);
 
   // Get the items from the transformed data
   const items = data?.items || [];
@@ -110,7 +105,7 @@ export default function RecentSubmissions({
     // Update global filter state
     setStatusFilter(localStatusFilter);
     // Update other global filters (would need to add these to the store)
-    // setSortOrder(localSortOrder);
+    setSortOrder(localSortOrder);
     // setPlatform(localPlatform);
 
     // Close the filter panel
