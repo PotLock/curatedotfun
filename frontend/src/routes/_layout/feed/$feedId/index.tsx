@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useFeedItems } from "../../../lib/api";
-import { useBotId } from "../../../lib/config";
-import SubmissionList from "../../../components/SubmissionList";
-import { useFilterStore } from "../../../store/useFilterStore";
+import { useFeedItems } from "../../../../lib/api";
+import { useBotId } from "../../../../lib/config";
+import SubmissionList from "../../../../components/SubmissionList";
+import { useFilterStore } from "../../../../store/useFilterStore";
 
-export const Route = createFileRoute("/feed/$feedId/")({
+export const Route = createFileRoute("/_layout/feed/$feedId/")({
   component: FeedContentPage,
 });
 

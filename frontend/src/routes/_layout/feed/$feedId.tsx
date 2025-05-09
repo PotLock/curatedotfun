@@ -1,8 +1,4 @@
 import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
-import { useFeedConfig } from "../../lib/api";
-import { Badge } from "../../components/ui/badge";
-import Header from "../../components/Header";
-import FeedLayout from "../../components/FeedLayout";
 import {
   Award,
   Coins,
@@ -12,6 +8,9 @@ import {
   UsersRound,
   Vote,
 } from "lucide-react";
+import FeedLayout from "../../../components/FeedLayout";
+import { Badge } from "../../../components/ui/badge";
+import { useFeedConfig } from "../../../lib/api";
 
 const TABS = [
   {
@@ -51,7 +50,7 @@ const TABS = [
   },
 ];
 
-export const Route = createFileRoute("/feed/$feedId")({
+export const Route = createFileRoute("/_layout/feed/$feedId")({
   component: FeedPageLayout,
 });
 
@@ -61,7 +60,6 @@ function FeedPageLayout() {
 
   return (
     <div className="max-w-[1440px] mx-auto w-full">
-      <Header />
       {/* Header with back button and feed title */}
       <div className="flex flex-col px-4 sm:px-6 md:px-[70px] py-4 sm:py-[30px] gap-4 sm:gap-[30px]">
         <div className="flex flex-col gap-4 sm:gap-6 p-4 sm:p-6 rounded-md border border-neutral-400 bg-white">

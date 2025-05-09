@@ -1,21 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import Header from "../../components/Header";
-import { ProfileHeader } from "../../components/profile/ProfileHeader";
-import { ProfileTabs } from "../../components/profile/ProfileTabs";
-import { useWeb3Auth } from "../../hooks/use-web3-auth";
 import { useEffect, useState } from "react";
-import { AuthUserInfo } from "../../types/web3auth";
-import { Button } from "../../components/ui/button";
+import { ProfileHeader } from "../../../components/profile/ProfileHeader";
+import { ProfileTabs } from "../../../components/profile/ProfileTabs";
+import { Button } from "../../../components/ui/button";
+import { useWeb3Auth } from "../../../hooks/use-web3-auth";
+import { AuthUserInfo } from "../../../types/web3auth";
 
-export const Route = createFileRoute("/profile/")({
+export const Route = createFileRoute("/_layout/profile/")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
 
-  const { isInitialized, isLoggedIn, login, logout, getUserInfo } =
-    useWeb3Auth();
+  const { isInitialized, isLoggedIn, login, getUserInfo } = useWeb3Auth();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -36,7 +34,6 @@ function RouteComponent() {
   }, [isLoggedIn, getUserInfo]);
   return (
     <div className="min-h-screen bg-white">
-      <Header />
       <main className="mx-auto w-full px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 lg:px-8 lg:py-8 xl:px-12 lg:max-w-6xl xl:max-w-7xl">
         {isInitialized && isLoggedIn && userInfo ? (
           <div className="flex flex-col gap-3 sm:gap-4 md:gap-6 lg:gap-8">

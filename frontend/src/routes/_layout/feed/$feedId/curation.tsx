@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import RecentSubmissions from "../../../components/RecentSubmissions"; // Adjusted import path
+import RecentSubmissions from "../../../../components/RecentSubmissions"; // Adjusted import path
 
-export const Route = createFileRoute("/feed/$feedId/curation")({
+export const Route = createFileRoute("/_layout/feed/$feedId/curation")({
   component: FeedCurationPage,
 });
 
