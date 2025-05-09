@@ -1353,7 +1353,7 @@
       "description": "India's crypto ecosystem.",
       "moderation": {
         "approvers": {
-          "twitter": ["potlock_","fiatisabubble" ,"potlock_intern", "plugrel"]
+          "twitter": ["potlock_", "fiatisabubble", "potlock_intern", "plugrel"]
         }
       },
       "outputs": {
@@ -1417,13 +1417,20 @@
         }
       }
     },
-   {
+    {
       "id": "nft",
       "name": "NFT News",
       "description": "Chain agnostic NFT news, product updates, thought leadership, regulatory changes, and more.",
       "moderation": {
         "approvers": {
-          "twitter": ["potlock_","genadrop" ,"potlock_intern","elliot_braem", "curatedotfun", "plugrel"]
+          "twitter": [
+            "potlock_",
+            "genadrop",
+            "potlock_intern",
+            "elliot_braem",
+            "curatedotfun",
+            "plugrel"
+          ]
         }
       },
       "outputs": {
@@ -1493,7 +1500,12 @@
       "description": "Vietnam crypto ecosystem.",
       "moderation": {
         "approvers": {
-          "twitter": ["cuongdc_real","KURODENJIRO" ,"potlock_intern", "plugrel"]
+          "twitter": [
+            "cuongdc_real",
+            "KURODENJIRO",
+            "potlock_intern",
+            "plugrel"
+          ]
         }
       },
       "outputs": {
