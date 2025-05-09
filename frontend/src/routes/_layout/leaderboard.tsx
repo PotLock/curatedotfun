@@ -1,6 +1,6 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { z } from "zod";
-import LeaderBoard from "../../components/LeaderBoard";
+import LeaderBoard from "../../components/Leaderboard";
 import { useLeaderboard } from "../../lib/api";
 
 const leaderboardSearchSchema = z.object({
