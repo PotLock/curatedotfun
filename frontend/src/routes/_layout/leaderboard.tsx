@@ -9,11 +9,11 @@ const leaderboardSearchSchema = z.object({
 });
 
 export const Route = createFileRoute("/_layout/leaderboard")({
-  component: LeaderBoardPage,
+  component: LeaderboardPage,
   validateSearch: (search) => leaderboardSearchSchema.parse(search),
 });
 
-function LeaderBoardPage() {
+function LeaderboardPage() {
   const search = useSearch({
     from: "/_layout/leaderboard",
   });
