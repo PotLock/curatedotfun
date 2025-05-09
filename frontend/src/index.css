@@ -11,8 +11,8 @@
 /* @custom-variant dark (&:is(.dark *)); */
 
 @font-face {
-  font-family: 'Londrina Solid';
-  src: url('@fonts/LondrinaSolid-NNS.ttf') format('truetype');
+  font-family: "Londrina Solid";
+  src: url("@fonts/LondrinaSolid-NNS.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
 }
@@ -129,8 +129,13 @@
 }
 
 @layer base {
+  html {
+    overflow-y: scroll; /* You already have this */
+    scrollbar-gutter: stable; /* Add this line */
+  }
+
   body {
-    @apply bg-white font-sans antialiased max-w-[1440px] mx-auto;
+    @apply bg-white font-sans antialiased max-w-[1440px]  mx-auto;
   }
 
   h1,
@@ -222,4 +227,13 @@
     border-radius: 0;
     border: none;
   }
+}
+
+html body[data-scroll-locked]:not(#_):not(#_):not(#_) {
+  margin-right: 0px !important;
+  width: 100vw !important;
+}
+
+body {
+  @apply !min-w-full;
 }

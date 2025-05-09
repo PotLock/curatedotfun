@@ -106,7 +106,7 @@ spec:
               name: postgres-storage
           readinessProbe:
             exec:
-              command: [ "pg_isready", "-U", "postgres" ]
+              command: ["pg_isready", "-U", "postgres"]
             initialDelaySeconds: 5
             periodSeconds: 5
       volumes:
@@ -170,12 +170,11 @@ spec:
           volumeMounts:
             - mountPath: /data
               name: redis-storage
-          args: [ "redis-server", "--appendonly", "yes" ]
+          args: ["redis-server", "--appendonly", "yes"]
       volumes:
         - name: redis-storage
           persistentVolumeClaim:
             claimName: redis-pvc
-
 
 #
 #---
@@ -222,7 +221,7 @@ kind: Deployment
 metadata:
   name: curate-app
 spec:
-  replicas: 1  # Run two instances for availability
+  replicas: 1 # Run two instances for availability
   selector:
     matchLabels:
       app: curate-app
@@ -235,7 +234,15 @@ spec:
         - name: run-migrations
           image: ghcr.io/elliotbraem/efizzybot:fe498dcbfed9692a2eaae900c3da066596e6af97
           workingDir: /app/backend
-          command: [ "pnpm", "exec", "drizzle-kit", "migrate", "--config", "drizzle.config.ts" ]
+          command:
+            [
+              "pnpm",
+              "exec",
+              "drizzle-kit",
+              "migrate",
+              "--config",
+              "drizzle.config.ts",
+            ]
       containers:
         - name: curate-app
           image: ghcr.io/elliotbraem/efizzybot:fe498dcbfed9692a2eaae900c3da066596e6af97
@@ -243,7 +250,7 @@ spec:
             - containerPort: 3000
           envFrom:
             - secretRef:
-                name: app-secrets  # Load all environment variables from secret
+                name: app-secrets # Load all environment variables from secret
           env:
             - name: DATABASE_URL
               value: "postgresql://postgres:postgres@postgres:5432/curatedotfun"
@@ -251,7 +258,7 @@ spec:
               value: "production"
           readinessProbe:
             httpGet:
-              path: /health  # Ensure the app has a /health endpoint
+              path: /health # Ensure the app has a /health endpoint
               port: 3000
             initialDelaySeconds: 10
             periodSeconds: 5

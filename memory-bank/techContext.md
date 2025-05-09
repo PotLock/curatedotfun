@@ -43,19 +43,19 @@
 - RSBuild & RSPack
 - Tailwind CSS
 - Testing Libraries
-  * Bun Test
-  * Nock (for HTTP mocking)
+  - Bun Test
+  - Nock (for HTTP mocking)
 
 ### Environment Configuration
 
 - Core Settings
-  * NODE_ENV
-  * PORT
-  * LOG_LEVEL
+  - NODE_ENV
+  - PORT
+  - LOG_LEVEL
 - Database Settings
-  * DATABASE_URL
-  * DATABASE_WRITE_URL (optional for read/write separation)
-  * DATABASE_READ_URL (optional for read/write separation)
+  - DATABASE_URL
+  - DATABASE_WRITE_URL (optional for read/write separation)
+  - DATABASE_READ_URL (optional for read/write separation)
 - Twitter Auth
   - TWITTER_USERNAME
   - TWITTER_PASSWORD
@@ -73,6 +73,7 @@
 ## Plugin System
 
 ### Module Federation
+
 - Runtime loading of remote modules
 - Shared dependencies between host and remotes
 - Type-safe plugin interfaces
@@ -158,6 +159,7 @@
 - Web3Auth integration for frontend (planned)
 
 ### Database Security
+
 - Connection pooling with proper limits
 - Prepared statements for all queries
 - Input validation and sanitization
@@ -167,6 +169,7 @@
 ## Deployment
 
 ### Infrastructure
+
 - Railway platform deployment
 - Docker containerization
 - Kubernetes orchestration
@@ -175,6 +178,7 @@
 - Graceful shutdown handling
 
 ### CI/CD Pipeline
+
 - GitHub Actions workflows
 - Automated testing
 - Docker image building
@@ -182,6 +186,7 @@
 - Environment-specific configurations
 
 ### Monitoring
+
 - Health check endpoints
 - Service initialization status
 - Graceful shutdown handling
@@ -209,6 +214,7 @@
   - Error boundaries
 
 ### Development Environment
+
 - Docker Compose for local development
 - PostgreSQL container with persistent volume
 - Automatic migrations on startup
@@ -216,15 +222,16 @@
 - Hot-reloading for development
 
 ### Database Management
+
 - Drizzle ORM for type-safe database operations
 - Drizzle Kit for schema migrations
 - Database commands:
-  * `pnpm run db:generate` - Generate migrations from schema changes
-  * `pnpm run db:migrate` - Apply migrations to database
-  * `pnpm run db:check` - Check schema for issues
-  * `pnpm run db:studio` - Launch Drizzle Studio for database management
-  * `pnpm run db:seed:dev` - Seed development database
-  * `pnpm run db:seed:test` - Seed test database
+  - `pnpm run db:generate` - Generate migrations from schema changes
+  - `pnpm run db:migrate` - Apply migrations to database
+  - `pnpm run db:check` - Check schema for issues
+  - `pnpm run db:studio` - Launch Drizzle Studio for database management
+  - `pnpm run db:seed:dev` - Seed development database
+  - `pnpm run db:seed:test` - Seed test database
 
 ### Testing Strategy
 
@@ -234,41 +241,42 @@
   - Plugin tests
   - Utility tests
 - Integration Testing
-  * API endpoints
-  * Plugin interactions
-  * Service integration
-  * Event handling
-  * Mock submission and distribution testing
-  * Backend service mocking
-  * Docker-based PostgreSQL testing
+  - API endpoints
+  - Plugin interactions
+  - Service integration
+  - Event handling
+  - Mock submission and distribution testing
+  - Backend service mocking
+  - Docker-based PostgreSQL testing
 - E2E Testing
   - User flows
   - Plugin workflows
   - Distribution paths
   - Error scenarios
 - Performance Testing
-  * Load testing
-  * Stress testing
-  * Memory profiling
-  * Bottleneck identification
+  - Load testing
+  - Stress testing
+  - Memory profiling
+  - Bottleneck identification
 - CI/CD Testing
-  * GitHub Actions workflow
-  * Docker-based test execution
-  * Automated test runs on pull requests and main branch
+  - GitHub Actions workflow
+  - Docker-based test execution
+  - Automated test runs on pull requests and main branch
 
 ### Project Structure
 
 - Monorepo with Turborepo
-  * Optimized task execution and caching
-  * Workspace-aware dependency management
-  * pnpm workspace configuration
-  * Integration testing setup
+  - Optimized task execution and caching
+  - Workspace-aware dependency management
+  - pnpm workspace configuration
+  - Integration testing setup
 - Backend and Frontend as separate workspaces
 - Shared types and utilities
 - Documentation as a separate package
 - GitHub Actions workflows for CI/CD
 
 ### Monorepo Configuration
+
 - Turborepo for build orchestration and caching
 - pnpm workspaces for dependency management
 - Corepack for package manager version consistency
@@ -277,6 +285,7 @@
 - Docker-based test execution
 
 ### Docker Configuration
+
 - Multi-stage build process for optimized images
 - Alpine-based images for smaller size
 - Turborepo pruning for minimal build context

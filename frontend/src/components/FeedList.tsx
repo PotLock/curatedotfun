@@ -20,12 +20,6 @@ const FeedList = () => {
         <h1 className=" text-[32px] leading-[63px] font-normal md:block hidden">
           Feeds
         </h1>
-        {/* {feeds.length > 0 && (
-          <span className="md:hidden text-gray-400 flex items-center">
-            <span className="mr-1">scroll</span>
-            <FaChevronRight className="h-3 w-3" />
-          </span>
-        )} */}
       </div>
       <nav className="flex flex-col gap-3 ">
         {feeds.length === 0 ? (

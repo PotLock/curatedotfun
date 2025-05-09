@@ -46,6 +46,7 @@ npm run test:pg:e2e
 ```
 
 These commands will:
+
 1. Start the PostgreSQL container
 2. Run the migrations to set up the schema
 3. Run the tests

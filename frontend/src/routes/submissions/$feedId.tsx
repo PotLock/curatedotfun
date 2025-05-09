@@ -1,63 +1,26 @@
-import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
-import { useFeedConfig } from "../../lib/api";
+import { createFileRoute } from "@tanstack/react-router";
+import { useFeedItems, useFeedConfig } from "../../lib/api";
+import { useBotId } from "../../lib/config";
 import { Badge } from "../../components/ui/badge";
+import SubmissionList from "../../components/SubmissionList";
 import Header from "../../components/Header";
+import { useFilterStore } from "../../store/useFilterStore";
 import FeedLayout from "../../components/FeedLayout";
-import {
-  Award,
-  Coins,
-  ListFilter,
-  Newspaper,
-  Settings2,
-  UsersRound,
-  Vote,
-} from "lucide-react";
+import { ProfileTabs } from "../../components/profile/ProfileTabs";
+// import { FeedTabs } from "../../components/feed/FeedTabs";
 
-const TABS = [
-  {
-    to: "/feed/$feedId/",
-    label: "Content",
-    icon: Newspaper,
-  },
-  {
-    to: "/feed/$feedId/curation",
-    label: "Curation",
-    icon: ListFilter,
-  },
-  {
-    to: "/feed/$feedId/proposals",
-    label: "Proposals",
-    icon: Vote,
-  },
-  {
-    to: "/feed/$feedId/token",
-    label: "Token",
-    icon: Coins,
-  },
-  {
-    to: "/feed/$feedId/points",
-    label: "Points",
-    icon: Award,
-  },
-  {
-    to: "/feed/$feedId/members",
-    label: "Members",
-    icon: UsersRound,
-  },
-  {
-    to: "/feed/$feedId/settings",
-    label: "Settings",
-    icon: Settings2,
-  },
-];
-
-export const Route = createFileRoute("/feed/$feedId")({
-  component: FeedPageLayout,
+export const Route = createFileRoute("/submissions/$feedId")({
+  component: FeedDetailsPage,
 });
 
-function FeedPageLayout() {
+function FeedDetailsPage() {
   const { feedId } = Route.useParams();
   const { data: feed } = useFeedConfig(feedId);
+  const { data: items = [] } = useFeedItems(feedId);
+
+  const botId = useBotId();
+
+  const { statusFilter, setStatusFilter } = useFilterStore();
 
   return (
     <div className="max-w-[1440px] mx-auto w-full">
@@ -104,8 +67,8 @@ function FeedPageLayout() {
                 Twitter
               </Badge>
             </div>
-            <div className="flex  sm:flex-row items-center gap-2 justify-end sm:gap-3 w-full sm:w-full">
-              <p className="flex">Posting to:</p>
+            <div className="flex  sm:flex-row items-center gap-2 w-full">
+              <p className="flex flex-1">Posting to:</p>
               <Badge className="flex gap-1 text-black border border-stone-500 rounded-md bg-stone-50 shadow-none">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -125,34 +88,24 @@ function FeedPageLayout() {
             </div>
           </div>
         </div>
-
-        {/* Tab Navigation */}
-        <div className="overflow-x-auto w-full border-b border-gray-200">
-          <div className="flex space-x-1">
-            {TABS.map(({ to, label, icon: Icon }) => (
-              <Link
-                key={label}
-                to={to}
-                params={{ feedId }} // Pass feedId as param
-                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap"
-                activeProps={{
-                  className:
-                    "flex items-center space-x-2 px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-500 -mb-px",
-                }}
-              >
-                <Icon strokeWidth={1} size={20} />
-                <span>{label}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-
         <FeedLayout feedId={feedId}>
-          <Outlet />
+          <div>
+            <h3 className="leading-8 sm:leading-10 text-xl sm:text-2xl font-normal">
+              Recent Content
+            </h3>
+            <SubmissionList
+              items={items}
+              statusFilter={statusFilter}
+              botId={botId}
+              feedId={feedId}
+              layout="grid"
+            />
+          </div>
+          {/* <FeedTabs /> */}
         </FeedLayout>
       </div>
     </div>
   );
 }
 
-export default FeedPageLayout;
+export default FeedDetailsPage;

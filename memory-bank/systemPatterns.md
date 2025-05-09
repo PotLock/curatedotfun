@@ -38,15 +38,16 @@
      - Simple Transform (Basic formatting)
      - Object Transform (Data mapping and transformation)
    - Plugin Features
-     * Runtime loading via module federation
-     * Type-safe configuration
-     * Custom endpoint registration
-     * Scheduled task integration
-     * Development toolkit with mocks
+     - Runtime loading via module federation
+     - Type-safe configuration
+     - Custom endpoint registration
+     - Scheduled task integration
+     - Development toolkit with mocks
 
 ### Database Architecture
 
 1. **PostgreSQL with Drizzle ORM**
+
    - Read/write separation with connection pools
    - Transaction support with retry logic
    - Comprehensive error handling with context-rich logging
@@ -56,20 +57,22 @@
    - Modular organization with clear separation of concerns
 
 2. **Database Service Structure**
+
    - Connection management (connection.ts)
    - Transaction utilities (transaction.ts)
-     * executeOperation - For single database operations
-     * executeTransaction - For multi-step operations requiring atomicity
-     * withDatabaseErrorHandling - For consistent error handling
+     - executeOperation - For single database operations
+     - executeTransaction - For multi-step operations requiring atomicity
+     - withDatabaseErrorHandling - For consistent error handling
    - Domain-specific repositories (repositories/)
-     * Twitter repository
-     * Submission repository
-     * Feed repository
-     * Leaderboard repository
+     - Twitter repository
+     - Submission repository
+     - Feed repository
+     - Leaderboard repository
    - Consolidated status update logic
    - Backward compatibility layer for gradual migration
 
 3. **Development Environment**
+
    - Docker Compose for local development
    - PostgreSQL container with persistent volume
    - Automatic migrations on startup
@@ -177,6 +180,7 @@ graph TD
 ## Key Technical Decisions
 
 1. **PostgreSQL Database**
+
    - Scalable relational database
    - Read/write separation capability
    - Connection pooling for performance
@@ -184,6 +188,7 @@ graph TD
    - Docker-based development environment
 
 2. **Hono Framework**
+
    - High performance
    - Built-in TypeScript support
    - Middleware ecosystem
@@ -191,6 +196,7 @@ graph TD
    - Dynamic endpoint registration
 
 3. **Module Federation Plugin System**
+
    - Runtime plugin loading without rebuilds
    - Type-safe plugin interfaces
    - Easy plugin development
@@ -198,6 +204,7 @@ graph TD
    - Hot-reloading capability
 
 4. **Configuration-Driven**
+
    - JSON-based configuration
    - Runtime configuration updates
    - Environment variable support
@@ -205,6 +212,7 @@ graph TD
    - Easy forking and customization
 
 5. **Service Architecture**
+
    - Platform-agnostic services
    - Clear service boundaries
    - Optimized transformer-distributor flow
@@ -212,6 +220,7 @@ graph TD
    - Mock system for plugin validation
 
 6. **Error Handling**
+
    - Granular error types
    - Graceful degradation
    - Error recovery strategies
@@ -219,12 +228,14 @@ graph TD
    - Error aggregation for multiple failures
 
 7. **Task Scheduling**
+
    - Configuration-driven cron jobs
    - Recap generation scheduling
    - Plugin-specific scheduled tasks
    - Reliable execution tracking
 
 8. **Build System**
+
    - RSPack for optimized builds
    - Module federation support
    - Fast development experience

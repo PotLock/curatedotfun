@@ -106,7 +106,7 @@ const SubmissionsLayout = ({ children, leftSidebar, feedId }: LayoutProps) => {
 
         {/* Main Content Area */}
         <div className="col-span-2">
-          <div className="flex-1 overflow-y-auto h-full">
+          <div className="flex-1 overflow-y-auto w-full h-full">
             <div>{children}</div>
           </div>
         </div>
