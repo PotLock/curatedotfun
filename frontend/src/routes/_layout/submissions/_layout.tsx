@@ -1,36 +1,20 @@
+import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
-import { ReactNode, useState } from "react";
-import SubmissionsHero from "./SubmissionsHero";
-import TopCurators from "./TopCurators";
+import { useState } from "react";
+import FeedList from "../../../components/FeedList";
+import SubmissionsHero from "../../../components/SubmissionsHero";
+import TopCurators from "../../../components/TopCurators";
 
-interface LayoutProps {
-  children: ReactNode;
-  leftSidebar?: ReactNode;
-  feedId?: string;
-}
+export const Route = createFileRoute("/_layout/submissions/_layout")({
+  component: SubmissionsLayoutRoute,
+});
 
-const SubmissionsLayout = ({ children, leftSidebar, feedId }: LayoutProps) => {
+function SubmissionsLayoutRoute() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileCuratorsOpen, setMobileCuratorsOpen] = useState(false);
 
-  // The title changes based on whether we're showing a specific feed
-  const titleText =
-    feedId && feedId !== "all" ? `Top Curators for #${feedId}` : "Top Curators";
-
-  // Create a default right sidebar that will be used if none is provided
-  const defaultRightSidebar = (
-    <div className="max-w-full overflow-x-hidden">
-      <div>
-        <h3 className="text-[32px] font-normal leading-[63px] md:block hidden">
-          {titleText}
-        </h3>
-        <TopCurators feedId={feedId} />
-      </div>
-    </div>
-  );
-
-  // Always use the default right sidebar
-  const finalRightSidebar = defaultRightSidebar;
+  // The title for the curators section
+  const titleText = "Top Curators";
 
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
   const toggleCurators = () => setMobileCuratorsOpen(!mobileCuratorsOpen);
@@ -63,12 +47,16 @@ const SubmissionsLayout = ({ children, leftSidebar, feedId }: LayoutProps) => {
 
       {/* Mobile Sidebar - Feed List (Slide in from left) */}
       <div
-        className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 md:hidden ${mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 md:hidden ${
+          mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
         onClick={toggleMobileMenu}
       />
 
       <div
-        className={`fixed top-0 left-0 h-full w-3/4 max-w-xs bg-white z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto md:hidden ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed top-0 left-0 h-full w-3/4 max-w-xs bg-white z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto md:hidden ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="font-medium text-lg">Feeds</h3>
@@ -76,17 +64,23 @@ const SubmissionsLayout = ({ children, leftSidebar, feedId }: LayoutProps) => {
             <X size={24} />
           </button>
         </div>
-        <div className="p-4">{leftSidebar}</div>
+        <div className="p-4">
+          <FeedList />
+        </div>
       </div>
 
       {/* Mobile Curators Panel (Slide in from right) */}
       <div
-        className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 md:hidden ${mobileCuratorsOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 md:hidden ${
+          mobileCuratorsOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
         onClick={toggleCurators}
       />
 
       <div
-        className={`fixed top-0 right-0 h-full w-3/4 max-w-xs bg-white z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto md:hidden ${mobileCuratorsOpen ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-0 right-0 h-full w-3/4 max-w-xs bg-white z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto md:hidden ${
+          mobileCuratorsOpen ? "translate-x-0" : "translate-x-full"
+        }`}
       >
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="font-medium text-lg">{titleText}</h3>
@@ -94,33 +88,53 @@ const SubmissionsLayout = ({ children, leftSidebar, feedId }: LayoutProps) => {
             <X size={24} />
           </button>
         </div>
-        <div className="p-4">{finalRightSidebar}</div>
+        <div className="p-4">
+          <div className="max-w-full overflow-x-hidden">
+            <div>
+              <h3 className="text-[32px] font-normal leading-[63px]">
+                {titleText}
+              </h3>
+              <TopCurators />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Desktop Layout */}
       <div className="hidden md:grid md:grid-cols-4 gap-4 lg:gap-8 overflow-hidden px-4 lg:px-8">
         {/* Left Sidebar - Feed List (Desktop) */}
-        <div className="col-span-1 overflow-y-auto">{leftSidebar}</div>
+        <div className="col-span-1 overflow-y-auto">
+          <FeedList />
+        </div>
 
         {/* Main Content Area */}
         <div className="col-span-2">
-          <div className="flex-1 overflow-y-auto w-full h-full">
-            <div>{children}</div>
+          <div className="flex-1 overflow-y-auto h-full">
+            <div>
+              <Outlet />
+            </div>
           </div>
         </div>
 
         {/* Right Panel - Feed Details */}
         <div className="col-span-1 bg-white overflow-y-auto">
-          <div>{finalRightSidebar}</div>
+          <div className="max-w-full overflow-x-hidden">
+            <div>
+              <h3 className="text-[32px] font-normal leading-[63px]">
+                {titleText}
+              </h3>
+              <TopCurators />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Mobile Content */}
       <div className="md:hidden px-4">
-        <div className="flex-1 overflow-y-auto">{children}</div>
+        <div className="flex-1 overflow-y-auto">
+          <Outlet />
+        </div>
       </div>
     </div>
   );
-};
-
-export default SubmissionsLayout;
+}

@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Modal } from "./Modal";
-import { HowItWorks } from "./HowItWorks";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
+import { HowItWorks } from "./HowItWorks";
+import { Modal } from "./Modal";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
+import { useNavigate } from "@tanstack/react-router";
 import {
   ChevronDown,
   CircleUserRound,
@@ -22,7 +23,6 @@ import {
 } from "lucide-react";
 import { AuthUserInfo } from "../types/web3auth";
 import UserMenu from "./UserMenu";
-import { useNavigate } from "@tanstack/react-router";
 
 const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);

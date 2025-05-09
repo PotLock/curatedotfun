@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import Layout from "../components/Layout";
+import Layout from "../../components/Layout";
 
-export const Route = createFileRoute("/test")({
+export const Route = createFileRoute("/_layout/test")({
   component: TestPage,
 });
 
