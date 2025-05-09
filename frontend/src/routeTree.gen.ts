@@ -8,39 +8,14 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from "@tanstack/react-router";
 
 // Import Routes
 
-<<<<<<< HEAD
 import { Route as rootRoute } from "./routes/__root";
-<<<<<<< HEAD
-import { Route as TestImport } from "./routes/test";
-import { Route as SettingsImport } from "./routes/settings";
-import { Route as LeaderboardImport } from "./routes/leaderboard";
-import { Route as IndexImport } from "./routes/index";
-import { Route as SubmissionsIndexImport } from "./routes/submissions/index";
-import { Route as ProfileIndexImport } from "./routes/profile/index";
-import { Route as FeedIndexImport } from "./routes/feed/index";
-import { Route as ExploreIndexImport } from "./routes/explore/index";
-import { Route as SubmissionsFeedIdImport } from "./routes/submissions/$feedId";
-import { Route as ProfileRootImport } from "./routes/profile/_root";
-import { Route as FeedFeedIdImport } from "./routes/feed/$feedId";
-import { Route as ExploreRootImport } from "./routes/explore/_root";
-import { Route as CreateFeedImport } from "./routes/create/feed";
-import { Route as FeedFeedIdIndexImport } from "./routes/feed/$feedId/index";
-import { Route as FeedFeedIdTokenImport } from "./routes/feed/$feedId/token";
-import { Route as FeedFeedIdProposalsImport } from "./routes/feed/$feedId/proposals";
-import { Route as FeedFeedIdPointsImport } from "./routes/feed/$feedId/points";
-import { Route as FeedFeedIdMembersImport } from "./routes/feed/$feedId/members";
-import { Route as FeedFeedIdCurationImport } from "./routes/feed/$feedId/curation";
-import { Route as FeedFeedIdSettingsIndexImport } from "./routes/feed/$feedId/settings/index";
-import { Route as FeedFeedIdSettingsConnectedImport } from "./routes/feed/$feedId/settings/connected";
-=======
 import { Route as LayoutImport } from "./routes/_layout";
 import { Route as LayoutIndexImport } from "./routes/_layout/index";
-import { Route as LayoutTestImport } from "./routes/_layout/test";
-import { Route as LayoutSettingsImport } from "./routes/_layout/settings";
+import { Route as SubmissionsFeedIdImport } from "./routes/submissions/$feedId";
 import { Route as LayoutLeaderboardImport } from "./routes/_layout/leaderboard";
 import { Route as LayoutProfileIndexImport } from "./routes/_layout/profile/index";
 import { Route as LayoutSubmissionsLayoutImport } from "./routes/_layout/submissions/_layout";
@@ -56,92 +31,35 @@ import { Route as LayoutFeedFeedIdMembersImport } from "./routes/_layout/feed/$f
 import { Route as LayoutFeedFeedIdCurationImport } from "./routes/_layout/feed/$feedId/curation";
 import { Route as LayoutFeedFeedIdSettingsIndexImport } from "./routes/_layout/feed/$feedId/settings/index";
 import { Route as LayoutFeedFeedIdSettingsConnectedImport } from "./routes/_layout/feed/$feedId/settings/connected";
->>>>>>> 2908d70 (reorganize)
-=======
-import { Route as rootRoute } from './routes/__root'
-import { Route as LayoutImport } from './routes/_layout'
-import { Route as LayoutIndexImport } from './routes/_layout/index'
-import { Route as LayoutLeaderboardImport } from './routes/_layout/leaderboard'
-import { Route as LayoutProfileIndexImport } from './routes/_layout/profile/index'
-import { Route as LayoutSubmissionsLayoutImport } from './routes/_layout/submissions/_layout'
-import { Route as LayoutProfileRootImport } from './routes/_layout/profile/_root'
-import { Route as LayoutFeedFeedIdImport } from './routes/_layout/feed/$feedId'
-import { Route as LayoutCreateFeedImport } from './routes/_layout/create/feed'
-import { Route as LayoutSubmissionsLayoutIndexImport } from './routes/_layout/submissions/_layout/index'
-import { Route as LayoutFeedFeedIdIndexImport } from './routes/_layout/feed/$feedId/index'
-import { Route as LayoutFeedFeedIdTokenImport } from './routes/_layout/feed/$feedId/token'
-import { Route as LayoutFeedFeedIdProposalsImport } from './routes/_layout/feed/$feedId/proposals'
-import { Route as LayoutFeedFeedIdPointsImport } from './routes/_layout/feed/$feedId/points'
-import { Route as LayoutFeedFeedIdMembersImport } from './routes/_layout/feed/$feedId/members'
-import { Route as LayoutFeedFeedIdCurationImport } from './routes/_layout/feed/$feedId/curation'
-import { Route as LayoutFeedFeedIdSettingsIndexImport } from './routes/_layout/feed/$feedId/settings/index'
-import { Route as LayoutFeedFeedIdSettingsConnectedImport } from './routes/_layout/feed/$feedId/settings/connected'
->>>>>>> 58705f7 (clean up)
 
 // Create Virtual Routes
 
-const LayoutSubmissionsImport = createFileRoute('/_layout/submissions')()
-const LayoutProfileImport = createFileRoute('/_layout/profile')()
+const LayoutSubmissionsImport = createFileRoute("/_layout/submissions")();
+const LayoutProfileImport = createFileRoute("/_layout/profile")();
 
 // Create/Update Routes
 
 const LayoutRoute = LayoutImport.update({
-  id: '/_layout',
+  id: "/_layout",
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const LayoutSubmissionsRoute = LayoutSubmissionsImport.update({
-  id: '/submissions',
-  path: '/submissions',
+  id: "/submissions",
+  path: "/submissions",
   getParentRoute: () => LayoutRoute,
-} as any)
+} as any);
 
 const LayoutProfileRoute = LayoutProfileImport.update({
-  id: '/profile',
-  path: '/profile',
+  id: "/profile",
+  path: "/profile",
   getParentRoute: () => LayoutRoute,
-} as any)
+} as any);
 
 const LayoutIndexRoute = LayoutIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => LayoutRoute,
-} as any)
-
-const LayoutLeaderboardRoute = LayoutLeaderboardImport.update({
-  id: '/leaderboard',
-  path: '/leaderboard',
-  getParentRoute: () => LayoutRoute,
-} as any)
-
-const LayoutProfileIndexRoute = LayoutProfileIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => LayoutProfileRoute,
-} as any)
-
-const LayoutSubmissionsLayoutRoute = LayoutSubmissionsLayoutImport.update({
-  id: '/_layout',
-  getParentRoute: () => LayoutSubmissionsRoute,
-} as any)
-
-<<<<<<< HEAD
-const ProfileIndexRoute = ProfileIndexImport.update({
   id: "/",
   path: "/",
-  getParentRoute: () => ProfileRoute,
-} as any);
-
-const FeedIndexRoute = FeedIndexImport.update({
-  id: "/feed/",
-  path: "/feed/",
-  getParentRoute: () => rootRoute,
-} as any);
-
-const ExploreIndexRoute = ExploreIndexImport.update({
-  id: "/",
-  path: "/",
-  getParentRoute: () => ExploreRoute,
+  getParentRoute: () => LayoutRoute,
 } as any);
 
 const SubmissionsFeedIdRoute = SubmissionsFeedIdImport.update({
@@ -150,92 +68,101 @@ const SubmissionsFeedIdRoute = SubmissionsFeedIdImport.update({
   getParentRoute: () => rootRoute,
 } as any);
 
-const ProfileRootRoute = ProfileRootImport.update({
-=======
-const LayoutProfileRootRoute = LayoutProfileRootImport.update({
-<<<<<<< HEAD
->>>>>>> 2908d70 (reorganize)
-  id: "/_root",
-=======
-  id: '/_root',
->>>>>>> 58705f7 (clean up)
+const LayoutLeaderboardRoute = LayoutLeaderboardImport.update({
+  id: "/leaderboard",
+  path: "/leaderboard",
+  getParentRoute: () => LayoutRoute,
+} as any);
+
+const LayoutProfileIndexRoute = LayoutProfileIndexImport.update({
+  id: "/",
+  path: "/",
   getParentRoute: () => LayoutProfileRoute,
-} as any)
+} as any);
+
+const LayoutSubmissionsLayoutRoute = LayoutSubmissionsLayoutImport.update({
+  id: "/_layout",
+  getParentRoute: () => LayoutSubmissionsRoute,
+} as any);
+
+const LayoutProfileRootRoute = LayoutProfileRootImport.update({
+  id: "/_root",
+  getParentRoute: () => LayoutProfileRoute,
+} as any);
 
 const LayoutFeedFeedIdRoute = LayoutFeedFeedIdImport.update({
-  id: '/feed/$feedId',
-  path: '/feed/$feedId',
+  id: "/feed/$feedId",
+  path: "/feed/$feedId",
   getParentRoute: () => LayoutRoute,
-} as any)
+} as any);
 
 const LayoutCreateFeedRoute = LayoutCreateFeedImport.update({
-  id: '/create/feed',
-  path: '/create/feed',
+  id: "/create/feed",
+  path: "/create/feed",
   getParentRoute: () => LayoutRoute,
-} as any)
+} as any);
 
 const LayoutSubmissionsLayoutIndexRoute =
   LayoutSubmissionsLayoutIndexImport.update({
-    id: '/',
-    path: '/',
+    id: "/",
+    path: "/",
     getParentRoute: () => LayoutSubmissionsLayoutRoute,
-  } as any)
+  } as any);
 
 const LayoutFeedFeedIdIndexRoute = LayoutFeedFeedIdIndexImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => LayoutFeedFeedIdRoute,
-} as any)
+} as any);
 
 const LayoutFeedFeedIdTokenRoute = LayoutFeedFeedIdTokenImport.update({
-  id: '/token',
-  path: '/token',
+  id: "/token",
+  path: "/token",
   getParentRoute: () => LayoutFeedFeedIdRoute,
-} as any)
+} as any);
 
 const LayoutFeedFeedIdProposalsRoute = LayoutFeedFeedIdProposalsImport.update({
-  id: '/proposals',
-  path: '/proposals',
+  id: "/proposals",
+  path: "/proposals",
   getParentRoute: () => LayoutFeedFeedIdRoute,
-} as any)
+} as any);
 
 const LayoutFeedFeedIdPointsRoute = LayoutFeedFeedIdPointsImport.update({
-  id: '/points',
-  path: '/points',
+  id: "/points",
+  path: "/points",
   getParentRoute: () => LayoutFeedFeedIdRoute,
-} as any)
+} as any);
 
 const LayoutFeedFeedIdMembersRoute = LayoutFeedFeedIdMembersImport.update({
-  id: '/members',
-  path: '/members',
+  id: "/members",
+  path: "/members",
   getParentRoute: () => LayoutFeedFeedIdRoute,
-} as any)
+} as any);
 
 const LayoutFeedFeedIdCurationRoute = LayoutFeedFeedIdCurationImport.update({
-  id: '/curation',
-  path: '/curation',
+  id: "/curation",
+  path: "/curation",
   getParentRoute: () => LayoutFeedFeedIdRoute,
-} as any)
+} as any);
 
 const LayoutFeedFeedIdSettingsIndexRoute =
   LayoutFeedFeedIdSettingsIndexImport.update({
-    id: '/settings/',
-    path: '/settings/',
+    id: "/settings/",
+    path: "/settings/",
     getParentRoute: () => LayoutFeedFeedIdRoute,
-  } as any)
+  } as any);
 
 const LayoutFeedFeedIdSettingsConnectedRoute =
   LayoutFeedFeedIdSettingsConnectedImport.update({
-    id: '/settings/connected',
-    path: '/settings/connected',
+    id: "/settings/connected",
+    path: "/settings/connected",
     getParentRoute: () => LayoutFeedFeedIdRoute,
-  } as any)
+  } as any);
 
 // Populate the FileRoutesByPath interface
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-<<<<<<< HEAD
     "/_layout": {
       id: "/_layout";
       path: "";
@@ -250,19 +177,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutLeaderboardImport;
       parentRoute: typeof LayoutImport;
     };
-    "/_layout/settings": {
-      id: "/_layout/settings";
-      path: "/settings";
-      fullPath: "/settings";
-      preLoaderRoute: typeof LayoutSettingsImport;
-      parentRoute: typeof LayoutImport;
-    };
-    "/_layout/test": {
-      id: "/_layout/test";
-      path: "/test";
-      fullPath: "/test";
-      preLoaderRoute: typeof LayoutTestImport;
-      parentRoute: typeof LayoutImport;
+    "/submissions/$feedId": {
+      id: "/submissions/$feedId";
+      path: "/submissions/$feedId";
+      fullPath: "/submissions/$feedId";
+      preLoaderRoute: typeof SubmissionsFeedIdImport;
+      parentRoute: typeof rootRoute;
     };
     "/_layout/": {
       id: "/_layout/";
@@ -299,41 +219,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutProfileRootImport;
       parentRoute: typeof LayoutProfileRoute;
     };
-<<<<<<< HEAD
-    "/submissions/$feedId": {
-      id: "/submissions/$feedId";
-      path: "/submissions/$feedId";
-      fullPath: "/submissions/$feedId";
-      preLoaderRoute: typeof SubmissionsFeedIdImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/explore/": {
-      id: "/explore/";
-      path: "/";
-      fullPath: "/explore/";
-      preLoaderRoute: typeof ExploreIndexImport;
-      parentRoute: typeof ExploreImport;
-    };
-    "/feed/": {
-      id: "/feed/";
-      path: "/feed";
-      fullPath: "/feed";
-      preLoaderRoute: typeof FeedIndexImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/profile/": {
-      id: "/profile/";
-      path: "/";
-      fullPath: "/profile/";
-      preLoaderRoute: typeof ProfileIndexImport;
-      parentRoute: typeof ProfileImport;
-    };
-    "/submissions/": {
-      id: "/submissions/";
-=======
     "/_layout/submissions": {
       id: "/_layout/submissions";
->>>>>>> 2908d70 (reorganize)
       path: "/submissions";
       fullPath: "/submissions";
       preLoaderRoute: typeof LayoutSubmissionsImport;
@@ -416,155 +303,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutFeedFeedIdSettingsIndexImport;
       parentRoute: typeof LayoutFeedFeedIdImport;
     };
-=======
-    '/_layout': {
-      id: '/_layout'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof LayoutImport
-      parentRoute: typeof rootRoute
-    }
-    '/_layout/leaderboard': {
-      id: '/_layout/leaderboard'
-      path: '/leaderboard'
-      fullPath: '/leaderboard'
-      preLoaderRoute: typeof LayoutLeaderboardImport
-      parentRoute: typeof LayoutImport
-    }
-    '/_layout/': {
-      id: '/_layout/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof LayoutIndexImport
-      parentRoute: typeof LayoutImport
-    }
-    '/_layout/create/feed': {
-      id: '/_layout/create/feed'
-      path: '/create/feed'
-      fullPath: '/create/feed'
-      preLoaderRoute: typeof LayoutCreateFeedImport
-      parentRoute: typeof LayoutImport
-    }
-    '/_layout/feed/$feedId': {
-      id: '/_layout/feed/$feedId'
-      path: '/feed/$feedId'
-      fullPath: '/feed/$feedId'
-      preLoaderRoute: typeof LayoutFeedFeedIdImport
-      parentRoute: typeof LayoutImport
-    }
-    '/_layout/profile': {
-      id: '/_layout/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof LayoutProfileImport
-      parentRoute: typeof LayoutImport
-    }
-    '/_layout/profile/_root': {
-      id: '/_layout/profile/_root'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof LayoutProfileRootImport
-      parentRoute: typeof LayoutProfileRoute
-    }
-    '/_layout/submissions': {
-      id: '/_layout/submissions'
-      path: '/submissions'
-      fullPath: '/submissions'
-      preLoaderRoute: typeof LayoutSubmissionsImport
-      parentRoute: typeof LayoutImport
-    }
-    '/_layout/submissions/_layout': {
-      id: '/_layout/submissions/_layout'
-      path: '/submissions'
-      fullPath: '/submissions'
-      preLoaderRoute: typeof LayoutSubmissionsLayoutImport
-      parentRoute: typeof LayoutSubmissionsRoute
-    }
-    '/_layout/profile/': {
-      id: '/_layout/profile/'
-      path: '/'
-      fullPath: '/profile/'
-      preLoaderRoute: typeof LayoutProfileIndexImport
-      parentRoute: typeof LayoutProfileImport
-    }
-    '/_layout/feed/$feedId/curation': {
-      id: '/_layout/feed/$feedId/curation'
-      path: '/curation'
-      fullPath: '/feed/$feedId/curation'
-      preLoaderRoute: typeof LayoutFeedFeedIdCurationImport
-      parentRoute: typeof LayoutFeedFeedIdImport
-    }
-    '/_layout/feed/$feedId/members': {
-      id: '/_layout/feed/$feedId/members'
-      path: '/members'
-      fullPath: '/feed/$feedId/members'
-      preLoaderRoute: typeof LayoutFeedFeedIdMembersImport
-      parentRoute: typeof LayoutFeedFeedIdImport
-    }
-    '/_layout/feed/$feedId/points': {
-      id: '/_layout/feed/$feedId/points'
-      path: '/points'
-      fullPath: '/feed/$feedId/points'
-      preLoaderRoute: typeof LayoutFeedFeedIdPointsImport
-      parentRoute: typeof LayoutFeedFeedIdImport
-    }
-    '/_layout/feed/$feedId/proposals': {
-      id: '/_layout/feed/$feedId/proposals'
-      path: '/proposals'
-      fullPath: '/feed/$feedId/proposals'
-      preLoaderRoute: typeof LayoutFeedFeedIdProposalsImport
-      parentRoute: typeof LayoutFeedFeedIdImport
-    }
-    '/_layout/feed/$feedId/token': {
-      id: '/_layout/feed/$feedId/token'
-      path: '/token'
-      fullPath: '/feed/$feedId/token'
-      preLoaderRoute: typeof LayoutFeedFeedIdTokenImport
-      parentRoute: typeof LayoutFeedFeedIdImport
-    }
-    '/_layout/feed/$feedId/': {
-      id: '/_layout/feed/$feedId/'
-      path: '/'
-      fullPath: '/feed/$feedId/'
-      preLoaderRoute: typeof LayoutFeedFeedIdIndexImport
-      parentRoute: typeof LayoutFeedFeedIdImport
-    }
-    '/_layout/submissions/_layout/': {
-      id: '/_layout/submissions/_layout/'
-      path: '/'
-      fullPath: '/submissions/'
-      preLoaderRoute: typeof LayoutSubmissionsLayoutIndexImport
-      parentRoute: typeof LayoutSubmissionsLayoutImport
-    }
-    '/_layout/feed/$feedId/settings/connected': {
-      id: '/_layout/feed/$feedId/settings/connected'
-      path: '/settings/connected'
-      fullPath: '/feed/$feedId/settings/connected'
-      preLoaderRoute: typeof LayoutFeedFeedIdSettingsConnectedImport
-      parentRoute: typeof LayoutFeedFeedIdImport
-    }
-    '/_layout/feed/$feedId/settings/': {
-      id: '/_layout/feed/$feedId/settings/'
-      path: '/settings'
-      fullPath: '/feed/$feedId/settings'
-      preLoaderRoute: typeof LayoutFeedFeedIdSettingsIndexImport
-      parentRoute: typeof LayoutFeedFeedIdImport
-    }
->>>>>>> 58705f7 (clean up)
   }
 }
 
 // Create and export the route tree
 
 interface LayoutFeedFeedIdRouteChildren {
-  LayoutFeedFeedIdCurationRoute: typeof LayoutFeedFeedIdCurationRoute
-  LayoutFeedFeedIdMembersRoute: typeof LayoutFeedFeedIdMembersRoute
-  LayoutFeedFeedIdPointsRoute: typeof LayoutFeedFeedIdPointsRoute
-  LayoutFeedFeedIdProposalsRoute: typeof LayoutFeedFeedIdProposalsRoute
-  LayoutFeedFeedIdTokenRoute: typeof LayoutFeedFeedIdTokenRoute
-  LayoutFeedFeedIdIndexRoute: typeof LayoutFeedFeedIdIndexRoute
-  LayoutFeedFeedIdSettingsConnectedRoute: typeof LayoutFeedFeedIdSettingsConnectedRoute
-  LayoutFeedFeedIdSettingsIndexRoute: typeof LayoutFeedFeedIdSettingsIndexRoute
+  LayoutFeedFeedIdCurationRoute: typeof LayoutFeedFeedIdCurationRoute;
+  LayoutFeedFeedIdMembersRoute: typeof LayoutFeedFeedIdMembersRoute;
+  LayoutFeedFeedIdPointsRoute: typeof LayoutFeedFeedIdPointsRoute;
+  LayoutFeedFeedIdProposalsRoute: typeof LayoutFeedFeedIdProposalsRoute;
+  LayoutFeedFeedIdTokenRoute: typeof LayoutFeedFeedIdTokenRoute;
+  LayoutFeedFeedIdIndexRoute: typeof LayoutFeedFeedIdIndexRoute;
+  LayoutFeedFeedIdSettingsConnectedRoute: typeof LayoutFeedFeedIdSettingsConnectedRoute;
+  LayoutFeedFeedIdSettingsIndexRoute: typeof LayoutFeedFeedIdSettingsIndexRoute;
 }
 
 const LayoutFeedFeedIdRouteChildren: LayoutFeedFeedIdRouteChildren = {
@@ -577,57 +329,57 @@ const LayoutFeedFeedIdRouteChildren: LayoutFeedFeedIdRouteChildren = {
   LayoutFeedFeedIdSettingsConnectedRoute:
     LayoutFeedFeedIdSettingsConnectedRoute,
   LayoutFeedFeedIdSettingsIndexRoute: LayoutFeedFeedIdSettingsIndexRoute,
-}
+};
 
 const LayoutFeedFeedIdRouteWithChildren =
-  LayoutFeedFeedIdRoute._addFileChildren(LayoutFeedFeedIdRouteChildren)
+  LayoutFeedFeedIdRoute._addFileChildren(LayoutFeedFeedIdRouteChildren);
 
 interface LayoutProfileRouteChildren {
-  LayoutProfileRootRoute: typeof LayoutProfileRootRoute
-  LayoutProfileIndexRoute: typeof LayoutProfileIndexRoute
+  LayoutProfileRootRoute: typeof LayoutProfileRootRoute;
+  LayoutProfileIndexRoute: typeof LayoutProfileIndexRoute;
 }
 
 const LayoutProfileRouteChildren: LayoutProfileRouteChildren = {
   LayoutProfileRootRoute: LayoutProfileRootRoute,
   LayoutProfileIndexRoute: LayoutProfileIndexRoute,
-}
+};
 
 const LayoutProfileRouteWithChildren = LayoutProfileRoute._addFileChildren(
   LayoutProfileRouteChildren,
-)
+);
 
 interface LayoutSubmissionsLayoutRouteChildren {
-  LayoutSubmissionsLayoutIndexRoute: typeof LayoutSubmissionsLayoutIndexRoute
+  LayoutSubmissionsLayoutIndexRoute: typeof LayoutSubmissionsLayoutIndexRoute;
 }
 
 const LayoutSubmissionsLayoutRouteChildren: LayoutSubmissionsLayoutRouteChildren =
   {
     LayoutSubmissionsLayoutIndexRoute: LayoutSubmissionsLayoutIndexRoute,
-  }
+  };
 
 const LayoutSubmissionsLayoutRouteWithChildren =
   LayoutSubmissionsLayoutRoute._addFileChildren(
     LayoutSubmissionsLayoutRouteChildren,
-  )
+  );
 
 interface LayoutSubmissionsRouteChildren {
-  LayoutSubmissionsLayoutRoute: typeof LayoutSubmissionsLayoutRouteWithChildren
+  LayoutSubmissionsLayoutRoute: typeof LayoutSubmissionsLayoutRouteWithChildren;
 }
 
 const LayoutSubmissionsRouteChildren: LayoutSubmissionsRouteChildren = {
   LayoutSubmissionsLayoutRoute: LayoutSubmissionsLayoutRouteWithChildren,
-}
+};
 
 const LayoutSubmissionsRouteWithChildren =
-  LayoutSubmissionsRoute._addFileChildren(LayoutSubmissionsRouteChildren)
+  LayoutSubmissionsRoute._addFileChildren(LayoutSubmissionsRouteChildren);
 
 interface LayoutRouteChildren {
-  LayoutLeaderboardRoute: typeof LayoutLeaderboardRoute
-  LayoutIndexRoute: typeof LayoutIndexRoute
-  LayoutCreateFeedRoute: typeof LayoutCreateFeedRoute
-  LayoutFeedFeedIdRoute: typeof LayoutFeedFeedIdRouteWithChildren
-  LayoutProfileRoute: typeof LayoutProfileRouteWithChildren
-  LayoutSubmissionsRoute: typeof LayoutSubmissionsRouteWithChildren
+  LayoutLeaderboardRoute: typeof LayoutLeaderboardRoute;
+  LayoutIndexRoute: typeof LayoutIndexRoute;
+  LayoutCreateFeedRoute: typeof LayoutCreateFeedRoute;
+  LayoutFeedFeedIdRoute: typeof LayoutFeedFeedIdRouteWithChildren;
+  LayoutProfileRoute: typeof LayoutProfileRouteWithChildren;
+  LayoutSubmissionsRoute: typeof LayoutSubmissionsRouteWithChildren;
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
@@ -637,61 +389,15 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutFeedFeedIdRoute: LayoutFeedFeedIdRouteWithChildren,
   LayoutProfileRoute: LayoutProfileRouteWithChildren,
   LayoutSubmissionsRoute: LayoutSubmissionsRouteWithChildren,
-}
+};
 
 const LayoutRouteWithChildren =
-  LayoutRoute._addFileChildren(LayoutRouteChildren)
+  LayoutRoute._addFileChildren(LayoutRouteChildren);
 
 export interface FileRoutesByFullPath {
-<<<<<<< HEAD
-<<<<<<< HEAD
-  "/": typeof IndexRoute;
-  "/leaderboard": typeof LeaderboardRoute;
-  "/settings": typeof SettingsRoute;
-  "/test": typeof TestRoute;
-  "/create/feed": typeof CreateFeedRoute;
-  "/explore": typeof ExploreRootRoute;
-  "/feed/$feedId": typeof FeedFeedIdRouteWithChildren;
-  "/profile": typeof ProfileRootRoute;
-  "/submissions/$feedId": typeof SubmissionsFeedIdRoute;
-  "/explore/": typeof ExploreIndexRoute;
-  "/feed": typeof FeedIndexRoute;
-  "/profile/": typeof ProfileIndexRoute;
-  "/submissions": typeof SubmissionsIndexRoute;
-  "/feed/$feedId/curation": typeof FeedFeedIdCurationRoute;
-  "/feed/$feedId/members": typeof FeedFeedIdMembersRoute;
-  "/feed/$feedId/points": typeof FeedFeedIdPointsRoute;
-  "/feed/$feedId/proposals": typeof FeedFeedIdProposalsRoute;
-  "/feed/$feedId/token": typeof FeedFeedIdTokenRoute;
-  "/feed/$feedId/": typeof FeedFeedIdIndexRoute;
-  "/feed/$feedId/settings/connected": typeof FeedFeedIdSettingsConnectedRoute;
-  "/feed/$feedId/settings": typeof FeedFeedIdSettingsIndexRoute;
-}
-
-export interface FileRoutesByTo {
-  "/": typeof IndexRoute;
-  "/leaderboard": typeof LeaderboardRoute;
-  "/settings": typeof SettingsRoute;
-  "/test": typeof TestRoute;
-  "/create/feed": typeof CreateFeedRoute;
-  "/explore": typeof ExploreIndexRoute;
-  "/profile": typeof ProfileIndexRoute;
-  "/submissions/$feedId": typeof SubmissionsFeedIdRoute;
-  "/feed": typeof FeedIndexRoute;
-  "/submissions": typeof SubmissionsIndexRoute;
-  "/feed/$feedId/curation": typeof FeedFeedIdCurationRoute;
-  "/feed/$feedId/members": typeof FeedFeedIdMembersRoute;
-  "/feed/$feedId/points": typeof FeedFeedIdPointsRoute;
-  "/feed/$feedId/proposals": typeof FeedFeedIdProposalsRoute;
-  "/feed/$feedId/token": typeof FeedFeedIdTokenRoute;
-  "/feed/$feedId": typeof FeedFeedIdIndexRoute;
-  "/feed/$feedId/settings/connected": typeof FeedFeedIdSettingsConnectedRoute;
-  "/feed/$feedId/settings": typeof FeedFeedIdSettingsIndexRoute;
-=======
   "": typeof LayoutRouteWithChildren;
   "/leaderboard": typeof LayoutLeaderboardRoute;
-  "/settings": typeof LayoutSettingsRoute;
-  "/test": typeof LayoutTestRoute;
+  "/submissions/$feedId": typeof SubmissionsFeedIdRoute;
   "/": typeof LayoutIndexRoute;
   "/create/feed": typeof LayoutCreateFeedRoute;
   "/feed/$feedId": typeof LayoutFeedFeedIdRouteWithChildren;
@@ -711,8 +417,7 @@ export interface FileRoutesByTo {
 
 export interface FileRoutesByTo {
   "/leaderboard": typeof LayoutLeaderboardRoute;
-  "/settings": typeof LayoutSettingsRoute;
-  "/test": typeof LayoutTestRoute;
+  "/submissions/$feedId": typeof SubmissionsFeedIdRoute;
   "/": typeof LayoutIndexRoute;
   "/create/feed": typeof LayoutCreateFeedRoute;
   "/profile": typeof LayoutProfileIndexRoute;
@@ -725,40 +430,13 @@ export interface FileRoutesByTo {
   "/feed/$feedId": typeof LayoutFeedFeedIdIndexRoute;
   "/feed/$feedId/settings/connected": typeof LayoutFeedFeedIdSettingsConnectedRoute;
   "/feed/$feedId/settings": typeof LayoutFeedFeedIdSettingsIndexRoute;
->>>>>>> 2908d70 (reorganize)
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute;
-<<<<<<< HEAD
-  "/": typeof IndexRoute;
-  "/leaderboard": typeof LeaderboardRoute;
-  "/settings": typeof SettingsRoute;
-  "/test": typeof TestRoute;
-  "/create/feed": typeof CreateFeedRoute;
-  "/explore": typeof ExploreRouteWithChildren;
-  "/explore/_root": typeof ExploreRootRoute;
-  "/feed/$feedId": typeof FeedFeedIdRouteWithChildren;
-  "/profile": typeof ProfileRouteWithChildren;
-  "/profile/_root": typeof ProfileRootRoute;
-  "/submissions/$feedId": typeof SubmissionsFeedIdRoute;
-  "/explore/": typeof ExploreIndexRoute;
-  "/feed/": typeof FeedIndexRoute;
-  "/profile/": typeof ProfileIndexRoute;
-  "/submissions/": typeof SubmissionsIndexRoute;
-  "/feed/$feedId/curation": typeof FeedFeedIdCurationRoute;
-  "/feed/$feedId/members": typeof FeedFeedIdMembersRoute;
-  "/feed/$feedId/points": typeof FeedFeedIdPointsRoute;
-  "/feed/$feedId/proposals": typeof FeedFeedIdProposalsRoute;
-  "/feed/$feedId/token": typeof FeedFeedIdTokenRoute;
-  "/feed/$feedId/": typeof FeedFeedIdIndexRoute;
-  "/feed/$feedId/settings/connected": typeof FeedFeedIdSettingsConnectedRoute;
-  "/feed/$feedId/settings/": typeof FeedFeedIdSettingsIndexRoute;
-=======
   "/_layout": typeof LayoutRouteWithChildren;
   "/_layout/leaderboard": typeof LayoutLeaderboardRoute;
-  "/_layout/settings": typeof LayoutSettingsRoute;
-  "/_layout/test": typeof LayoutTestRoute;
+  "/submissions/$feedId": typeof SubmissionsFeedIdRoute;
   "/_layout/": typeof LayoutIndexRoute;
   "/_layout/create/feed": typeof LayoutCreateFeedRoute;
   "/_layout/feed/$feedId": typeof LayoutFeedFeedIdRouteWithChildren;
@@ -776,86 +454,18 @@ export interface FileRoutesById {
   "/_layout/submissions/_layout/": typeof LayoutSubmissionsLayoutIndexRoute;
   "/_layout/feed/$feedId/settings/connected": typeof LayoutFeedFeedIdSettingsConnectedRoute;
   "/_layout/feed/$feedId/settings/": typeof LayoutFeedFeedIdSettingsIndexRoute;
->>>>>>> 2908d70 (reorganize)
-=======
-  '': typeof LayoutRouteWithChildren
-  '/leaderboard': typeof LayoutLeaderboardRoute
-  '/': typeof LayoutIndexRoute
-  '/create/feed': typeof LayoutCreateFeedRoute
-  '/feed/$feedId': typeof LayoutFeedFeedIdRouteWithChildren
-  '/profile': typeof LayoutProfileRootRoute
-  '/submissions': typeof LayoutSubmissionsLayoutRouteWithChildren
-  '/profile/': typeof LayoutProfileIndexRoute
-  '/feed/$feedId/curation': typeof LayoutFeedFeedIdCurationRoute
-  '/feed/$feedId/members': typeof LayoutFeedFeedIdMembersRoute
-  '/feed/$feedId/points': typeof LayoutFeedFeedIdPointsRoute
-  '/feed/$feedId/proposals': typeof LayoutFeedFeedIdProposalsRoute
-  '/feed/$feedId/token': typeof LayoutFeedFeedIdTokenRoute
-  '/feed/$feedId/': typeof LayoutFeedFeedIdIndexRoute
-  '/submissions/': typeof LayoutSubmissionsLayoutIndexRoute
-  '/feed/$feedId/settings/connected': typeof LayoutFeedFeedIdSettingsConnectedRoute
-  '/feed/$feedId/settings': typeof LayoutFeedFeedIdSettingsIndexRoute
-}
-
-export interface FileRoutesByTo {
-  '/leaderboard': typeof LayoutLeaderboardRoute
-  '/': typeof LayoutIndexRoute
-  '/create/feed': typeof LayoutCreateFeedRoute
-  '/profile': typeof LayoutProfileIndexRoute
-  '/submissions': typeof LayoutSubmissionsLayoutIndexRoute
-  '/feed/$feedId/curation': typeof LayoutFeedFeedIdCurationRoute
-  '/feed/$feedId/members': typeof LayoutFeedFeedIdMembersRoute
-  '/feed/$feedId/points': typeof LayoutFeedFeedIdPointsRoute
-  '/feed/$feedId/proposals': typeof LayoutFeedFeedIdProposalsRoute
-  '/feed/$feedId/token': typeof LayoutFeedFeedIdTokenRoute
-  '/feed/$feedId': typeof LayoutFeedFeedIdIndexRoute
-  '/feed/$feedId/settings/connected': typeof LayoutFeedFeedIdSettingsConnectedRoute
-  '/feed/$feedId/settings': typeof LayoutFeedFeedIdSettingsIndexRoute
-}
-
-export interface FileRoutesById {
-  __root__: typeof rootRoute
-  '/_layout': typeof LayoutRouteWithChildren
-  '/_layout/leaderboard': typeof LayoutLeaderboardRoute
-  '/_layout/': typeof LayoutIndexRoute
-  '/_layout/create/feed': typeof LayoutCreateFeedRoute
-  '/_layout/feed/$feedId': typeof LayoutFeedFeedIdRouteWithChildren
-  '/_layout/profile': typeof LayoutProfileRouteWithChildren
-  '/_layout/profile/_root': typeof LayoutProfileRootRoute
-  '/_layout/submissions': typeof LayoutSubmissionsRouteWithChildren
-  '/_layout/submissions/_layout': typeof LayoutSubmissionsLayoutRouteWithChildren
-  '/_layout/profile/': typeof LayoutProfileIndexRoute
-  '/_layout/feed/$feedId/curation': typeof LayoutFeedFeedIdCurationRoute
-  '/_layout/feed/$feedId/members': typeof LayoutFeedFeedIdMembersRoute
-  '/_layout/feed/$feedId/points': typeof LayoutFeedFeedIdPointsRoute
-  '/_layout/feed/$feedId/proposals': typeof LayoutFeedFeedIdProposalsRoute
-  '/_layout/feed/$feedId/token': typeof LayoutFeedFeedIdTokenRoute
-  '/_layout/feed/$feedId/': typeof LayoutFeedFeedIdIndexRoute
-  '/_layout/submissions/_layout/': typeof LayoutSubmissionsLayoutIndexRoute
-  '/_layout/feed/$feedId/settings/connected': typeof LayoutFeedFeedIdSettingsConnectedRoute
-  '/_layout/feed/$feedId/settings/': typeof LayoutFeedFeedIdSettingsIndexRoute
->>>>>>> 58705f7 (clean up)
 }
 
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
-<<<<<<< HEAD
     | ""
     | "/leaderboard"
-    | "/settings"
-    | "/test"
+    | "/submissions/$feedId"
     | "/"
     | "/create/feed"
     | "/feed/$feedId"
     | "/profile"
-<<<<<<< HEAD
-    | "/submissions/$feedId"
-    | "/explore/"
-    | "/feed"
-    | "/profile/"
-=======
->>>>>>> 2908d70 (reorganize)
     | "/submissions"
     | "/profile/"
     | "/feed/$feedId/curation"
@@ -870,16 +480,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo;
   to:
     | "/leaderboard"
-    | "/settings"
-    | "/test"
+    | "/submissions/$feedId"
     | "/"
     | "/create/feed"
     | "/profile"
-<<<<<<< HEAD
-    | "/submissions/$feedId"
-    | "/feed"
-=======
->>>>>>> 2908d70 (reorganize)
     | "/submissions"
     | "/feed/$feedId/curation"
     | "/feed/$feedId/members"
@@ -891,35 +495,9 @@ export interface FileRouteTypes {
     | "/feed/$feedId/settings";
   id:
     | "__root__"
-<<<<<<< HEAD
-    | "/"
-    | "/leaderboard"
-    | "/settings"
-    | "/test"
-    | "/create/feed"
-    | "/explore"
-    | "/explore/_root"
-    | "/feed/$feedId"
-    | "/profile"
-    | "/profile/_root"
-    | "/submissions/$feedId"
-    | "/explore/"
-    | "/feed/"
-    | "/profile/"
-    | "/submissions/"
-    | "/feed/$feedId/curation"
-    | "/feed/$feedId/members"
-    | "/feed/$feedId/points"
-    | "/feed/$feedId/proposals"
-    | "/feed/$feedId/token"
-    | "/feed/$feedId/"
-    | "/feed/$feedId/settings/connected"
-    | "/feed/$feedId/settings/";
-=======
     | "/_layout"
     | "/_layout/leaderboard"
-    | "/_layout/settings"
-    | "/_layout/test"
+    | "/submissions/$feedId"
     | "/_layout/"
     | "/_layout/create/feed"
     | "/_layout/feed/$feedId"
@@ -937,113 +515,22 @@ export interface FileRouteTypes {
     | "/_layout/submissions/_layout/"
     | "/_layout/feed/$feedId/settings/connected"
     | "/_layout/feed/$feedId/settings/";
->>>>>>> 2908d70 (reorganize)
   fileRoutesById: FileRoutesById;
 }
 
 export interface RootRouteChildren {
-<<<<<<< HEAD
-  IndexRoute: typeof IndexRoute;
-  LeaderboardRoute: typeof LeaderboardRoute;
-  SettingsRoute: typeof SettingsRoute;
-  TestRoute: typeof TestRoute;
-  CreateFeedRoute: typeof CreateFeedRoute;
-  ExploreRoute: typeof ExploreRouteWithChildren;
-  FeedFeedIdRoute: typeof FeedFeedIdRouteWithChildren;
-  ProfileRoute: typeof ProfileRouteWithChildren;
-  SubmissionsFeedIdRoute: typeof SubmissionsFeedIdRoute;
-  FeedIndexRoute: typeof FeedIndexRoute;
-  SubmissionsIndexRoute: typeof SubmissionsIndexRoute;
-}
-
-const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  LeaderboardRoute: LeaderboardRoute,
-  SettingsRoute: SettingsRoute,
-  TestRoute: TestRoute,
-  CreateFeedRoute: CreateFeedRoute,
-  ExploreRoute: ExploreRouteWithChildren,
-  FeedFeedIdRoute: FeedFeedIdRouteWithChildren,
-  ProfileRoute: ProfileRouteWithChildren,
-  SubmissionsFeedIdRoute: SubmissionsFeedIdRoute,
-  FeedIndexRoute: FeedIndexRoute,
-  SubmissionsIndexRoute: SubmissionsIndexRoute,
-=======
   LayoutRoute: typeof LayoutRouteWithChildren;
-=======
-    | ''
-    | '/leaderboard'
-    | '/'
-    | '/create/feed'
-    | '/feed/$feedId'
-    | '/profile'
-    | '/submissions'
-    | '/profile/'
-    | '/feed/$feedId/curation'
-    | '/feed/$feedId/members'
-    | '/feed/$feedId/points'
-    | '/feed/$feedId/proposals'
-    | '/feed/$feedId/token'
-    | '/feed/$feedId/'
-    | '/submissions/'
-    | '/feed/$feedId/settings/connected'
-    | '/feed/$feedId/settings'
-  fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/leaderboard'
-    | '/'
-    | '/create/feed'
-    | '/profile'
-    | '/submissions'
-    | '/feed/$feedId/curation'
-    | '/feed/$feedId/members'
-    | '/feed/$feedId/points'
-    | '/feed/$feedId/proposals'
-    | '/feed/$feedId/token'
-    | '/feed/$feedId'
-    | '/feed/$feedId/settings/connected'
-    | '/feed/$feedId/settings'
-  id:
-    | '__root__'
-    | '/_layout'
-    | '/_layout/leaderboard'
-    | '/_layout/'
-    | '/_layout/create/feed'
-    | '/_layout/feed/$feedId'
-    | '/_layout/profile'
-    | '/_layout/profile/_root'
-    | '/_layout/submissions'
-    | '/_layout/submissions/_layout'
-    | '/_layout/profile/'
-    | '/_layout/feed/$feedId/curation'
-    | '/_layout/feed/$feedId/members'
-    | '/_layout/feed/$feedId/points'
-    | '/_layout/feed/$feedId/proposals'
-    | '/_layout/feed/$feedId/token'
-    | '/_layout/feed/$feedId/'
-    | '/_layout/submissions/_layout/'
-    | '/_layout/feed/$feedId/settings/connected'
-    | '/_layout/feed/$feedId/settings/'
-  fileRoutesById: FileRoutesById
-}
-
-export interface RootRouteChildren {
-  LayoutRoute: typeof LayoutRouteWithChildren
->>>>>>> 58705f7 (clean up)
+  SubmissionsFeedIdRoute: typeof SubmissionsFeedIdRoute;
 }
 
 const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
-<<<<<<< HEAD
->>>>>>> 2908d70 (reorganize)
+  SubmissionsFeedIdRoute: SubmissionsFeedIdRoute,
 };
-=======
-}
->>>>>>> 58705f7 (clean up)
 
 export const routeTree = rootRoute
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
 
 /* ROUTE_MANIFEST_START
 {
@@ -1051,21 +538,8 @@ export const routeTree = rootRoute
     "__root__": {
       "filePath": "__root.tsx",
       "children": [
-<<<<<<< HEAD
-        "/",
-        "/leaderboard",
-        "/settings",
-        "/test",
-        "/create/feed",
-        "/explore",
-        "/feed/$feedId",
-        "/profile",
-        "/submissions/$feedId",
-        "/feed/",
-        "/submissions/"
-=======
-        "/_layout"
->>>>>>> 2908d70 (reorganize)
+        "/_layout",
+        "/submissions/$feedId"
       ]
     },
     "/_layout": {
@@ -1082,6 +556,9 @@ export const routeTree = rootRoute
     "/_layout/leaderboard": {
       "filePath": "_layout/leaderboard.tsx",
       "parent": "/_layout"
+    },
+    "/submissions/$feedId": {
+      "filePath": "submissions/$feedId.tsx"
     },
     "/_layout/": {
       "filePath": "_layout/index.tsx",
@@ -1117,21 +594,12 @@ export const routeTree = rootRoute
       "filePath": "_layout/profile/_root.tsx",
       "parent": "/_layout/profile"
     },
-<<<<<<< HEAD
-    "/submissions/$feedId": {
-      "filePath": "submissions/$feedId.tsx"
-    },
-    "/explore/": {
-      "filePath": "explore/index.tsx",
-      "parent": "/explore"
-=======
     "/_layout/submissions": {
       "filePath": "_layout/submissions",
       "parent": "/_layout",
       "children": [
         "/_layout/submissions/_layout"
       ]
->>>>>>> 2908d70 (reorganize)
     },
     "/_layout/submissions/_layout": {
       "filePath": "_layout/submissions/_layout.tsx",
