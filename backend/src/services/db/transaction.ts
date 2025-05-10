@@ -1,5 +1,5 @@
 import { PoolClient } from "pg";
-import { NodePgDatabase } from "drizzle-orm/node-postgres";
+import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
 import { logger } from "../../utils/logger";
 import { executeWithRetry } from "./utils";
 import { dbConnection } from "./connection";
@@ -24,16 +24,24 @@ export async function executeOperation<T>(
 /**
  * Executes a transaction with proper error handling and retries.
  * @param operations Function that performs operations within the transaction
+ * @param isWrite Whether this is a write operation (uses write pool)
  */
 export async function executeTransaction<T>(
-  operations: (client: PoolClient) => Promise<T>,
+  operations: (db: NodePgDatabase<any>) => Promise<T>,
+  isWrite: boolean = true,
 ): Promise<T> {
   await dbConnection.ensureConnection();
 
   const client = await dbConnection.getWritePool().connect();
   try {
     await client.query("BEGIN");
-    const result = await operations(client);
+
+    // Create a Drizzle instance for this transaction
+    const db = drizzle(client);
+
+    // Execute the operations
+    const result = await operations(db);
+
     await client.query("COMMIT");
     return result;
   } catch (error) {

@@ -8,6 +8,7 @@ import {
   SubmissionStatus,
   SubmissionWithFeedData,
 } from "../../types/twitter";
+import { FeedConfig } from "../../types/config";
 import {
   feeds,
   moderationHistory,
@@ -18,24 +19,27 @@ import {
 
 export async function upsertFeeds(
   db: NodePgDatabase<any>,
-  feedsToUpsert: { id: string; name: string; description?: string }[],
+  feedsToUpsert: FeedConfig[],
 ): Promise<void> {
   await db.transaction(async (tx) => {
-    for (const feed of feedsToUpsert) {
+    for (const feedConfig of feedsToUpsert) {
       await tx
         .insert(feeds)
         .values({
-          id: feed.id,
-          name: feed.name,
-          description: feed.description,
+          id: feedConfig.id,
+          config: feedConfig,
+          name: feedConfig.name,
+          description: feedConfig.description,
           createdAt: new Date(),
           updatedAt: new Date(),
         })
         .onConflictDoUpdate({
           target: feeds.id,
           set: {
-            name: feed.name,
-            description: feed.description,
+            config: feedConfig,
+            name: feedConfig.name,
+            description: feedConfig.description,
+            updatedAt: new Date(),
           },
         })
         .execute();

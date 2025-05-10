@@ -4,6 +4,7 @@ import {
   useGetLastTweetId,
   useUpdateLastTweetId,
 } from "../lib/api";
+import RecapManager from "./RecapManager";
 
 export default function Settings() {
   const { data: config } = useAppConfig();
@@ -143,30 +144,10 @@ export default function Settings() {
                   </div>
                 )}
 
-              {/* Recap Plugins */}
-              {feed.outputs.recap?.enabled && (
-                <div className="mb-4">
-                  <h4 className="font-semibold mb-2">Recap Plugins:</h4>
-                  <div className="space-y-2">
-                    {feed.outputs.recap.transform && (
-                      <div className="bg-gray-50 p-2 rounded">
-                        <span className="text-sm font-medium">Transform: </span>
-                        <code className="font-mono text-sm">
-                          {feed.outputs.recap.transform.plugin}
-                        </code>
-                      </div>
-                    )}
-                    {feed.outputs.recap.distribute?.map((dist, idx) => (
-                      <div key={idx} className="bg-gray-50 p-2 rounded">
-                        <span className="text-sm font-medium">
-                          Distribute:{" "}
-                        </span>
-                        <code className="font-mono text-sm">{dist.plugin}</code>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Recap Manager */}
+              <div className="mt-6 pt-6 border-t-2 border-gray-200">
+                <RecapManager feedId={feed.id} />
+              </div>
             </div>
           ))}
         </div>

@@ -3,6 +3,7 @@ import { secureHeaders } from "hono/secure-headers";
 import path from "path";
 import { apiRoutes } from "./routes/api";
 import { mockTwitterService } from "./routes/api/test";
+import { initializeInternalRouter } from "./routes/api/internal";
 import { configureStaticRoutes, staticRoutes } from "./routes/static";
 import { ConfigService, isProduction } from "./services/config/config.service";
 import { DistributionService } from "./services/distribution/distribution.service";
@@ -11,6 +12,9 @@ import { ProcessorService } from "./services/processor/processor.service";
 import { SubmissionService } from "./services/submissions/submission.service";
 import { TransformationService } from "./services/transformation/transformation.service";
 import { TwitterService } from "./services/twitter/client";
+import { feedRepository } from "./services/db/repositories";
+import { SchedulerService } from "./services/scheduler/scheduler.service";
+import { SchedulerClient } from "@crosspost/scheduler-sdk";
 import { AppContext, AppInstance, HonoApp } from "./types/app";
 import { getAllowedOrigins } from "./utils/config";
 import { errorHandler } from "./utils/error";
@@ -57,12 +61,35 @@ export async function createApp(): Promise<AppInstance> {
     submissionService.initialize();
   }
 
+  // Initialize scheduler service
+  const schedulerClient = new SchedulerClient({
+    baseUrl: process.env.SCHEDULER_BASE_URL || "http://localhost:3001",
+    headers: {
+      Authorization: `Bearer ${process.env.SCHEDULER_API_TOKEN || ""}`,
+    },
+  });
+
+  const backendUrl = process.env.CURATE_BACKEND_URL || "http://localhost:3000";
+  const schedulerService = new SchedulerService(
+    feedRepository,
+    processorService,
+    schedulerClient,
+    backendUrl,
+  );
+
+  // Initialize scheduler on startup (non-blocking)
+  schedulerService.initialize().catch((err) => {
+    console.error("Failed to initialize scheduler service:", err);
+  });
+
   const context: AppContext = {
     twitterService,
     submissionService,
     distributionService,
     processorService,
     configService,
+    schedulerService,
+    feedRepository,
   };
 
   // Create Hono app
@@ -101,6 +128,10 @@ export async function createApp(): Promise<AppInstance> {
 
   // Mount API routes
   app.route("/api", apiRoutes);
+
+  // Mount internal API routes
+  const internalRouter = initializeInternalRouter(schedulerService);
+  app.route("/api/internal", internalRouter);
 
   // Configure static routes for production
   if (isProduction) {

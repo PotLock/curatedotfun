@@ -10,6 +10,7 @@ TRUNCATE TABLE feed_plugins CASCADE;
 TRUNCATE TABLE submission_counts CASCADE;
 TRUNCATE TABLE twitter_cookies CASCADE;
 TRUNCATE TABLE twitter_cache CASCADE;
+TRUNCATE TABLE feed_recaps_state CASCADE;
 
 -- Insert test feeds
 INSERT INTO feeds (id, name, description, created_at, updated_at)
@@ -51,3 +52,9 @@ VALUES
   ('user-1', 1, CURRENT_DATE, NOW(), NOW()),
   ('user-2', 1, CURRENT_DATE, NOW(), NOW()),
   ('user-3', 1, CURRENT_DATE, NOW(), NOW());
+
+-- Insert test feed_recaps_state
+INSERT INTO feed_recaps_state (feed_id, recap_id, recap_config_index, external_job_id, last_successful_completion, last_run_error, created_at, updated_at)
+VALUES 
+  ('test-feed-1', 'daily-recap', 0, 'job-1', NOW(), NULL, NOW(), NOW()),
+  ('test-feed-2', 'weekly-recap', 0, 'job-2', NULL, 'Failed to generate recap', NOW(), NOW());

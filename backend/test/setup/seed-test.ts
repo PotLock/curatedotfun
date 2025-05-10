@@ -29,6 +29,7 @@ async function main() {
       TRUNCATE TABLE submission_counts CASCADE;
       TRUNCATE TABLE twitter_cookies CASCADE;
       TRUNCATE TABLE twitter_cache CASCADE;
+      TRUNCATE TABLE feed_recaps_state CASCADE;
     `);
 
     console.log("Existing data cleared. Inserting test data...");
@@ -39,6 +40,34 @@ async function main() {
         id: "test-feed-1",
         name: "Test Feed 1",
         description: "A test feed for testing",
+        config: {
+          id: "test-feed-1",
+          name: "Test Feed 1",
+          description: "A test feed for testing",
+          moderation: {
+            approvers: {
+              twitter: ["moderator-1"],
+            },
+          },
+          outputs: {
+            stream: {
+              enabled: true,
+              transform: [],
+              distribute: [],
+            },
+            recap: [
+              {
+                id: "daily-recap",
+                name: "Daily Recap",
+                enabled: true,
+                schedule: "0 0 * * *",
+                timezone: "UTC",
+                transform: [],
+                distribute: [],
+              },
+            ],
+          },
+        },
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -46,6 +75,34 @@ async function main() {
         id: "test-feed-2",
         name: "Test Feed 2",
         description: "Another test feed for testing",
+        config: {
+          id: "test-feed-2",
+          name: "Test Feed 2",
+          description: "Another test feed for testing",
+          moderation: {
+            approvers: {
+              twitter: ["moderator-2"],
+            },
+          },
+          outputs: {
+            stream: {
+              enabled: true,
+              transform: [],
+              distribute: [],
+            },
+            recap: [
+              {
+                id: "weekly-recap",
+                name: "Weekly Recap",
+                enabled: true,
+                schedule: "0 0 * * 0",
+                timezone: "UTC",
+                transform: [],
+                distribute: [],
+              },
+            ],
+          },
+        },
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -53,6 +110,23 @@ async function main() {
         id: "test-feed-3",
         name: "Test Feed 3",
         description: "Yet another test feed for testing",
+        config: {
+          id: "test-feed-3",
+          name: "Test Feed 3",
+          description: "Yet another test feed for testing",
+          moderation: {
+            approvers: {
+              twitter: ["moderator-3"],
+            },
+          },
+          outputs: {
+            stream: {
+              enabled: true,
+              transform: [],
+              distribute: [],
+            },
+          },
+        },
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -182,21 +256,45 @@ async function main() {
       {
         userId: "user-1",
         count: 1,
-        lastResetDate: new Date(),
+        lastResetDate: new Date().toISOString().split("T")[0],
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       {
         userId: "user-2",
         count: 1,
-        lastResetDate: new Date(),
+        lastResetDate: new Date().toISOString().split("T")[0],
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       {
         userId: "user-3",
         count: 1,
-        lastResetDate: new Date(),
+        lastResetDate: new Date().toISOString().split("T")[0],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
+
+    // Insert test feed_recaps_state
+    await db.insert(schema.feedRecapsState).values([
+      {
+        feedId: "test-feed-1",
+        recapId: "daily-recap",
+        recapConfigIndex: 0,
+        externalJobId: "job-1",
+        lastSuccessfulCompletion: new Date(),
+        lastRunError: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        feedId: "test-feed-2",
+        recapId: "weekly-recap",
+        recapConfigIndex: 0,
+        externalJobId: "job-2",
+        lastSuccessfulCompletion: null,
+        lastRunError: "Failed to generate recap",
         createdAt: new Date(),
         updatedAt: new Date(),
       },

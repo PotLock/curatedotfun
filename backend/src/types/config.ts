@@ -36,12 +36,7 @@ export interface StreamConfig {
   distribute?: DistributorConfig[];
 }
 
-export interface RecapConfig {
-  enabled: boolean;
-  schedule: string;
-  transform?: TransformConfig[]; // Global transforms for recap
-  distribute: DistributorConfig[];
-}
+import { RecapConfig } from "./recap";
 
 export type PluginsConfig = Record<string, PluginConfig>;
 
@@ -52,7 +47,7 @@ export interface FeedConfig {
   moderation: ModerationConfig;
   outputs: {
     stream?: StreamConfig;
-    recap?: RecapConfig;
+    recap?: RecapConfig[];
   };
 }
 
