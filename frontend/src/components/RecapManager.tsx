@@ -99,11 +99,11 @@ export default function RecapManager({ feedId }: RecapManagerProps) {
         if (
           !(
             /^(\*|[0-9]+)(\s+(\*|[0-9]+)){4}$/.test(value) || // Cron format
-            /^(minute|hour|day):[0-9]+$/.test(value)           // Interval format
+            /^(minute|hour|day):[0-9]+$/.test(value) // Interval format
           )
         ) {
           setFormError(
-            "Invalid schedule format. Use cron expression or interval (e.g., day:1)"
+            "Invalid schedule format. Use cron expression or interval (e.g., day:1)",
           );
           // Still update the form value to show what the user typed
         } else {

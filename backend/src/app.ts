@@ -49,10 +49,10 @@ export async function createApp(): Promise<AppInstance> {
 
   const submissionService = twitterService
     ? new SubmissionService(
-      twitterService,
-      processorService,
-      configService.getConfig(),
-    )
+        twitterService,
+        processorService,
+        configService.getConfig(),
+      )
     : null;
 
   if (submissionService) {

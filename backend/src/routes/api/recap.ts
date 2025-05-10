@@ -15,7 +15,10 @@ const recapConfigSchema = z.object({
   enabled: z.boolean(),
   schedule: z
     .string()
-    .regex(/^(@every|(?:\d+ [\d\*\/,-]+.*)|(?:[a-z]+:\d+))$/, "invalid schedule"),
+    .regex(
+      /^(@every|(?:\d+ [\d\*\/,-]+.*)|(?:[a-z]+:\d+))$/,
+      "invalid schedule",
+    ),
   timezone: z
     .string()
     .optional()

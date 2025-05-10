@@ -27,26 +27,21 @@ export const triggerRoutes = new Hono();
 
 // POST /api/trigger/recap
 // Endpoint for the scheduler to trigger recap jobs
-triggerRoutes.post(
-  "/recap",
-  zValidator("json", recapJobSchema),
-  async (c) => {
-    const { feedId, recapId } = c.req.valid("json");
+triggerRoutes.post("/recap", zValidator("json", recapJobSchema), async (c) => {
+  const { feedId, recapId } = c.req.valid("json");
 
-    logger.info(`Received request to run recap: ${feedId}/${recapId}`);
+  logger.info(`Received request to run recap: ${feedId}/${recapId}`);
 
-    try {
-      // TODO: need to handle schedulerService injection
-      // await schedulerService.runRecapJob(feedId, recapId);
-      return c.json({ success: true });
-    } catch (error) {
-      logger.error(`Error running recap job: ${feedId}/${recapId}`, error);
+  try {
+    // TODO: need to handle schedulerService injection
+    // await schedulerService.runRecapJob(feedId, recapId);
+    return c.json({ success: true });
+  } catch (error) {
+    logger.error(`Error running recap job: ${feedId}/${recapId}`, error);
 
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      return c.json({ error: errorMessage }, 500);
-    }
-  },
-);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return c.json({ error: errorMessage }, 500);
+  }
+});
 
 export default triggerRoutes;
