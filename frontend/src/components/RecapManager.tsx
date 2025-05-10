@@ -92,6 +92,28 @@ export default function RecapManager({ feedId }: RecapManagerProps) {
   ) => {
     const { name, value, type } = e.target;
 
+    // Validate schedule if that's the field being changed
+    if (name === "schedule") {
+      try {
+        // Basic validation for cron format or interval format
+        if (
+          !(
+            /^(\*|[0-9]+)(\s+(\*|[0-9]+)){4}$/.test(value) || // Cron format
+            /^(minute|hour|day):[0-9]+$/.test(value)           // Interval format
+          )
+        ) {
+          setFormError(
+            "Invalid schedule format. Use cron expression or interval (e.g., day:1)"
+          );
+          // Still update the form value to show what the user typed
+        } else {
+          setFormError(null);
+        }
+      } catch (err) {
+        setFormError("Invalid schedule format");
+      }
+    }
+
     setRecapForm((prev) => ({
       ...prev,
       [name]:
