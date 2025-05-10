@@ -144,7 +144,7 @@ export class SchedulerService {
     const payload = { feedId, recapId: recapConfig.id };
 
     // Target URL for the job
-    const target = `${this.backendUrl}/api/internal/run-recap`;
+    const target = `${this.backendUrl}/api/trigger/recap`;
 
     // Parse schedule
     const scheduleConfig = this.parseSchedule(recapConfig.schedule);

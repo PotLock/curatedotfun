@@ -1,20 +1,18 @@
+import { SchedulerClient } from "@crosspost/scheduler-sdk";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import path from "path";
-import { apiRoutes } from "./routes/api";
 import { mockTwitterService } from "./routes/api/test";
-import { initializeInternalRouter } from "./routes/api/internal";
 import { configureStaticRoutes, staticRoutes } from "./routes/static";
 import { ConfigService, isProduction } from "./services/config/config.service";
+import { feedRepository } from "./services/db/repositories";
 import { DistributionService } from "./services/distribution/distribution.service";
 import { PluginService } from "./services/plugins/plugin.service";
 import { ProcessorService } from "./services/processor/processor.service";
+import { SchedulerService } from "./services/scheduler/scheduler.service";
 import { SubmissionService } from "./services/submissions/submission.service";
 import { TransformationService } from "./services/transformation/transformation.service";
 import { TwitterService } from "./services/twitter/client";
-import { feedRepository } from "./services/db/repositories";
-import { SchedulerService } from "./services/scheduler/scheduler.service";
-import { SchedulerClient } from "@crosspost/scheduler-sdk";
 import { AppContext, AppInstance, HonoApp } from "./types/app";
 import { getAllowedOrigins } from "./utils/config";
 import { errorHandler } from "./utils/error";
@@ -51,10 +49,10 @@ export async function createApp(): Promise<AppInstance> {
 
   const submissionService = twitterService
     ? new SubmissionService(
-        twitterService,
-        processorService,
-        configService.getConfig(),
-      )
+      twitterService,
+      processorService,
+      configService.getConfig(),
+    )
     : null;
 
   if (submissionService) {
@@ -125,13 +123,6 @@ export async function createApp(): Promise<AppInstance> {
   // UNCOMMENT THIS IF YOU WANT TO SEE REQUESTS
   // import { logger } from "hono/logger";
   // if (!isProduction) app.use("*", logger());
-
-  // Mount API routes
-  app.route("/api", apiRoutes);
-
-  // Mount internal API routes
-  const internalRouter = initializeInternalRouter(schedulerService);
-  app.route("/api/internal", internalRouter);
 
   // Configure static routes for production
   if (isProduction) {
