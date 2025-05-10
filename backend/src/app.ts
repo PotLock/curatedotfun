@@ -76,9 +76,9 @@ export async function createApp(): Promise<AppInstance> {
   );
 
   // Initialize scheduler on startup (non-blocking)
-  schedulerService.initialize().catch((err) => {
-    console.error("Failed to initialize scheduler service:", err);
-  });
+  // schedulerService.initialize().catch((err) => {
+  //   console.error("Failed to initialize scheduler service:", err);
+  // });
 
   const context: AppContext = {
     twitterService,
