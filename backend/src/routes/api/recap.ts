@@ -72,7 +72,7 @@ recapRouter.get("/:feedId/recap", async (c) => {
     const recapStates = await feedRepository.getAllRecapStatesForFeed(feedId);
 
     // Combine recap configs with their states
-    const recaps = feedConfig.outputs.recap || [];
+    const recaps = feedConfig.outputs?.recap ?? [];
     const recapsWithState = recaps.map((recap) => {
       const state = recapStates.find((s) => s.recapId === recap.id);
       return {
