@@ -22,7 +22,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data # dev persists volumes, so you don't lose your setup
     profiles: ["dev"]
-    
+
   # Production-specific postgres config
   postgres_prod:
     extends: postgres
@@ -63,7 +63,7 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
-      - node_modules_cache:/app/node_modules  # Add persistent volume for node_modules, otherwise this messes with rspack bindings
+      - node_modules_cache:/app/node_modules # Add persistent volume for node_modules, otherwise this messes with rspack bindings
     command: sh -c "bun add -g pnpm && if [ ! -d /app/node_modules/.pnpm ]; then echo '📦 Installing dependencies...' && pnpm install; else echo '✅ Dependencies already installed, skipping'; fi && pnpm run db:migrate && pnpm run db:seed:dev"
     profiles: ["dev"]
 
@@ -77,7 +77,7 @@ services:
         condition: service_healthy
     command: sh -c "bun add -g pnpm && pnpm install && pnpm run db:migrate && pnpm run db:seed:test"
     profiles: ["test"]
-    
+
   # Production-specific initialization
   db-init-prod:
     extends: db-init
@@ -110,4 +110,4 @@ services:
 volumes:
   postgres_data:
   postgres_data_prod:
-  node_modules_cache:  # Add persistent volume for node_modules
+  node_modules_cache: # Add persistent volume for node_modules
