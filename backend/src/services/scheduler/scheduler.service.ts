@@ -161,10 +161,7 @@ export class SchedulerService {
             {
               ...scheduleConfig,
               payload,
-              // Don't update these fields unless needed
-              // name: jobName,
-              // type: JobType.HTTP,
-              // target,
+              target,
             },
           );
 
