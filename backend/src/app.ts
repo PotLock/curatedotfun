@@ -15,7 +15,7 @@ import { TransformationService } from "./services/transformation/transformation.
 import { TwitterService } from "./services/twitter/client";
 import { AppContext, AppInstance, HonoApp } from "./types/app";
 import { getAllowedOrigins } from "./utils/config";
-import { errorHandler } from "./utils/error";
+import { errorHandler, appContextMiddleware } from "./core/middleware";
 
 const ALLOWED_ORIGINS = getAllowedOrigins();
 
@@ -98,6 +98,8 @@ export async function createApp(): Promise<AppInstance> {
     c.set("context", context);
     await next();
   });
+  
+  app.use("*", appContextMiddleware());
 
   // Handle errors
   app.onError((err, c) => {

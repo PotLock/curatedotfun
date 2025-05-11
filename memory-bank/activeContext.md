@@ -1,159 +1,113 @@
 # Active Context
 
-## Current Focus
-Comprehensive Error Handling, Database Configuration, Test Coverage, and Security Enhancements
+## Current Focus: Backend Refactoring
 
-### Background
-- Successfully operating with Node.js/Hono backend
-- Using pnpm for package management with Bun for scripts and tests
-- Plugin system fully operational with module federation
-- Multiple active feeds with Twitter-based curation
-- Deployed to Railway with Docker containerization
+We are currently focused on a comprehensive refactoring of the backend architecture to improve maintainability, modularity, and testability. This refactoring aims to standardize patterns, reduce redundancy, and create a more organized codebase.
 
-### Next Phase Priorities
-1. **Comprehensive Error Handling Solution**
-   - Implementing granular error types across the application
-   - Developing consistent error recovery mechanisms
-   - Enhancing error logging and monitoring
-   - Creating user-friendly error messages
-   - Implementing graceful degradation strategies
+### Key Refactoring Areas
 
-2. **Moving Configuration to Database**
-   - Migrating from JSON-based configuration to database storage
-   - Implementing configuration versioning
-   - Creating admin interface for configuration management
-   - Ensuring backward compatibility
-   - Implementing validation and security measures
+1. **Type System Refactoring**
+   - Creating a single source of truth for types derived from the database schema
+   - Using drizzle-zod to generate Zod schemas from Drizzle tables
+   - Deriving TypeScript types from these Zod schemas
+   - Ensuring consistent type usage across the application
 
-3. **Completing Test Coverage**
-   - Expanding component tests for key flows
-   - Implementing integration tests for external services
-   - Adding E2E tests for critical user journeys
-   - Improving test infrastructure with Docker
-   - Implementing performance testing
+2. **Repository Layer Enhancement**
+   - Implementing a base repository class with common CRUD operations
+   - Refactoring existing repositories to extend this base class
+   - Standardizing error handling in repositories
+   - Adding missing repository methods for complete data access
 
-4. **Database Security for Web3Auth**
-   - Implementing secure authentication with Web3Auth
-   - Adding database protections for user data
-   - Creating proper access control mechanisms
-   - Implementing audit logging
-   - Ensuring compliance with security best practices
+3. **Service Layer Standardization**
+   - Implementing a service factory pattern for dependency injection
+   - Refactoring services to use consistent initialization patterns
+   - Standardizing error handling in services
+   - Ensuring proper separation of concerns
 
-### Key Considerations
-- Ensuring reliable content processing
-- Supporting growing number of feeds
-- Maintaining plugin compatibility
-- Balancing performance and features
-- **Comprehensive error handling across the application**
-- **Database security for user authentication**
-- **Test coverage for critical flows**
-- **Configuration management in database**
+4. **Route Layer Modularization**
+   - Implementing a modular route structure with dedicated files per resource
+   - Adding request validation using Zod schemas
+   - Standardizing response formatting
+   - Improving error handling in route handlers
 
-## Active Decisions
+5. **Application Bootstrap Refactoring**
+   - Refactoring app.ts to use the new patterns
+   - Implementing proper service initialization
+   - Setting up centralized error handling
+   - Configuring middleware consistently
 
-### Architecture
-1. Node.js/Hono in production
-   - Stable and reliable
-   - Good performance characteristics
-   - Native module compatibility
-2. pnpm for package management with Bun for scripts and tests
-   - Fast package management
-   - Excellent developer experience
-   - Strong workspace support
-   - Managed via Corepack for version consistency
-3. **PostgreSQL with Drizzle ORM**
-   - Improved scalability
-   - Read/write separation capability
-   - Transaction support with retry logic
-   - Repository pattern for domain-specific operations
-   - Modular database service architecture
-   - Docker-based development environment
-4. **Module Federation for Plugin System**
-   - Runtime loading without rebuilds
-   - Type-safe plugin interfaces
-   - Easy plugin development
-   - Hot-reloading capability
-5. **Railway Deployment with Docker**
-   - Simplified deployment process
-   - Containerized application
-   - Kubernetes orchestration
-   - Environment-specific configurations
+6. **Plugin System Enhancement**
+   - Improving the plugin system for better modularity
+   - Preparing for potential extraction as a separate package
+   - Enhancing plugin type safety
+   - Standardizing plugin initialization and configuration
 
-### Plugin System
-- Runtime module federation for plugins
-- Type-safe plugin configuration
-- Hot-reloading support
-- Standardized interfaces for different plugin types
+### Recent Changes
 
-### Content Flow
-- Twitter as primary content source
-- Trusted curator moderation
-- Configurable transformation pipeline
-- Multi-channel distribution
+- Completed analysis of current codebase structure and patterns
+- Identified areas for improvement in the backend architecture
+- Created a comprehensive refactoring plan with detailed steps
+- Updated Memory Bank documentation to reflect the new architecture
 
-## Current Focus Areas
-1. Implementing comprehensive error handling solution
-   - ✅ Added comprehensive error handling to database repositories
-   - ✅ Implemented transaction-based operations for data consistency
-   - ✅ Added default values for graceful degradation
-   - ✅ Enhanced error logging with context
-2. Moving configuration to database
-3. Completing test coverage
-   - ✅ Added tests for error handling scenarios
-   - ✅ Added tests for transaction-based operations
-4. Adding database protections for Web3Auth
-5. Enhancing monitoring and logging
-   - ✅ Improved database operation logging
-6. Improving performance and scalability
-7. Migrating to repository pattern for database operations
-   - ✅ Completed initial reorganization
-   - ✅ Consolidated duplicate status update logic
-   - ✅ Implemented transaction-based operations for related data
-   - ✅ Added comprehensive error handling to all repository methods
-   - ✅ Improved testability and maintainability
+### Current Challenges
 
-## Next Steps
-1. Complete implementation of error handling framework for other services
-2. Create database schema for configuration storage
-3. Develop migration plan for configuration
-4. Implement Web3Auth integration
-5. Add database security measures
-6. Expand test coverage for critical flows
-7. Further enhance monitoring and logging
-8. Complete full migration to repository pattern
-   - Update remaining service files to use repositories
-   - Remove backward compatibility layer
-   - Add more comprehensive tests for repositories
+- Ensuring backward compatibility during refactoring
+- Maintaining type safety throughout the application
+- Balancing between standardization and flexibility
+- Managing the transition from singleton patterns to dependency injection
+- Handling the plugin system's integration with Hono routes
 
-## Validated Solutions
-1. Twitter-based submission and moderation
-2. Module federation plugin architecture
-3. Configuration-driven feed management
-4. Multi-channel content distribution
-5. PostgreSQL with Drizzle ORM
-6. Docker containerization
-7. Railway deployment
-8. JSON sanitization at key points in the transformation pipeline
+### Next Steps
 
-## Testing Strategy Implementation
+#### Phase 1: Core Infrastructure & Type System
+1. Create `backend/src/core/types.ts` for centralized type definitions
+2. Implement `backend/src/core/errors.ts` for custom error classes
+3. Set up dependency injection container in `backend/src/core/container.ts`
+4. Define application context in `backend/src/core/appContext.ts`
 
-### Current Testing Status
-- Component tests implemented for key flows
-- Docker-Compose for testing infrastructure
-- Integration tests for external services
-- E2E tests for full flows
-- CI/CD with GitHub Actions
+#### Phase 2: Data Access Layer
+1. Create `backend/src/services/db/repositories/base.repository.ts`
+2. Refactor existing repositories to extend BaseRepository
+3. Standardize error handling in repositories
+4. Move query logic from queries.ts into respective repositories
 
-### Testing Approach
-- Focus on component tests as primary testing strategy
-- Using Docker-Compose for real database and infrastructure
-- Implementing a fake MQ for message queue testing
-- Clear directory structure for different test types
-- Following Node.js testing best practices as documented in memory-bank/testingPlan.md
+#### Phase 3: Service Layer
+1. Define standard service interfaces
+2. Refactor services to use constructor injection
+3. Update service initialization in app.ts
+4. Implement service factory pattern
 
-### Next Testing Priorities
-1. Expand component test coverage
-2. Add more integration tests for external services
-3. Implement performance testing
-4. Add security testing
-5. Improve test data management
+#### Phase 4: Route Layer
+1. Create modular route files for each resource
+2. Implement request validation with Zod schemas
+3. Standardize response formatting
+4. Set up centralized error handling middleware
+
+#### Phase 5: Application Bootstrap
+1. Refactor app.ts to use the new patterns
+2. Implement proper service initialization
+3. Configure middleware consistently
+4. Set up graceful shutdown
+
+### Integration Points
+
+- **Database Connection**: Ensure the refactored repositories work with the existing connection management
+- **Plugin System**: Maintain compatibility with the current plugin system while improving its structure
+- **API Routes**: Ensure all existing API endpoints continue to function with the new route organization
+- **Error Handling**: Integrate the new error handling system with existing logging and reporting
+- **Configuration**: Maintain compatibility with the current configuration system
+
+### Testing Strategy
+
+- Unit tests for individual components (repositories, services)
+- Integration tests for database operations
+- Component tests for critical flows
+- End-to-end tests for API endpoints
+- Mock implementations for external dependencies
+
+### Documentation Updates
+
+- Update Memory Bank files to reflect the new architecture
+- Document the new patterns and conventions
+- Create examples for implementing new components
+- Update .clinerules with new coding standards

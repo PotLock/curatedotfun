@@ -59,6 +59,16 @@ curate.fun is a content curation platform that aggregates and distributes curate
 - Containerized deployment with Docker
 - PostgreSQL database with proper security measures
 
+## Refactoring Goals
+1. Derive application types from database schema for consistency
+2. Standardize service initialization and dependency injection
+3. Implement a more modular route structure
+4. Centralize error handling
+5. Fully adopt the repository pattern
+6. Improve code organization and reduce redundancy
+7. Enhance testability through clear separation of concerns
+8. Make the plugin system more modular and reusable
+
 ## Current Status
 The platform is fully operational with:
 - Multiple active feeds across various domains
@@ -67,3 +77,4 @@ The platform is fully operational with:
 - AI-powered content transformation
 - Comprehensive plugin system
 - Containerized deployment on Railway
+- Undergoing architectural refactoring to improve maintainability and scalability

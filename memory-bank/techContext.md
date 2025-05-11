@@ -3,266 +3,184 @@
 ## Technology Stack
 
 ### Backend
-- **Runtime**: Node.js
-- **Framework**: Hono
-- **Language**: TypeScript
-- **Database**: PostgreSQL with Drizzle ORM (with repository pattern)
-- **Build Tool**: RSPack
-- **Package Manager**: pnpm (with Corepack)
-- **Script Runner**: Bun (for tests and development scripts)
+- **Node.js**: Runtime environment
+- **TypeScript**: Programming language with static typing
+- **Hono**: High-performance web framework
+- **PostgreSQL**: Primary database
+- **Drizzle ORM**: Type-safe database toolkit
+- **Module Federation**: Plugin system architecture
+- **Zod**: Schema validation and type generation
+- **Bun**: Fast JavaScript runtime for scripts and tests
+- **Docker**: Containerization for deployment and development
+- **Railway**: Deployment platform
 
 ### Frontend
-- **Framework**: React 18
-- **Router**: TanStack Router
-- **State Management**: TanStack Query
-- **Build Tool**: RSBuild
-- **Styling**: Tailwind CSS
+- **React**: UI library
+- **TypeScript**: Programming language with static typing
+- **TanStack Router**: Type-safe routing
+- **TailwindCSS**: Utility-first CSS framework
+- **RSBuild**: Build system optimized for React
 
-### External Services
-- **Twitter API**: Content source and moderation
-- **Telegram API**: Content distribution
-- **Notion API**: Content distribution
-- **NEAR Social**: Content distribution
-- **OpenRouter API**: AI transformations
+### Development Tools
+- **pnpm**: Package manager
+- **Corepack**: Package manager version consistency
+- **Turborepo**: Monorepo build system
+- **ESLint**: Code linting
+- **Prettier**: Code formatting
+- **RSPack**: Build system for backend
 
-## Development Setup
+## Core Libraries
 
-### Core Dependencies
-- Node.js (runtime in production)
-- pnpm (package manager)
-- Bun (script runner and test runner)
-- Corepack (package manager version management)
-- TypeScript (5.x+)
-- Hono (latest)
-- React (18.x)
-- TanStack Router & Query
-- RSBuild & RSPack
-- Tailwind CSS
-- Testing Libraries
-  * Bun Test
-  * Nock (for HTTP mocking)
+### Database
+- **Drizzle ORM**: Type-safe database toolkit
+  - Schema definition
+  - Query building
+  - Migration management
+  - Type generation
+- **pg**: PostgreSQL client
+- **drizzle-zod**: Zod schema generation from Drizzle schema
 
-### Environment Configuration
-- Core Settings
-  * NODE_ENV
-  * PORT
-  * LOG_LEVEL
-- Database Settings
-  * DATABASE_URL
-  * DATABASE_WRITE_URL (optional for read/write separation)
-  * DATABASE_READ_URL (optional for read/write separation)
-- Twitter Auth
-  * TWITTER_USERNAME
-  * TWITTER_PASSWORD
-  * TWITTER_EMAIL
-  * TWITTER_2FA_SECRET
-- Distribution Settings
-  * TELEGRAM_BOT_TOKEN
-  * NOTION_API_KEY
-  * OPENROUTER_API_KEY
-  * SHIPPOST_NEAR_SOCIAL_KEY
-- Plugin Settings
-  * PLUGIN_CACHE_TTL
-  * MAX_PLUGIN_MEMORY
+### API Framework
+- **Hono**: High-performance web framework
+  - Middleware support
+  - Type-safe routing
+  - Request validation
+  - Error handling
+  - Static file serving
+- **@hono/node-server**: Node.js adapter for Hono
+- **@hono/zod-validator**: Zod integration for request validation
 
-## Plugin System
+### Plugin System
+- **Module Federation**: Dynamic code loading
+  - Runtime plugin loading
+  - Type-safe plugin interfaces
+  - Hot-reloading support
+  - Plugin caching and invalidation
+- **@module-federation/node**: Node.js support for Module Federation
+- **@module-federation/runtime**: Runtime support for Module Federation
 
-### Module Federation
-- Runtime loading of remote modules
-- Shared dependencies between host and remotes
-- Type-safe plugin interfaces
-- Hot-reloading support
-- Plugin caching and invalidation
+### Utilities
+- **async-retry**: Retry logic for transient errors
+- **zod**: Schema validation and type generation
+- **pino**: Logging library
+- **dotenv**: Environment variable loading
 
-### Core Plugin Features
-- Runtime module federation loading
-- Hot-reloading support
-- Custom endpoint registration
-- Scheduled task integration
-- Type-safe configuration
+## Development Environment
 
-### Distributor Plugins
-- Telegram: Real-time message distribution
-- RSS: Feed generation
-- Notion: Database integration
-- NEAR Social: Content posting
+### Local Development
+- **Docker Compose**: Local development environment
+  - PostgreSQL container
+  - Volume mounting for persistence
+  - Environment variable configuration
+- **Bun**: Fast JavaScript runtime for scripts and tests
+- **pnpm**: Package manager with workspaces support
+- **Turborepo**: Build orchestration and caching
 
-### Transformer Plugins
-- AI Transform: AI-powered content transformation
-- Simple Transform: Basic content formatting
-- Object Transform: Data mapping and transformation
+### Testing
+- **Bun Test**: Testing framework
+- **Docker Compose**: Test environment setup
+  - Isolated test database
+  - Service dependencies
+- **Mock implementations**: For external services
+- **Component tests**: For critical flows
+- **Integration tests**: For database operations
+- **Unit tests**: For utility functions
 
-### Source Plugins
-- Twitter: Tweet monitoring and interaction
-- Telegram: Message monitoring (planned)
-- LinkedIn: Post monitoring (planned)
+### CI/CD
+- **GitHub Actions**: CI/CD pipeline
+  - Automated testing
+  - Build verification
+  - Deployment to Railway
+- **Railway**: Deployment platform
+  - Container-based deployment
+  - Environment variable management
+  - Database provisioning
 
-### Plugin Development
-- Development Tools
-  * Plugin development kit
-  * Type generation utilities
-  * Testing helpers
-  * Documentation generators
-- Testing Infrastructure
-  * Mock system
-  * Test runners
-  * Fixture generators
-  * Performance testing tools
-- Development Features
-  * Hot-reload support
-  * Debug logging
-  * State inspection
-  * Performance profiling
+## Database Schema
 
-## Task Scheduling
+The database schema is defined using Drizzle ORM and includes the following tables:
 
-### Cron Jobs
-- Configuration-driven scheduling
-- Recap generation tasks
-- Plugin-specific scheduled tasks
-- Execution monitoring
-- Error handling and retries
+- **feeds**: Stores feed configurations
+- **submissions**: Stores tweet submissions
+- **submission_feeds**: Links submissions to feeds with status
+- **moderation_history**: Tracks moderation actions
+- **submission_counts**: Tracks daily submission counts
+- **feed_plugins**: Stores plugin configurations per feed
+- **feed_recaps_state**: Tracks the state of recap jobs
+- **twitter_cookies**: Stores Twitter authentication cookies
+- **twitter_cache**: Caches Twitter-related data
 
-### Recap System
-- Scheduled content aggregation
-- Customizable transformation
-- Multi-channel distribution
-- Configurable schedules (cron syntax)
+## API Endpoints
+
+The API is organized into the following routes:
+
+- **/api/submissions**: Submission management
+- **/api/feeds**: Feed management
+- **/api/config**: Configuration management
+- **/api/leaderboard**: Leaderboard data
+- **/api/stats**: System statistics
+- **/api/plugin**: Plugin management
+- **/api/recap**: Recap management
+- **/api/trigger**: Manual triggers for actions
+- **/api/test**: Testing endpoints (non-production)
+
+## Refactoring Technologies
+
+### Type Generation
+- **drizzle-zod**: Generate Zod schemas from Drizzle tables
+- **zod**: Schema validation and type inference
+
+### Dependency Injection
+- Custom lightweight DI container
+- Constructor injection pattern
+- Service factory pattern
+
+### Repository Pattern
+- Base repository with common CRUD operations
+- Type-safe database operations
+- Transaction support with retry logic
+
+### Error Handling
+- Custom error classes
+- Centralized error handler middleware
+- Detailed error logging with context
+
+### Route Organization
+- Modular route definitions
+- Request validation with Zod
+- Response formatting
+- Error handling middleware
+
+## Deployment Architecture
+
+### Container-based Deployment
+- Docker containers
+- Railway platform
+- Environment-specific configurations
+
+### Database
+- PostgreSQL on Railway
+- Connection pooling
+- Read/write separation capability
+
+### Scaling
+- Horizontal scaling with multiple instances
+- Database connection pooling
+- Efficient resource usage
 
 ## Security Considerations
 
-### API Security
-- CORS with allowed origins configuration
-- Secure headers middleware
-- Cross-Origin policies
-- Content Security Policy
+- **CORS**: Configured for allowed origins
+- **Secure Headers**: HTTP security headers
+- **Input Validation**: Zod schema validation
+- **Database Security**: Parameterized queries via Drizzle
+- **Error Handling**: Safe error responses
+- **Authentication**: Planned Web3Auth integration
 
-### Authentication & Authorization
-- Twitter-based curator authentication
-- Environment-based service authentication
-- API endpoint access control
-- Web3Auth integration for frontend (planned)
+## Performance Considerations
 
-### Database Security
-- Connection pooling with proper limits
-- Prepared statements for all queries
-- Input validation and sanitization
-- Transaction isolation levels
-- Database user permissions
-
-## Deployment
-
-### Infrastructure
-- Railway platform deployment
-- Docker containerization
-- Kubernetes orchestration
-- PostgreSQL database
-- Health check endpoints
-- Graceful shutdown handling
-
-### CI/CD Pipeline
-- GitHub Actions workflows
-- Automated testing
-- Docker image building
-- Railway deployment
-- Environment-specific configurations
-
-### Monitoring
-- Health check endpoints
-- Service initialization status
-- Graceful shutdown handling
-- Error logging and recovery
-- Performance metrics
-
-## Development Practices
-
-### Code Organization
-- Architecture
-  * Service-based design
-  * Plugin system
-  * Event-driven patterns
-  * Clean architecture principles
-- Standards
-  * TypeScript strict mode
-  * ESLint configuration
-  * Prettier formatting
-  * Import organization
-- Component Design
-  * Atomic design principles
-  * Reusable patterns
-  * Performance optimization
-  * Error boundaries
-
-### Development Environment
-- Docker Compose for local development
-- PostgreSQL container with persistent volume
-- Automatic migrations on startup
-- Seed data scripts
-- Hot-reloading for development
-
-### Database Management
-- Drizzle ORM for type-safe database operations
-- Drizzle Kit for schema migrations
-- Database commands:
-  * `pnpm run db:generate` - Generate migrations from schema changes
-  * `pnpm run db:migrate` - Apply migrations to database
-  * `pnpm run db:check` - Check schema for issues
-  * `pnpm run db:studio` - Launch Drizzle Studio for database management
-  * `pnpm run db:seed:dev` - Seed development database
-  * `pnpm run db:seed:test` - Seed test database
-
-### Testing Strategy
-- Unit Testing
-  * Service tests
-  * Component tests
-  * Plugin tests
-  * Utility tests
-- Integration Testing
-  * API endpoints
-  * Plugin interactions
-  * Service integration
-  * Event handling
-  * Mock submission and distribution testing
-  * Backend service mocking
-  * Docker-based PostgreSQL testing
-- E2E Testing
-  * User flows
-  * Plugin workflows
-  * Distribution paths
-  * Error scenarios
-- Performance Testing
-  * Load testing
-  * Stress testing
-  * Memory profiling
-  * Bottleneck identification
-- CI/CD Testing
-  * GitHub Actions workflow
-  * Docker-based test execution
-  * Automated test runs on pull requests and main branch
-
-### Project Structure
-- Monorepo with Turborepo
-  * Optimized task execution and caching
-  * Workspace-aware dependency management
-  * pnpm workspace configuration
-  * Integration testing setup
-- Backend and Frontend as separate workspaces
-- Shared types and utilities
-- Documentation as a separate package
-- GitHub Actions workflows for CI/CD
-
-### Monorepo Configuration
-- Turborepo for build orchestration and caching
-- pnpm workspaces for dependency management
-- Corepack for package manager version consistency
-- Optimized Docker configuration for monorepo
-- Integration testing infrastructure
-- Docker-based test execution
-
-### Docker Configuration
-- Multi-stage build process for optimized images
-- Alpine-based images for smaller size
-- Turborepo pruning for minimal build context
-- Dedicated test directory with testing infrastructure
-- Docker Compose setup for local development and testing
-- GitHub Actions integration for CI/CD
+- **Connection Pooling**: Efficient database connections
+- **Read/Write Separation**: Optimized database access
+- **Caching**: Strategic caching of expensive operations
+- **Efficient Queries**: Optimized database queries
+- **Resource Management**: Proper cleanup of resources

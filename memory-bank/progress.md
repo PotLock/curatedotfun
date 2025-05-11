@@ -1,135 +1,97 @@
 # Progress Tracking
 
-## Current Status
+## Refactoring Roadmap Progress
 
-### Working
-- Frontend application with React and TanStack Router
-- Backend with Node.js/Hono
-- Plugin system with module federation
-- Twitter-based content submission and moderation
-- Multiple active feeds with different curator networks
-- Configuration-driven feed management
-- Multi-channel content distribution
-- Railway deployment with Docker containerization
+### Phase 1: Core Infrastructure & Type System
+- [ ] Create `backend/src/core/types.ts` for centralized type definitions
+- [ ] Implement `backend/src/core/errors.ts` for custom error classes
+- [ ] Set up dependency injection container in `backend/src/core/container.ts`
+- [ ] Define application context in `backend/src/core/appContext.ts`
+- [ ] Create validation middleware using Zod
 
-### Platform Features
+### Phase 2: Data Access Layer
+- [ ] Create `backend/src/services/db/repositories/base.repository.ts`
+- [ ] Refactor SubmissionRepository to extend BaseRepository
+- [ ] Refactor FeedRepository to extend BaseRepository
+- [ ] Refactor LeaderboardRepository to extend BaseRepository
+- [ ] Refactor TwitterRepository to extend BaseRepository
+- [ ] Move query logic from queries.ts into respective repositories
+- [ ] Standardize error handling in repositories
+- [ ] Add missing repository methods for complete data access
 
-#### Core System ✓
-- [x] Content submission via Twitter
-- [x] Trusted curator moderation
-- [x] Content processing pipeline
-- [x] Plugin architecture with module federation
-- [x] Configuration management
-- [x] Multi-feed support
-- [x] Database storage and retrieval
+### Phase 3: Service Layer
+- [ ] Define standard service interfaces
+- [ ] Refactor ConfigService to use constructor injection
+- [ ] Refactor DistributionService to use constructor injection
+- [ ] Refactor PluginService to use constructor injection
+- [ ] Refactor ProcessorService to use constructor injection
+- [ ] Refactor SchedulerService to use constructor injection
+- [ ] Refactor SubmissionService to use constructor injection
+- [ ] Refactor TransformationService to use constructor injection
+- [ ] Refactor TwitterService to use constructor injection
+- [ ] Implement service factory pattern
+- [ ] Update service initialization in app.ts
 
-#### Distribution ✓
-- [x] Telegram channel distribution
-- [x] RSS feed generation
-- [x] Notion database integration
-- [x] NEAR Social integration
-- [x] Custom formatting per feed
+### Phase 4: Route Layer
+- [ ] Create modular route structure
+- [ ] Implement submission.routes.ts
+- [ ] Implement feed.routes.ts
+- [ ] Implement config.routes.ts
+- [ ] Implement plugin.routes.ts
+- [ ] Implement leaderboard.routes.ts
+- [ ] Implement stats.routes.ts
+- [ ] Implement trigger.routes.ts
+- [ ] Implement test.routes.ts
+- [ ] Add request validation with Zod schemas
+- [ ] Standardize response formatting
+- [ ] Set up centralized error handling middleware
 
-#### Transformation ✓
-- [x] Simple text transformation
-- [x] Object mapping transformation
-- [x] AI-powered content enhancement
-- [x] Per-distributor transformations
-- [x] JSON sanitization throughout pipeline
+### Phase 5: Application Bootstrap
+- [ ] Refactor app.ts to use the new patterns
+- [ ] Implement proper service initialization
+- [ ] Configure middleware consistently
+- [ ] Set up graceful shutdown
+- [ ] Update static route handling
 
-#### Frontend ✓
-- [x] Feed management interface
-- [x] Submission viewing and filtering
-- [x] Moderation information display
-- [x] Configuration visualization
-- [x] Responsive design
+### Phase 6: Plugin System Enhancement
+- [ ] Improve plugin system for better modularity
+- [ ] Enhance plugin type safety
+- [ ] Standardize plugin initialization and configuration
+- [ ] Prepare for potential extraction as a separate package
 
-#### Infrastructure ✓
-- [x] Turborepo conversion
-  - [x] Workspace configuration
-  - [x] Corepack integration
-  - [x] Optimized task configuration
-  - [x] Integration testing setup
-  - [x] Docker optimization
-- [x] PostgreSQL migration from SQLite
-  - [x] Docker-based development environment
-  - [x] Migration scripts
-  - [x] Database service implementation
-  - [x] Repository pattern implementation
-  - [x] Modular database service architecture
-  - [x] Testing infrastructure with isolated test databases
-- [x] Docker containerization
-  - [x] Multi-stage build process
-  - [x] Optimized images
-  - [x] Development environment
-  - [x] Production configuration
-- [x] Railway deployment
-  - [x] CI/CD pipeline
-  - [x] Environment configuration
-  - [x] Kubernetes setup
-  - [x] Monitoring and logging
+### Phase 7: Testing & Documentation
+- [ ] Update unit tests for refactored components
+- [ ] Update integration tests for database operations
+- [ ] Update component tests for critical flows
+- [ ] Update end-to-end tests for API endpoints
+- [ ] Create mock implementations for external dependencies
+- [ ] Update documentation to reflect the new architecture
+- [ ] Create examples for implementing new components
 
-### In Progress
-- [ ] Comprehensive error handling solution
-  - [x] Database repositories error handling implemented
-  - [x] Transaction-based operations for data consistency
-  - [ ] Error handling for other services
-- [ ] Moving configuration to database
-- [ ] Completing test coverage
-  - [x] Tests for database error handling
-  - [x] Tests for transaction-based operations
-  - [ ] Tests for other services
-- [ ] Database protections for Web3Auth
-- [ ] Full migration to repository pattern for database operations
-  - [x] Initial reorganization completed
-  - [x] Consolidated duplicate status update logic
-  - [x] Transaction-based operations for related data
-  - [x] Comprehensive error handling in repositories
-  - [ ] Update remaining service files to use repositories
-  - [ ] Remove backward compatibility layer
-- [ ] Recap functionality
-- [ ] Enhanced analytics
-- [ ] Additional distributor plugins
+## Completed Tasks
 
-## Next Actions
-1. Complete comprehensive error handling solution
-   - [x] Add error handling to database repositories
-   - [x] Implement transaction-based operations
-   - [x] Add default values for graceful degradation
-   - [x] Enhance error logging with context
-   - [ ] Design error type hierarchy for other services
-   - [ ] Implement error recovery mechanisms for other services
-   - [ ] Create user-friendly error messages
+### Analysis & Planning
+- [x] Analyze current codebase structure and patterns
+- [x] Identify areas for improvement in the backend architecture
+- [x] Create a comprehensive refactoring plan with detailed steps
+- [x] Update Memory Bank documentation to reflect the new architecture
 
-2. Move configuration to database
-   - Design database schema for configuration
-   - Create migration scripts
-   - Implement configuration service
-   - Add versioning support
-   - Create admin interface
+## Current Work
 
-3. Complete test coverage
-   - Expand component tests
-   - Add integration tests
-   - Implement E2E tests
-   - Add performance tests
-   - Improve test infrastructure
+- Implementing the refactoring plan, starting with Phase 1: Core Infrastructure & Type System
+- Setting up the foundation for the new architecture
+- Preparing for the transition from the current architecture to the new one
 
-4. Implement database protections for Web3Auth
-   - Integrate Web3Auth
-   - Add database security measures
-   - Implement access control
-   - Add audit logging
-   - Ensure compliance with security best practices
+## Upcoming Work
+
+- Complete Phase 1 and move on to Phase 2
+- Begin refactoring repositories to use the new base repository pattern
+- Start implementing the dependency injection container
+- Create the first modular route files
 
 ## Known Issues
-- None critical - System is stable and operational
-- Configuration management needs to be moved to database for better versioning and security
-- Error handling needs to be more comprehensive
-- Test coverage needs to be expanded
-- Database security needs to be enhanced for Web3Auth integration
 
-## Feed Status
-- Active feeds: Multiple (Ethereum, NEAR, Solana, Grants, AI, etc.)
-- Curator networks: Established for all active feeds
-- Distribution channels: Operational for all active feeds
+- Need to ensure backward compatibility during refactoring
+- Need to handle the transition from singleton patterns to dependency injection
+- Need to maintain plugin system functionality during refactoring
+- Need to ensure all existing API endpoints continue to function with the new route organization

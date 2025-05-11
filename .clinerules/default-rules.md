@@ -102,38 +102,38 @@
 
 ## Current Focus Areas
 
-### Recap Scheduling System
-- Implementing reliable recap generation for feeds
-- Using external scheduler service for job management
-- Tracking job state in the database for resilience
-- Supporting both cron expressions and interval-based schedules
-- Providing UI for managing recap configurations
-- Handling process restarts and maintaining job consistency
+### Backend Refactoring
+- Implementing a comprehensive refactoring of the backend architecture
+- Deriving application types from database schema for consistency
+- Standardizing service initialization and dependency injection
+- Implementing a more modular route structure
+- Centralizing error handling
+- Fully adopting the repository pattern
+- Improving code organization and reducing redundancy
+- Enhancing testability through clear separation of concerns
+- Making the plugin system more modular and reusable
 
-### Comprehensive Error Handling
-- Implementing granular error types across the application
-- Developing consistent error recovery mechanisms
-- Enhancing error logging and monitoring
-- Creating user-friendly error messages
-- Implementing graceful degradation strategies
+### Refactoring Patterns
+- Always derive types from `core/types.ts`
+- Repositories must extend `BaseRepository`
+- Services must use constructor injection for dependencies, resolved via the DI container
+- API routes should be defined in dedicated `*.routes.ts` files and use `zod-validator`
+- Throw custom errors from `core/errors.ts` in services and repositories
+- Business logic resides in services, data access in repositories, request/response handling in routes
 
-### Configuration in Database
-- Migrating from JSON-based configuration to database storage
-- Implementing configuration versioning
-- Creating admin interface for configuration management
-- Ensuring backward compatibility
-- Implementing validation and security measures
+### Naming Conventions
+- Files: `kebab-case.ts` (e.g., `submission.service.ts`, `base.repository.ts`)
+- Classes: `PascalCase` (e.g., `SubmissionService`, `BaseRepository`)
+- Interfaces/Types: `PascalCase` (e.g., `Submission`, `NewFeed`)
+- Functions/Methods: `camelCase` (e.g., `getSubmissionById`, `createApp`)
+- Variables/Constants: `camelCase` for local variables, `UPPER_SNAKE_CASE` for true constants
+- Folders: `kebab-case` for directories containing multiple related files
 
-### Test Coverage
-- Expanding component tests for key flows
-- Implementing integration tests for external services
-- Adding E2E tests for critical user journeys
-- Improving test infrastructure with Docker
-- Implementing performance testing
-
-### Web3Auth Security
-- Implementing secure authentication with Web3Auth
-- Adding database protections for user data
-- Creating proper access control mechanisms
-- Implementing audit logging
-- Ensuring compliance with security best practices
+### File Structure
+- Core types and utilities in `backend/src/core/`
+- Services in `backend/src/services/`
+- Repositories in `backend/src/services/db/repositories/`
+- Routes in `backend/src/routes/`
+- Utilities in `backend/src/utils/`
+- Application bootstrap in `backend/src/app.ts`
+- Entry point in `backend/src/index.ts`
