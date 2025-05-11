@@ -3,6 +3,7 @@ import { HonoApp } from "../../types/app";
 import configRoutes from "./config";
 import exampleRoutes from "./example";
 import feedRoutes from "./feed";
+import feedExampleRoutes from "./feed-example";
 import leaderboardRoutes from "./leaderboard";
 import pluginRoutes from "./plugin";
 import { statsRoutes } from "./stats";
@@ -33,4 +34,5 @@ apiRoutes.route("/trigger", triggerRoutes);
 // Example routes to demonstrate new validation middleware and DI container
 if (!isProduction) {
   apiRoutes.route("/example", exampleRoutes);
+  apiRoutes.route("/feed-example", feedExampleRoutes);
 }

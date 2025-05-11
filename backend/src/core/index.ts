@@ -8,3 +8,4 @@ export {
 } from './appContext';
 export * from './middleware';
 export * from './repositories';
+export * from './services';

@@ -6,6 +6,7 @@ import { SubmissionService } from "../services/submissions/submission.service";
 import { TwitterService } from "../services/twitter/client";
 import { FeedRepository } from "../services/db/repositories/feed.repository";
 import { SchedulerService } from "../services/scheduler/scheduler.service";
+import { Container } from "../core/container";
 
 /**
  * Application context shared across routes
@@ -18,6 +19,7 @@ export interface AppContext {
   configService: ConfigService;
   schedulerService: SchedulerService;
   feedRepository: FeedRepository;
+  container: Container;
 }
 
 /**

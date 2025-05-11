@@ -16,6 +16,9 @@ import { TwitterService } from "./services/twitter/client";
 import { AppContext, AppInstance, HonoApp } from "./types/app";
 import { getAllowedOrigins } from "./utils/config";
 import { errorHandler, appContextMiddleware } from "./core/middleware";
+import { container } from "./core/container";
+import { ServiceProvider } from "./core/services";
+import * as schema from "./services/db/schema";
 
 const ALLOWED_ORIGINS = getAllowedOrigins();
 
@@ -80,6 +83,9 @@ export async function createApp(): Promise<AppInstance> {
   //   console.error("Failed to initialize scheduler service:", err);
   // });
 
+  const db = await import("./services/db");
+  ServiceProvider.registerServices(container, db, schema);
+
   const context: AppContext = {
     twitterService,
     submissionService,
@@ -88,6 +94,7 @@ export async function createApp(): Promise<AppInstance> {
     configService,
     schedulerService,
     feedRepository,
+    container,
   };
 
   // Create Hono app
