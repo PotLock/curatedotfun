@@ -4,6 +4,8 @@ import { DistributionService } from "../services/distribution/distribution.servi
 import { ProcessorService } from "../services/processor/processor.service";
 import { SubmissionService } from "../services/submissions/submission.service";
 import { TwitterService } from "../services/twitter/client";
+import { FeedRepository } from "../services/db/repositories/feed.repository";
+import { SchedulerService } from "../services/scheduler/scheduler.service";
 
 /**
  * Application context shared across routes
@@ -14,6 +16,8 @@ export interface AppContext {
   distributionService: DistributionService | null;
   processorService: ProcessorService | null;
   configService: ConfigService;
+  // schedulerService: SchedulerService;
+  feedRepository: FeedRepository;
 }
 
 /**

@@ -1,7 +1,10 @@
 import {
+  date,
   index,
   integer,
+  jsonb,
   primaryKey,
+  serial,
   pgTable as table,
   text,
   timestamp,
@@ -10,8 +13,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-// From exports/plugins
-export * from "../twitter/schema";
+import { FeedConfig } from "../../types/config";
 
 // Reusable timestamp columns
 const timestamps = {
@@ -29,13 +31,44 @@ export type SubmissionStatus =
   (typeof SubmissionStatus)[keyof typeof SubmissionStatus];
 
 // Feeds Table
-// Builds according to feeds in curate.config.json
+// Stores the entire feed configuration as JSONB
 export const feeds = table("feeds", {
   id: text("id").primaryKey(), // (hashtag)
+  // Store the entire configuration as JSONB
+  config: jsonb("config").$type<FeedConfig>().notNull(),
+  // Keep these fields for backward compatibility and quick lookups
   name: text("name").notNull(),
   description: text("description"),
   ...timestamps,
 });
+
+// Feed Recaps State Table
+// Tracks the state of each recap job
+export const feedRecapsState = table(
+  "feed_recaps_state",
+  {
+    id: serial("id").primaryKey(),
+    feedId: text("feed_id")
+      .notNull()
+      .references(() => feeds.id, { onDelete: "cascade" }),
+    // Unique ID of the recap configuration
+    recapId: text("recap_id").notNull(),
+    // Unique ID provided by the external scheduler service for this specific job
+    externalJobId: text("external_job_id").unique(),
+    // Last time the curate backend successfully processed this recap
+    lastSuccessfulCompletion: timestamp("last_successful_completion"),
+    // Error message if the last run failed in the curate backend
+    lastRunError: text("last_run_error"),
+    ...timestamps,
+  },
+  (table) => ({
+    // Ensure only one state record per feed/recap ID combination
+    feedRecapIdIdx: uniqueIndex("feed_recap_id_idx").on(
+      table.feedId,
+      table.recapId,
+    ),
+  }),
+);
 
 export const submissions = table(
   "submissions",
@@ -129,7 +162,7 @@ export const feedPlugins = table(
   ],
 );
 
-// Users Table (for Web3Auth/NEAR integration)
+// Users Table
 export const users = table(
   "users",
   {
@@ -151,3 +184,18 @@ export const users = table(
     ),
   }),
 );
+
+// will not be needed after Masa
+export const twitterCookies = table("twitter_cookies", {
+  username: text("username").primaryKey(),
+  cookies: text("cookies").notNull(), // JSON string of TwitterCookie[]
+  ...timestamps,
+});
+
+// done differently after Masa
+export const twitterCache = table("twitter_cache", {
+  key: text("key").primaryKey(), // e.g., "last_tweet_id"
+  value: text("value").notNull(),
+  ...timestamps,
+});
+
