@@ -3,45 +3,44 @@ import { validator } from "hono/validator";
 import { getDatabase } from "../../services/db";
 import * as schema from "../../services/db/schema";
 import { eq } from "drizzle-orm";
-// import { connect, KeyPair, keyStores, transactions, utils } from "near-api-js"; // Requires installation
-// TODO: Import necessary types (e.g., User from schema, Web3Auth user info type)
-// TODO: Import authentication middleware
+import { connect, KeyPair, keyStores, transactions, utils } from "near-api-js";
+import { jwt } from "hono/jwt";
 
 const users = new Hono();
 
-// --- Middleware (Placeholder) ---
-// Apply authentication middleware to protect these routes
-// users.use('*', authMiddleware); // Example placeholder
+const authMiddleware = jwt({ // TODO: move to own middleware
+  secret: process.env.JWT_SECRET!,
+  cookie: "curatedotfun:auth-token", // TODO: "AppId"
+});
+
+users.use("*", authMiddleware); // TODO: apply to all routes
 
 // --- GET /api/users/me ---
 // Fetches the profile of the currently authenticated user
 users.get("/me", async (c) => {
-  // 1. Get sub_id from authenticated context (e.g., c.get('jwtPayload').sub)
-  // const sub_id = c.get("sub_id_from_auth_middleware"); // Placeholder - Requires Auth Middleware
-  const sub_id = "placeholder_sub_id"; // Temporary placeholder value
+  const jwtPayload = c.get("jwtPayload"); // TODO: hono zod validator
+  const sub_id = jwtPayload?.sub;
 
   if (!sub_id) {
-    // This check might be redundant now but keep for structure
-    return c.json({ error: "Unauthorized: Missing user identifier" }, 401);
+    return c.json({ error: "Unauthorized: Missing user identifier in token" }, 401);
   }
 
   try {
-    // 2. Query database for user by sub_id
+    // TODO: better db injection
     const dbInstance = getDatabase();
-    const db = dbInstance.getReadDb(); // Use the read connection
+    const db = dbInstance.getReadDb();
     const userResult = await db
       .select()
       .from(schema.users)
       .where(eq(schema.users.sub_id, sub_id))
       .limit(1);
 
-    const user = userResult[0]; // Drizzle returns an array, get the first element if it exists
+    const user = userResult[0];
 
     if (!user) {
       return c.json({ error: "User profile not found" }, 404);
     }
 
-    // 3. Return user profile
     return c.json({ profile: user });
   } catch (error) {
     console.error("Error fetching user profile:", error);
@@ -53,32 +52,28 @@ users.get("/me", async (c) => {
 // Creates a new user profile and associated NEAR sub-account
 users.post(
   "/",
-  // Input validation
-  validator("json", (value, c) => {
+  validator("json", (value, c) => { // TODO: hono zod validation
     // TODO: Define expected schema using Zod or similar
     const expectedSchema = {
       chosen_username: "string", // Add more specific validation (length, chars)
       near_public_key: "string", // Add specific validation (format)
       user_info: "object?", // Optional
     };
-    // Basic type check placeholder
     if (
       typeof value?.chosen_username !== "string" ||
       typeof value?.near_public_key !== "string"
     ) {
       return c.json({ error: "Invalid input" }, 400);
     }
-    return value; // Return validated value
+    return value;
   }),
   async (c) => {
     const { chosen_username, near_public_key, user_info } = c.req.valid("json");
-    // 1. Get sub_id from authenticated context
-    // const sub_id = c.get("sub_id_from_auth_middleware"); // Placeholder - Requires Auth Middleware
-    const sub_id = "placeholder_sub_id"; // Temporary placeholder value
+    const jwtPayload = c.get("jwtPayload");
+    const sub_id = jwtPayload?.sub;
 
     if (!sub_id) {
-      // This check might be redundant now but keep for structure
-      return c.json({ error: "Unauthorized: Missing user identifier" }, 401);
+      return c.json({ error: "Unauthorized: Missing user identifier in token" }, 401);
     }
 
     try {
@@ -91,19 +86,76 @@ users.post(
       }
       // TODO: Add check against reserved names if necessary
 
-      // 4. Construct full NEAR account ID
-      const new_near_account_id = `${chosen_username}.users.curatedotfun.near`; // Or use config for parent domain
+      const new_near_account_id = `${chosen_username}.users.curatedotfun.near`; // Or use config for parent domain (app config)
 
-      // 5. TODO: Implement NEAR sub-account creation logic
-      //    - Connect to NEAR using parent account key
-      //    - Call createAccount and addKey actions
-      //    - Handle errors (e.g., account exists, network issues)
-      console.log(`Placeholder: Create NEAR account ${new_near_account_id} with key ${near_public_key}`);
-      const nearCreationSuccess = true; // Placeholder
+      let nearCreationSuccess = false;
+      try {
+        // Get the parent account ID and private key from environment variables
+        const parentAccountId = process.env.NEAR_PARENT_ACCOUNT_ID || "users.curatedotfun.near";
+        const parentPrivateKey = process.env.USERS_MASTER_KEYPAIR;
+        
+        if (!parentPrivateKey) {
+          throw new Error("Missing USERS_MASTER_KEYPAIR environment variable");
+        }
+
+        // Determine network (testnet or mainnet)
+        const networkId = process.env.NEAR_NETWORK_ID || "testnet";
+        
+        // Set up keystore with parent account key
+        const keyStore = new keyStores.InMemoryKeyStore();
+        // Parse the private key correctly based on its format
+        const parentKeyPair = KeyPair.fromString(parentPrivateKey as any); // Type assertion to bypass TS error
+        await keyStore.setKey(networkId, parentAccountId, parentKeyPair);
+        
+        // Connect to NEAR
+        const connectionConfig = {
+          networkId,
+          keyStore,
+          nodeUrl: `https://rpc.${networkId}.near.org`,
+          walletUrl: `https://wallet.${networkId}.near.org`,
+          helperUrl: `https://helper.${networkId}.near.org`,
+          explorerUrl: `https://explorer.${networkId}.near.org`,
+        };
+        
+        const nearConnection = await connect(connectionConfig);
+        const parentAccount = await nearConnection.account(parentAccountId);
+        
+        // Parse the public key from the string provided by the frontend
+        const publicKey = utils.PublicKey.fromString(near_public_key);
+        
+        // Create the new account as a sub-account
+        const actions = [
+          transactions.createAccount(),
+          transactions.transfer(BigInt("100000000000000000000000")), // 0.1 NEAR for initial balance (TODO: use utils)
+          transactions.addKey(publicKey, transactions.functionCallAccessKey(new_near_account_id, [], BigInt("1000000000000000000000000"))),
+        ];
+        
+        // Execute the transaction
+        const result = await parentAccount.signAndSendTransaction({
+          receiverId: new_near_account_id,
+          actions,
+        });
+        
+        console.log(`Created NEAR account ${new_near_account_id}`, result);
+        nearCreationSuccess = true;
+      } catch (nearError: any) {
+        console.error("Error creating NEAR account:", nearError);
+        
+        // Handle specific NEAR errors
+        if (nearError.message?.includes("already exists")) {
+          return c.json({ error: "NEAR account name already taken" }, 409);
+        } else if (nearError.message?.includes("invalid public key")) {
+          return c.json({ error: "Invalid NEAR public key format" }, 400);
+        }
+        
+        return c.json({ 
+          error: "Failed to create NEAR account", 
+          details: nearError.message || "Unknown NEAR error" 
+        }, 500);
+      }
 
       if (!nearCreationSuccess) {
-         // TODO: Return specific error based on NEAR failure reason
-         return c.json({ error: "Failed to create NEAR account" }, 500);
+        return c.json({ error: "Failed to create NEAR account" }, 500);
       }
 
       // 6. Insert user into database
@@ -129,10 +181,9 @@ users.post(
         return c.json({ error: "Failed to save user profile after account creation" }, 500);
       }
 
-      // 7. Return success response
       return c.json({ profile: newUser }, 201);
 
-    } catch (error: any) { // Added type annotation for error
+    } catch (error: any) {
       console.error("Error creating user profile:", error);
       // TODO: Handle potential duplicate key errors from DB (e.g., near_account_id unique constraint)
       // Check for specific database error codes if needed (e.g., PostgreSQL unique violation code '23505')
@@ -148,9 +199,15 @@ users.post(
 
 // --- PUT /api/users/me ---
 // Updates the profile of the currently authenticated user
-users.put("/me", /* validator for update fields */ async (c) => {
-   // TODO: Implement update logic
-   // 1. Get sub_id from auth context
+users.put("/me", /* validator for update fields */ async (c) => { // TODO: hono zod validator
+   const jwtPayload = c.get("jwtPayload");
+   const sub_id = jwtPayload?.sub;
+
+   if (!sub_id) {
+     return c.json({ error: "Unauthorized: Missing user identifier in token" }, 401);
+   }
+
+   // TODO: Implement the rest of the update logic
    // 2. Find user by sub_id
    // 3. Validate input fields to update
    // 4. Update user record in DB
@@ -160,11 +217,3 @@ users.put("/me", /* validator for update fields */ async (c) => {
 
 
 export default users;
-
-
-- __Backend - NEAR Account Creation:__ The core logic to create the NEAR sub-account in `backend/src/routes/api/users.ts` (within the `POST /users` handler) is still a placeholder (`// 5. TODO: Implement NEAR sub-account creation logic`). This requires installing `near-api-js` in the backend workspace and using the parent account's private key (stored securely) to sign the `createAccount` and `addKey` transactions.
-- __Backend - Authentication:__ The API endpoints currently use placeholder authentication (`const sub_id = "placeholder_sub_id";`). Proper authentication middleware needs to be implemented (e.g., using Hono's JWT middleware) to verify the Web3Auth ID token sent from the frontend and securely extract the user's `sub_id`.
-- __Backend - Error Handling:__ Enhance error handling in the API routes, especially for potential database unique constraint violations (e.g., `sub_id` or `near_account_id` already exists) and NEAR transaction failures.
-- __Database Migration:__ The database migration for the new `users` table needs to be generated (`pnpm run db:generate`) and applied (`pnpm run db:migrate`).
-- __Frontend - UI/UX:__ Refine loading states and error messages in the `CreateNearAccountModal` and potentially other UI components interacting with the Web3Auth flow.
-

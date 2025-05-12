@@ -16,6 +16,11 @@ interface UserProfile {
   updatedAt: string | null; // Or Date
 }
 
+export interface Web3AuthModalState {
+  type: 'create-account';
+  isOpen: boolean;
+  onClose: () => void;
+}
 
 export type AuthUserInfo = {
   email?: string;

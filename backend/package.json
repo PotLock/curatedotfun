@@ -29,7 +29,6 @@
   "devDependencies": {
     "@curatedotfun/types": "^0.0.5",
     "@module-federation/node": "^2.6.30",
-    "@module-federation/runtime": "^0.11.1",
     "@rspack/binding": "1.2.8",
     "@rspack/cli": "1.2.8",
     "@rspack/core": "1.2.8",
@@ -58,6 +57,7 @@
     "drizzle-orm": "^0.40.1",
     "hono": "^4.0.5",
     "lodash": "^4.17.21",
+    "near-api-js": "^5.1.1",
     "ora": "^8.1.1",
     "pg": "^8.15.6",
     "pino": "^9.6.0",
