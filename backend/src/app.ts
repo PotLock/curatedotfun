@@ -48,10 +48,10 @@ export async function createApp(): Promise<AppInstance> {
 
   const submissionService = twitterService
     ? new SubmissionService(
-      twitterService,
-      processorService,
-      configService.getConfig(),
-    )
+        twitterService,
+        processorService,
+        configService.getConfig(),
+      )
     : null;
 
   if (submissionService) {
@@ -122,7 +122,6 @@ export async function createApp(): Promise<AppInstance> {
   // UNCOMMENT THIS IF YOU WANT TO SEE REQUESTS
   // import { logger } from "hono/logger";
   // if (!isProduction) app.use("*", logger());
-
 
   // Mount API routes
   app.route("/api", apiRoutes);

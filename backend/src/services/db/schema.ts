@@ -8,7 +8,7 @@ import {
   pgTable as table,
   text,
   timestamp,
-  uniqueIndex
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 import { FeedConfig } from "../../types/config";
