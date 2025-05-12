@@ -8,7 +8,7 @@ export interface GlobalConfig {
 }
 
 export interface PluginConfig {
-  type: "distributor" | "transformer";
+  type: "distributor" | "transformer" | "source";
   url: string;
   config?: Record<string, unknown>;
 }
@@ -51,8 +51,12 @@ export interface FeedConfig {
   };
 }
 
+// Import rule types
+import { RuleConfig } from "../core/rules/rules.types";
+
 export interface AppConfig {
   global: GlobalConfig;
   plugins: PluginsConfig;
   feeds: FeedConfig[];
+  rules?: RuleConfig[]; // Optional for backward compatibility
 }

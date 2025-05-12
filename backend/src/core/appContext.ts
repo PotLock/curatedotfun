@@ -58,6 +58,10 @@ export function createAppContext(legacyContext: LegacyAppContext): AppContext {
     container.registerInstance('FeedRepository', legacyContext.feedRepository);
   }
 
+  if (legacyContext.ruleEngineService && !container.has('RuleEngineService')) {
+    container.registerInstance('RuleEngineService', legacyContext.ruleEngineService);
+  }
+
   // Create enhanced context
   return {
     ...legacyContext,

@@ -6,6 +6,7 @@ import { SubmissionService } from "../services/submissions/submission.service";
 import { TwitterService } from "../services/twitter/client";
 import { FeedRepository } from "../services/db/repositories/feed.repository";
 import { SchedulerService } from "../services/scheduler/scheduler.service";
+import { RuleEngineService } from "../services/rules/rule.engine.service";
 import { Container } from "../core/container";
 
 /**
@@ -19,6 +20,7 @@ export interface AppContext {
   configService: ConfigService;
   schedulerService: SchedulerService;
   feedRepository: FeedRepository;
+  ruleEngineService: RuleEngineService;
   container: Container;
 }
 

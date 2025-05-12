@@ -13,7 +13,12 @@ export type SelectFeed = z.infer<typeof selectFeedSchema>;
 export const insertSubmissionSchema = createInsertSchema(schema.submissions);
 export const selectSubmissionSchema = createSelectSchema(schema.submissions);
 export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
-export type SelectSubmission = z.infer<typeof selectSubmissionSchema>;
+export type SelectSubmissionBase = z.infer<typeof selectSubmissionSchema>;
+
+// Extended SelectSubmission type with feeds property
+export interface SelectSubmission extends SelectSubmissionBase {
+  feeds?: SelectSubmissionFeed[];
+}
 
 // Example for 'submissionFeeds' table:
 export const insertSubmissionFeedSchema = createInsertSchema(schema.submissionFeeds);
