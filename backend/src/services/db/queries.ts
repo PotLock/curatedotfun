@@ -700,33 +700,42 @@ export async function getLeaderboard(
   db: NodePgDatabase<any>,
   timeRange: string = "all",
 ): Promise<LeaderboardEntry[]> {
-  // Use PostgreSQL's date functions for more efficient filtering
-  let dateCondition;
+  let startDate: Date | null = null;
+  const now = new Date();
 
   switch (timeRange) {
     case "month":
-      // First day of current month using PostgreSQL's date_trunc
-      dateCondition = sql`AND s.created_at >= date_trunc('month', CURRENT_DATE)`;
+      startDate = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+      );
       break;
     case "week":
-      // Start of current week (Sunday) using PostgreSQL's date_trunc
-      dateCondition = sql`AND s.created_at >= date_trunc('week', CURRENT_DATE)`;
+      startDate = new Date(now);
+      const dayOfWeek = startDate.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
+      const diff = startDate.getUTCDate() - dayOfWeek;
+      startDate.setUTCDate(diff);
+      startDate.setUTCHours(0, 0, 0, 0);
       break;
     case "today":
-      // Start of today using PostgreSQL's date_trunc
-      dateCondition = sql`AND s.created_at >= date_trunc('day', CURRENT_DATE)`;
+      startDate = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+      );
       break;
-    default:
-      // No date filter for "all"
-      dateCondition = sql``;
+    default: // "all"
+      startDate = null;
       break;
   }
+
+  // Build the date filter SQL fragment conditionally
+  const dateFilterSql = startDate
+    ? sql`AND s.created_at >= ${startDate}`
+    : sql``;
 
   // Use a single query with Common Table Expressions (CTEs) for better performance
   const result = await db.execute(sql`
     WITH feed_totals AS (
       -- Get total submissions per feed
-      SELECT 
+      SELECT
         feed_id AS feedid,
         COUNT(DISTINCT submission_id) AS totalcount
       FROM 
@@ -746,9 +755,9 @@ export async function getLeaderboard(
         submissions s
       LEFT JOIN 
         moderation_history mh ON s.tweet_id = mh.tweet_id
-      WHERE 
-        1=1 ${dateCondition}
-      GROUP BY 
+      WHERE
+        s.curator_id IS NOT NULL ${dateFilterSql}
+      GROUP BY
         s.curator_id, s.curator_username
     ),
     curator_feeds AS (
@@ -762,11 +771,11 @@ export async function getLeaderboard(
         submission_feeds sf
       JOIN 
         submissions s ON sf.submission_id = s.tweet_id
-      JOIN 
+      JOIN
         feed_totals ft ON sf.feed_id = ft.feedid
-      WHERE 
-        1=1 ${dateCondition}
-      GROUP BY 
+      WHERE
+        s.curator_id IS NOT NULL ${dateFilterSql}
+      GROUP BY
         s.curator_id, sf.feed_id, ft.totalcount
     )
     -- Combine all data with JSON aggregation
