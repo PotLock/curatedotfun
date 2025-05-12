@@ -9,20 +9,19 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
-import { ChevronDown, CircleUserRound, CreditCard, LogOut } from "lucide-react";
-import { AuthUserInfo } from "../types/web3auth";
 import { useNavigate } from "@tanstack/react-router";
-import { LoginModal } from "./LoginModal";
+import { ChevronDown, CircleUserRound, CreditCard, LogOut } from "lucide-react";
+import { useAuthStore } from "../store/auth-store";
+import { AuthUserInfo } from "../types/web3auth";
 
 export default function UserMenu() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
   const [imageError, setImageError] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const navigate = useNavigate();
+  const { showLoginModal } = useAuthStore();
 
-  const { isInitialized, isLoggedIn, logout, getUserInfo } =
-    useWeb3Auth();
+  const { isInitialized, isLoggedIn, logout, getUserInfo } = useWeb3Auth();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -130,15 +129,10 @@ export default function UserMenu() {
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (
-        <Button className="hidden md:flex" onClick={() => setIsLoginModalOpen(true)}>
+        <Button className="hidden md:flex" onClick={showLoginModal}>
           Login
         </Button>
       )}
-
-      <LoginModal 
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
     </>
   );
 }

@@ -4,6 +4,7 @@ import { useWeb3Auth } from "../hooks/use-web3-auth";
 import { HowItWorks } from "./HowItWorks";
 import { Modal } from "./Modal";
 import { Button } from "./ui/button";
+import { useAuthStore } from "../store/auth-store";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,16 +24,15 @@ import {
 } from "lucide-react";
 import { AuthUserInfo } from "../types/web3auth";
 import UserMenu from "./UserMenu";
-import { LoginModal } from "./LoginModal";
 
 const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
+  const { showLoginModal } = useAuthStore();
 
   const { isInitialized, isLoggedIn, logout, getUserInfo } =
     useWeb3Auth();
@@ -106,7 +106,6 @@ const Header = () => {
         </div>
       </header>
 
-      {/* Mobile Navigation Menu */}
       {/* Mobile Navigation Menu */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 top-0 left-0 z-50 bg-white flex flex-col">
@@ -242,7 +241,7 @@ const Header = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button onClick={() => setIsLoginModalOpen(true)}>Login</Button>
+                <Button onClick={showLoginModal}>Login</Button>
               )}
             </div>
           </div>
@@ -251,11 +250,6 @@ const Header = () => {
       <Modal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)}>
         <HowItWorks />
       </Modal>
-      
-      <LoginModal 
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
     </>
   );
 };

@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import * as schema from "./db/schema";
 import {
   connect,
   KeyPair,
@@ -8,14 +7,15 @@ import {
   utils,
 } from "near-api-js";
 import { z } from "zod"; // Import z
-import { selectUserSchema, insertUserSchema, updateUserSchema } from "../validation/users.validation"; // Import more schemas
+import { insertUserSchema, selectUserSchema, updateUserSchema } from "../validation/users.validation"; // Import more schemas
 import { DatabaseConnection } from "./db/connection";
+import * as schema from "./db/schema";
 
 export type InsertUserData = z.infer<typeof insertUserSchema> & { sub_id: string };
 export type UpdateUserData = z.infer<typeof updateUserSchema>;
 
 export class UserService {
-  constructor(private dbInstance: DatabaseConnection) {}
+  constructor(private dbInstance: DatabaseConnection) { }
 
   async findUserBySubId(sub_id: string) {
     const db = this.dbInstance.getReadDb();
@@ -38,11 +38,11 @@ export class UserService {
     const writeDb = this.dbInstance.getWriteDb();
 
     const { sub_id, username, near_public_key, email } = data;
-    const new_near_account_id = `${username}.users.curatedotfun.near`; // TODO: Use config
+    const parentAccountId =
+      process.env.NEAR_PARENT_ACCOUNT_ID || "users.curatedotfun.testnet";
+    const new_near_account_id = `${username}.${parentAccountId}`;
 
     try {
-      const parentAccountId =
-        process.env.NEAR_PARENT_ACCOUNT_ID || "users.curatedotfun.near";
       const parentPrivateKey = process.env.USERS_MASTER_KEYPAIR;
 
       if (!parentPrivateKey) {

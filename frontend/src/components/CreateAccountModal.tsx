@@ -3,14 +3,7 @@ import { useWeb3Auth } from "../hooks/use-web3-auth";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "./ui/dialog";
+import { Modal } from "./Modal";
 import { usernameSchema } from "../lib/validation/user";
 import { useCreateUserProfile } from "../lib/api";
 
@@ -113,19 +106,15 @@ export const CreateAccountModal = ({
     : createUserMutation.error ? "An unexpected error occurred" : null);
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent
-        className="sm:max-w-[425px]"
-        onEscapeKeyDown={handleClose}
-        onPointerDownOutside={handleClose}
-      >
-        <DialogHeader>
-          <DialogTitle>Choose Your NEAR Account Name</DialogTitle>
-          <DialogDescription>
+    <Modal isOpen={isOpen} onClose={handleClose}>
+      <div className="max-w-[425px] mx-auto">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold">Choose Your NEAR Account Name</h2>
+          <p className="text-gray-600">
             This will be your unique identifier on the NEAR blockchain
             associated with this app.
-          </DialogDescription>
-        </DialogHeader>
+          </p>
+        </div>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
@@ -159,7 +148,7 @@ export const CreateAccountModal = ({
               </div>
             )}
           </div>
-          <DialogFooter>
+          <div className="mt-6 flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
@@ -174,9 +163,9 @@ export const CreateAccountModal = ({
             >
               {createUserMutation.isPending ? "Creating..." : "Create Account"}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </Modal>
   );
 };
