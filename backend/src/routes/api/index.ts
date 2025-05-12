@@ -4,9 +4,10 @@ import configRoutes from "./config";
 import feedRoutes from "./feed";
 import leaderboardRoutes from "./leaderboard";
 import pluginRoutes from "./plugin";
-import submissionRoutes from "./submission";
 import { statsRoutes } from "./stats";
+import submissionRoutes from "./submission";
 import { testRoutes } from "./test";
+import triggerRoutes from "./trigger";
 import twitterRoutes from "./twitter";
 
 // Create main API router
@@ -26,3 +27,4 @@ apiRoutes.route("/config", configRoutes);
 apiRoutes.route("/plugins", pluginRoutes);
 apiRoutes.route("/leaderboard", leaderboardRoutes);
 apiRoutes.route("/stats", statsRoutes);
+apiRoutes.route("/trigger", triggerRoutes);

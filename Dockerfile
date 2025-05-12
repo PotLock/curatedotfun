@@ -48,7 +48,6 @@ COPY --from=builder --chown=app:app /app/backend/package.json ./backend/package.
 COPY --from=builder --chown=app:app /app/backend/drizzle.config.ts ./backend/drizzle.config.ts
 COPY --from=builder --chown=app:app /app/backend/src/services/db/migrations ./backend/src/services/db/migrations
 COPY --from=builder --chown=app:app /app/backend/src/services/db/schema.ts ./backend/src/services/db/schema.ts
-COPY --from=builder --chown=app:app /app/backend/src/services/twitter/schema.ts ./backend/src/services/twitter/schema.ts
 COPY --from=builder --chown=app:app /app/package.json ./
 COPY --from=builder --chown=app:app /app/pnpm-lock.yaml ./
 COPY --from=builder --chown=app:app /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
