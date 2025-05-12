@@ -18,7 +18,10 @@ interface CreateNearAccountModalProps {
   onClose: () => void; // Function to call when the modal should close (e.g., set isOpen to false)
 }
 
-export const CreateNearAccountModal = ({ isOpen, onClose }: CreateNearAccountModalProps) => {
+export const CreateNearAccountModal = ({
+  isOpen,
+  onClose,
+}: CreateNearAccountModalProps) => {
   const {
     nearPublicKey,
     getUserInfo,
@@ -52,8 +55,14 @@ export const CreateNearAccountModal = ({ isOpen, onClose }: CreateNearAccountMod
     if (!chosenUsername || !nearPublicKey || !web3auth) return;
 
     // Basic validation
-    if (!/^[a-z0-9]+$/.test(chosenUsername) || chosenUsername.length < 2 || chosenUsername.length > 32) {
-      setError("Username must be 2-32 characters, lowercase letters and numbers only.");
+    if (
+      !/^[a-z0-9]+$/.test(chosenUsername) ||
+      chosenUsername.length < 2 ||
+      chosenUsername.length > 32
+    ) {
+      setError(
+        "Username must be 2-32 characters, lowercase letters and numbers only.",
+      );
       return;
     }
 
@@ -78,7 +87,8 @@ export const CreateNearAccountModal = ({ isOpen, onClose }: CreateNearAccountMod
         body: JSON.stringify({
           chosen_username: chosenUsername.toLowerCase(),
           near_public_key: nearPublicKey,
-          user_info: { // Send optional info if available
+          user_info: {
+            // Send optional info if available
             name: userInfo.name,
             email: userInfo.email,
           },
@@ -89,14 +99,15 @@ export const CreateNearAccountModal = ({ isOpen, onClose }: CreateNearAccountMod
 
       if (!response.ok) {
         // Handle specific errors from backend if provided
-        throw new Error(data.error || `Failed to create account (HTTP ${response.status})`);
+        throw new Error(
+          data.error || `Failed to create account (HTTP ${response.status})`,
+        );
       }
 
       // Success! Update the profile state in the context
       setCurrentUserProfile(data.profile);
       console.log("Account and profile created successfully:", data.profile);
       onClose(); // Close the modal on success
-
     } catch (err: unknown) {
       console.error("Error creating account:", err);
       if (err instanceof Error) {
@@ -112,11 +123,16 @@ export const CreateNearAccountModal = ({ isOpen, onClose }: CreateNearAccountMod
   // Use Dialog component from shadcn/ui
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-[425px]" onEscapeKeyDown={handleClose} onPointerDownOutside={handleClose}>
+      <DialogContent
+        className="sm:max-w-[425px]"
+        onEscapeKeyDown={handleClose}
+        onPointerDownOutside={handleClose}
+      >
         <DialogHeader>
           <DialogTitle>Choose Your NEAR Account Name</DialogTitle>
           <DialogDescription>
-            This will be your unique identifier on the NEAR blockchain associated with this app.
+            This will be your unique identifier on the NEAR blockchain
+            associated with this app.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -128,7 +144,9 @@ export const CreateNearAccountModal = ({ isOpen, onClose }: CreateNearAccountMod
               <Input
                 id="username"
                 value={chosenUsername}
-                onChange={(e) => setChosenUsername(e.target.value.toLowerCase())}
+                onChange={(e) =>
+                  setChosenUsername(e.target.value.toLowerCase())
+                }
                 placeholder="your-choice"
                 className="col-span-3"
                 required
@@ -139,7 +157,10 @@ export const CreateNearAccountModal = ({ isOpen, onClose }: CreateNearAccountMod
             </div>
             <div className="col-span-4 text-sm text-muted-foreground text-center px-6">
               Your full account ID will be: <br />
-              <span className="font-mono break-all">{chosenUsername || "[username]"}{nearAccountSuffix}</span>
+              <span className="font-mono break-all">
+                {chosenUsername || "[username]"}
+                {nearAccountSuffix}
+              </span>
             </div>
             {error && (
               <div className="col-span-4 text-red-600 text-sm text-center bg-red-100 p-2 rounded">
@@ -148,10 +169,18 @@ export const CreateNearAccountModal = ({ isOpen, onClose }: CreateNearAccountMod
             )}
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={isLoading}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading || !chosenUsername || !nearPublicKey}>
+            <Button
+              type="submit"
+              disabled={isLoading || !chosenUsername || !nearPublicKey}
+            >
               {isLoading ? "Creating..." : "Create Account"}
             </Button>
           </DialogFooter>

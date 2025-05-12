@@ -198,4 +198,3 @@ export const twitterCache = table("twitter_cache", {
   value: text("value").notNull(),
   ...timestamps,
 });
-

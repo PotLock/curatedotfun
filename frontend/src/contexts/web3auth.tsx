@@ -35,7 +35,8 @@ interface Web3AuthProviderProps {
 export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
   const [web3auth, setWeb3auth] = useState<Web3Auth | null>(null);
   const [provider, setProvider] = useState<IProvider | null>(null);
-  const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null); // State for backend profile
+  const [currentUserProfile, setCurrentUserProfile] =
+    useState<UserProfile | null>(null); // State for backend profile
   const [nearPublicKey, setNearPublicKey] = useState<string | null>(null); // State for derived NEAR public key
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -131,7 +132,8 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
       const idToken = await authInstance.authenticateUser(); // Important for securing backend calls
 
       // 4. Call backend to check for existing profile
-      const response = await fetch("/api/users/me", { // Use the RESTful endpoint
+      const response = await fetch("/api/users/me", {
+        // Use the RESTful endpoint
         headers: {
           Authorization: `Bearer ${idToken.idToken}`, // Send token for auth
         },

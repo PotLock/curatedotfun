@@ -22,7 +22,8 @@ interface AuthProviderProps {
 }
 
 function Web3AuthHandler() {
-  const { isLoggedIn, currentUserProfile, nearPublicKey, isInitialized } = useWeb3Auth();
+  const { isLoggedIn, currentUserProfile, nearPublicKey, isInitialized } =
+    useWeb3Auth();
   const { setModalState } = useAuth();
 
   useEffect(() => {
@@ -35,15 +36,21 @@ function Web3AuthHandler() {
 
       if (shouldShowModal) {
         setModalState({
-          type: 'create-account',
+          type: "create-account",
           isOpen: true,
-          onClose: () => setModalState(null)
+          onClose: () => setModalState(null),
         });
       } else {
         setModalState(null);
       }
     }
-  }, [isInitialized, isLoggedIn, currentUserProfile, nearPublicKey, setModalState]);
+  }, [
+    isInitialized,
+    isLoggedIn,
+    currentUserProfile,
+    nearPublicKey,
+    setModalState,
+  ]);
 
   return null;
 }
@@ -54,8 +61,13 @@ function AuthModals() {
   if (!modalState) return null;
 
   switch (modalState.type) {
-    case 'create-account':
-      return <CreateAccountModal isOpen={modalState.isOpen} onClose={modalState.onClose} />;
+    case "create-account":
+      return (
+        <CreateAccountModal
+          isOpen={modalState.isOpen}
+          onClose={modalState.onClose}
+        />
+      );
     default:
       return null;
   }

@@ -1,10 +1,12 @@
+import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import path from "path";
-import { apiRoutes } from "./routes/api"; // Import the aggregated API routes
+import { apiRoutes } from "./routes/api";
 import { mockTwitterService } from "./routes/api/test";
 import { configureStaticRoutes, staticRoutes } from "./routes/static";
 import { ConfigService, isProduction } from "./services/config/config.service";
+import { getDatabase } from "./services/db";
 import { feedRepository } from "./services/db/repositories";
 import { DistributionService } from "./services/distribution/distribution.service";
 import { PluginService } from "./services/plugins/plugin.service";
@@ -12,7 +14,7 @@ import { ProcessorService } from "./services/processor/processor.service";
 import { SubmissionService } from "./services/submissions/submission.service";
 import { TransformationService } from "./services/transformation/transformation.service";
 import { TwitterService } from "./services/twitter/client";
-import { AppContext, AppInstance, HonoApp } from "./types/app";
+import { AppContext, AppInstance, Env } from "./types/app";
 import { getAllowedOrigins } from "./utils/config";
 import { errorHandler } from "./utils/error";
 
@@ -90,7 +92,14 @@ export async function createApp(): Promise<AppInstance> {
   };
 
   // Create Hono app
-  const app = HonoApp();
+  const app = new Hono<Env>();
+
+  // Inject database into context
+  app.use("*", async (c, next) => {
+    const dbInstance = getDatabase();
+    c.set("db", dbInstance);
+    await next();
+  });
 
   // Set context (make services accessible to routes)
   app.use("*", async (c, next) => {

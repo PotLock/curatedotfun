@@ -17,7 +17,7 @@ interface UserProfile {
 }
 
 export interface Web3AuthModalState {
-  type: 'create-account';
+  type: "create-account";
   isOpen: boolean;
   onClose: () => void;
 }
