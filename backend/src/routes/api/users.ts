@@ -30,24 +30,20 @@ const userCreateSchema = z.object({
     .optional(),
 });
 
-// Define the type for our users router
 const users = new Hono<Env>();
 
-// Create auth middleware that sets the jwtPayload in the Variables
+
+// TODO: Move to middleware, should protect all routes
 const authMiddleware = jwt({
   secret: process.env.JWT_SECRET!,
   cookie: "curatedotfun:auth-token",
 });
 
-// Apply auth middleware and set jwtPayload in Variables
 users.use("*", async (c, next) => {
-  // First run the JWT middleware
   await authMiddleware(c, async () => {});
 
-  // Get the JWT payload from the middleware
   const payload = c.get("jwtPayload");
 
-  // Set it in the Variables for type-safe access
   if (payload) {
     c.set("jwtPayload", payload);
   }

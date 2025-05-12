@@ -1,8 +1,8 @@
-import { HonoApp } from "../../types/app";
+import { Hono } from "hono";
 import { PluginService } from "../../services/plugins/plugin.service";
+import { Env } from "types/app";
 
-// Create plugin routes
-const router = HonoApp();
+const router = new Hono<Env>();
 
 /**
  * Reload all plugins
