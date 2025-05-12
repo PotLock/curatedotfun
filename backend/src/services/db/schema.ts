@@ -7,6 +7,7 @@ import {
   timestamp,
   serial,
   date,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 // From exports/plugins
@@ -126,4 +127,27 @@ export const feedPlugins = table(
     index("feed_plugins_plugin_idx").on(table.pluginId),
     primaryKey({ columns: [table.feedId, table.pluginId] }), // Ensure one config per plugin per feed
   ],
+);
+
+// Users Table (for Web3Auth/NEAR integration)
+export const users = table(
+  "users",
+  {
+    id: serial("id").primaryKey(),
+    sub_id: text("sub_id").notNull().unique(), // Unique subject identifier from Web3Auth
+    near_account_id: text("near_account_id").unique(), // e.g., chosenname.users.curatedotfun.near
+    near_public_key: text("near_public_key").notNull().unique(), // ed25519 public key
+    username: text("username"), // Optional: display name
+    email: text("email"), // Optional: email from Web3Auth
+    ...timestamps, // createdAt, updatedAt
+  },
+  (users) => ({
+    subIdIdx: uniqueIndex("users_sub_id_idx").on(users.sub_id),
+    nearAccountIdIdx: uniqueIndex("users_near_account_id_idx").on(
+      users.near_account_id,
+    ),
+    nearPublicKeyIdx: uniqueIndex("users_near_public_key_idx").on(
+      users.near_public_key,
+    ),
+  }),
 );

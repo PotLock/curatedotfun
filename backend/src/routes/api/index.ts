@@ -8,6 +8,7 @@ import submissionRoutes from "./submission";
 import { statsRoutes } from "./stats";
 import { testRoutes } from "./test";
 import twitterRoutes from "./twitter";
+import usersRoutes from "./users";
 
 // Create main API router
 export const apiRoutes = HonoApp();
@@ -26,3 +27,4 @@ apiRoutes.route("/config", configRoutes);
 apiRoutes.route("/plugins", pluginRoutes);
 apiRoutes.route("/leaderboard", leaderboardRoutes);
 apiRoutes.route("/stats", statsRoutes);
+apiRoutes.route("/users", usersRoutes);
