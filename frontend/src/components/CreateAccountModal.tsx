@@ -11,6 +11,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "./ui/dialog";
+import { usernameSchema } from "../lib/validation/user";
+import { useCreateUserProfile } from "../lib/api";
 
 interface CreateAccountModalProps {
   isOpen: boolean;
@@ -27,10 +29,13 @@ export const CreateAccountModal = ({
     web3auth, // Needed for authenticateUser to get ID token
     setCurrentUserProfile, // To update profile state on success
     logout,
+    provider,
+    getNearCredentials,
   } = useWeb3Auth();
   const [chosenUsername, setChosenUsername] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  
+  const createUserMutation = useCreateUserProfile();
 
   const nearAccountSuffix = ".users.curatedotfun.near"; // TODO: Make this configurable (app config)
 
@@ -38,10 +43,10 @@ export const CreateAccountModal = ({
   useEffect(() => {
     if (isOpen) {
       setChosenUsername("");
-      setError(null);
-      setIsLoading(false);
+      setValidationError(null);
+      createUserMutation.reset();
     }
-  }, [isOpen]);
+  }, [isOpen, createUserMutation]);
 
   const handleClose = () => {
     // Optionally, you could force logout if they close without creating
@@ -51,72 +56,61 @@ export const CreateAccountModal = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chosenUsername || !nearPublicKey || !web3auth) return;
+    if (!chosenUsername || !web3auth) return;
 
-    // TODO: zod validation
-    if (
-      !/^[a-z0-9]+$/.test(chosenUsername) ||
-      chosenUsername.length < 2 ||
-      chosenUsername.length > 32
-    ) {
-      setError(
-        "Username must be 2-32 characters, lowercase letters and numbers only.",
-      );
+    const validationResult = usernameSchema.safeParse(chosenUsername);
+    if (!validationResult.success) {
+      setValidationError(validationResult.error.errors[0]?.message || 
+        "Username must be 2-32 characters, lowercase letters and numbers only.");
       return;
     }
-
-    setIsLoading(true);
-    setError(null);
+    
+    setValidationError(null);
 
     try {
       // Get user info again to ensure we have fresh data if needed
-      // Primarily need sub_id which is stable, but good practice
       const userInfo = await getUserInfo();
+      
+      // If nearPublicKey is not available, try to get it directly
+      let publicKey = nearPublicKey;
+      if (!publicKey && provider) {
+        try {
+          // Get credentials directly from the provider
+          const credentials = await getNearCredentials(provider);
+          publicKey = credentials.publicKey;
+          console.log("Generated public key:", publicKey);
+        } catch (keyError) {
+          console.error("Failed to generate NEAR public key:", keyError);
+          setValidationError("Failed to generate NEAR public key. Please try again.");
+          return;
+        }
+      }
+      
+      if (!publicKey) {
+        setValidationError("NEAR public key is required but not available. Please try logging in again.");
+        return;
+      }
 
-      const idToken = await web3auth.authenticateUser();
-
-      const response = await fetch("/api/users", {
-        // TODO: sdk method
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken.idToken}`,
-        },
-        body: JSON.stringify({
-          chosen_username: chosenUsername.toLowerCase(),
-          near_public_key: nearPublicKey,
-          user_info: {
-            // Send optional info if available
-            name: userInfo.name,
-            email: userInfo.email,
-          },
-        }),
+      console.log("Creating user profile with public key:", publicKey);
+      const profile = await createUserMutation.mutateAsync({
+        username: chosenUsername.toLowerCase(),
+        near_public_key: publicKey,
+        name: userInfo.name,
+        email: userInfo.email
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Handle specific errors from backend if provided
-        throw new Error(
-          data.error || `Failed to create account (HTTP ${response.status})`,
-        );
-      }
-
       // Update the profile state in the context
-      setCurrentUserProfile(data.profile);
-      console.log("Account and profile created successfully:", data.profile);
+      setCurrentUserProfile(profile);
+      console.log("Account and profile created successfully:", profile);
       onClose(); // Close the modal on success
-    } catch (err: unknown) {
+    } catch (err) {
       console.error("Error creating account:", err);
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unexpected error occurred.");
-      }
-    } finally {
-      setIsLoading(false);
     }
   };
+
+  const error = validationError || (createUserMutation.error instanceof Error 
+    ? createUserMutation.error.message 
+    : createUserMutation.error ? "An unexpected error occurred" : null);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -147,7 +141,7 @@ export const CreateAccountModal = ({
                 placeholder="your-choice"
                 className="col-span-3"
                 required
-                disabled={isLoading}
+                disabled={createUserMutation.isPending}
                 pattern="[a-z0-9]{2,32}"
                 title="2-32 characters, lowercase letters and numbers only."
               />
@@ -170,15 +164,15 @@ export const CreateAccountModal = ({
               type="button"
               variant="outline"
               onClick={handleClose}
-              disabled={isLoading}
+              disabled={createUserMutation.isPending}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={isLoading || !chosenUsername || !nearPublicKey}
+              disabled={createUserMutation.isPending || !chosenUsername}
             >
-              {isLoading ? "Creating..." : "Create Account"}
+              {createUserMutation.isPending ? "Creating..." : "Create Account"}
             </Button>
           </DialogFooter>
         </form>

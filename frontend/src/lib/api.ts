@@ -1,6 +1,9 @@
-import { useMutation, useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { z } from "zod";
+import { useWeb3Auth } from "../hooks/use-web3-auth";
 import type { AppConfig, FeedConfig } from "../types/config";
 import type { SubmissionWithFeedData } from "../types/twitter";
+import { usernameSchema, UserProfile } from "./validation/user";
 
 export function useFeedConfig(feedId: string) {
   return useQuery<FeedConfig>({
@@ -159,6 +162,77 @@ export interface TransformedInfiniteData<T> {
   pages: PaginatedResponse<T>[];
   pageParams: number[];
   items: T[];
+}
+
+// User profile types and functions
+export type CreateUserProfilePayload = {
+  username: z.infer<typeof usernameSchema>;
+  near_public_key: string;
+  name?: string | null;
+  email?: string | null;
+  idToken: string;
+};
+
+export function createUserProfile(payload: CreateUserProfilePayload) {
+  const { idToken, ...body } = payload;
+
+  return fetch("/api/users", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`,
+    },
+    body: JSON.stringify(body),
+  }).then(async (response) => {
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || `Failed to create account (HTTP ${response.status})`);
+    }
+
+    return data.profile as UserProfile;
+  });
+}
+
+export function useCreateUserProfile() {
+  const { web3auth } = useWeb3Auth();
+  return useMutation({
+    mutationFn: async (payload: Omit<CreateUserProfilePayload, "idToken">) => {
+      if (!web3auth) throw new Error("Web3Auth not initialized");
+      const authResult = await web3auth.authenticateUser();
+      return createUserProfile({ ...payload, idToken: authResult.idToken });
+    }
+  });
+}
+
+export function getCurrentUserProfile(idToken: string) {
+  return fetch("/api/users/me", {
+    headers: {
+      Authorization: `Bearer ${idToken}`,
+    },
+  }).then(async (response) => {
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || `Failed to fetch user profile (HTTP ${response.status})`);
+    }
+
+    return data.profile as UserProfile;
+  });
+}
+
+export function useCurrentUserProfile(enabled = true) {
+  const { web3auth } = useWeb3Auth();
+
+  return useQuery<UserProfile>({
+    queryKey: ["currentUserProfile"],
+    queryFn: async () => {
+      if (!web3auth) throw new Error("Web3Auth not initialized");
+      const authResult = await web3auth.authenticateUser();
+      return getCurrentUserProfile(authResult.idToken);
+    },
+    enabled: enabled,
+  });
 }
 
 export function useAllSubmissions(limit: number = 20, status?: string) {

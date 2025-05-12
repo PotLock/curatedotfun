@@ -23,16 +23,18 @@ import {
 } from "lucide-react";
 import { AuthUserInfo } from "../types/web3auth";
 import UserMenu from "./UserMenu";
+import { LoginModal } from "./LoginModal";
 
 const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
 
-  const { isInitialized, isLoggedIn, login, logout, getUserInfo } =
+  const { isInitialized, isLoggedIn, logout, getUserInfo } =
     useWeb3Auth();
 
   useEffect(() => {
@@ -240,7 +242,7 @@ const Header = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button onClick={login}>Login</Button>
+                <Button onClick={() => setIsLoginModalOpen(true)}>Login</Button>
               )}
             </div>
           </div>
@@ -249,6 +251,11 @@ const Header = () => {
       <Modal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)}>
         <HowItWorks />
       </Modal>
+      
+      <LoginModal 
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+      />
     </>
   );
 };

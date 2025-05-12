@@ -5,7 +5,7 @@ import { Env } from "types/app";
 export const statsRoutes = new Hono<Env>();
 
 /**
- * Get platform statistics
+ * Get platform statistics (used by landing page)
  */
 statsRoutes.get("/", async (c) => {
   const context = c.get("context");

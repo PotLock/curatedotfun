@@ -189,6 +189,9 @@ importers:
       '@tanstack/react-router':
         specifier: ^1.114.15
         version: 1.117.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@web3auth/auth-adapter':
+        specifier: ^9.7.0
+        version: 9.7.0(@babel/runtime@7.27.0)
       '@web3auth/base':
         specifier: ^9.7.0
         version: 9.7.0(@babel/runtime@7.27.0)
@@ -201,6 +204,9 @@ importers:
       '@web3auth/modal':
         specifier: ^9.7.0
         version: 9.7.0(@babel/runtime@7.27.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.6.3)
+      '@web3auth/no-modal':
+        specifier: ^9.7.0
+        version: 9.7.0(@babel/runtime@7.27.0)(@web3auth/auth-adapter@9.7.0(@babel/runtime@7.27.0))
       add:
         specifier: ^2.0.6
         version: 2.0.6
