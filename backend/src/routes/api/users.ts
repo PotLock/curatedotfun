@@ -160,3 +160,11 @@ users.put("/me", /* validator for update fields */ async (c) => {
 
 
 export default users;
+
+
+- __Backend - NEAR Account Creation:__ The core logic to create the NEAR sub-account in `backend/src/routes/api/users.ts` (within the `POST /users` handler) is still a placeholder (`// 5. TODO: Implement NEAR sub-account creation logic`). This requires installing `near-api-js` in the backend workspace and using the parent account's private key (stored securely) to sign the `createAccount` and `addKey` transactions.
+- __Backend - Authentication:__ The API endpoints currently use placeholder authentication (`const sub_id = "placeholder_sub_id";`). Proper authentication middleware needs to be implemented (e.g., using Hono's JWT middleware) to verify the Web3Auth ID token sent from the frontend and securely extract the user's `sub_id`.
+- __Backend - Error Handling:__ Enhance error handling in the API routes, especially for potential database unique constraint violations (e.g., `sub_id` or `near_account_id` already exists) and NEAR transaction failures.
+- __Database Migration:__ The database migration for the new `users` table needs to be generated (`pnpm run db:generate`) and applied (`pnpm run db:migrate`).
+- __Frontend - UI/UX:__ Refine loading states and error messages in the `CreateNearAccountModal` and potentially other UI components interacting with the Web3Auth flow.
+
