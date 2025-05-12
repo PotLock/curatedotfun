@@ -1,10 +1,11 @@
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import path from "path";
-import { apiRoutes } from "./routes/api";
+import { apiRoutes } from "./routes/api"; // Import the aggregated API routes
 import { mockTwitterService } from "./routes/api/test";
 import { configureStaticRoutes, staticRoutes } from "./routes/static";
 import { ConfigService, isProduction } from "./services/config/config.service";
+import { feedRepository } from "./services/db/repositories";
 import { DistributionService } from "./services/distribution/distribution.service";
 import { PluginService } from "./services/plugins/plugin.service";
 import { ProcessorService } from "./services/processor/processor.service";
@@ -57,12 +58,35 @@ export async function createApp(): Promise<AppInstance> {
     submissionService.initialize();
   }
 
+  // Initialize scheduler service
+  // const schedulerClient = new SchedulerClient({
+  //   baseUrl: process.env.SCHEDULER_BASE_URL || "http://localhost:3001",
+  //   headers: {
+  //     Authorization: `Bearer ${process.env.SCHEDULER_API_TOKEN || ""}`,
+  //   },
+  // });
+
+  // const backendUrl = process.env.CURATE_BACKEND_URL || "http://localhost:3000";
+  // const schedulerService = new SchedulerService(
+  //   feedRepository,
+  //   processorService,
+  //   schedulerClient,
+  //   backendUrl,
+  // );
+
+  // Initialize scheduler on startup (non-blocking)
+  // schedulerService.initialize().catch((err) => {
+  //   console.error("Failed to initialize scheduler service:", err);
+  // });
+
   const context: AppContext = {
     twitterService,
     submissionService,
     distributionService,
     processorService,
     configService,
+    // schedulerService,
+    feedRepository,
   };
 
   // Create Hono app

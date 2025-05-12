@@ -6,7 +6,7 @@ const FeedList = () => {
   const { data: feeds = [] } = useQuery<FeedConfig[]>({
     queryKey: ["feeds"],
     queryFn: async () => {
-      const response = await fetch("/api/feeds");
+      const response = await fetch("/api/feeds"); // TODO: standardize to /feed, remove the /feeds route in routes
       if (!response.ok) {
         throw new Error("Failed to fetch feeds");
       }

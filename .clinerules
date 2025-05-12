@@ -78,6 +78,14 @@
 4. DistributionService → Distributor-specific transforms
 5. Distribution to configured channels
 
+### Recap Flow
+1. Scheduler service creates jobs based on feed configuration
+2. External scheduler triggers recap job via HTTP endpoint
+3. Recap job fetches approved submissions since last run
+4. ProcessorService applies batch transformations
+5. Distribution to configured channels
+6. Update last successful completion timestamp
+
 ### Plugin System
 1. PluginService loads plugins at runtime via module federation
 2. Plugins register with appropriate service
@@ -89,8 +97,18 @@
 2. Transaction support with retry logic
 3. Error handling and connection management
 4. Type-safe queries with Drizzle ORM
+5. Repository pattern for domain-specific operations
+6. State tracking for external scheduled jobs
 
 ## Current Focus Areas
+
+### Recap Scheduling System
+- Implementing reliable recap generation for feeds
+- Using external scheduler service for job management
+- Tracking job state in the database for resilience
+- Supporting both cron expressions and interval-based schedules
+- Providing UI for managing recap configurations
+- Handling process restarts and maintaining job consistency
 
 ### Comprehensive Error Handling
 - Implementing granular error types across the application
