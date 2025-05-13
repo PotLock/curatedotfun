@@ -8,6 +8,7 @@ import * as schema from "../services/db/schema";
 
 export const insertUserSchema = createInsertSchema(schema.users, {
   id: z.undefined(),
+  sub_id: z.undefined(),
   createdAt: z.undefined(),
   updatedAt: z.undefined(),
 });

@@ -17,7 +17,7 @@ import { TwitterService } from "./services/twitter/client";
 import { AppContext, AppInstance, Env } from "./types/app";
 import { getAllowedOrigins } from "./utils/config";
 import { errorHandler } from "./utils/error";
-import { jwt } from "hono/jwt"; // Import jwt for global auth
+import { web3AuthJwtMiddleware } from "./utils/auth";
 import { usersController } from "./controllers/users.controller"; // Import usersController
 
 const ALLOWED_ORIGINS = getAllowedOrigins();
@@ -114,21 +114,7 @@ export async function createApp(): Promise<AppInstance> {
     return errorHandler(err, c);
   });
 
-  app.use("*", async (c, next) => {
-    const jwtMiddleware = jwt({
-      secret: process.env.JWT_SECRET!,
-      cookie: "curatedotfun:auth-token",
-    });
-    try {
-      await jwtMiddleware(c, async () => {}); 
-    } catch (e) {
-      // If jwtMiddleware throws (e.g. token invalid/expired), then payload won't be set.
-      // Specific routes can check for payload presence.
-
-      // Or should we throw error here...?
-    }
-    await next();
-  });
+  app.use("*", web3AuthJwtMiddleware);
 
   app.use("*", secureHeaders());
   app.use(

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
+import { useCreateUserProfile } from "../lib/api";
+import { usernameSchema } from "../lib/validation/user";
+import { Modal } from "./Modal";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Modal } from "./Modal";
-import { usernameSchema } from "../lib/validation/user";
-import { useCreateUserProfile } from "../lib/api";
 
 interface CreateAccountModalProps {
   isOpen: boolean;
@@ -27,7 +27,7 @@ export const CreateAccountModal = ({
   } = useWeb3Auth();
   const [chosenUsername, setChosenUsername] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
-  
+
   const createUserMutation = useCreateUserProfile();
 
   const nearAccountSuffix = ".users.curatedotfun.near"; // TODO: Make this configurable (app config)
@@ -37,12 +37,10 @@ export const CreateAccountModal = ({
     if (isOpen) {
       setChosenUsername("");
       setValidationError(null);
-      createUserMutation.reset();
     }
-  }, [isOpen, createUserMutation]);
+  }, [isOpen]);
 
   const handleClose = () => {
-    // Optionally, you could force logout if they close without creating
     logout();
     onClose();
   };
@@ -53,18 +51,19 @@ export const CreateAccountModal = ({
 
     const validationResult = usernameSchema.safeParse(chosenUsername);
     if (!validationResult.success) {
-      setValidationError(validationResult.error.errors[0]?.message || 
-        "Username must be 2-32 characters, lowercase letters and numbers only.");
+      setValidationError(
+        validationResult.error.errors[0]?.message ||
+          "Username must be 2-32 characters, lowercase letters and numbers only.",
+      );
       return;
     }
-    
+
     setValidationError(null);
 
     try {
       // Get user info again to ensure we have fresh data if needed
       const userInfo = await getUserInfo();
-      
-      // If nearPublicKey is not available, try to get it directly
+      // If nearPublicKey is not available (not a login with wallet), try to get it directly
       let publicKey = nearPublicKey;
       if (!publicKey && provider) {
         try {
@@ -74,13 +73,17 @@ export const CreateAccountModal = ({
           console.log("Generated public key:", publicKey);
         } catch (keyError) {
           console.error("Failed to generate NEAR public key:", keyError);
-          setValidationError("Failed to generate NEAR public key. Please try again.");
+          setValidationError(
+            "Failed to generate NEAR public key. Please try again.",
+          );
           return;
         }
       }
-      
+
       if (!publicKey) {
-        setValidationError("NEAR public key is required but not available. Please try logging in again.");
+        setValidationError(
+          "NEAR public key is required but not available. Please try logging in again.",
+        );
         return;
       }
 
@@ -89,21 +92,70 @@ export const CreateAccountModal = ({
         username: chosenUsername.toLowerCase(),
         near_public_key: publicKey,
         name: userInfo.name,
-        email: userInfo.email
+        email: userInfo.email,
       });
 
       // Update the profile state in the context
       setCurrentUserProfile(profile);
       console.log("Account and profile created successfully:", profile);
-      onClose(); // Close the modal on success
+      onClose();
     } catch (err) {
       console.error("Error creating account:", err);
+
+      if (err instanceof Error) {
+        // TODO: This could be cleaned up
+        try {
+          const errorData = JSON.parse(err.message);
+
+          // Check if it's a Zod validation error with issues array
+          if (errorData.error && errorData.error.issues) {
+            // TODO: Helper
+            const issues = errorData.error.issues;
+            const errorMessages = issues
+              .map(
+                (issue: { path: string[]; message: string }) =>
+                  `${issue.path.join(".")}: ${issue.message}`,
+              )
+              .join(", ");
+            setValidationError(errorMessages || "Validation failed");
+            return;
+          }
+
+          // Check for JWT verification errors
+          if (errorData.error && errorData.error.includes("JWT")) {
+            // TODO: Helper
+            setValidationError(
+              "Authentication error. Please try logging in again.",
+            );
+            return;
+          }
+
+          if (errorData.error) {
+            // TODO: Helper
+            setValidationError(
+              typeof errorData.error === "string"
+                ? errorData.error
+                : JSON.stringify(errorData.error),
+            );
+            return;
+          }
+        } catch {
+          // If not JSON, use the error message directly
+          setValidationError(err.message);
+        }
+      } else {
+        setValidationError("An unexpected error occurred");
+      }
     }
   };
 
-  const error = validationError || (createUserMutation.error instanceof Error 
-    ? createUserMutation.error.message 
-    : createUserMutation.error ? "An unexpected error occurred" : null);
+  const error =
+    validationError ||
+    (createUserMutation.error instanceof Error
+      ? createUserMutation.error.message
+      : createUserMutation.error
+        ? "An unexpected error occurred"
+        : null);
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose}>

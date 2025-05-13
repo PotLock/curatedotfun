@@ -129,7 +129,10 @@ export const useRefreshAccount = createAuthenticatedMutation({
     client,
     { platform, userId }: { platform: Platform; userId: string },
   ) => {
-    await client.auth.refreshProfile(platform.toLowerCase() as Platform, userId);
+    await client.auth.refreshProfile(
+      platform.toLowerCase() as Platform,
+      userId,
+    );
     return userId;
   },
   getAuthDetails: ({

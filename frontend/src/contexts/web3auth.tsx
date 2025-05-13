@@ -140,26 +140,28 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
       console.log("Provider not available yet in fetchProfileAndNearKey");
       return;
     }
-    
+
     // Set provider in state
     setProvider(authInstance.provider);
-    
+
     try {
       // Get private key directly from the provider
       const privateKey = await authInstance.provider.request({
         method: "private_key",
       });
-      
+
       if (!privateKey) {
         throw new Error("Failed to get private key from Web3Auth");
       }
 
       // Convert the secp256k1 key to ed25519 key
-      const privateKeyEd25519 = getED25519Key(privateKey as string).sk.toString("hex");
+      const privateKeyEd25519 = getED25519Key(privateKey as string).sk.toString(
+        "hex",
+      );
       const privateKeyEd25519Buffer = Buffer.from(privateKeyEd25519, "hex");
       const bs58encode = utils.serialize.base_encode(privateKeyEd25519Buffer);
       const keyPair = KeyPair.fromString(`ed25519:${bs58encode}`);
-      
+
       // Store the public key
       const publicKeyString = keyPair.getPublicKey().toString();
       setNearPublicKey(publicKeyString);
@@ -219,11 +221,11 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
 
       // Convert the base58 private key to KeyPair
       const keyPair = KeyPair.fromString(`ed25519:${bs58encode}`);
-      
+
       // Get public key
       const publicKeyString = keyPair.getPublicKey().toString();
       setNearPublicKey(publicKeyString);
-      
+
       return { keyPair, publicKey: publicKeyString };
     } catch (error) {
       console.error("Error getting NEAR credentials:", error);
@@ -232,34 +234,43 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
   };
 
   // Login with a specific provider
-  const login = async (loginProvider = "google", extraLoginOptions: unknown = {}) => {
+  const login = async (
+    loginProvider = "google",
+    extraLoginOptions: unknown = {},
+  ) => {
     if (!web3auth) {
       console.log("Web3Auth not initialized yet");
       throw new Error("Web3Auth not initialized");
     }
-    
+
     try {
       // Connect using the specified provider
       const web3authProvider = await web3auth.connectTo(WALLET_ADAPTERS.AUTH, {
         loginProvider,
         ...(extraLoginOptions as Record<string, unknown>),
       });
-      
+
       setProvider(web3authProvider);
       setIsLoggedIn(true);
-      
+
       // Get NEAR credentials immediately after connecting
       if (web3authProvider) {
         try {
           const credentials = await getNearCredentials(web3authProvider);
           return { provider: web3authProvider, credentials };
         } catch (error) {
-          console.error(`Error getting NEAR credentials during login with ${loginProvider}:`, error);
+          console.error(
+            `Error getting NEAR credentials during login with ${loginProvider}:`,
+            error,
+          );
           return { provider: web3authProvider, error };
         }
       } else {
         console.error("Provider is null after connecting");
-        return { provider: web3authProvider, error: new Error("Provider is null after connecting") };
+        return {
+          provider: web3authProvider,
+          error: new Error("Provider is null after connecting"),
+        };
       }
     } catch (error) {
       console.error(`Login with ${loginProvider} failed:`, error);

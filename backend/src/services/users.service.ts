@@ -1,21 +1,21 @@
 import { eq } from "drizzle-orm";
-import {
-  connect,
-  KeyPair,
-  keyStores,
-  transactions,
-  utils,
-} from "near-api-js";
+import { connect, KeyPair, keyStores, transactions, utils } from "near-api-js";
 import { z } from "zod"; // Import z
-import { insertUserSchema, selectUserSchema, updateUserSchema } from "../validation/users.validation"; // Import more schemas
+import {
+  insertUserSchema,
+  selectUserSchema,
+  updateUserSchema,
+} from "../validation/users.validation"; // Import more schemas
 import { DatabaseConnection } from "./db/connection";
 import * as schema from "./db/schema";
 
-export type InsertUserData = z.infer<typeof insertUserSchema> & { sub_id: string };
+export type InsertUserData = z.infer<typeof insertUserSchema> & {
+  sub_id: string;
+};
 export type UpdateUserData = z.infer<typeof updateUserSchema>;
 
 export class UserService {
-  constructor(private dbInstance: DatabaseConnection) { }
+  constructor(private dbInstance: DatabaseConnection) {}
 
   async findUserBySubId(sub_id: string) {
     const db = this.dbInstance.getReadDb();

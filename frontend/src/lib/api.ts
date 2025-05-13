@@ -187,7 +187,9 @@ export function createUserProfile(payload: CreateUserProfilePayload) {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || `Failed to create account (HTTP ${response.status})`);
+      throw new Error(
+        data.error || `Failed to create account (HTTP ${response.status})`,
+      );
     }
 
     return data.profile as UserProfile;
@@ -201,7 +203,7 @@ export function useCreateUserProfile() {
       if (!web3auth) throw new Error("Web3Auth not initialized");
       const authResult = await web3auth.authenticateUser();
       return createUserProfile({ ...payload, idToken: authResult.idToken });
-    }
+    },
   });
 }
 
@@ -214,7 +216,9 @@ export function getCurrentUserProfile(idToken: string) {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || `Failed to fetch user profile (HTTP ${response.status})`);
+      throw new Error(
+        data.error || `Failed to fetch user profile (HTTP ${response.status})`,
+      );
     }
 
     return data.profile as UserProfile;

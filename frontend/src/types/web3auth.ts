@@ -60,11 +60,20 @@ export interface Web3AuthContextType {
   provider: IProvider | null;
   isInitialized: boolean;
   isLoggedIn: boolean;
-  login: (loginProvider?: string, extraLoginOptions?: unknown) => Promise<{ provider: IProvider | null; credentials?: { keyPair: KeyPair; publicKey: string }; error?: unknown }>;
+  login: (
+    loginProvider?: string,
+    extraLoginOptions?: unknown,
+  ) => Promise<{
+    provider: IProvider | null;
+    credentials?: { keyPair: KeyPair; publicKey: string };
+    error?: unknown;
+  }>;
   logout: () => Promise<void>;
   getUserInfo(): Promise<Partial<AuthUserInfo>>;
   getNearAccount(): Promise<NearAccountInfo>;
-  getNearCredentials(web3authProvider: IProvider | null): Promise<{ keyPair: KeyPair; publicKey: string }>;
+  getNearCredentials(
+    web3authProvider: IProvider | null,
+  ): Promise<{ keyPair: KeyPair; publicKey: string }>;
   // Add the new properties
   currentUserProfile: UserProfile | null;
   nearPublicKey: string | null;

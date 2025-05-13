@@ -34,9 +34,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
       <div className="max-w-[425px] mx-auto">
         <div className="mb-6">
           <h2 className="text-2xl font-bold">Log in</h2>
-          <p className="text-gray-600">
-            Choose your preferred login method
-          </p>
+          <p className="text-gray-600">Choose your preferred login method</p>
         </div>
 
         <div className="flex flex-col gap-4 py-4">

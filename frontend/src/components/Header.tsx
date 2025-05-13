@@ -34,8 +34,7 @@ const Header = () => {
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
   const { showLoginModal } = useAuthStore();
 
-  const { isInitialized, isLoggedIn, logout, getUserInfo } =
-    useWeb3Auth();
+  const { isInitialized, isLoggedIn, logout, getUserInfo } = useWeb3Auth();
 
   useEffect(() => {
     const fetchUserInfo = async () => {

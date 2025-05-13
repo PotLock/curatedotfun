@@ -71,6 +71,9 @@ importers:
       hono:
         specifier: ^4.0.5
         version: 4.7.8
+      jose:
+        specifier: ^6.0.11
+        version: 6.0.11
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -4264,6 +4267,9 @@ packages:
 
   joi@17.13.3:
     resolution: {integrity: sha512-otDA4ldcIx+ZXsKHWmp0YizCweVRZG96J10b0FevjfuncLO1oX59THoAmHkNubYJ+9gWsYsp5k8v4ib6oDv1fA==}
+
+  jose@6.0.11:
+    resolution: {integrity: sha512-QxG7EaliDARm1O1S8BGakqncGT9s25bKL1WSf6/oa17Tkqwi8D2ZNglqCF+DsYF88/rV66Q/Q2mFAy697E1DUg==}
 
   joycon@3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
@@ -10333,6 +10339,8 @@ snapshots:
       '@sideway/address': 4.1.5
       '@sideway/formula': 3.0.1
       '@sideway/pinpoint': 2.0.0
+
+  jose@6.0.11: {}
 
   joycon@3.1.1: {}
 
