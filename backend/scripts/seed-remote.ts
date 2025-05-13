@@ -13,19 +13,19 @@ async function seedRemote() {
   console.log("Starting remote seeding process...");
 
   // --- Configure your Database URLs ---
-  const RAILWAY_DATABASE_URL = process.env.RAILWAY_DATABASE_URL;
-  const LOCAL_DATABASE_URL = process.env.DATABASE_URL;
+  const SOURCE_DATABASE_URL = process.env.SOURCE_DATABASE_URL;
+  const TARGET_DATEBASE_URL = process.env.DATABASE_URL;
 
-  if (!RAILWAY_DATABASE_URL) {
+  if (!SOURCE_DATABASE_URL) {
     console.error(
-      "Error: RAILWAY_DATABASE_URL environment variable is required.",
+      "Error: SOURCE_DATABASE_URL environment variable is required.",
     );
     process.exit(1);
   }
 
-  if (!LOCAL_DATABASE_URL) {
+  if (!TARGET_DATEBASE_URL) {
     console.error(
-      "Error: LOCAL_DATABASE_URL environment variable is required.",
+      "Error: TARGET_DATEBASE_URL environment variable is required.",
     );
     console.error(
       "Please set the DATABASE_URL environment variable for your local database.",
@@ -37,8 +37,8 @@ async function seedRemote() {
 
   try {
     // --- Parse Database URLs ---
-    const railwayConfig = parse(RAILWAY_DATABASE_URL);
-    const localConfig = parse(LOCAL_DATABASE_URL);
+    const railwayConfig = parse(SOURCE_DATABASE_URL);
+    const localConfig = parse(TARGET_DATEBASE_URL);
 
     // Validate parsed configurations
     if (
@@ -47,7 +47,7 @@ async function seedRemote() {
       !railwayConfig.password ||
       !railwayConfig.database
     ) {
-      console.error("Error: Could not parse RAILWAY_DATABASE_URL correctly.");
+      console.error("Error: Could not parse SOURCE_DATABASE_URL correctly.");
       process.exit(1);
     }
     if (
@@ -57,7 +57,7 @@ async function seedRemote() {
       !localConfig.database
     ) {
       console.error(
-        "Error: Could not parse LOCAL_DATABASE_URL (DATABASE_URL) correctly.",
+        "Error: Could not parse TARGET_DATEBASE_URL (DATABASE_URL) correctly.",
       );
       process.exit(1);
     }
