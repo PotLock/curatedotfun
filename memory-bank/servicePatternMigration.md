@@ -9,30 +9,36 @@ This document outlines the process for migrating existing backend services to fo
 The pattern consists of the following components:
 
 1. **Validation Layer**
+
    - Zod schemas for request validation and type inference
    - Frontend and backend schema alignment
 
 2. **Repository Layer**
+
    - Database operations using Drizzle ORM
    - Error handling and transaction management
    - Domain-specific database operations
 
 3. **Service Interface Layer**
+
    - TypeScript interfaces defining service contracts
    - Type definitions derived from Zod schemas
 
 4. **Service Implementation Layer**
+
    - Business logic implementation
    - Repository interaction
    - Error handling with custom error types
    - Data validation with Zod schemas
 
 5. **Dependency Injection Layer**
+
    - Service provider for centralized service instantiation
    - Improved testability through dependency injection
    - Consistent service access across controllers
 
 6. **Controller Layer**
+
    - Hono-based API routes
    - Request validation with Zod schemas
    - Error handling and response formatting
@@ -48,6 +54,7 @@ The pattern consists of the following components:
 ### Phase 1: Setup & Validation
 
 1. **[ ] Define Zod Schemas**
+
    - Create/update `backend/src/validation/<entity>.validation.ts`
    - Use drizzle-zod utilities to create schemas from the database schema:
      - `createInsertSchema(schema.<entity>)` for `insert<Entity>Schema`
@@ -57,6 +64,7 @@ The pattern consists of the following components:
    - Create/update corresponding schemas in `frontend/src/lib/validation/<entity>.ts` for client-side use and type inference
 
 2. **[ ] Register Zod Schema for JSON Generation**
+
    - If the entity's data will be exposed publicly or needs a formal schema, add its `select<Entity>Schema` to `backend/scripts/generate-json-schemas.ts`
 
 3. **[ ] Define Service Interface**
@@ -67,6 +75,7 @@ The pattern consists of the following components:
 ### Phase 2: Data Layer
 
 4. **[ ] Create/Update Database Schema**
+
    - Ensure the database table schema (in `backend/src/services/db/schema.ts`) matches the `select<Entity>Schema`
    - **Crucially, ensure all tables include `data JSONB NULL` and `metadata JSONB NULL` columns**
    - Generate and apply migrations if necessary (`pnpm --filter backend drizzle:generate`, `pnpm --filter backend drizzle:migrate`)
@@ -94,6 +103,7 @@ The pattern consists of the following components:
 ### Phase 4: API Layer
 
 7. **[ ] Create Controller**
+
    - Create `backend/src/controllers/<entity>.controller.ts`
    - Create a new Hono instance: `const <entity>Controller = new Hono<Env>()`
    - Define routes (e.g., `GET /`, `POST /`, `GET /:id`, `PUT /:id`, `DELETE /:id`)
@@ -112,13 +122,16 @@ The pattern consists of the following components:
 ### Phase 5: Refinement & Cleanup
 
 9. **[ ] Add Tests**
+
    - Write unit/integration/component tests for the new repository, service, and controller logic (referencing `backend/test/`)
 
 10. **[ ] Update Error Handling**
-   - Ensure any new custom error types are defined in `backend/src/types/errors.ts`
-   - Verify the central error handler (`backend/src/utils/error.ts`) handles these errors appropriately if needed, or that controllers handle them specifically
+
+- Ensure any new custom error types are defined in `backend/src/types/errors.ts`
+- Verify the central error handler (`backend/src/utils/error.ts`) handles these errors appropriately if needed, or that controllers handle them specifically
 
 11. **[ ] Code Review & Refactor**
+
     - Review the new code for adherence to the pattern, consistency, and best practices
     - Refactor as needed
 
@@ -128,17 +141,27 @@ The pattern consists of the following components:
 ## Example: Users Service Implementation
 
 ### Validation (`backend/src/validation/users.validation.ts`)
+
 ```typescript
 import { z } from "zod";
 
 export const insertUserSchema = z.object({
-  username: z.string().min(2).max(32).regex(/^[a-z0-9]+$/),
+  username: z
+    .string()
+    .min(2)
+    .max(32)
+    .regex(/^[a-z0-9]+$/),
   near_public_key: z.string(),
   email: z.string().email().optional().nullable(),
 });
 
 export const updateUserSchema = z.object({
-  username: z.string().min(2).max(32).regex(/^[a-z0-9]+$/).optional(),
+  username: z
+    .string()
+    .min(2)
+    .max(32)
+    .regex(/^[a-z0-9]+$/)
+    .optional(),
   email: z.string().email().optional().nullable(),
   name: z.string().optional().nullable(),
 });
@@ -157,9 +180,13 @@ export const selectUserSchema = z.object({
 ```
 
 ### Service Interface (`backend/src/services/interfaces/user.interface.ts`)
+
 ```typescript
 import { z } from "zod";
-import { insertUserSchema, updateUserSchema } from "../../validation/users.validation";
+import {
+  insertUserSchema,
+  updateUserSchema,
+} from "../../validation/users.validation";
 
 export type InsertUserData = z.infer<typeof insertUserSchema> & {
   auth_provider_id: string;
@@ -170,11 +197,15 @@ export type UpdateUserData = z.infer<typeof updateUserSchema>;
 export interface IUserService {
   findUserByAuthProviderId(auth_provider_id: string): Promise<any | null>;
   createUser(data: InsertUserData): Promise<any>;
-  updateUser(auth_provider_id: string, data: UpdateUserData): Promise<any | null>;
+  updateUser(
+    auth_provider_id: string,
+    data: UpdateUserData,
+  ): Promise<any | null>;
 }
 ```
 
 ### Repository (`backend/src/services/db/repositories/user.repository.ts`)
+
 ```typescript
 import { eq } from "drizzle-orm";
 import { DatabaseError, NotFoundError } from "../../../types/errors";
@@ -203,7 +234,7 @@ export class UserRepository {
         operationName: "find user by auth_provider_id",
         additionalContext: { auth_provider_id },
       },
-      null
+      null,
     );
   }
 
@@ -214,26 +245,32 @@ export const userRepository = new UserRepository();
 ```
 
 ### Service (`backend/src/services/users.service.ts`)
+
 ```typescript
 import { selectUserSchema } from "../validation/users.validation";
 import { DatabaseConnection } from "./db/connection";
 import { UserRepository } from "./db/repositories";
-import { IUserService, InsertUserData, UpdateUserData } from "./interfaces/user.interface";
+import {
+  IUserService,
+  InsertUserData,
+  UpdateUserData,
+} from "./interfaces/user.interface";
 import { UserServiceError } from "../types/errors";
 
 export class UserService implements IUserService {
   constructor(
     private userRepository: UserRepository,
-    private dbInstance: DatabaseConnection
+    private dbInstance: DatabaseConnection,
   ) {}
 
   async findUserByAuthProviderId(auth_provider_id: string) {
-    const user = await this.userRepository.findByAuthProviderId(auth_provider_id);
-    
+    const user =
+      await this.userRepository.findByAuthProviderId(auth_provider_id);
+
     if (!user) {
       return null;
     }
-    
+
     return selectUserSchema.parse(user);
   }
 
@@ -242,6 +279,7 @@ export class UserService implements IUserService {
 ```
 
 ### Controller (`backend/src/controllers/users.controller.ts`)
+
 ```typescript
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
@@ -288,6 +326,7 @@ export { usersController };
 ```
 
 ### App Setup (`backend/src/app.ts`)
+
 ```typescript
 import { Hono } from "hono";
 import { apiRoutes } from "./routes/api";
@@ -312,52 +351,60 @@ export async function createApp(): Promise<AppInstance> {
 ## Services to Migrate
 
 1. **[✅] Activity Service**
+
    - Implementation: `backend/src/services/activity.service.ts`
    - API routes: `/api/activity`
 
 2. **[ ] Feeds Service**
+
    - Current implementation: `backend/src/services/feeds/`
    - API routes: `/api/feeds`
 
 3. **[ ] Submissions Service**
+
    - Current implementation: `backend/src/services/submissions/`
    - API routes: `/api/submissions`
 
-3. **[ ] Processor Service**
+4. **[ ] Processor Service**
+
    - Current implementation: `backend/src/services/processor/`
    - API routes: `/api/process`
 
-4. **[ ] Distribution Service**
+5. **[ ] Distribution Service**
+
    - Current implementation: `backend/src/services/distribution/`
    - API routes: `/api/distribute`
 
-5. **[ ] Transformation Service**
+6. **[ ] Transformation Service**
+
    - Current implementation: `backend/src/services/transformation/`
    - API routes: `/api/transform`
 
-6. **[ ] Plugin Service**
+7. **[ ] Plugin Service**
+
    - Current implementation: `backend/src/services/plugins/`
    - API routes: `/api/plugins`
 
-7. **[ ] Config Service**
+8. **[ ] Config Service**
+
    - Current implementation: `backend/src/services/config/`
    - API routes: `/api/config`
 
-8. **[ ] Twitter Service**
+9. **[ ] Twitter Service**
    - Current implementation: `backend/src/services/twitter/`
    - API routes: `/api/twitter`
 
 ## Progress Tracking
 
-| Service | Validation | Interface | Repository | Service | Controller | Mounted | Tests | Cleanup |
-|---------|------------|-----------|------------|---------|------------|---------|-------|---------|
-| Users   | ✅         | ✅        | ✅         | ✅      | ✅         | ✅      | ✅    | ✅      |
-| Activity| ✅         | ✅        | ✅         | ✅      | ✅         | ✅      | ❌    | ✅      |
-| Feeds   | ❌         | ❌        | ❌         | ❌      | ❌         | ❌      | ❌    | ❌      |
-| Submissions | ❌     | ❌        | ❌         | ❌      | ❌         | ❌      | ❌    | ❌      |
-| Processor | ❌       | ❌        | ❌         | ❌      | ❌         | ❌      | ❌    | ❌      |
-| Distribution | ❌    | ❌        | ❌         | ❌      | ❌         | ❌      | ❌    | ❌      |
-| Transformation | ❌  | ❌        | ❌         | ❌      | ❌         | ❌      | ❌    | ❌      |
-| Plugin   | ❌        | ❌        | ❌         | ❌      | ❌         | ❌      | ❌    | ❌      |
-| Config   | ❌        | ❌        | ❌         | ❌      | ❌         | ❌      | ❌    | ❌      |
-| Twitter  | ❌        | ❌        | ❌         | ❌      | ❌         | ❌      | ❌    | ❌      |
+| Service        | Validation | Interface | Repository | Service | Controller | Mounted | Tests | Cleanup |
+| -------------- | ---------- | --------- | ---------- | ------- | ---------- | ------- | ----- | ------- |
+| Users          | ✅         | ✅        | ✅         | ✅      | ✅         | ✅      | ✅    | ✅      |
+| Activity       | ✅         | ✅        | ✅         | ✅      | ✅         | ✅      | ❌    | ✅      |
+| Feeds          | ❌         | ❌        | ❌         | ❌      | ❌         | ❌      | ❌    | ❌      |
+| Submissions    | ❌         | ❌        | ❌         | ❌      | ❌         | ❌      | ❌    | ❌      |
+| Processor      | ❌         | ❌        | ❌         | ❌      | ❌         | ❌      | ❌    | ❌      |
+| Distribution   | ❌         | ❌        | ❌         | ❌      | ❌         | ❌      | ❌    | ❌      |
+| Transformation | ❌         | ❌        | ❌         | ❌      | ❌         | ❌      | ❌    | ❌      |
+| Plugin         | ❌         | ❌        | ❌         | ❌      | ❌         | ❌      | ❌    | ❌      |
+| Config         | ❌         | ❌        | ❌         | ❌      | ❌         | ❌      | ❌    | ❌      |
+| Twitter        | ❌         | ❌        | ❌         | ❌      | ❌         | ❌      | ❌    | ❌      |
