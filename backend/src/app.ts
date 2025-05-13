@@ -19,6 +19,8 @@ import { getAllowedOrigins } from "./utils/config";
 import { errorHandler } from "./utils/error";
 import { web3AuthJwtMiddleware } from "./utils/auth";
 import { usersController } from "./controllers/users.controller"; // Import usersController
+import { activityController } from "./controllers/activity.controller"; // Import activityController
+import { ServiceProvider } from "./utils/service-provider";
 
 const ALLOWED_ORIGINS = getAllowedOrigins();
 
@@ -100,6 +102,9 @@ export async function createApp(): Promise<AppInstance> {
   app.use("*", async (c, next) => {
     const dbInstance = getDatabase();
     c.set("db", dbInstance);
+
+    ServiceProvider.initialize(dbInstance);
+
     await next();
   });
 
@@ -139,6 +144,7 @@ export async function createApp(): Promise<AppInstance> {
   // Mount API routes
   app.route("/api", apiRoutes);
   app.route("/api/users", usersController);
+  app.route("/api/activity", activityController);
 
   // Configure static routes for production
   if (isProduction) {

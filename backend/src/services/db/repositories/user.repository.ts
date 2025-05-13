@@ -30,7 +30,7 @@ export class UserRepository {
         operationName: "find user by auth_provider_id",
         additionalContext: { auth_provider_id },
       },
-      null
+      null,
     );
   }
 
@@ -56,7 +56,7 @@ export class UserRepository {
         operationName: "find user by NEAR account ID",
         additionalContext: { near_account_id },
       },
-      null
+      null,
     );
   }
 
@@ -82,7 +82,7 @@ export class UserRepository {
         operationName: "find user by NEAR public key",
         additionalContext: { near_public_key },
       },
-      null
+      null,
     );
   }
 
@@ -130,7 +130,7 @@ export class UserRepository {
               throw new DatabaseError(
                 `A user with this ${field} already exists`,
                 error.code,
-                error
+                error,
               );
             }
             throw error;
@@ -140,7 +140,7 @@ export class UserRepository {
       {
         operationName: "create user",
         additionalContext: { userData },
-      }
+      },
     );
   }
 
@@ -157,7 +157,7 @@ export class UserRepository {
       username?: string | null;
       email?: string | null;
       name?: string | null;
-    }
+    },
   ) {
     return withDatabaseErrorHandling(
       async () => {
@@ -182,7 +182,7 @@ export class UserRepository {
       {
         operationName: "update user",
         additionalContext: { auth_provider_id, userData },
-      }
+      },
     );
   }
 
@@ -207,7 +207,7 @@ export class UserRepository {
         operationName: "delete user",
         additionalContext: { auth_provider_id },
       },
-      false
+      false,
     );
   }
 }

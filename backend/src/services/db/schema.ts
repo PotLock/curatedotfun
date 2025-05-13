@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   date,
   index,
@@ -10,10 +11,12 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
 
 import { FeedConfig } from "../../types/config";
 import { Profile } from "../../types/zod/userProfile";
+
+// Import activity schema
+export * from "./schema/activity";
 
 export type Metadata = {
   type: string; // URL to the JSON schema, e.g., "/schemas/userProfile.v1.schema.json"
@@ -178,15 +181,17 @@ export const users = table(
     near_public_key: text("near_public_key").notNull().unique(), // ed25519 public key
     username: text("username"), // Optional: display name
     email: text("email"), // Optional: email from Web3Auth
-    
+
     // Dynamic app-specific JSON data and its metadata
     metadata: jsonb("metadata").$type<Metadata>(), // Holds type (schema URL) and other meta info
     data: jsonb("data").$type<Profile>(), // Holds the actual user profile data
-    
+
     ...timestamps, // createdAt, updatedAt
   },
   (users) => ({
-    authProviderIdIdx: uniqueIndex("users_auth_provider_id_idx").on(users.auth_provider_id),
+    authProviderIdIdx: uniqueIndex("users_auth_provider_id_idx").on(
+      users.auth_provider_id,
+    ),
     nearAccountIdIdx: uniqueIndex("users_near_account_id_idx").on(
       users.near_account_id,
     ),
@@ -194,7 +199,9 @@ export const users = table(
       users.near_public_key,
     ),
     // Index on metadata type for efficient queries
-    metadataTypeIdx: index("metadata_type_idx").on(sql`(${users.metadata} ->> 'type')`),
+    metadataTypeIdx: index("metadata_type_idx").on(
+      sql`(${users.metadata} ->> 'type')`,
+    ),
   }),
 );
 

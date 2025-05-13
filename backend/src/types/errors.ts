@@ -116,6 +116,18 @@ export class UserServiceError extends ServiceError {
 }
 
 /**
+ * Activity service specific errors
+ */
+export class ActivityServiceError extends ServiceError {
+  constructor(
+    message: string,
+    options?: { statusCode?: number; cause?: Error },
+  ) {
+    super(message, options?.statusCode || 500, options?.cause);
+  }
+}
+
+/**
  * NEAR account related errors
  */
 export class NearAccountError extends ServiceError {
@@ -168,7 +180,7 @@ export class TransformError extends AppError {
     super(
       `Transform error in ${stage} transform #${index + 1} (${plugin}): ${message}`,
       500,
-      cause
+      cause,
     );
     this.name = "TransformError";
   }

@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { insertUserSchema, updateUserSchema } from "../../validation/users.validation";
+import {
+  insertUserSchema,
+  updateUserSchema,
+} from "../../validation/users.validation";
 
 export type InsertUserData = z.infer<typeof insertUserSchema> & {
   auth_provider_id: string;
@@ -28,5 +31,15 @@ export interface IUserService {
    * @param data The user data to update
    * @returns The updated user or null if not found
    */
-  updateUser(auth_provider_id: string, data: UpdateUserData): Promise<any | null>;
+  updateUser(
+    auth_provider_id: string,
+    data: UpdateUserData,
+  ): Promise<any | null>;
+
+  /**
+   * Delete a user and their associated NEAR account
+   * @param auth_provider_id The auth provider ID of the user to delete
+   * @returns True if the user and NEAR account were deleted, false otherwise
+   */
+  deleteUser(auth_provider_id: string): Promise<boolean>;
 }
