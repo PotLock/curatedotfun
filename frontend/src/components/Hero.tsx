@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Button } from "./ui/button";
 
 interface ButtonProps {
@@ -31,7 +32,7 @@ export default function Hero({ title, description, buttons }: HeroProps) {
       {buttons && buttons.length > 0 && (
         <div className="flex gap-3 mt-4">
           {buttons.map((button, index) => (
-            <a href={button.link} key={index}>
+            <Link to={button.link} key={index}>
               <Button
                 variant={
                   button.variant === "primary"
@@ -43,7 +44,7 @@ export default function Hero({ title, description, buttons }: HeroProps) {
               >
                 {button.text}
               </Button>
-            </a>
+            </Link>
           ))}
         </div>
       )}
