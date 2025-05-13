@@ -6,7 +6,7 @@ const FeedList = () => {
   const { data: feeds = [] } = useQuery<FeedConfig[]>({
     queryKey: ["feeds"],
     queryFn: async () => {
-      const response = await fetch("/api/feeds");
+      const response = await fetch("/api/feeds"); // TODO: standardize to /feed, remove the /feeds route in routes
       if (!response.ok) {
         throw new Error("Failed to fetch feeds");
       }
@@ -17,13 +17,9 @@ const FeedList = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex justify-start items-start gap-6 ">
-        <h1 className=" text-[32px] leading-[63px] font-normal ">Feeds</h1>
-        {/* {feeds.length > 0 && (
-          <span className="md:hidden text-gray-400 flex items-center">
-            <span className="mr-1">scroll</span>
-            <FaChevronRight className="h-3 w-3" />
-          </span>
-        )} */}
+        <h1 className=" text-[32px] leading-[63px] font-normal md:block hidden">
+          Feeds
+        </h1>
       </div>
       <nav className="flex flex-col gap-3 ">
         {feeds.length === 0 ? (

@@ -1,45 +1,30 @@
-import { Hono } from "hono";
+import { JwtVariables } from "hono/jwt";
 import { ConfigService } from "../services/config/config.service";
+import { FeedRepository } from "../services/db/repositories/feed.repository";
 import { DistributionService } from "../services/distribution/distribution.service";
 import { ProcessorService } from "../services/processor/processor.service";
 import { SubmissionService } from "../services/submissions/submission.service";
 import { TwitterService } from "../services/twitter/client";
+import { Hono } from "hono";
 
-/**
- * Application context shared across routes
- */
 export interface AppContext {
   twitterService: TwitterService | null;
   submissionService: SubmissionService | null;
   distributionService: DistributionService | null;
   processorService: ProcessorService | null;
   configService: ConfigService;
+  // schedulerService: SchedulerService;
+  feedRepository: FeedRepository;
 }
 
-/**
- * Application instance returned by createApp
- */
-export interface AppInstance {
-  app: HonoAppType;
-  context: AppContext;
-}
-
-/**
- * Type for Hono app with AppContext
- */
-export type HonoAppType = Hono<{
+export type Env = {
   Variables: {
     context: AppContext;
-  };
-}>;
-
-/**
- * Factory function to create a new Hono app with AppContext
- */
-export const HonoApp = (): HonoAppType => {
-  return new Hono<{
-    Variables: {
-      context: AppContext;
-    };
-  }>();
+    db: ReturnType<typeof import("../services/db").getDatabase>; // TODO: better return type?
+  } & JwtVariables;
 };
+
+export interface AppInstance {
+  app: Hono<Env>;
+  context: AppContext;
+}

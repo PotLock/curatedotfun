@@ -50,6 +50,7 @@
 - [x] Responsive design
 
 #### Infrastructure ✓
+
 - [x] Turborepo conversion
   - [x] Workspace configuration
   - [x] Corepack integration
@@ -68,6 +69,18 @@
   - [x] Monitoring and logging
 
 ### In Progress
+
+- [ ] Backend service pattern migration
+  - [x] Users service implementation completed (reference pattern)
+  - [ ] Migrate Feeds service
+  - [ ] Migrate Submissions service
+  - [ ] Migrate Processor service
+  - [ ] Migrate Distribution service
+  - [ ] Migrate Transformation service
+  - [ ] Migrate Plugin service
+  - [ ] Migrate Config service
+  - [ ] Migrate Twitter service
+  - [ ] Delete unused code after migration
 - [ ] Comprehensive error handling solution
   - [x] Database repositories error handling implemented
   - [x] Transaction-based operations for data consistency
@@ -90,7 +103,20 @@
 - [ ] Additional distributor plugins
 
 ## Next Actions
-1. Complete comprehensive error handling solution
+
+1. Migrate backend services to follow the users service pattern
+
+   - [ ] Define Zod schemas for validation
+   - [ ] Create service interfaces
+   - [ ] Implement repositories with proper error handling
+   - [ ] Develop services with business logic
+   - [ ] Create controllers with route definitions
+   - [ ] Mount controllers in app.ts
+   - [ ] Add tests for new implementations
+   - [ ] Delete unused code after migration
+
+2. Complete comprehensive error handling solution
+
    - [x] Add error handling to database repositories
    - [x] Implement transaction-based operations
    - [x] Add default values for graceful degradation
@@ -99,21 +125,23 @@
    - [ ] Implement error recovery mechanisms for other services
    - [ ] Create user-friendly error messages
 
-2. Move configuration to database
+3. Move configuration to database
+
    - Design database schema for configuration
    - Create migration scripts
    - Implement configuration service
    - Add versioning support
    - Create admin interface
 
-3. Complete test coverage
+4. Complete test coverage
+
    - Expand component tests
    - Add integration tests
    - Implement E2E tests
    - Add performance tests
    - Improve test infrastructure
 
-4. Implement database protections for Web3Auth
+5. Implement database protections for Web3Auth
    - Integrate Web3Auth
    - Add database security measures
    - Implement access control

@@ -1,3 +1,4 @@
+import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import path from "path";
@@ -5,15 +6,21 @@ import { apiRoutes } from "./routes/api";
 import { mockTwitterService } from "./routes/api/test";
 import { configureStaticRoutes, staticRoutes } from "./routes/static";
 import { ConfigService, isProduction } from "./services/config/config.service";
+import { getDatabase } from "./services/db";
+import { feedRepository } from "./services/db/repositories";
 import { DistributionService } from "./services/distribution/distribution.service";
 import { PluginService } from "./services/plugins/plugin.service";
 import { ProcessorService } from "./services/processor/processor.service";
 import { SubmissionService } from "./services/submissions/submission.service";
 import { TransformationService } from "./services/transformation/transformation.service";
 import { TwitterService } from "./services/twitter/client";
-import { AppContext, AppInstance, HonoApp } from "./types/app";
+import { AppContext, AppInstance, Env } from "./types/app";
 import { getAllowedOrigins } from "./utils/config";
 import { errorHandler } from "./utils/error";
+import { web3AuthJwtMiddleware } from "./utils/auth";
+import { usersController } from "./controllers/users.controller"; // Import usersController
+import { activityController } from "./controllers/activity.controller"; // Import activityController
+import { ServiceProvider } from "./utils/service-provider";
 
 const ALLOWED_ORIGINS = getAllowedOrigins();
 
@@ -57,16 +64,49 @@ export async function createApp(): Promise<AppInstance> {
     submissionService.initialize();
   }
 
+  // Initialize scheduler service
+  // const schedulerClient = new SchedulerClient({
+  //   baseUrl: process.env.SCHEDULER_BASE_URL || "http://localhost:3001",
+  //   headers: {
+  //     Authorization: `Bearer ${process.env.SCHEDULER_API_TOKEN || ""}`,
+  //   },
+  // });
+
+  // const backendUrl = process.env.CURATE_BACKEND_URL || "http://localhost:3000";
+  // const schedulerService = new SchedulerService(
+  //   feedRepository,
+  //   processorService,
+  //   schedulerClient,
+  //   backendUrl,
+  // );
+
+  // Initialize scheduler on startup (non-blocking)
+  // schedulerService.initialize().catch((err) => {
+  //   console.error("Failed to initialize scheduler service:", err);
+  // });
+
   const context: AppContext = {
     twitterService,
     submissionService,
     distributionService,
     processorService,
     configService,
+    // schedulerService,
+    feedRepository,
   };
 
   // Create Hono app
-  const app = HonoApp();
+  const app = new Hono<Env>();
+
+  // Inject database into context
+  app.use("*", async (c, next) => {
+    const dbInstance = getDatabase();
+    c.set("db", dbInstance);
+
+    ServiceProvider.initialize(dbInstance);
+
+    await next();
+  });
 
   // Set context (make services accessible to routes)
   app.use("*", async (c, next) => {
@@ -78,6 +118,8 @@ export async function createApp(): Promise<AppInstance> {
   app.onError((err, c) => {
     return errorHandler(err, c);
   });
+
+  app.use("*", web3AuthJwtMiddleware);
 
   app.use("*", secureHeaders());
   app.use(
@@ -101,6 +143,8 @@ export async function createApp(): Promise<AppInstance> {
 
   // Mount API routes
   app.route("/api", apiRoutes);
+  app.route("/api/users", usersController);
+  app.route("/api/activity", activityController);
 
   // Configure static routes for production
   if (isProduction) {

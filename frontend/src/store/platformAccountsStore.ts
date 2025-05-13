@@ -89,7 +89,7 @@ export function useConnectedAccounts() {
 export const useConnectAccount = createAuthenticatedMutation({
   mutationKey: ["connectAccount"],
   clientMethod: async (client, { platform }: { platform: Platform }) => {
-    await client.auth.loginToPlatform(platform.toLowerCase() as any);
+    await client.auth.loginToPlatform(platform.toLowerCase() as Platform);
   },
   getAuthDetails: ({ platform }: { platform: Platform }) =>
     `loginToPlatform:${platform}`,
@@ -104,7 +104,7 @@ export const useDisconnectAccount = createAuthenticatedMutation({
     client,
     { platform, userId }: { platform: Platform; userId: string },
   ) => {
-    await client.auth.revokeAuth(platform.toLowerCase() as any, userId);
+    await client.auth.revokeAuth(platform.toLowerCase() as Platform, userId);
     return userId;
   },
   getAuthDetails: ({
@@ -129,7 +129,10 @@ export const useRefreshAccount = createAuthenticatedMutation({
     client,
     { platform, userId }: { platform: Platform; userId: string },
   ) => {
-    await client.auth.refreshProfile(platform.toLowerCase() as any, userId);
+    await client.auth.refreshProfile(
+      platform.toLowerCase() as Platform,
+      userId,
+    );
     return userId;
   },
   getAuthDetails: ({
@@ -151,7 +154,7 @@ export const useCheckAccountStatus = createAuthenticatedMutation({
     { platform, userId }: { platform: Platform; userId: string },
   ) => {
     const { authenticated, tokenStatus } = await client.auth.getAuthStatus(
-      platform.toLowerCase() as any,
+      platform.toLowerCase() as Platform,
       userId,
     );
     const isConnected = authenticated && tokenStatus.valid;

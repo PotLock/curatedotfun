@@ -1,8 +1,8 @@
-import { HonoApp } from "../../types/app";
+import { Hono } from "hono";
 import { logger } from "../../utils/logger";
+import { Env } from "types/app";
 
-// Create config routes
-const router = HonoApp();
+const router = new Hono<Env>();
 
 /**
  * Reload the application configuration from disk
