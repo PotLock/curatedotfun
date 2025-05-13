@@ -22,7 +22,9 @@ export default defineConfig({
       "@fonts": path.resolve(__dirname, "public/fonts"),
     },
     define: {
-      "import.meta.env.PUBLIC_WEB3_CLIENT_ID": JSON.stringify("BGv7EZrPFf601UlYbS5DH40oIUQyEghhP5hOrheXU9m7cz5BcXkEDfY4KIg_fOu0m336UzTRca08Ic4y-wzqoPs"),
+      "import.meta.env.PUBLIC_WEB3_CLIENT_ID": JSON.stringify(
+        "BGv7EZrPFf601UlYbS5DH40oIUQyEghhP5hOrheXU9m7cz5BcXkEDfY4KIg_fOu0m336UzTRca08Ic4y-wzqoPs",
+      ),
       "import.meta.env.PUBLIC_NETWORK": JSON.stringify("testnet"),
     },
   },
