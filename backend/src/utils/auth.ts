@@ -128,7 +128,7 @@ export async function web3AuthJwtMiddleware(c: Context<Env>, next: Next) {
     c.set("jwtPayload", {
       ...payload,
       loginType,
-      userId: extractUserIdFromJwt(payload),
+      authProviderId: extractAuthProviderIdFromJwt(payload),
     });
   } catch (error) {
     // If verification fails, continue without setting jwtPayload
@@ -175,11 +175,11 @@ export function extractAddressFromExternalWalletJwt(
 }
 
 /**
- * Extracts the user identifier from a JWT payload
+ * Extracts the auth provider identifier from a JWT payload
  * @param payload The decoded JWT payload
- * @returns The user identifier (verifierId)
+ * @returns The auth provider identifier (verifierId)
  */
-export function extractUserIdFromJwt(payload: any): string | null {
+export function extractAuthProviderIdFromJwt(payload: any): string | null {
   return payload.verifierId || null;
 }
 
@@ -199,7 +199,7 @@ export async function verifyAndExtractJwtInfo(
       const socialPayload = await verify(idToken, "social");
       const extractedPublicKey =
         extractPublicKeyFromSocialLoginJwt(socialPayload);
-      const userId = extractUserIdFromJwt(socialPayload);
+      const authProviderId = extractAuthProviderIdFromJwt(socialPayload);
 
       // If publicKey is provided, verify it matches
       if (publicKey && extractedPublicKey) {
@@ -213,7 +213,7 @@ export async function verifyAndExtractJwtInfo(
       return {
         isValid: true,
         loginType: "social",
-        userId,
+        authProviderId,
         publicKey: extractedPublicKey,
         payload: socialPayload,
       };
@@ -222,7 +222,7 @@ export async function verifyAndExtractJwtInfo(
       const walletPayload = await verify(idToken, "wallet");
       const extractedAddress =
         extractAddressFromExternalWalletJwt(walletPayload);
-      const userId = extractUserIdFromJwt(walletPayload);
+      const authProviderId = extractAuthProviderIdFromJwt(walletPayload);
 
       // If publicKey (address) is provided, verify it matches
       if (publicKey && extractedAddress) {
@@ -236,7 +236,7 @@ export async function verifyAndExtractJwtInfo(
       return {
         isValid: true,
         loginType: "wallet",
-        userId,
+        authProviderId,
         address: extractedAddress,
         payload: walletPayload,
       };

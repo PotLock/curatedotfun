@@ -1,5 +1,5 @@
 {
-  "id": "f74bb620-d99a-4f26-937b-eaabb5799df8",
+  "id": "5c13a0b0-b0fa-4dc7-9593-8ab10864361e",
   "prevId": "1228fc99-5ab9-4ba9-bd0f-7d26c338efbb",
   "version": "7",
   "dialect": "postgresql",
@@ -78,8 +78,12 @@
           "name": "feed_plugins_feed_id_feeds_id_fk",
           "tableFrom": "feed_plugins",
           "tableTo": "feeds",
-          "columnsFrom": ["feed_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "feed_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -87,7 +91,10 @@
       "compositePrimaryKeys": {
         "feed_plugins_feed_id_plugin_id_pk": {
           "name": "feed_plugins_feed_id_plugin_id_pk",
-          "columns": ["feed_id", "plugin_id"]
+          "columns": [
+            "feed_id",
+            "plugin_id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -178,8 +185,12 @@
           "name": "feed_recaps_state_feed_id_feeds_id_fk",
           "tableFrom": "feed_recaps_state",
           "tableTo": "feeds",
-          "columnsFrom": ["feed_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "feed_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -189,7 +200,9 @@
         "feed_recaps_state_external_job_id_unique": {
           "name": "feed_recaps_state_external_job_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["external_job_id"]
+          "columns": [
+            "external_job_id"
+          ]
         }
       },
       "policies": {},
@@ -354,8 +367,12 @@
           "name": "moderation_history_tweet_id_submissions_tweet_id_fk",
           "tableFrom": "moderation_history",
           "tableTo": "submissions",
-          "columnsFrom": ["tweet_id"],
-          "columnsTo": ["tweet_id"],
+          "columnsFrom": [
+            "tweet_id"
+          ],
+          "columnsTo": [
+            "tweet_id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -363,8 +380,12 @@
           "name": "moderation_history_feed_id_feeds_id_fk",
           "tableFrom": "moderation_history",
           "tableTo": "feeds",
-          "columnsFrom": ["feed_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "feed_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -503,8 +524,12 @@
           "name": "submission_feeds_submission_id_submissions_tweet_id_fk",
           "tableFrom": "submission_feeds",
           "tableTo": "submissions",
-          "columnsFrom": ["submission_id"],
-          "columnsTo": ["tweet_id"],
+          "columnsFrom": [
+            "submission_id"
+          ],
+          "columnsTo": [
+            "tweet_id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -512,8 +537,12 @@
           "name": "submission_feeds_feed_id_feeds_id_fk",
           "tableFrom": "submission_feeds",
           "tableTo": "feeds",
-          "columnsFrom": ["feed_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "feed_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -521,7 +550,10 @@
       "compositePrimaryKeys": {
         "submission_feeds_submission_id_feed_id_pk": {
           "name": "submission_feeds_submission_id_feed_id_pk",
-          "columns": ["submission_id", "feed_id"]
+          "columns": [
+            "submission_id",
+            "feed_id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -729,8 +761,8 @@
           "primaryKey": true,
           "notNull": true
         },
-        "sub_id": {
-          "name": "sub_id",
+        "auth_provider_id": {
+          "name": "auth_provider_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -759,6 +791,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "data": {
+          "name": "data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -775,11 +819,11 @@
         }
       },
       "indexes": {
-        "users_sub_id_idx": {
-          "name": "users_sub_id_idx",
+        "users_auth_provider_id_idx": {
+          "name": "users_auth_provider_id_idx",
           "columns": [
             {
-              "expression": "sub_id",
+              "expression": "auth_provider_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -819,25 +863,46 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "metadata_type_idx": {
+          "name": "metadata_type_idx",
+          "columns": [
+            {
+              "expression": "(\"metadata\" ->> 'type')",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "users_sub_id_unique": {
-          "name": "users_sub_id_unique",
+        "users_auth_provider_id_unique": {
+          "name": "users_auth_provider_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["sub_id"]
+          "columns": [
+            "auth_provider_id"
+          ]
         },
         "users_near_account_id_unique": {
           "name": "users_near_account_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["near_account_id"]
+          "columns": [
+            "near_account_id"
+          ]
         },
         "users_near_public_key_unique": {
           "name": "users_near_public_key_unique",
           "nullsNotDistinct": false,
-          "columns": ["near_public_key"]
+          "columns": [
+            "near_public_key"
+          ]
         }
       },
       "policies": {},

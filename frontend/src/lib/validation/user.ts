@@ -8,7 +8,7 @@ export const usernameSchema = z
 
 export const userProfileSchema = z.object({
   id: z.number(),
-  sub_id: z.string(),
+  auth_provider_id: z.string(),
   near_account_id: z.string().nullable(),
   near_public_key: z.string().nullable(),
   username: z.string().nullable(),
