@@ -2,7 +2,7 @@
   "name": "@curatedotfun/backend",
   "version": "0.0.1",
   "scripts": {
-    "schemas:generate": "node ./scripts/generate-json-schemas.ts",
+    "schemas:generate": "node ./scripts/generate-json-schemas.js",
     "build": "pnpm run schemas:generate && rspack build",
     "start": "node dist/main.js",
     "dev": "NODE_ENV=development concurrently --kill-others-on-fail \"rspack build --watch\" \"wait-on -d 500 dist/main.js && node scripts/dev-server.js\"",
