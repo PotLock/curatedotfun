@@ -2,8 +2,8 @@ import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import FeedList from "../../../components/FeedList";
-import SubmissionsHero from "../../../components/SubmissionsHero";
 import TopCurators from "../../../components/TopCurators";
+import HeroComponent from "../../../components/HeroComponent";
 
 export const Route = createFileRoute("/_layout/submissions/_layout")({
   component: SubmissionsLayoutRoute,
@@ -22,7 +22,10 @@ function SubmissionsLayoutRoute() {
   return (
     <div className="flex flex-col gap-6 md:gap-12">
       <div>
-        <SubmissionsHero />
+        <HeroComponent
+          title="All Submissions."
+          description="Interact with All submissions under one roof!"
+        />
       </div>
 
       {/* Mobile Navigation Controls */}

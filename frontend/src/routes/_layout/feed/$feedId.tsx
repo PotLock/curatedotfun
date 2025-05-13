@@ -125,7 +125,7 @@ function FeedPageLayout() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="overflow-x-auto w-full border-b border-gray-200">
+        <div className="overflow-x-auto overflow-y-hidden max-w-[380px] md:max-w-full  border-b border-gray-200">
           <div className="flex space-x-1">
             {TABS.map(({ to, label, icon: Icon }) => (
               <Link

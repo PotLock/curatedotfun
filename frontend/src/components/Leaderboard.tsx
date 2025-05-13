@@ -2,6 +2,7 @@ import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { LeaderboardEntry, useAppConfig } from "../lib/api";
 import { Link } from "@tanstack/react-router";
+import HeroComponent from "./HeroComponent";
 
 interface LeaderboardSearch {
   feed: string;
@@ -108,16 +109,13 @@ export default function Leaderboard({
   });
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-[#111111] mb-4">Leaderboard</h1>
-        <p className="text-[#64748b] max-w-2xl mx-auto">
-          Top Performing Curators ranked by submissions, engagement and
-          activities.
-        </p>
-      </div>
+    <div className=" flex flex-col mx-auto ">
+      <HeroComponent
+        title="Leaderboard"
+        description="Top Performing Curators ranked by submissions, engagement and activities."
+      />
 
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 px-4 py-8">
         <div className="relative w-full md:w-auto">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#a3a3a3] h-4 w-4" />
           <input
@@ -217,9 +215,9 @@ export default function Leaderboard({
         </div>
       </div>
 
-      <div className="overflow-y-auto max-h-[500px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+      <div className="overflow-y-auto max-h-[500px] md:max-w-full max-w-[400px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         <div className="relative">
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse ">
             <thead className="sticky top-0 bg-white z-10">
               <tr className="border-b border-[#e5e5e5]">
                 <th className="text-left py-4 px-2 font-medium text-sm whitespace-nowrap">
@@ -234,15 +232,15 @@ export default function Leaderboard({
                 <th className="text-left py-4 px-2 font-medium text-sm whitespace-nowrap">
                   Approval Rate
                 </th>
-                <th className="text-left py-4 px-2 font-medium text-sm whitespace-nowrap">
+                <th className=" text-left py-4 px-2 font-medium text-sm whitespace-nowrap">
                   Submissions
                 </th>
-                <th className="text-left py-4 px-2 font-medium text-sm whitespace-nowrap">
+                <th className=" text-left py-4 px-2 font-medium text-sm whitespace-nowrap">
                   Top Feeds
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="overflow-x-auto">
               {isLoading && (
                 <tr>
                   <td colSpan={5} className="text-left py-8">
@@ -402,6 +400,6 @@ export default function Leaderboard({
           </table>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

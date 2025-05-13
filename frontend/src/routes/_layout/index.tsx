@@ -12,6 +12,7 @@ import { StatusFilterType, useFilterStore } from "../../store/useFilterStore";
 import { SubmissionStatus, SubmissionWithFeedData } from "../../types/twitter";
 
 import { useFeedFilterStore } from "../../store/useFeedFilterStore";
+import HeroComponent from "../../components/HeroComponent";
 
 export const Route = createFileRoute("/_layout/")({
   component: ExplorePage,
@@ -138,61 +139,56 @@ function ExplorePage() {
   const feedItems = feedData?.items || [];
 
   return (
-    <main className="py-6 px-6 md:py-12 w-full md:px-16">
-      {/* Hero section */}
-      <div className="flex flex-col gap-7 items-center p-12 justify-center border-b border-neutral-300">
-        <div className="max-w-[786px] flex flex-col">
-          <h1 className="text-center text-4xl md:text-5xl font-normal font-londrina leading-[63px]">
-            Explore
-          </h1>
-          <p className="text-center text-lg md:text-2xl leading-7 md:leading-10">
-            Discover autonomous brands powered by curators and AI.
-            <br /> Find feeds that match your interests and contribute to their
-            growth.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Link to="/create/feed">
-            <Button>Create Feed</Button>
-          </Link>
-          <Link to="/submissions">
-            <Button variant="secondary">Submissions</Button>
-          </Link>
-        </div>
+    <main className="py-0  md:pb-12 w-full md:px-0">
+      <HeroComponent
+        title="Explore"
+        description="Discover autonomous brands powered by curators and AI. Find feeds that match your interests and contribute to their growth."
+        buttons={[
+          {
+            text: "Create Feed",
+            link: "/create/feed",
+          },
+          {
+            text: "Submissions",
+            link: "/submissions",
+            variant: "secondary",
+          },
+        ]}
+      />
+      <div className="flex flex-col gap-6 md:gap-0 px-6">
+        {/* Recent Submissions Section */}
+        <FeedSection
+          title="Recent Submissions"
+          items={recentItems}
+          fetchNextPage={fetchNextRecentPage}
+          hasNextPage={hasNextRecentPage}
+          isFetchingNextPage={isFetchingNextRecentPage}
+          status={recentStatus}
+          statusFilter={statusFilter || ""}
+          setStatusFilter={setStatusFilter}
+          botId={botId}
+          showAll={false}
+          showSort={true}
+          layout={"flex"}
+        />
+
+        {/* Feeds Section */}
+        <FeedSection
+          title="Feed"
+          items={feedItems}
+          fetchNextPage={fetchNextFeedPage}
+          hasNextPage={hasNextFeedPage}
+          isFetchingNextPage={isFetchingNextFeedPage}
+          status={feedStatus}
+          statusFilter={feedStatusFilter || ""}
+          setStatusFilter={setFeedStatusFilter}
+          botId={botId}
+          layout={"flex"}
+          actionButton={{
+            label: "View All Feeds",
+          }}
+        />
       </div>
-
-      {/* Recent Submissions Section */}
-      <FeedSection
-        title="Recent Submissions"
-        items={recentItems}
-        fetchNextPage={fetchNextRecentPage}
-        hasNextPage={hasNextRecentPage}
-        isFetchingNextPage={isFetchingNextRecentPage}
-        status={recentStatus}
-        statusFilter={statusFilter || ""}
-        setStatusFilter={setStatusFilter}
-        botId={botId}
-        showAll={false}
-        showSort={true}
-        layout={"flex"}
-      />
-
-      {/* Feeds Section */}
-      <FeedSection
-        title="Feed"
-        items={feedItems}
-        fetchNextPage={fetchNextFeedPage}
-        hasNextPage={hasNextFeedPage}
-        isFetchingNextPage={isFetchingNextFeedPage}
-        status={feedStatus}
-        statusFilter={feedStatusFilter || ""}
-        setStatusFilter={setFeedStatusFilter}
-        botId={botId}
-        layout={"flex"}
-        actionButton={{
-          label: "View All Feeds",
-        }}
-      />
     </main>
   );
 }
