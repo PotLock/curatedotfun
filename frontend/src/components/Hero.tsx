@@ -6,18 +6,13 @@ interface ButtonProps {
   variant?: "primary" | "secondary";
 }
 
-interface HeroComponentProps {
+interface HeroProps {
   title: string;
   description: string;
   buttons?: ButtonProps[];
-  //   descriptionWithBreak?: boolean;
 }
 
-export default function HeroComponent({
-  title,
-  description,
-  buttons,
-}: HeroComponentProps) {
+export default function Hero({ title, description, buttons }: HeroProps) {
   return (
     <div
       className="flex flex-col items-center justify-center py-20 gap-2 border w-full"

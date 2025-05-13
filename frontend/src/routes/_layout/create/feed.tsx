@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import CurationFormSteps from "../../../components/CurationFormSteps";
-import HeroComponent from "../../../components/HeroComponent";
+import HeroComponent from "../../../components/Hero";
 
 export const Route = createFileRoute("/_layout/create/feed")({
   component: RouteComponent,

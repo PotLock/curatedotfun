@@ -2,7 +2,7 @@ import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { LeaderboardEntry, useAppConfig } from "../lib/api";
 import { Link } from "@tanstack/react-router";
-import HeroComponent from "./HeroComponent";
+import HeroComponent from "./Hero";
 
 interface LeaderboardSearch {
   feed: string;

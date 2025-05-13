@@ -3,7 +3,7 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import FeedList from "../../../components/FeedList";
 import TopCurators from "../../../components/TopCurators";
-import HeroComponent from "../../../components/HeroComponent";
+import HeroComponent from "../../../components/Hero";
 
 export const Route = createFileRoute("/_layout/submissions/_layout")({
   component: SubmissionsLayoutRoute,

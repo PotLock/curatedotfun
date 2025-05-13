@@ -12,7 +12,7 @@ import { StatusFilterType, useFilterStore } from "../../store/useFilterStore";
 import { SubmissionStatus, SubmissionWithFeedData } from "../../types/twitter";
 
 import { useFeedFilterStore } from "../../store/useFeedFilterStore";
-import HeroComponent from "../../components/HeroComponent";
+import HeroComponent from "../../components/Hero";
 
 export const Route = createFileRoute("/_layout/")({
   component: ExplorePage,
