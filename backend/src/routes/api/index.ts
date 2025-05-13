@@ -1,5 +1,5 @@
+import { Hono } from "hono";
 import { isProduction } from "../../services/config/config.service";
-import { HonoApp } from "../../types/app";
 import configRoutes from "./config";
 import feedRoutes from "./feed";
 import leaderboardRoutes from "./leaderboard";
@@ -9,9 +9,10 @@ import submissionRoutes from "./submission";
 import { testRoutes } from "./test";
 import triggerRoutes from "./trigger";
 import twitterRoutes from "./twitter";
+import { Env } from "types/app";
 
 // Create main API router
-export const apiRoutes = HonoApp();
+export const apiRoutes = new Hono<Env>();
 
 // Test routes in development
 if (!isProduction) {

@@ -4,6 +4,7 @@ import { useWeb3Auth } from "../hooks/use-web3-auth";
 import { HowItWorks } from "./HowItWorks";
 import { Modal } from "./Modal";
 import { Button } from "./ui/button";
+import { useAuthStore } from "../store/auth-store";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,9 +32,9 @@ const Header = () => {
   const navigate = useNavigate();
 
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
+  const { showLoginModal } = useAuthStore();
 
-  const { isInitialized, isLoggedIn, login, logout, getUserInfo } =
-    useWeb3Auth();
+  const { isInitialized, isLoggedIn, logout, getUserInfo } = useWeb3Auth();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -104,7 +105,6 @@ const Header = () => {
         </div>
       </header>
 
-      {/* Mobile Navigation Menu */}
       {/* Mobile Navigation Menu */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 top-0 left-0 z-50 bg-white flex flex-col">
@@ -240,7 +240,7 @@ const Header = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button onClick={login}>Login</Button>
+                <Button onClick={showLoginModal}>Login</Button>
               )}
             </div>
           </div>

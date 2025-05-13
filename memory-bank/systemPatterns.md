@@ -85,12 +85,31 @@
 
 ### Design Patterns
 
-1. **Singleton Pattern**
+1. **Controller -> Service -> Repository Pattern**
+
+   - Layered architecture for clear separation of concerns
+   - **Controller Layer**:
+     - Hono-based API routes
+     - Request validation with Zod schemas
+     - Error handling and response formatting
+     - Dependency injection from Hono context
+   - **Service Layer**:
+     - Business logic implementation
+     - Service interfaces for consistent API
+     - Error handling with custom error types
+     - Data validation with Zod schemas
+   - **Repository Layer**:
+     - Database operations with Drizzle ORM
+     - Transaction management
+     - Error handling with context-rich logging
+     - Domain-specific database operations
+
+2. **Singleton Pattern**
 
    - Used in ConfigService and PluginService for global configuration
    - Ensures consistent state across the application
 
-2. **Plugin Pattern**
+3. **Plugin Pattern**
 
    - Module federation for runtime plugin loading
    - Standardized plugin interfaces
@@ -98,7 +117,7 @@
    - Hot-reloading support
    - Plugin caching and invalidation
 
-3. **Service Pattern**
+4. **Service Pattern**
 
    - Clear service boundaries and responsibilities
    - Platform-agnostic design
@@ -106,13 +125,13 @@
    - Dependency injection
    - Extensible action handling
 
-4. **Observer Pattern**
+5. **Observer Pattern**
 
    - Generic content source monitoring
    - Event-driven content processing
    - Configurable action handlers
 
-5. **Pipeline Pattern**
+6. **Pipeline Pattern**
    - Transformation pipeline with global and per-distributor transforms
    - Graceful error handling and recovery
    - Configurable transform chains

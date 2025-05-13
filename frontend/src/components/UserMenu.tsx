@@ -9,17 +9,19 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
-import { ChevronDown, CircleUserRound, CreditCard, LogOut } from "lucide-react";
-import { AuthUserInfo } from "../types/web3auth";
 import { useNavigate } from "@tanstack/react-router";
+import { ChevronDown, CircleUserRound, CreditCard, LogOut } from "lucide-react";
+import { useAuthStore } from "../store/auth-store";
+import { AuthUserInfo } from "../types/web3auth";
+
 export default function UserMenu() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
   const [imageError, setImageError] = useState(false);
   const navigate = useNavigate();
+  const { showLoginModal } = useAuthStore();
 
-  const { isInitialized, isLoggedIn, login, logout, getUserInfo } =
-    useWeb3Auth();
+  const { isInitialized, isLoggedIn, logout, getUserInfo } = useWeb3Auth();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -28,7 +30,6 @@ export default function UserMenu() {
         setUserInfo(info);
         // Reset image error state when we get new user info
         setImageError(false);
-        console.log("User Info:", info);
       } catch (error) {
         console.error("Error fetching user info:", error);
       }
@@ -44,16 +45,8 @@ export default function UserMenu() {
   // Profile image component with error handling
   const ProfileImage = ({ size = "small" }) => {
     const handleImageError = () => {
-      console.log("Image failed to load:", userInfo?.profileImage);
       setImageError(true);
     };
-
-    // Debug image URL
-    useEffect(() => {
-      if (userInfo?.profileImage) {
-        console.log("Attempting to load profile image:", userInfo.profileImage);
-      }
-    }, [userInfo]);
 
     if (imageError || !userInfo?.profileImage) {
       return (
@@ -136,7 +129,7 @@ export default function UserMenu() {
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (
-        <Button className="hidden md:flex" onClick={login}>
+        <Button className="hidden md:flex" onClick={showLoginModal}>
           Login
         </Button>
       )}

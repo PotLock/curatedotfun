@@ -2,7 +2,7 @@
 
 ## Current Focus
 
-Comprehensive Error Handling, Database Configuration, Test Coverage, and Security Enhancements
+Backend Service Pattern Migration, Comprehensive Error Handling, Database Configuration, Test Coverage, and Security Enhancements
 
 ### Background
 
@@ -103,20 +103,26 @@ Comprehensive Error Handling, Database Configuration, Test Coverage, and Securit
 
 ## Current Focus Areas
 
-1. Implementing comprehensive error handling solution
+1. Migrating all backend services to follow the users service pattern
+   - Implementing Controller -> Service -> Repository pattern across all services
+   - Standardizing error handling and validation
+   - Ensuring consistent API responses
+   - Improving code organization and maintainability
+   - Deleting unused code after migration
+2. Implementing comprehensive error handling solution
    - ✅ Added comprehensive error handling to database repositories
    - ✅ Implemented transaction-based operations for data consistency
    - ✅ Added default values for graceful degradation
    - ✅ Enhanced error logging with context
-2. Moving configuration to database
-3. Completing test coverage
+3. Moving configuration to database
+4. Completing test coverage
    - ✅ Added tests for error handling scenarios
    - ✅ Added tests for transaction-based operations
-4. Adding database protections for Web3Auth
-5. Enhancing monitoring and logging
+5. Adding database protections for Web3Auth
+6. Enhancing monitoring and logging
    - ✅ Improved database operation logging
-6. Improving performance and scalability
-7. Migrating to repository pattern for database operations
+7. Improving performance and scalability
+8. Migrating to repository pattern for database operations
    - ✅ Completed initial reorganization
    - ✅ Consolidated duplicate status update logic
    - ✅ Implemented transaction-based operations for related data
@@ -125,14 +131,22 @@ Comprehensive Error Handling, Database Configuration, Test Coverage, and Securit
 
 ## Next Steps
 
-1. Complete implementation of error handling framework for other services
-2. Create database schema for configuration storage
-3. Develop migration plan for configuration
-4. Implement Web3Auth integration
-5. Add database security measures
-6. Expand test coverage for critical flows
-7. Further enhance monitoring and logging
-8. Complete full migration to repository pattern
+1. Migrate all backend services to follow the users service pattern
+   - Define Zod schemas for validation
+   - Create service interfaces
+   - Implement repositories with proper error handling
+   - Develop services with business logic
+   - Create controllers with route definitions
+   - Mount controllers in app.ts
+   - Delete unused code after migration
+2. Complete implementation of error handling framework for other services
+3. Create database schema for configuration storage
+4. Develop migration plan for configuration
+5. Implement Web3Auth integration
+6. Add database security measures
+7. Expand test coverage for critical flows
+8. Further enhance monitoring and logging
+9. Complete full migration to repository pattern
    - Update remaining service files to use repositories
    - Remove backward compatibility layer
    - Add more comprehensive tests for repositories

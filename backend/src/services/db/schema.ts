@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   date,
   index,
@@ -12,6 +13,16 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { FeedConfig } from "../../types/config";
+import { Profile } from "../../types/zod/userProfile";
+
+// Import activity schema
+export * from "./schema/activity";
+
+export type Metadata = {
+  type: string; // URL to the JSON schema, e.g., "/schemas/userProfile.v1.schema.json"
+  version?: string; // Optional: version of the data instance itself
+  // other potential meta-fields: lastValidated, sourceSystem etc.
+};
 
 // Reusable timestamp columns
 const timestamps = {
@@ -158,6 +169,40 @@ export const feedPlugins = table(
     index("feed_plugins_plugin_idx").on(table.pluginId),
     primaryKey({ columns: [table.feedId, table.pluginId] }), // Ensure one config per plugin per feed
   ],
+);
+
+// Users Table
+export const users = table(
+  "users",
+  {
+    id: serial("id").primaryKey(),
+    auth_provider_id: text("auth_provider_id").notNull().unique(), // Unique identifier from Web3Auth (previously sub_id)
+    near_account_id: text("near_account_id").unique(), // e.g., chosenname.users.curatedotfun.near
+    near_public_key: text("near_public_key").notNull().unique(), // ed25519 public key
+    username: text("username"), // Optional: display name
+    email: text("email"), // Optional: email from Web3Auth
+
+    // Dynamic app-specific JSON data and its metadata
+    metadata: jsonb("metadata").$type<Metadata>(), // Holds type (schema URL) and other meta info
+    data: jsonb("data").$type<Profile>(), // Holds the actual user profile data
+
+    ...timestamps, // createdAt, updatedAt
+  },
+  (users) => ({
+    authProviderIdIdx: uniqueIndex("users_auth_provider_id_idx").on(
+      users.auth_provider_id,
+    ),
+    nearAccountIdIdx: uniqueIndex("users_near_account_id_idx").on(
+      users.near_account_id,
+    ),
+    nearPublicKeyIdx: uniqueIndex("users_near_public_key_idx").on(
+      users.near_public_key,
+    ),
+    // Index on metadata type for efficient queries
+    metadataTypeIdx: index("metadata_type_idx").on(
+      sql`(${users.metadata} ->> 'type')`,
+    ),
+  }),
 );
 
 // will not be needed after Masa
