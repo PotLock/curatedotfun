@@ -32,11 +32,11 @@ RUN pnpm install --frozen-lockfile
 COPY --from=pruner /app/out/full/ .
 
 # Args coming from environment
-ARG PUBLIC_WEB3_CLIENT_ID_ARG
-ARG PUBLIC_NETWORK_ARG
+ARG PUBLIC_WEB3_CLIENT_ID
+ARG PUBLIC_NETWORK
 
-ENV PUBLIC_WEB3_CLIENT_ID=$PUBLIC_WEB3_CLIENT_ID_ARG
-ENV PUBLIC_NETWORK=$PUBLIC_NETWORK_ARG
+ENV PUBLIC_WEB3_CLIENT_ID=$PUBLIC_WEB3_CLIENT_ID
+ENV PUBLIC_NETWORK=$PUBLIC_NETWORK
 
 # Build the application using turbo (which will respect the dependencies in turbo.json)
 ENV NODE_ENV="production"
