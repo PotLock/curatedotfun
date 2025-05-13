@@ -29,6 +29,13 @@
       "when": 1747106826937,
       "tag": "0003_melted_hellion",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1747112673581,
+      "tag": "0004_slimy_talon",
+      "breakpoints": true
     }
   ]
 }

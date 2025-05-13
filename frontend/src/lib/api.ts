@@ -128,13 +128,21 @@ export interface LeaderboardEntry {
   feedSubmissions: FeedSubmissionCount[];
 }
 
-export function useLeaderboard(timeRange?: string) {
+export function useLeaderboard(
+  timeRange?: string,
+  feedId?: string,
+  limit?: number,
+) {
   return useQuery<LeaderboardEntry[]>({
-    queryKey: ["leaderboard", timeRange],
+    queryKey: ["leaderboard", timeRange, feedId, limit],
     queryFn: async () => {
-      const url = timeRange
-        ? `/api/leaderboard?timeRange=${timeRange}`
-        : "/api/leaderboard";
+      const params = new URLSearchParams();
+      if (timeRange) params.append("timeRange", timeRange);
+      if (feedId) params.append("feed_id", feedId);
+      if (limit !== undefined) params.append("limit", limit.toString());
+
+      const queryString = params.toString();
+      const url = `/api/leaderboard${queryString ? `?${queryString}` : ""}`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch leaderboard");
