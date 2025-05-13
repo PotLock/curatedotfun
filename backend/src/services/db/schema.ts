@@ -1,4 +1,3 @@
-import { sql } from "drizzle-orm";
 import {
   date,
   index,
@@ -12,23 +11,14 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-import { FeedConfig } from "../../types/config";
-import { Profile } from "../../types/zod/userProfile";
+import { feeds } from "./schema/feeds";
+import { timestamps } from "./schema/common";
 
-// Import activity schema
 export * from "./schema/activity";
-
-export type Metadata = {
-  type: string; // URL to the JSON schema, e.g., "/schemas/userProfile.v1.schema.json"
-  version?: string; // Optional: version of the data instance itself
-  // other potential meta-fields: lastValidated, sourceSystem etc.
-};
-
-// Reusable timestamp columns
-const timestamps = {
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-};
+export * from "./schema/connected-accounts";
+export * from "./schema/feed-permissions";
+export * from "./schema/feeds";
+export * from "./schema/users";
 
 export const SubmissionStatus = {
   PENDING: "pending",
@@ -38,18 +28,6 @@ export const SubmissionStatus = {
 
 export type SubmissionStatus =
   (typeof SubmissionStatus)[keyof typeof SubmissionStatus];
-
-// Feeds Table
-// Stores the entire feed configuration as JSONB
-export const feeds = table("feeds", {
-  id: text("id").primaryKey(), // (hashtag)
-  // Store the entire configuration as JSONB
-  config: jsonb("config").$type<FeedConfig>().notNull(),
-  // Keep these fields for backward compatibility and quick lookups
-  name: text("name").notNull(),
-  description: text("description"),
-  ...timestamps,
-});
 
 // Feed Recaps State Table
 // Tracks the state of each recap job
@@ -83,19 +61,24 @@ export const submissions = table(
   "submissions",
   {
     tweetId: text("tweet_id").primaryKey(),
-    userId: text("user_id").notNull(), // Original tweet author
-    username: text("username").notNull(), // Original tweet author
-    curatorId: text("curator_id").notNull(), // Who submitted it
+    userId: text("user_id").notNull(),
+    username: text("username").notNull(),
+    curatorId: text("curator_id").notNull(),
     curatorUsername: text("curator_username").notNull(),
-    curatorTweetId: text("curator_tweet_id").notNull(), // The tweet where they submitted it
-    content: text("content").notNull(), // Original tweet content
+    curatorTweetId: text("curator_tweet_id").notNull(),
+    content: text("content").notNull(),
     curatorNotes: text("curator_notes"),
     submittedAt: text("submitted_at"),
+    platform: text("platform"),
+    platformUserId: text("platform_user_id"),
+    data: jsonb("data"),
+    metadata: jsonb("metadata"),
     ...timestamps,
   },
   (submissions) => [
     index("submissions_user_id_idx").on(submissions.userId),
     index("submissions_submitted_at_idx").on(submissions.submittedAt),
+    index("submissions_platform_user_id_idx").on(submissions.platform, submissions.platformUserId),
   ],
 );
 
@@ -169,40 +152,6 @@ export const feedPlugins = table(
     index("feed_plugins_plugin_idx").on(table.pluginId),
     primaryKey({ columns: [table.feedId, table.pluginId] }), // Ensure one config per plugin per feed
   ],
-);
-
-// Users Table
-export const users = table(
-  "users",
-  {
-    id: serial("id").primaryKey(),
-    auth_provider_id: text("auth_provider_id").notNull().unique(), // Unique identifier from Web3Auth (previously sub_id)
-    near_account_id: text("near_account_id").unique(), // e.g., chosenname.users.curatedotfun.near
-    near_public_key: text("near_public_key").notNull().unique(), // ed25519 public key
-    username: text("username"), // Optional: display name
-    email: text("email"), // Optional: email from Web3Auth
-
-    // Dynamic app-specific JSON data and its metadata
-    metadata: jsonb("metadata").$type<Metadata>(), // Holds type (schema URL) and other meta info
-    data: jsonb("data").$type<Profile>(), // Holds the actual user profile data
-
-    ...timestamps, // createdAt, updatedAt
-  },
-  (users) => ({
-    authProviderIdIdx: uniqueIndex("users_auth_provider_id_idx").on(
-      users.auth_provider_id,
-    ),
-    nearAccountIdIdx: uniqueIndex("users_near_account_id_idx").on(
-      users.near_account_id,
-    ),
-    nearPublicKeyIdx: uniqueIndex("users_near_public_key_idx").on(
-      users.near_public_key,
-    ),
-    // Index on metadata type for efficient queries
-    metadataTypeIdx: index("metadata_type_idx").on(
-      sql`(${users.metadata} ->> 'type')`,
-    ),
-  }),
 );
 
 // will not be needed after Masa

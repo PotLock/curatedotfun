@@ -1,15 +1,15 @@
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
   jsonb,
-  pgTable as table,
   serial,
+  pgTable as table,
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
-import { users, feeds, submissions } from "../schema";
-import { Metadata } from "../schema";
+import { feeds, submissions, users } from "../schema";
+import { Metadata, timestamps } from "./common";
 
 // Activity Types
 export const ActivityType = {
@@ -23,13 +23,6 @@ export const ActivityType = {
 
 export type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];
 
-// Reusable timestamp columns
-const timestamps = {
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-};
-
-// Activities Table
 export const activities = table(
   "activities",
   {
@@ -48,24 +41,24 @@ export const activities = table(
 
     // Dynamic activity-specific data and metadata
     data: jsonb("data"), // Holds the actual activity data
-    metadata: jsonb("metadata").$type<Metadata>(), // Holds type (schema URL) and other meta info
+    metadata: jsonb("metadata").$type<Metadata>(),
 
-    ...timestamps, // createdAt, updatedAt
+    ...timestamps,
   },
-  (activities) => ({
+  (activities) => [
     // Indexes for common queries
-    userIdIdx: index("activities_user_id_idx").on(activities.user_id),
-    typeIdx: index("activities_type_idx").on(activities.type),
-    timestampIdx: index("activities_timestamp_idx").on(activities.timestamp),
-    feedIdIdx: index("activities_feed_id_idx").on(activities.feed_id),
-    submissionIdIdx: index("activities_submission_id_idx").on(
+    index("activities_user_id_idx").on(activities.user_id),
+    index("activities_type_idx").on(activities.type),
+    index("activities_timestamp_idx").on(activities.timestamp),
+    index("activities_feed_id_idx").on(activities.feed_id),
+    index("activities_submission_id_idx").on(
       activities.submission_id,
     ),
     // Index on metadata type for efficient queries
-    metadataTypeIdx: index("activities_metadata_type_idx").on(
+    index("activities_metadata_type_idx").on(
       sql`(${activities.metadata} ->> 'type')`,
     ),
-  }),
+  ],
 );
 
 // User Stats Table - For aggregated user statistics
@@ -79,9 +72,9 @@ export const userStats = table("user_stats", {
 
   // Dynamic stats data and metadata
   data: jsonb("data"), // Holds additional stats data
-  metadata: jsonb("metadata").$type<Metadata>(), // Holds type (schema URL) and other meta info
+  metadata: jsonb("metadata").$type<Metadata>(),
 
-  ...timestamps, // createdAt, updatedAt
+  ...timestamps,
 });
 
 // Feed User Stats Table - For feed-specific user statistics
@@ -103,24 +96,24 @@ export const feedUserStats = table(
 
     // Dynamic feed-specific stats data and metadata
     data: jsonb("data"), // Holds additional stats data
-    metadata: jsonb("metadata").$type<Metadata>(), // Holds type (schema URL) and other meta info
+    metadata: jsonb("metadata").$type<Metadata>(),
 
-    ...timestamps, // createdAt, updatedAt
+    ...timestamps,
   },
-  (feedUserStats) => ({
+  (feedUserStats) => [
     // Ensure one stats record per user/feed combination
-    userFeedIdx: index("feed_user_stats_user_feed_idx").on(
+    index("feed_user_stats_user_feed_idx").on(
       feedUserStats.user_id,
       feedUserStats.feed_id,
     ),
     // Indexes for ranking queries
-    curatorRankIdx: index("feed_user_stats_curator_rank_idx").on(
+    index("feed_user_stats_curator_rank_idx").on(
       feedUserStats.feed_id,
       feedUserStats.curator_rank,
     ),
-    approverRankIdx: index("feed_user_stats_approver_rank_idx").on(
+    index("feed_user_stats_approver_rank_idx").on(
       feedUserStats.feed_id,
       feedUserStats.approver_rank,
     ),
-  }),
+  ],
 );
