@@ -604,6 +604,85 @@
         }
       }
     },
+        {
+      "id": "giveth",
+      "name": "Giveth Galaxy",
+      "description": "eveyrthing happening in Giveth + General Magic Ecosystem",
+      "moderation": {
+        "approvers": {
+          "twitter": [
+            "plugrel",
+            "Giveth",
+            "thegrifft",
+            "Pairwisevote",
+            "theqacc",
+            "retropgf",
+            "anamarie_com",
+            "Generalmagicio"
+          ]
+        }
+      },
+      "outputs": {
+        "stream": {
+          "enabled": true,
+          "transform": [
+            {
+              "plugin": "@curatedotfun/object-transform",
+              "config": {
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "content": "{{content}}",
+                  "author": "{{username}}",
+                  "notes": "{{curator.notes}}",
+                  "submittedAt": "{{submittedAt}}"
+                }
+              }
+            },
+            {
+              "plugin": "@curatedotfun/ai-transform",
+              "config": {
+                "prompt": "Summarize the content into a concise news flash, incorporating relevant details from the curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information. When processing social media-style content, convert @mentions into markdown links in the format: [@username](https://x.com/username). Ensure all mentions are accurately linked and preserve their original intent.",
+                "apiKey": "{OPENROUTER_API_KEY}",
+                "schema": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title derived from summary of content"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
+                  }
+                }
+              }
+            }
+          ],
+          "distribute": [
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "*[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "@giveth_news"
+              }
+            }
+          ]
+        }
+      }
+    },
     {
       "id": "publicgoods",
       "name": "Public Goods FM",
