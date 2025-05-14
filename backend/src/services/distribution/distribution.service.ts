@@ -5,7 +5,7 @@ import { logger } from "../../utils/logger";
 import { sanitizeJson } from "../../utils/sanitize";
 import { PluginService } from "../plugins/plugin.service";
 import { DistributorConfig } from "./../../types/config";
-import { isStaging } from "services/config/config.service";
+import { isStaging } from "../../services/config/config.service";
 
 export class DistributionService {
   constructor(private pluginService: PluginService) {}
