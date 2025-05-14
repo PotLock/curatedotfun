@@ -12,6 +12,8 @@ import { logger } from "../../utils/logger";
 export const isProduction = process.env.NODE_ENV === "production";
 export const isTest = process.env.NODE_ENV === "test";
 export const isStaging = process.env.NODE_ENV === "staging";
+
+console.log("Using environment: ", process.env.NODE_ENV)
 export class ConfigService {
   private static instance: ConfigService;
   private config: AppConfig | null = null;
