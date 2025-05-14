@@ -45,7 +45,6 @@ export default function BasicInformationForm() {
       try {
         const info = await getUserInfo();
         setUserInfo(info);
-        console.log("User Info:", info);
       } catch (error) {
         console.error("Error fetching user info:", error);
       }
@@ -201,7 +200,7 @@ export default function BasicInformationForm() {
       ) : (
         <div className="flex flex-col items-center justify-center py-10">
           <p className="mb-4 text-gray-600">Please login to create a feed</p>
-          <Button onClick={login}>Login</Button>
+          <Button onClick={() => login()}>Login</Button>
         </div>
       )}
     </div>

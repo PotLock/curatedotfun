@@ -44,8 +44,8 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
 
   // Subscribe to authentication events
   const subscribeAuthEvents = (web3authInstance: Web3AuthNoModal) => {
-    web3authInstance.on(ADAPTER_EVENTS.CONNECTED, async (data) => {
-      console.log("Connected to Web3Auth", data);
+    web3authInstance.on(ADAPTER_EVENTS.CONNECTED, async () => {
+      console.log("Connected to Web3Auth");
       setIsLoggedIn(true);
       setProvider(web3authInstance.provider);
       // Fetch profile immediately after connection
@@ -179,7 +179,6 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
       if (response.ok) {
         const data = await response.json();
         setCurrentUserProfile(data.profile);
-        console.log("User profile found:", data.profile);
       } else if (response.status === 404) {
         setCurrentUserProfile(null);
         console.log("User profile not found (404). Needs creation.");
