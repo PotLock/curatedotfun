@@ -32,7 +32,7 @@ RUN pnpm install --frozen-lockfile
 COPY --from=pruner /app/out/full/ .
 
 # Build the application using turbo (which will respect the dependencies in turbo.json)
-ENV NODE_ENV="production"
+# ENV NODE_ENV="production"
 RUN pnpm run build
 
 # Production stage
