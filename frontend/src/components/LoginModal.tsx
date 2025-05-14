@@ -32,7 +32,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="max-w-[425px] mx-auto">
-        <div className="mb-6">
+        <div className="">
           <h2 className="text-2xl font-bold">Log in</h2>
           <p className="text-gray-600">Choose your preferred login method</p>
         </div>
@@ -150,7 +150,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             </div>
 
             {/* Divider before Email Section */}
-            <div className="relative my-4">
+            <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
@@ -193,7 +193,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             </form>
 
             {/* Divider before Wallet Section */}
-            <div className="relative my-4">
+            <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
@@ -230,7 +230,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
           </div>
         </div>
 
-        <div className="mt-6 flex justify-end">
+        <div className=" flex justify-end">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>

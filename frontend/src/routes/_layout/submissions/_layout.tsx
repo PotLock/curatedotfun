@@ -3,7 +3,7 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import FeedList from "../../../components/FeedList";
 import TopCurators from "../../../components/TopCurators";
-import HeroComponent from "../../../components/Hero";
+import { Hero } from "../../../components/Hero";
 
 export const Route = createFileRoute("/_layout/submissions/_layout")({
   component: SubmissionsLayoutRoute,
@@ -20,14 +20,12 @@ function SubmissionsLayoutRoute() {
   const toggleCurators = () => setMobileCuratorsOpen(!mobileCuratorsOpen);
 
   return (
-    <div className="flex flex-col gap-6 md:gap-12">
-      <div>
-        <HeroComponent
-          title="All Submissions."
-          description="Interact with All submissions under one roof!"
-        />
-      </div>
-
+    <>
+      {/* <div className="flex flex-col gap-6 md:gap-12"> */}
+      <Hero
+        title="All Submissions."
+        description="Interact with All submissions under one roof!"
+      />
       {/* Mobile Navigation Controls */}
       <div className="flex justify-between items-center px-4 md:hidden">
         <button
@@ -47,7 +45,6 @@ function SubmissionsLayoutRoute() {
           <span className="mr-2 font-medium">Curators</span>
         </button>
       </div>
-
       {/* Mobile Sidebar - Feed List (Slide in from left) */}
       <div
         className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 md:hidden ${
@@ -55,7 +52,6 @@ function SubmissionsLayoutRoute() {
         }`}
         onClick={toggleMobileMenu}
       />
-
       <div
         className={`fixed top-0 left-0 h-full w-3/4 max-w-xs bg-white z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto md:hidden ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
@@ -71,7 +67,6 @@ function SubmissionsLayoutRoute() {
           <FeedList />
         </div>
       </div>
-
       {/* Mobile Curators Panel (Slide in from right) */}
       <div
         className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 md:hidden ${
@@ -79,7 +74,6 @@ function SubmissionsLayoutRoute() {
         }`}
         onClick={toggleCurators}
       />
-
       <div
         className={`fixed top-0 right-0 h-full w-3/4 max-w-xs bg-white z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto md:hidden ${
           mobileCuratorsOpen ? "translate-x-0" : "translate-x-full"
@@ -102,9 +96,8 @@ function SubmissionsLayoutRoute() {
           </div>
         </div>
       </div>
-
       {/* Desktop Layout */}
-      <div className="hidden md:grid md:grid-cols-4 gap-4 lg:gap-8 overflow-hidden px-4 lg:px-8">
+      <div className="hidden md:grid md:grid-cols-4 md:max-w-[1440px] mx-auto gap-4 lg:gap-8 overflow-hidden px-4 lg:px-8">
         {/* Left Sidebar - Feed List (Desktop) */}
         <div className="col-span-1 overflow-y-auto">
           <FeedList />
@@ -131,13 +124,13 @@ function SubmissionsLayoutRoute() {
           </div>
         </div>
       </div>
-
       {/* Mobile Content */}
       <div className="md:hidden px-4">
         <div className="flex-1 overflow-y-auto">
           <Outlet />
         </div>
       </div>
-    </div>
+      // {/* </div> */}
+    </>
   );
 }

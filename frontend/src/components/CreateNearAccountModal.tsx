@@ -3,15 +3,8 @@ import { useWeb3Auth } from "../hooks/use-web3-auth";
 import { Button } from "./ui/button"; // Assuming you have shadcn/ui Button
 import { Input } from "./ui/input"; // Assuming you have shadcn/ui Input
 import { Label } from "./ui/label"; // Assuming you have shadcn/ui Label
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  // DialogClose, // Removed as it's not explicitly used here
-} from "./ui/dialog"; // Assuming shadcn/ui Dialog
+
+import { Modal } from "./Modal";
 
 interface CreateNearAccountModalProps {
   isOpen: boolean;
@@ -120,21 +113,16 @@ export const CreateNearAccountModal = ({
     }
   };
 
-  // Use Dialog component from shadcn/ui
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent
-        className="sm:max-w-[425px]"
-        onEscapeKeyDown={handleClose}
-        onPointerDownOutside={handleClose}
-      >
-        <DialogHeader>
-          <DialogTitle>Choose Your NEAR Account Name</DialogTitle>
-          <DialogDescription>
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <div className="max-w-[425px]">
+        <div>
+          <h2 className="text-2xl font-bold">Choose Your NEAR Account Name</h2>
+          <p className="text-gray-600">
             This will be your unique identifier on the NEAR blockchain
             associated with this app.
-          </DialogDescription>
-        </DialogHeader>
+          </p>
+        </div>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
@@ -168,7 +156,7 @@ export const CreateNearAccountModal = ({
               </div>
             )}
           </div>
-          <DialogFooter>
+          <div>
             <Button
               type="button"
               variant="outline"
@@ -183,9 +171,9 @@ export const CreateNearAccountModal = ({
             >
               {isLoading ? "Creating..." : "Create Account"}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </Modal>
   );
 };

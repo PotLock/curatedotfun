@@ -2,7 +2,7 @@ import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { LeaderboardEntry, useAppConfig } from "../lib/api";
 import { Link } from "@tanstack/react-router";
-import HeroComponent from "./Hero";
+import { Hero } from "./Hero";
 
 interface LeaderboardSearch {
   feed: string;
@@ -110,12 +110,12 @@ export default function Leaderboard({
 
   return (
     <div className=" flex flex-col mx-auto ">
-      <HeroComponent
+      <Hero
         title="Leaderboard"
         description="Top Performing Curators ranked by submissions, engagement and activities."
       />
 
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 px-4 py-8">
+      <div className="flex flex-col md:flex-row md:max-w-[1440px] w-full md:w-full mx-auto justify-between items-center mb-6 gap-4 px-4 py-8">
         <div className="relative w-full md:w-auto">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#a3a3a3] h-4 w-4" />
           <input
@@ -215,7 +215,7 @@ export default function Leaderboard({
         </div>
       </div>
 
-      <div className="overflow-y-auto max-h-[500px] md:max-w-full max-w-[400px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+      <div className="overflow-y-auto max-h-[500px] md:max-w-[1440px] md:w-full mx-auto max-w-[400px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         <div className="relative">
           <table className="w-full border-collapse ">
             <thead className="sticky top-0 bg-white z-10">

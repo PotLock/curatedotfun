@@ -15,6 +15,7 @@ import { Button } from "./ui/button";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useAuthStore } from "../store/auth-store";
 
 const BasicInformationFormSchema = z.object({
   profileImage: z.string().optional(),
@@ -28,7 +29,8 @@ type FormValues = z.infer<typeof BasicInformationFormSchema>;
 export default function BasicInformationForm() {
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const { isLoggedIn, getUserInfo, login } = useWeb3Auth();
+  const { isLoggedIn, getUserInfo } = useWeb3Auth();
+  const { showLoginModal } = useAuthStore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(BasicInformationFormSchema),
@@ -201,7 +203,7 @@ export default function BasicInformationForm() {
       ) : (
         <div className="flex flex-col items-center justify-center py-10">
           <p className="mb-4 text-gray-600">Please login to create a feed</p>
-          <Button onClick={login}>Login</Button>
+          <Button onClick={showLoginModal}>Login</Button>
         </div>
       )}
     </div>

@@ -327,12 +327,12 @@ export const FeedItem = ({ submission }: FeedItemProps) => {
             <Badge variant={submission.status}>{submission.status}</Badge>
           </div>
         </div>
-        <div className="w-full overflow-hidden">
+        {/* <div className="w-full overflow-hidden">
           <p className="text-base font-semibold leading-6">
             EP 4. Arbitrum DAO's 7,500 ETH Allocation Faces Mixed Reactions Over
             Non-Native Project
           </p>
-        </div>
+        </div> */}
       </div>
       {/* Title Section */}
 
