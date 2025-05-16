@@ -12,7 +12,8 @@ import { StatusFilterType, useFilterStore } from "../../store/useFilterStore";
 import { SubmissionStatus, SubmissionWithFeedData } from "../../types/twitter";
 
 import { useFeedFilterStore } from "../../store/useFeedFilterStore";
-import HeroComponent from "../../components/Hero";
+import { Hero } from "../../components/Hero";
+import { Container } from "../../components/Container";
 
 export const Route = createFileRoute("/_layout/")({
   component: ExplorePage,
@@ -140,7 +141,7 @@ function ExplorePage() {
 
   return (
     <main className="py-0  md:pb-12 w-full md:px-0">
-      <HeroComponent
+      <Hero
         title="Explore"
         description="Discover autonomous brands powered by curators and AI. Find feeds that match your interests and contribute to their growth."
         buttons={[
@@ -155,8 +156,7 @@ function ExplorePage() {
           },
         ]}
       />
-      <div className="flex flex-col gap-6 md:gap-0 px-6">
-        {/* Recent Submissions Section */}
+      <Container>
         <FeedSection
           title="Recent Submissions"
           items={recentItems}
@@ -171,7 +171,6 @@ function ExplorePage() {
           showSort={true}
           layout={"flex"}
         />
-
         {/* Feeds Section */}
         <FeedSection
           title="Feed"
@@ -188,7 +187,7 @@ function ExplorePage() {
             label: "View All Feeds",
           }}
         />
-      </div>
+      </Container>
     </main>
   );
 }

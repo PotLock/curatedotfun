@@ -13,7 +13,7 @@ interface HeroProps {
   buttons?: ButtonProps[];
 }
 
-export default function Hero({ title, description, buttons }: HeroProps) {
+export function Hero({ title, description, buttons }: HeroProps) {
   return (
     <div
       className="flex flex-col items-center justify-center py-20 gap-2 border w-full"
@@ -25,7 +25,7 @@ export default function Hero({ title, description, buttons }: HeroProps) {
       }}
     >
       <h1 className="md:text-5xl text-2xl text-center font-bold">{title}</h1>
-      <p className=" md:text-2xl text-lg text-center px-2 font-normal leading-8">
+      <p className=" md:text-2xl md:max-w-[800px] text-lg text-center px-2 font-normal leading-8">
         {description}
       </p>
 
@@ -51,3 +51,5 @@ export default function Hero({ title, description, buttons }: HeroProps) {
     </div>
   );
 }
+
+export default Hero;
