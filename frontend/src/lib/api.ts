@@ -138,7 +138,7 @@ export function useLeaderboard(
     queryFn: async () => {
       const params = new URLSearchParams();
       if (timeRange) params.append("timeRange", timeRange);
-      if (feedId) params.append("feed_id", feedId);
+      if (feedId) params.append("feedId", feedId);
       if (limit !== undefined) params.append("limit", limit.toString());
 
       const queryString = params.toString();
@@ -297,5 +297,245 @@ export function useAllSubmissions(limit: number = 20, status?: string) {
     refetchOnWindowFocus: true,
     // Refetch when regaining network connection
     refetchOnReconnect: true,
+  });
+}
+
+export interface GlobalActivityStats {
+  approval_rate: number;
+  total_approvals: number;
+  total_submissions: number;
+}
+
+export function useGlobalActivityStats() {
+  return useQuery<GlobalActivityStats>({
+    queryKey: ["global-activity-stats"],
+    queryFn: async () => {
+      const response = await fetch("/api/activity/stats");
+      if (!response.ok) {
+        throw new Error("Failed to fetch global activity stats");
+      }
+      return response.json();
+    },
+    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
+}
+
+// Activity Types
+
+export const ActivityType = {
+  CONTENT_SUBMISSION: "CONTENT_SUBMISSION",
+  CONTENT_APPROVAL: "CONTENT_APPROVAL",
+  TOKEN_BUY: "TOKEN_BUY",
+  TOKEN_SELL: "TOKEN_SELL",
+  POINTS_REDEMPTION: "POINTS_REDEMPTION",
+  POINTS_AWARDED: "POINTS_AWARDED",
+} as const;
+
+export type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];
+
+export interface UserActivityStats {
+  type: ActivityType;
+  feed_id: string | null;
+  user_id: number;
+  id: number;
+  data: any;
+  metadata: any | null;
+  createdAt: Date;
+  updatedAt: Date | null;
+  timestamp: Date;
+  submission_id: string | null;
+}
+
+export interface ListOfUserActivityStats {
+  activities: UserActivityStats[];
+}
+
+export interface ActivityQueryOptions {
+  timeRange?: string;
+  feedId?: string;
+}
+
+export interface CuratedFeed {
+  feed_id: string;
+  feed_name: string | null;
+  submissions_count: number;
+  curator_rank: number | null;
+  points: number;
+  data: unknown;
+  metadata: any | null;
+}
+
+export interface FeedRank {
+  curatorRank: number | null;
+  approverRank: number | null;
+}
+
+// Activity Hooks
+export interface AggregatedActivityStats {
+  totalSubmissions: number;
+  totalApprovals: number;
+  totalRejections: number;
+  approvalRate: number;
+}
+
+export function useMyActivity() {
+  const { web3auth } = useWeb3Auth();
+
+  return useQuery<AggregatedActivityStats>({
+    queryKey: ["my-activity"],
+    queryFn: async () => {
+      if (!web3auth) throw new Error("Web3Auth not initialized");
+      const authResult = await web3auth.authenticateUser();
+
+      const response = await fetch("/api/activity/user/me", {
+        headers: {
+          Authorization: `Bearer ${authResult.idToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch user activity");
+      }
+
+      const data: ListOfUserActivityStats = await response.json();
+
+      // Calculate statistics from activities
+      const stats = data.activities.reduce(
+        (acc, activity) => {
+          if (activity.type === ActivityType.CONTENT_SUBMISSION) {
+            acc.totalSubmissions++;
+          } else if (activity.type === ActivityType.CONTENT_APPROVAL) {
+            acc.totalApprovals++;
+          }
+          return acc;
+        },
+        { totalSubmissions: 0, totalApprovals: 0 },
+      );
+
+      // Calculate rejections (submissions - approvals)
+      const totalRejections = stats.totalSubmissions - stats.totalApprovals;
+
+      // Calculate approval rate
+      const approvalRate =
+        stats.totalApprovals + totalRejections > 0
+          ? stats.totalApprovals / (stats.totalApprovals + totalRejections)
+          : 0;
+
+      return {
+        totalSubmissions: stats.totalSubmissions,
+        totalApprovals: stats.totalApprovals,
+        totalRejections,
+        approvalRate,
+      };
+    },
+    enabled: !!web3auth,
+  });
+}
+
+export function useUserActivity(
+  userId: string | number,
+  options?: ActivityQueryOptions,
+) {
+  const params = new URLSearchParams();
+  if (options?.timeRange) params.append("timeRange", options.timeRange);
+  if (options?.feedId) params.append("feedId", options.feedId);
+
+  const queryString = params.toString();
+
+  return useQuery<UserActivityStats[]>({
+    queryKey: ["user-activity", userId, options],
+    queryFn: async () => {
+      const url = `/api/activity/user/${userId}${queryString ? `?${queryString}` : ""}`;
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch user activity");
+      }
+
+      const data = await response.json();
+
+      return data.activities;
+    },
+  });
+}
+
+export function useMyCuratedFeeds() {
+  const { web3auth } = useWeb3Auth();
+
+  return useQuery<CuratedFeed[]>({
+    queryKey: ["my-curated-feeds"],
+    queryFn: async () => {
+      if (!web3auth) throw new Error("Web3Auth not initialized");
+      const authResult = await web3auth.authenticateUser();
+
+      const response = await fetch("/api/activity/feeds/curated-by/me", {
+        headers: {
+          Authorization: `Bearer ${authResult.idToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch curated feeds");
+      }
+
+      const data = await response.json();
+
+      return data.feeds;
+    },
+    enabled: !!web3auth,
+  });
+}
+
+export function useMyApprovedFeeds() {
+  const { web3auth } = useWeb3Auth();
+
+  return useQuery<CuratedFeed[]>({
+    queryKey: ["my-approved-feeds"],
+    queryFn: async () => {
+      if (!web3auth) throw new Error("Web3Auth not initialized");
+      const authResult = await web3auth.authenticateUser();
+
+      const response = await fetch("/api/activity/feeds/approved-by/me", {
+        headers: {
+          Authorization: `Bearer ${authResult.idToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch approved feeds");
+      }
+
+      const data = await response.json();
+
+      return data.feeds;
+    },
+    enabled: !!web3auth,
+  });
+}
+
+export function useMyFeedRank(feedId: string) {
+  const { web3auth } = useWeb3Auth();
+
+  return useQuery<FeedRank>({
+    queryKey: ["my-feed-rank", feedId],
+    queryFn: async () => {
+      if (!web3auth) throw new Error("Web3Auth not initialized");
+      const authResult = await web3auth.authenticateUser();
+
+      const response = await fetch(`/api/activity/feeds/${feedId}/my-rank`, {
+        headers: {
+          Authorization: `Bearer ${authResult.idToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch feed rank");
+      }
+
+      return response.json();
+    },
+    enabled: !!web3auth,
   });
 }

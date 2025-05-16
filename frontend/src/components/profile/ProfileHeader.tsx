@@ -4,15 +4,13 @@ import { useWeb3Auth } from "../../hooks/use-web3-auth";
 export function ProfileHeader() {
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
 
-  const { isInitialized, isLoggedIn, login, logout, getUserInfo } =
-    useWeb3Auth();
+  const { isLoggedIn, getUserInfo, currentUserProfile } = useWeb3Auth();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
         const info = await getUserInfo();
         setUserInfo(info);
-        console.log("User Info:", info);
       } catch (error) {
         console.error("Error fetching user info:", error);
       }
@@ -32,19 +30,21 @@ export function ProfileHeader() {
         src={userInfo?.profileImage}
       />
       <div className="flex flex-col gap-2.5 items-center md:items-start text-center md:text-left">
-        <div className="flex flex-col">
-          <h2 className="text-lg md:text-xl">{userInfo?.name}</h2>
+        <div className="flex flex-col space-y-4">
+          <h2 className="text-lg md:text-2xl capitalize">
+            {currentUserProfile?.username}
+          </h2>
           <div className="flex items-center gap-2 justify-center md:justify-start">
             <img
-              className="rounded-lg size-5 md:size-6"
-              src="/images/solana.png"
+              className="size-5 md:size-6 rounded-lg"
+              src="/images/near.png"
             />
             <p className="text-sm md:text-base font-normal text-[#64748B]">
-              6f2d.......xd345
+              {currentUserProfile?.near_account_id}
             </p>
           </div>
         </div>
-        <p className="text-[#262626] max-w-[610px] text-sm md:text-base">
+        {/* <p className="text-[#262626] max-w-[610px] text-sm md:text-base">
           Daily updates on crypto and blockchain grants, funding opportunities
           and ecosystem development.
         </p>
@@ -103,7 +103,7 @@ export function ProfileHeader() {
             </svg>
             /web3.plungrel
           </a>
-        </div>
+        </div> */}
       </div>
     </div>
   );

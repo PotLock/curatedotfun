@@ -47,7 +47,6 @@ export default function BasicInformationForm() {
       try {
         const info = await getUserInfo();
         setUserInfo(info);
-        console.log("User Info:", info);
       } catch (error) {
         console.error("Error fetching user info:", error);
       }
