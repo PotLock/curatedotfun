@@ -155,39 +155,41 @@ function ExplorePage() {
           },
         ]}
       />
-      <div className="flex flex-col gap-6 md:gap-0 px-6 md:max-w-[1440px] mx-auto">
-        {/* Recent Submissions Section */}
-        <FeedSection
-          title="Recent Submissions"
-          items={recentItems}
-          fetchNextPage={fetchNextRecentPage}
-          hasNextPage={hasNextRecentPage}
-          isFetchingNextPage={isFetchingNextRecentPage}
-          status={recentStatus}
-          statusFilter={statusFilter || ""}
-          setStatusFilter={setStatusFilter}
-          botId={botId}
-          showAll={false}
-          showSort={true}
-          layout={"flex"}
-        />
-
-        {/* Feeds Section */}
-        <FeedSection
-          title="Feed"
-          items={feedItems}
-          fetchNextPage={fetchNextFeedPage}
-          hasNextPage={hasNextFeedPage}
-          isFetchingNextPage={isFetchingNextFeedPage}
-          status={feedStatus}
-          statusFilter={feedStatusFilter || ""}
-          setStatusFilter={setFeedStatusFilter}
-          botId={botId}
-          layout={"flex"}
-          actionButton={{
-            label: "View All Feeds",
-          }}
-        />
+      <div className="w-full flex justify-center px-6 md:px-0">
+        <div className="w-full md:max-w-screen-xl">
+          {" "}
+          {/* Recent Submissions Section */}
+          <FeedSection
+            title="Recent Submissions"
+            items={recentItems}
+            fetchNextPage={fetchNextRecentPage}
+            hasNextPage={hasNextRecentPage}
+            isFetchingNextPage={isFetchingNextRecentPage}
+            status={recentStatus}
+            statusFilter={statusFilter || ""}
+            setStatusFilter={setStatusFilter}
+            botId={botId}
+            showAll={false}
+            showSort={true}
+            layout={"flex"}
+          />
+          {/* Feeds Section */}
+          <FeedSection
+            title="Feed"
+            items={feedItems}
+            fetchNextPage={fetchNextFeedPage}
+            hasNextPage={hasNextFeedPage}
+            isFetchingNextPage={isFetchingNextFeedPage}
+            status={feedStatus}
+            statusFilter={feedStatusFilter || ""}
+            setStatusFilter={setFeedStatusFilter}
+            botId={botId}
+            layout={"flex"}
+            actionButton={{
+              label: "View All Feeds",
+            }}
+          />
+        </div>
       </div>
     </main>
   );

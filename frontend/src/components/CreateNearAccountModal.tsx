@@ -115,65 +115,61 @@ export const CreateNearAccountModal = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="max-w-[425px]">
-        <div>
-          <h2 className="text-2xl font-bold">Choose Your NEAR Account Name</h2>
-          <p className="text-gray-600">
-            This will be your unique identifier on the NEAR blockchain
-            associated with this app.
-          </p>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="username" className="text-right col-span-1">
-                Username
-              </Label>
-              <Input
-                id="username"
-                value={chosenUsername}
-                onChange={(e) =>
-                  setChosenUsername(e.target.value.toLowerCase())
-                }
-                placeholder="your-choice"
-                className="col-span-3"
-                required
-                disabled={isLoading}
-                pattern="[a-z0-9]{2,32}" // Basic pattern match
-                title="2-32 characters, lowercase letters and numbers only."
-              />
-            </div>
-            <div className="col-span-4 text-sm text-muted-foreground text-center px-6">
-              Your full account ID will be: <br />
-              <span className="font-mono break-all">
-                {chosenUsername || "[username]"}
-                {nearAccountSuffix}
-              </span>
-            </div>
-            {error && (
-              <div className="col-span-4 text-red-600 text-sm text-center bg-red-100 p-2 rounded">
-                {error}
-              </div>
-            )}
-          </div>
-          <div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isLoading || !chosenUsername || !nearPublicKey}
-            >
-              {isLoading ? "Creating..." : "Create Account"}
-            </Button>
-          </div>
-        </form>
+      <div>
+        <h2 className="text-2xl font-bold">Choose Your NEAR Account Name</h2>
+        <p className="text-gray-600">
+          This will be your unique identifier on the NEAR blockchain associated
+          with this app.
+        </p>
       </div>
+      <form onSubmit={handleSubmit}>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="username" className="text-right col-span-1">
+              Username
+            </Label>
+            <Input
+              id="username"
+              value={chosenUsername}
+              onChange={(e) => setChosenUsername(e.target.value.toLowerCase())}
+              placeholder="your-choice"
+              className="col-span-3"
+              required
+              disabled={isLoading}
+              pattern="[a-z0-9]{2,32}" // Basic pattern match
+              title="2-32 characters, lowercase letters and numbers only."
+            />
+          </div>
+          <div className="col-span-4 text-sm text-muted-foreground text-center px-6">
+            Your full account ID will be: <br />
+            <span className="font-mono break-all">
+              {chosenUsername || "[username]"}
+              {nearAccountSuffix}
+            </span>
+          </div>
+          {error && (
+            <div className="col-span-4 text-red-600 text-sm text-center bg-red-100 p-2 rounded">
+              {error}
+            </div>
+          )}
+        </div>
+        <div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClose}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={isLoading || !chosenUsername || !nearPublicKey}
+          >
+            {isLoading ? "Creating..." : "Create Account"}
+          </Button>
+        </div>
+      </form>
     </Modal>
   );
 };

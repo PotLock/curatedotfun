@@ -21,7 +21,6 @@ function SubmissionsLayoutRoute() {
 
   return (
     <>
-      {/* <div className="flex flex-col gap-6 md:gap-12"> */}
       <Hero
         title="All Submissions."
         description="Interact with All submissions under one roof!"
@@ -97,7 +96,7 @@ function SubmissionsLayoutRoute() {
         </div>
       </div>
       {/* Desktop Layout */}
-      <div className="hidden md:grid md:grid-cols-4 md:max-w-[1440px] mx-auto gap-4 lg:gap-8 overflow-hidden px-4 lg:px-8">
+      <div className="hidden md:grid md:grid-cols-4 md:max-w-screen-xl mx-auto gap-4 lg:gap-8 overflow-hidden px-4 lg:px-8">
         {/* Left Sidebar - Feed List (Desktop) */}
         <div className="col-span-1 overflow-y-auto">
           <FeedList />
@@ -130,7 +129,6 @@ function SubmissionsLayoutRoute() {
           <Outlet />
         </div>
       </div>
-      // {/* </div> */}
     </>
   );
 }
