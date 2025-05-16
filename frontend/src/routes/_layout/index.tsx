@@ -13,6 +13,7 @@ import { SubmissionStatus, SubmissionWithFeedData } from "../../types/twitter";
 
 import { useFeedFilterStore } from "../../store/useFeedFilterStore";
 import { Hero } from "../../components/Hero";
+import { Container } from "../../components/Container";
 
 export const Route = createFileRoute("/_layout/")({
   component: ExplorePage,
@@ -155,42 +156,38 @@ function ExplorePage() {
           },
         ]}
       />
-      <div className="w-full flex justify-center px-6 md:px-0">
-        <div className="w-full md:max-w-screen-xl">
-          {" "}
-          {/* Recent Submissions Section */}
-          <FeedSection
-            title="Recent Submissions"
-            items={recentItems}
-            fetchNextPage={fetchNextRecentPage}
-            hasNextPage={hasNextRecentPage}
-            isFetchingNextPage={isFetchingNextRecentPage}
-            status={recentStatus}
-            statusFilter={statusFilter || ""}
-            setStatusFilter={setStatusFilter}
-            botId={botId}
-            showAll={false}
-            showSort={true}
-            layout={"flex"}
-          />
-          {/* Feeds Section */}
-          <FeedSection
-            title="Feed"
-            items={feedItems}
-            fetchNextPage={fetchNextFeedPage}
-            hasNextPage={hasNextFeedPage}
-            isFetchingNextPage={isFetchingNextFeedPage}
-            status={feedStatus}
-            statusFilter={feedStatusFilter || ""}
-            setStatusFilter={setFeedStatusFilter}
-            botId={botId}
-            layout={"flex"}
-            actionButton={{
-              label: "View All Feeds",
-            }}
-          />
-        </div>
-      </div>
+      <Container>
+        <FeedSection
+          title="Recent Submissions"
+          items={recentItems}
+          fetchNextPage={fetchNextRecentPage}
+          hasNextPage={hasNextRecentPage}
+          isFetchingNextPage={isFetchingNextRecentPage}
+          status={recentStatus}
+          statusFilter={statusFilter || ""}
+          setStatusFilter={setStatusFilter}
+          botId={botId}
+          showAll={false}
+          showSort={true}
+          layout={"flex"}
+        />
+        {/* Feeds Section */}
+        <FeedSection
+          title="Feed"
+          items={feedItems}
+          fetchNextPage={fetchNextFeedPage}
+          hasNextPage={hasNextFeedPage}
+          isFetchingNextPage={isFetchingNextFeedPage}
+          status={feedStatus}
+          statusFilter={feedStatusFilter || ""}
+          setStatusFilter={setFeedStatusFilter}
+          botId={botId}
+          layout={"flex"}
+          actionButton={{
+            label: "View All Feeds",
+          }}
+        />
+      </Container>
     </main>
   );
 }
