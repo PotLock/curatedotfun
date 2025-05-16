@@ -1,15 +1,15 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/profile-tabs";
 import {
   Activity,
-  Award,
-  Newspaper,
-  NotepadTextDashed,
   ScanSearch,
+  // Award,
+  // Newspaper,
+  // NotepadTextDashed
 } from "lucide-react";
 import { ProfileOverview } from "./overview";
-import { ProfileContent } from "./content";
-import { MyFeeds } from "./my-feeds";
-import { ProfilePoints } from "./points";
+// import { ProfileContent } from "./content";
+// import { MyFeeds } from "./my-feeds";
+// import { ProfilePoints } from "./points";
 import { ProfileActivity } from "./activity";
 
 // Tab data structure
@@ -20,24 +20,24 @@ const TABS = [
     icon: ScanSearch,
     component: ProfileOverview,
   },
-  {
-    value: "content",
-    label: "Content",
-    icon: NotepadTextDashed,
-    component: ProfileContent,
-  },
-  {
-    value: "my-feeds",
-    label: "My Feeds",
-    icon: Newspaper,
-    component: MyFeeds,
-  },
-  {
-    value: "points",
-    label: "Points",
-    icon: Award,
-    component: ProfilePoints,
-  },
+  // {
+  //   value: "content",
+  //   label: "Content",
+  //   icon: NotepadTextDashed,
+  //   component: ProfileContent,
+  // },
+  // {
+  //   value: "my-feeds",
+  //   label: "My Feeds",
+  //   icon: Newspaper,
+  //   component: MyFeeds,
+  // },
+  // {
+  //   value: "points",
+  //   label: "Points",
+  //   icon: Award,
+  //   component: ProfilePoints,
+  // },
   {
     value: "activity",
     label: "Activity",

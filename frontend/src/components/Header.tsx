@@ -41,7 +41,6 @@ const Header = () => {
       try {
         const info = await getUserInfo();
         setUserInfo(info);
-        console.log("User Info:", info);
       } catch (error) {
         console.error("Error fetching user info:", error);
       }
@@ -78,10 +77,16 @@ const Header = () => {
               <Button variant={"ghost"}>Feeds</Button>
             </Link> */}
 
-            <Link to="/leaderboard">
+            <Link
+              to="/leaderboard"
+              search={{ feed: "all feeds", timeframe: "all" }}
+            >
               <Button variant={"ghost"}>Leaderboard</Button>
             </Link>
-            <Link to="/create/feed">
+            <Link
+              to="/create/feed"
+              search={{ feed: "all feeds", timeframe: "all" }}
+            >
               <Button variant={"ghost"}>Create</Button>
             </Link>
           </div>
@@ -150,6 +155,7 @@ const Header = () => {
               </Link> */}
               <Link
                 to="/leaderboard"
+                search={{ feed: "all feeds", timeframe: "all" }}
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full"
               >

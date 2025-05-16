@@ -40,7 +40,7 @@ type ActivityContent =
   | PointsRedemptionContent;
 
 // Main activity item interface
-interface ActivityItem {
+export interface ActivityItem {
   type: string;
   icon: LucideIcon;
   time: string;
@@ -185,6 +185,13 @@ export function ActivityTable({
   return (
     <Table className="border-spacing-6 border-separate">
       <TableBody>
+        {data.length === 0 && (
+          <TableRow>
+            <TableCell colSpan={5} className="text-center">
+              No activities found
+            </TableCell>
+          </TableRow>
+        )}
         {data.map((item, index) => (
           <TableRow key={index} className="border-b py-3 border-gray-100">
             <TableCell className="w-10 py-3">

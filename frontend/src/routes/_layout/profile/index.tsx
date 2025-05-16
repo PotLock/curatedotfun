@@ -36,7 +36,7 @@ function RouteComponent() {
         ) : (
           <div className="min-h-screen mx-auto max-w-[1440px] flex flex-col gap-4 items-center justify-center">
             <h1>Please Login to Continue</h1>
-            <Button onClick={login}>Login</Button>
+            <Button onClick={() => login()}>Login</Button>
           </div>
         )}
       </main>
