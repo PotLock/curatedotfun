@@ -444,7 +444,7 @@ export function useUserActivity(
 
   const queryString = params.toString();
 
-  return useQuery<AggregatedActivityStats>({
+  return useQuery<UserActivityStats[]>({
     queryKey: ["user-activity", userId, options],
     queryFn: async () => {
       const url = `/api/activity/user/${userId}${queryString ? `?${queryString}` : ""}`;
@@ -454,36 +454,9 @@ export function useUserActivity(
         throw new Error("Failed to fetch user activity");
       }
 
-      const data: ListOfUserActivityStats = await response.json();
+      const data = await response.json();
 
-      // Calculate statistics from activities
-      const stats = data.activities.reduce(
-        (acc, activity) => {
-          if (activity.type === ActivityType.CONTENT_SUBMISSION) {
-            acc.totalSubmissions++;
-          } else if (activity.type === ActivityType.CONTENT_APPROVAL) {
-            acc.totalApprovals++;
-          }
-          return acc;
-        },
-        { totalSubmissions: 0, totalApprovals: 0 },
-      );
-
-      // Calculate rejections (submissions - approvals)
-      const totalRejections = stats.totalSubmissions - stats.totalApprovals;
-
-      // Calculate approval rate
-      const approvalRate =
-        stats.totalApprovals + totalRejections > 0
-          ? stats.totalApprovals / (stats.totalApprovals + totalRejections)
-          : 0;
-
-      return {
-        totalSubmissions: stats.totalSubmissions,
-        totalApprovals: stats.totalApprovals,
-        totalRejections,
-        approvalRate,
-      };
+      return data.activities;
     },
   });
 }
@@ -507,7 +480,9 @@ export function useMyCuratedFeeds() {
         throw new Error("Failed to fetch curated feeds");
       }
 
-      return response.json();
+      const data = await response.json();
+
+      return data.feeds;
     },
     enabled: !!web3auth,
   });
@@ -532,7 +507,9 @@ export function useMyApprovedFeeds() {
         throw new Error("Failed to fetch approved feeds");
       }
 
-      return response.json();
+      const data = await response.json();
+
+      return data.feeds;
     },
     enabled: !!web3auth,
   });

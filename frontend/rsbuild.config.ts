@@ -58,7 +58,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "http://localhost:3000",
+        target: "https://curatedotfun-staging-31fe.up.railway.app",
         secure: false,
         // target: "https://app.curate.fun",
         changeOrigin: true,

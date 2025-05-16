@@ -1,3 +1,4 @@
+import { useMyApprovedFeeds } from "../../../lib/api";
 import { Badge } from "../../ui/badge";
 
 interface ItemProps {
@@ -35,6 +36,8 @@ function Item({ image, points, name, tags }: ItemProps) {
 }
 
 export function ApproverFor() {
+  const { data: userApprovedFeeds, isLoading } = useMyApprovedFeeds();
+
   return (
     <div className="border rounded-lg px-2 sm:px-3 pb-3 border-neutral-300 gap-2 sm:gap-3 flex flex-col">
       <div className="flex items-center text-base sm:text-xl justify-between w-full py-2 sm:py-[14px] border-b border-dashed border-neutral-500">
@@ -46,24 +49,27 @@ export function ApproverFor() {
         </p>
       </div>
       <div className="grid gap-1">
-        <Item
-          image="/images/near-week.png"
-          points={"1,000"}
-          name="Near Week"
-          tags={["near"]}
-        />
-        <Item
-          image="/images/near-week.png"
-          points={"1,000"}
-          name="Near Week"
-          tags={["near"]}
-        />
-        <Item
-          image="/images/near-week.png"
-          points={"1,000"}
-          name="Near Week"
-          tags={["near"]}
-        />
+        {isLoading && (
+          <div className="flex items-center justify-center h-24">
+            <span className="text-neutral-500">Loading...</span>
+          </div>
+        )}
+        {!isLoading && userApprovedFeeds?.length === 0 && (
+          <div className="flex items-center justify-center h-24">
+            <span className="text-neutral-500">No feeds found</span>
+          </div>
+        )}
+        {!isLoading &&
+          Array.isArray(userApprovedFeeds) &&
+          userApprovedFeeds.map((feed) => (
+            <Item
+              key={feed.feed_id}
+              image="/images/near-week.png"
+              points={feed.points.toString()}
+              name={feed.feed_name || "Unknown Feed"}
+              tags={["near"]}
+            />
+          ))}
       </div>
     </div>
   );

@@ -23,8 +23,6 @@ export function UserStats() {
   const { currentUserProfile } = useWeb3Auth();
   const { data: userActivityStats, isLoading } = useMyActivity();
 
-  console.log(userActivityStats);
-
   return (
     <div className="border rounded-lg py-3 sm:py-5 px-2 sm:px-[14px] border-neutral-300 gap-4 sm:gap-6 flex flex-col">
       <div className="rounded border pt-16 sm:pt-24 px-3 sm:px-5 pb-2 sm:pb-[14px] border-[#94A3B8] relative overflow-hidden">

@@ -9,7 +9,7 @@ export function CurateCTA() {
           className="object-cover w-16 h-16 sm:size-[74px] sm:ms-[14px]"
         />
         <div className="flex flex-col text-sm sm:text-base">
-          <h5 className="font-bold">No Problem.</h5>
+          <h5 className="font-bold">No $CURATE? No Problem.</h5>
           <p className="text-xs sm:text-sm">
             Getting CURATE is easier than ever with _______. Get your tokens in
             minutes.
