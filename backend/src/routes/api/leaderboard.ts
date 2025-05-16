@@ -1,8 +1,8 @@
-import { HonoApp } from "../../types/app";
+import { Hono } from "hono";
 import { leaderboardRepository } from "../../services/db/repositories";
+import { Env } from "types/app";
 
-// Create leaderboard routes
-const router = HonoApp();
+const router = new Hono<Env>();
 
 /**
  * Get the leaderboard data

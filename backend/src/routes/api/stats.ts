@@ -1,11 +1,11 @@
-import { HonoApp } from "../../types/app";
+import { Hono } from "hono";
 import { submissionRepository } from "../../services/db/repositories";
+import { Env } from "types/app";
 
-// Create stats routes
-export const statsRoutes = HonoApp();
+export const statsRoutes = new Hono<Env>();
 
 /**
- * Get platform statistics
+ * Get platform statistics (used by landing page)
  */
 statsRoutes.get("/", async (c) => {
   const context = c.get("context");

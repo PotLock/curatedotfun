@@ -1,11 +1,12 @@
 import { zValidator } from "@hono/zod-validator";
+import { Hono } from "hono";
 import { z } from "zod";
-import { HonoApp } from "../../types/app";
+import { Env } from "../../types/app";
 import { serviceUnavailable } from "../../utils/error";
 import { logger } from "../../utils/logger";
 
 // Create Twitter routes
-const router = HonoApp();
+const router = new Hono<Env>();
 
 /**
  * Get the last checked tweet ID

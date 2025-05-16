@@ -22,6 +22,20 @@
       "when": 1746378850416,
       "tag": "0002_brown_satana",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1747106826937,
+      "tag": "0003_melted_hellion",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1747112673581,
+      "tag": "0004_slimy_talon",
+      "breakpoints": true
     }
   ]
 }

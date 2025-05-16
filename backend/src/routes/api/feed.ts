@@ -1,10 +1,10 @@
 import { feedRepository } from "../../services/db/repositories";
-import { HonoApp } from "../../types/app";
 import { serviceUnavailable } from "../../utils/error";
 import { logger } from "../../utils/logger";
+import { Hono } from "hono";
+import { Env } from "types/app";
 
-// Create feed routes
-const router = HonoApp();
+const router = new Hono<Env>();
 
 /**
  * Get all feeds

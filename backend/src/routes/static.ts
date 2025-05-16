@@ -3,6 +3,7 @@ import { readFile } from "fs/promises";
 import { Context, Hono } from "hono";
 import path from "path";
 import { logger } from "../utils/logger";
+import { Env } from "types/app";
 
 /**
  * Serve files with specific MIME type
@@ -41,7 +42,7 @@ async function serveFileWithMimeType(
 /**
  * Router for static file serving
  */
-export const staticRoutes = new Hono();
+export const staticRoutes = new Hono<Env>();
 
 /**
  * Configure static file serving for production

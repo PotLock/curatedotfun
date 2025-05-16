@@ -2,6 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import { logger } from "../../utils/logger";
+import { Env } from "types/app";
 
 // Define validation schema for the recap job payload
 const recapJobSchema = z.object({
@@ -10,7 +11,7 @@ const recapJobSchema = z.object({
 });
 
 // Create a router for internal API endpoints
-export const triggerRoutes = new Hono();
+export const triggerRoutes = new Hono<Env>();
 
 // TODO: Middleware to validate API token
 // internalRouter.use(async (c, next) => {
