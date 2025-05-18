@@ -1,7 +1,5 @@
 export function Container({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto w-full max-w-[400px] md:max-w-screen-xl lg:max-w-6xl xl:max-w-7xl">
-      {children}
-    </div>
+    <div className="mx-auto px-4 w-full md:max-w-screen-2xl">{children}</div>
   );
 }

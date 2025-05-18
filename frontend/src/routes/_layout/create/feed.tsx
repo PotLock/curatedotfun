@@ -13,6 +13,7 @@ function RouteComponent() {
         title="Create your own autonomous brand."
         description="Set up your own feed on Twitter, Farcaster and other platforms with automated curation and distribution."
       />
+
       <CurationFormSteps />
     </div>
   );
