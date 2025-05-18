@@ -77,7 +77,9 @@ feedRoutes.post("/:feedId/process", async (c) => {
       // If no distributors specified, use all available
       if (!distributorsParam) {
         // Track all distributors
-        streamConfig.distribute!.forEach((d: DistributorConfig) => usedDistributors.add(d.plugin));
+        streamConfig.distribute!.forEach((d: DistributorConfig) =>
+          usedDistributors.add(d.plugin),
+        );
       } else {
         // Parse and validate requested distributors
         const requestedDistributors = distributorsParam
@@ -100,7 +102,7 @@ feedRoutes.post("/:feedId/process", async (c) => {
         if (invalidDistributors.length > 0) {
           logger.warn(
             `Invalid distributor(s) specified: ${invalidDistributors.join(", ")}. ` +
-            `Available distributors: ${availableDistributors.join(", ")}`,
+              `Available distributors: ${availableDistributors.join(", ")}`,
           );
         }
 

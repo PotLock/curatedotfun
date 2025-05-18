@@ -1,9 +1,6 @@
 import { performReload } from "@module-federation/node/utils";
 import { init, loadRemote } from "@module-federation/runtime";
-import {
-  PluginError,
-  PluginLoadError
-} from "../types/errors";
+import { PluginError, PluginLoadError } from "../types/errors";
 
 import {
   BotPlugin,
