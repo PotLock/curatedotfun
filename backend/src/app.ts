@@ -5,21 +5,19 @@ import path from "path";
 import { apiRoutes } from "./routes/api";
 import { mockTwitterService } from "./routes/api/test";
 import { configureStaticRoutes, staticRoutes } from "./routes/static";
-import { ConfigService, isProduction } from "./services/config/config.service";
+import { ConfigService, isProduction } from "./services/config.service";
 import { getDatabase } from "./services/db";
 import { feedRepository } from "./services/db/repositories";
-import { DistributionService } from "./services/distribution/distribution.service";
-import { PluginService } from "./services/plugins/plugin.service";
-import { ProcessorService } from "./services/processor/processor.service";
-import { SubmissionService } from "./services/submissions/submission.service";
-import { TransformationService } from "./services/transformation/transformation.service";
+import { DistributionService } from "./services/distribution.service";
+import { PluginService } from "./services/plugin.service";
+import { ProcessorService } from "./services/processor.service";
+import { SubmissionService } from "./services/submission.service";
+import { TransformationService } from "./services/transformation.service";
 import { TwitterService } from "./services/twitter/client";
 import { AppContext, AppInstance, Env } from "./types/app";
+import { web3AuthJwtMiddleware } from "./utils/auth";
 import { getAllowedOrigins } from "./utils/config";
 import { errorHandler } from "./utils/error";
-import { web3AuthJwtMiddleware } from "./utils/auth";
-import { usersController } from "./controllers/users.controller"; // Import usersController
-import { activityController } from "./controllers/activity.controller"; // Import activityController
 import { ServiceProvider } from "./utils/service-provider";
 
 const ALLOWED_ORIGINS = getAllowedOrigins();
@@ -54,10 +52,10 @@ export async function createApp(): Promise<AppInstance> {
 
   const submissionService = twitterService
     ? new SubmissionService(
-        twitterService,
-        processorService,
-        configService.getConfig(),
-      )
+      twitterService,
+      processorService,
+      configService.getConfig(),
+    )
     : null;
 
   if (submissionService) {
@@ -143,8 +141,6 @@ export async function createApp(): Promise<AppInstance> {
 
   // Mount API routes
   app.route("/api", apiRoutes);
-  app.route("/api/users", usersController);
-  app.route("/api/activity", activityController);
 
   // Configure static routes for production
   if (isProduction) {

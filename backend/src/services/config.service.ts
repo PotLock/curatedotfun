@@ -5,9 +5,9 @@ import {
   FeedConfig,
   PluginConfig,
   PluginsConfig,
-} from "../../types/config";
-import { hydrateConfigValues } from "../../utils/config";
-import { logger } from "../../utils/logger";
+} from "../types/config";
+import { hydrateConfigValues } from "../utils/config";
+import { logger } from "../utils/logger";
 
 export const isProduction = process.env.NODE_ENV === "production";
 export const isTest = process.env.NODE_ENV === "test";

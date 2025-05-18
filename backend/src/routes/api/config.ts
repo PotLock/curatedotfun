@@ -1,13 +1,13 @@
 import { Hono } from "hono";
-import { logger } from "../../utils/logger";
 import { Env } from "types/app";
+import { logger } from "../../utils/logger";
 
-const router = new Hono<Env>();
+const configRoutes = new Hono<Env>();
 
 /**
  * Reload the application configuration from disk
  */
-router.post("/reload", async (c) => {
+configRoutes.post("/reload", async (c) => {
   try {
     const context = c.get("context");
     const config = await context.configService.loadConfig();
@@ -36,7 +36,7 @@ router.post("/reload", async (c) => {
 /**
  * Get the full application configuration
  */
-router.get("/", async (c) => {
+configRoutes.get("/", async (c) => {
   const context = c.get("context");
   const rawConfig = await context.configService.getRawConfig();
   return c.json(rawConfig);
@@ -45,7 +45,7 @@ router.get("/", async (c) => {
 /**
  * Get all feed configurations
  */
-router.get("/feeds", async (c) => {
+configRoutes.get("/feeds", async (c) => {
   const context = c.get("context");
   const rawConfig = await context.configService.getRawConfig();
   return c.json(rawConfig.feeds);
@@ -54,7 +54,7 @@ router.get("/feeds", async (c) => {
 /**
  * Get configuration for a specific feed
  */
-router.get("/:feedId", (c) => {
+configRoutes.get("/:feedId", (c) => {
   const context = c.get("context");
   const feedId = c.req.param("feedId");
 
@@ -66,4 +66,4 @@ router.get("/:feedId", (c) => {
   return c.json(feed);
 });
 
-export default router;
+export { configRoutes };

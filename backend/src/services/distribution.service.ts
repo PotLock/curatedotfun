@@ -1,11 +1,11 @@
 import { ActionArgs } from "@curatedotfun/types";
-import { PluginError, PluginExecutionError } from "../../types/errors";
-import { Submission } from "../../types/twitter";
-import { logger } from "../../utils/logger";
-import { sanitizeJson } from "../../utils/sanitize";
-import { PluginService } from "../plugins/plugin.service";
-import { DistributorConfig } from "./../../types/config";
-import { isStaging } from "../../services/config/config.service";
+import { PluginError, PluginExecutionError } from "../types/errors";
+import { Submission } from "../types/twitter";
+import { logger } from "../utils/logger";
+import { sanitizeJson } from "../utils/sanitize";
+import { PluginService } from "./plugin.service";
+import { DistributorConfig } from "../types/config";
+import { isStaging } from "../services/config.service";
 
 export class DistributionService {
   constructor(private pluginService: PluginService) {}

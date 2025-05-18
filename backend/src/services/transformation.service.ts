@@ -1,8 +1,8 @@
-import { TransformConfig } from "../../types/config";
-import { TransformError } from "../../types/errors";
-import { PluginService } from "../plugins/plugin.service";
-import { logger } from "../../utils/logger";
-import { sanitizeJson } from "../../utils/sanitize";
+import { TransformConfig } from "../types/config";
+import { TransformError } from "../types/errors";
+import { PluginService } from "./plugin.service";
+import { logger } from "../utils/logger";
+import { sanitizeJson } from "../utils/sanitize";
 import { ActionArgs } from "@curatedotfun/types";
 import { merge } from "lodash";
 

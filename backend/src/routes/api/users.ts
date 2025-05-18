@@ -1,23 +1,23 @@
-import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { Env } from "../types/app";
-import { InsertUserData, UserService } from "../services/users.service";
-import {
-  insertUserSchema,
-  updateUserSchema,
-} from "../validation/users.validation";
+import { Hono } from "hono";
+import { ContentfulStatusCode } from "hono/utils/http-status";
+import { InsertUserData } from "../../services/users.service";
+import { Env } from "../../types/app";
 import {
   NearAccountError,
   NotFoundError,
   UserServiceError,
-} from "../types/errors";
-import { ContentfulStatusCode, StatusCode } from "hono/utils/http-status";
-import { ServiceProvider } from "../utils/service-provider";
+} from "../../types/errors";
+import { ServiceProvider } from "../../utils/service-provider";
+import {
+  insertUserSchema,
+  updateUserSchema,
+} from "../../validation/users.validation";
 
-const usersController = new Hono<Env>();
+const usersRoutes = new Hono<Env>();
 
 // --- GET /api/users/me ---
-usersController.get("/me", async (c) => {
+usersRoutes.get("/me", async (c) => {
   const jwtPayload = c.get("jwtPayload");
   const authProviderId = jwtPayload?.authProviderId;
 
@@ -38,13 +38,13 @@ usersController.get("/me", async (c) => {
 
     return c.json({ profile: user });
   } catch (error) {
-    console.error("Error in usersController.get('/me'):", error);
+    console.error("Error in usersRoutes.get('/me'):", error);
     return c.json({ error: "Failed to fetch user profile" }, 500);
   }
 });
 
 // --- POST /api/users ---
-usersController.post("/", zValidator("json", insertUserSchema), async (c) => {
+usersRoutes.post("/", zValidator("json", insertUserSchema), async (c) => {
   const createUserData = c.req.valid("json");
   const jwtPayload = c.get("jwtPayload");
   const authProviderId = jwtPayload?.authProviderId;
@@ -66,7 +66,7 @@ usersController.post("/", zValidator("json", insertUserSchema), async (c) => {
 
     return c.json({ profile: newUser }, 201);
   } catch (error: any) {
-    console.error("Error in usersController.post('/'):", error);
+    console.error("Error in usersRoutes.post('/'):", error);
 
     if (error instanceof NearAccountError) {
       return c.json(
@@ -87,7 +87,7 @@ usersController.post("/", zValidator("json", insertUserSchema), async (c) => {
 });
 
 // --- PUT /api/users/me ---
-usersController.put("/me", zValidator("json", updateUserSchema), async (c) => {
+usersRoutes.put("/me", zValidator("json", updateUserSchema), async (c) => {
   const updateData = c.req.valid("json");
   const jwtPayload = c.get("jwtPayload");
   const authProviderId = jwtPayload?.authProviderId;
@@ -112,7 +112,7 @@ usersController.put("/me", zValidator("json", updateUserSchema), async (c) => {
 
     return c.json({ profile: updatedUser });
   } catch (error) {
-    console.error("Error in usersController.put('/me'):", error);
+    console.error("Error in usersRoutes.put('/me'):", error);
 
     if (error instanceof NotFoundError) {
       return c.json(
@@ -133,7 +133,7 @@ usersController.put("/me", zValidator("json", updateUserSchema), async (c) => {
 });
 
 // --- DELETE /api/users/me ---
-usersController.delete("/me", async (c) => {
+usersRoutes.delete("/me", async (c) => {
   const jwtPayload = c.get("jwtPayload");
   const authProviderId = jwtPayload?.authProviderId;
 
@@ -155,7 +155,7 @@ usersController.delete("/me", async (c) => {
       return c.json({ error: "Failed to delete user profile" }, 500);
     }
   } catch (error: any) {
-    console.error("Error in usersController.delete('/me'):", error);
+    console.error("Error in usersRoutes.delete('/me'):", error);
 
     if (error instanceof NotFoundError) {
       return c.json(
@@ -182,4 +182,4 @@ usersController.delete("/me", async (c) => {
   }
 });
 
-export { usersController };
+export { usersRoutes };

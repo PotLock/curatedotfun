@@ -2,9 +2,8 @@ import { performReload } from "@module-federation/node/utils";
 import { init, loadRemote } from "@module-federation/runtime";
 import {
   PluginError,
-  PluginInitError,
-  PluginLoadError,
-} from "../../types/errors";
+  PluginLoadError
+} from "../types/errors";
 
 import {
   BotPlugin,
@@ -14,10 +13,10 @@ import {
   PluginTypeMap,
   TransformerPlugin,
 } from "@curatedotfun/types";
-import { logger } from "../../utils/logger";
-import { createPluginInstanceKey } from "../../utils/plugin";
-import { ConfigService, isProduction } from "../config/config.service";
 import { Hono } from "hono";
+import { logger } from "../utils/logger";
+import { createPluginInstanceKey } from "../utils/plugin";
+import { ConfigService, isProduction } from "./config.service";
 
 /**
  * Cache entry for a loaded plugin

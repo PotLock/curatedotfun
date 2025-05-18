@@ -1,15 +1,16 @@
+import { Hono } from "hono";
+import { Env } from "../../types/app";
 import { feedRepository } from "../../services/db/repositories";
 import { serviceUnavailable } from "../../utils/error";
 import { logger } from "../../utils/logger";
-import { Hono } from "hono";
-import { Env } from "types/app";
+import { DistributorConfig, StreamConfig } from "../../types/config";
 
-const router = new Hono<Env>();
+const feedRoutes = new Hono<Env>();
 
 /**
  * Get all feeds
  */
-router.get("/", async (c) => {
+feedRoutes.get("/", async (c) => {
   const context = c.get("context");
   return c.json(context.configService.getConfig().feeds);
 });
@@ -17,7 +18,7 @@ router.get("/", async (c) => {
 /**
  * Get submissions for a specific feed
  */
-router.get("/:feedId", async (c) => {
+feedRoutes.get("/:feedId", async (c) => {
   const context = c.get("context");
   const feedId = c.req.param("feedId");
 
@@ -34,7 +35,7 @@ router.get("/:feedId", async (c) => {
  * Optional query parameter: distributors - comma-separated list of distributor plugins to use
  * Example: /api/feed/solana/process?distributors=@curatedotfun/rss
  */
-router.post("/:feedId/process", async (c) => {
+feedRoutes.post("/:feedId/process", async (c) => {
   const context = c.get("context");
   const feedId = c.req.param("feedId");
 
@@ -71,12 +72,12 @@ router.post("/:feedId/process", async (c) => {
       }
 
       // Create a copy of the stream config
-      const streamConfig = { ...feed.outputs.stream };
+      const streamConfig: StreamConfig = { ...feed.outputs.stream };
 
       // If no distributors specified, use all available
       if (!distributorsParam) {
         // Track all distributors
-        streamConfig.distribute!.forEach((d) => usedDistributors.add(d.plugin));
+        streamConfig.distribute!.forEach((d: DistributorConfig) => usedDistributors.add(d.plugin));
       } else {
         // Parse and validate requested distributors
         const requestedDistributors = distributorsParam
@@ -99,7 +100,7 @@ router.post("/:feedId/process", async (c) => {
         if (invalidDistributors.length > 0) {
           logger.warn(
             `Invalid distributor(s) specified: ${invalidDistributors.join(", ")}. ` +
-              `Available distributors: ${availableDistributors.join(", ")}`,
+            `Available distributors: ${availableDistributors.join(", ")}`,
           );
         }
 
@@ -111,7 +112,7 @@ router.post("/:feedId/process", async (c) => {
           continue; // Skip to the next submission
         } else {
           // Filter to only requested distributors
-          streamConfig.distribute = streamConfig.distribute!.filter((d) =>
+          streamConfig.distribute = streamConfig.distribute!.filter((d: any) =>
             validDistributors.includes(d.plugin),
           );
 
@@ -137,4 +138,4 @@ router.post("/:feedId/process", async (c) => {
   });
 });
 
-export default router;
+export { feedRoutes };
