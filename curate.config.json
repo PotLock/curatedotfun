@@ -720,6 +720,10 @@
                 "prompt": "Concisely explain the submission and, relevant details from the curator and curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information. When processing social media-style content, convert @mentions into markdown links in the format: [@username](https://x.com/username). Ensure all mentions are accurately linked and preserve their original intent.",
                 "apiKey": "{OPENROUTER_API_KEY}",
                 "schema": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title derived from summary of content describe content and who posted content"
+                  },
                   "summary": {
                     "type": "string",
                     "description": "Summary of content influenced by curator notes"
@@ -741,7 +745,7 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "*[{{summary}}](<{{source}}>)*\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
+                    "template": "*[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
