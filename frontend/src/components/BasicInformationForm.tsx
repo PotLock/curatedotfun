@@ -59,16 +59,32 @@ export default function BasicInformationForm() {
     }
   }, [isLoggedIn, getUserInfo]);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setImagePreview(base64String);
-        form.setValue("profileImage", base64String);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${import.meta.env.PUBLIC_PINATA_JWT_KEY}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to upload file to Pinata');
+        }
+
+        const data = await response.json();
+        const ipfsUrl = `https://ipfs.io/ipfs/${data.IpfsHash}`;
+        setImagePreview(ipfsUrl);
+        form.setValue("profileImage", ipfsUrl);
+      } catch (error) {
+        console.error('Error uploading file to Pinata:', error);
+      }
     }
   };
 
