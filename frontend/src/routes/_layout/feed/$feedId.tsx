@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import FeedLayout from "../../../components/FeedLayout";
 import { Badge } from "../../../components/ui/badge";
-import { useFeedConfig } from "../../../lib/api";
+import { useFeed } from "../../../lib/api";
 
 const TABS = [
   {
@@ -56,7 +56,7 @@ export const Route = createFileRoute("/_layout/feed/$feedId")({
 
 function FeedPageLayout() {
   const { feedId } = Route.useParams();
-  const { data: feed } = useFeedConfig(feedId);
+  const { data: feed } = useFeed(feedId);
 
   return (
     <div className="max-w-[1440px] mx-auto w-full">

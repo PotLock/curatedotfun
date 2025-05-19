@@ -1,4 +1,3 @@
-import { sql } from "drizzle-orm";
 import {
   date,
   index,
@@ -14,8 +13,8 @@ import {
 
 import { FeedConfig } from "../../types/config";
 import { Profile } from "../../types/zod/userProfile";
+import { sql } from "drizzle-orm";
 
-// Import activity schema
 export * from "./schema/activity";
 
 export type Metadata = {
