@@ -604,7 +604,7 @@
         }
       }
     },
-        {
+    {
       "id": "giveth",
       "name": "Giveth Galaxy",
       "description": "eveyrthing happening in Giveth + General Magic Ecosystem",
@@ -677,6 +677,78 @@
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "@giveth_news"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "shitzu",
+      "name": "Shitzu boost",
+      "description": "Submissions for shitzu community",
+      "moderation": {
+        "approvers": {
+          "twitter": [
+            "plugrel",
+            "ShitzuCommunity",
+            "shitzuonnear",
+            "marior_dev",
+            "travbori"
+          ]
+        }
+      },
+      "outputs": {
+        "stream": {
+          "enabled": true,
+          "transform": [
+            {
+              "plugin": "@curatedotfun/object-transform",
+              "config": {
+                "mappings": {
+                  "source": "https://x.com/{{username}}/status/{{tweetId}}",
+                  "content": "{{content}}",
+                  "author": "{{username}}",
+                  "notes": "{{curator.notes}}",
+                  "submittedAt": "{{submittedAt}}"
+                }
+              }
+            },
+            {
+              "plugin": "@curatedotfun/ai-transform",
+              "config": {
+                "prompt": "Concisely explain the submission and, relevant details from the curator and curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information. When processing social media-style content, convert @mentions into markdown links in the format: [@username](https://x.com/username). Ensure all mentions are accurately linked and preserve their original intent.",
+                "apiKey": "{OPENROUTER_API_KEY}",
+                "schema": {
+                  "summary": {
+                    "type": "string",
+                    "description": "Summary of content influenced by curator notes"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for the content"
+                  }
+                }
+              }
+            }
+          ],
+          "distribute": [
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/simple-transform",
+                  "config": {
+                    "template": "*[{{summary}}](<{{source}}>)*\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/telegram",
+              "config": {
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "@shitzufeed"
               }
             }
           ]
