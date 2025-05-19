@@ -1,8 +1,8 @@
 import { JwtVariables } from "hono/jwt";
-import { ConfigService } from "../services/config/config.service";
+import { ConfigService } from "../services/config.service";
 import { FeedRepository } from "../services/db/repositories/feed.repository";
 import { DistributionService } from "../services/distribution.service";
-import { ProcessorService } from "../services/processor/processor.service";
+import { ProcessorService } from "../services/processor.service";
 import { SubmissionService } from "../services/submission.service";
 import { TwitterService } from "../services/twitter/client";
 import { Hono } from "hono";

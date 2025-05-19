@@ -13,7 +13,7 @@ export const insertActivitySchema = createInsertSchema(schema.activities, {
   id: z.undefined(),
   createdAt: z.undefined(),
   updatedAt: z.undefined(),
-  timestamp: z.undefined(), // Will be set to current timestamp by default
+  timestamp: z.undefined(),
 });
 
 export const selectActivitySchema = createSelectSchema(schema.activities);

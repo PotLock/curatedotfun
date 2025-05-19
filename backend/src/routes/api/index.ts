@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { isProduction } from "../../services/config.service";
 import { configRoutes } from "./config";
-import { feedRoutes } from "./feed";
+import { feedsRoutes } from "./feeds";
 import { leaderboardRoutes } from "./leaderboard";
 import { pluginRoutes } from "./plugin";
 import { statsRoutes } from "./stats";
@@ -24,8 +24,7 @@ if (!isProduction) {
 // Mount sub-routers
 apiRoutes.route("/twitter", twitterRoutes);
 apiRoutes.route("/submissions", submissionRoutes);
-apiRoutes.route("/feed", feedRoutes);
-apiRoutes.route("/feeds", feedRoutes); // Alias for compatibility (TODO: Fix, combine into one)
+apiRoutes.route("/feeds", feedsRoutes);
 apiRoutes.route("/config", configRoutes);
 apiRoutes.route("/plugins", pluginRoutes);
 apiRoutes.route("/leaderboard", leaderboardRoutes);

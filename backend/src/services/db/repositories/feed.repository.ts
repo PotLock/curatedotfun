@@ -2,6 +2,11 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { FeedConfig } from "../../../types/config";
 import { RecapState } from "../../../types/recap";
 import {
+  InsertFeedData,
+  SelectFeedData,
+  UpdateFeedData,
+} from "../../../validation/feed.validation";
+import {
   Submission,
   SubmissionFeed,
   SubmissionStatus,
@@ -30,6 +35,58 @@ export interface ApprovedSubmission {
  * Repository for feed-related database operations
  */
 export class FeedRepository {
+  /**
+   * Get a feed by ID
+   */
+  async getFeedById(feedId: string): Promise<SelectFeedData | null> {
+    return executeOperation(async (db) => {
+      const result = await db
+        .select()
+        .from(feeds)
+        .where(eq(feeds.id, feedId))
+        .limit(1);
+      return result.length > 0 ? (result[0] as SelectFeedData) : null;
+    });
+  }
+
+  /**
+   * Get all feeds
+   */
+  async getAllFeeds(): Promise<SelectFeedData[]> {
+    return executeOperation(async (db) => {
+      const result = await db.select().from(feeds);
+      return result as SelectFeedData[];
+    });
+  }
+
+  /**
+   * Create a new feed
+   */
+  async createFeed(data: InsertFeedData): Promise<SelectFeedData> {
+    return executeTransaction(async (db) => {
+      const result = await db.insert(feeds).values(data).returning();
+      return result[0] as SelectFeedData;
+    }, true); // isWrite = true
+  }
+
+  /**
+   * Update an existing feed
+   */
+  async updateFeed(
+    feedId: string,
+    data: UpdateFeedData,
+  ): Promise<SelectFeedData | null> {
+    return executeTransaction(async (db) => {
+      const result = await db
+        .update(feeds)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(feeds.id, feedId))
+        .returning();
+      return result.length > 0 ? (result[0] as SelectFeedData) : null;
+    }, true); // isWrite = true
+  }
+
+  // --- Existing methods for feed config and recap state ---
   /**
    * Get a feed's configuration by ID
    */
@@ -60,23 +117,6 @@ export class FeedRepository {
 
       return result.map((row) => row.config);
     });
-  }
-
-  /**
-   * Update a feed's configuration
-   */
-  async updateFeedConfig(feedId: string, config: FeedConfig): Promise<void> {
-    await executeOperation(async (db) => {
-      await db
-        .update(feeds)
-        .set({
-          config,
-          name: config.name,
-          description: config.description,
-          updatedAt: new Date(),
-        })
-        .where(eq(feeds.id, feedId));
-    }, true); // isWrite = true
   }
 
   /**

@@ -3,7 +3,6 @@ import { z } from "zod";
 export const socialImageSchema = z
   .object({
     url: z.string().url().optional(),
-    ipfs_cid: z.string().optional(),
   })
   .strict();
 
@@ -17,6 +16,5 @@ export const profileSchema = z
   })
   .strict();
 
-// You can infer TypeScript types from Zod schemas if needed elsewhere
 export type Profile = z.infer<typeof profileSchema>;
 export type SocialImage = z.infer<typeof socialImageSchema>;

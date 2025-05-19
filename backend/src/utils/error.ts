@@ -47,3 +47,21 @@ export function serviceUnavailable(service: string): HTTPException {
     message: `${service} service not available`,
   });
 }
+
+/**
+ * Helper to create a bad request error
+ * @param c - Hono context
+ * @param message - Optional custom message
+ * @param details - Optional details about the validation errors
+ */
+export function badRequest(
+  c: Context,
+  message = "Bad Request",
+  details?: unknown,
+) {
+  const responseBody: { error: string; details?: unknown } = { error: message };
+  if (details) {
+    responseBody.details = details;
+  }
+  return c.json(responseBody, ErrorCode.BAD_REQUEST);
+}

@@ -80,7 +80,7 @@ describe("Submission Flow", () => {
 
     // Verify submissions were created for each feed
     for (const feedId of feedIds) {
-      const submissionsResponse = await apiClient.get(`/api/feed/${feedId}`);
+      const submissionsResponse = await apiClient.get(`/api/feeds/${feedId}`);
       expect(submissionsResponse.status).toBe(200);
 
       const submission = submissionsResponse.data.submissions.find(

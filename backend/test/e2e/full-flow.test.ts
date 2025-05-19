@@ -154,7 +154,7 @@ describe("Full Flow E2E", () => {
       .reply(200, { success: true });
 
     // Act - Generate recap
-    const recapResponse = await apiClient.post("/api/feed/test-feed/recap", {
+    const recapResponse = await apiClient.post("/api/feeds/test-feed/recap", {
       timeframe: "daily",
     });
 

@@ -1,48 +1,132 @@
 import { Hono } from "hono";
 import { Env } from "../../types/app";
 import { feedRepository } from "../../services/db/repositories";
-import { serviceUnavailable } from "../../utils/error";
+import { serviceUnavailable, badRequest } from "../../utils/error";
 import { logger } from "../../utils/logger";
 import { DistributorConfig, StreamConfig } from "../../types/config";
+import {
+  insertFeedSchema,
+  updateFeedSchema,
+} from "../../validation/feed.validation";
 
-const feedRoutes = new Hono<Env>();
+const feedsRoutes = new Hono<Env>();
 
 /**
  * Get all feeds
  */
-feedRoutes.get("/", async (c) => {
-  const context = c.get("context");
-  return c.json(context.configService.getConfig().feeds);
+feedsRoutes.get("/", async (c) => {
+  try {
+    const feeds = await feedRepository.getAllFeeds();
+    return c.json(feeds);
+  } catch (error) {
+    logger.error("Error fetching all feeds:", error);
+    return c.json({ error: "Failed to fetch feeds" }, 500);
+  }
+});
+
+/**
+ * Create a new feed
+ */
+feedsRoutes.post("/", async (c) => {
+  const body = await c.req.json();
+  const validationResult = insertFeedSchema.safeParse(body);
+
+  if (!validationResult.success) {
+    return badRequest(c, "Invalid feed data", validationResult.error.flatten());
+  }
+
+  try {
+    const newFeed = await feedRepository.createFeed(validationResult.data);
+    return c.json(newFeed, 201);
+  } catch (error) {
+    logger.error("Error creating feed:", error);
+    return c.json({ error: "Failed to create feed" }, 500);
+  }
+});
+
+/**
+ * Get a specific feed by its ID
+ */
+feedsRoutes.get("/:feedId", async (c) => {
+  const feedId = c.req.param("feedId");
+  try {
+    const feed = await feedRepository.getFeedById(feedId);
+    if (!feed) {
+      return c.notFound();
+    }
+    return c.json(feed);
+  } catch (error) {
+    logger.error(`Error fetching feed ${feedId}:`, error);
+    return c.json({ error: "Failed to fetch feed" }, 500);
+  }
 });
 
 /**
  * Get submissions for a specific feed
  */
-feedRoutes.get("/:feedId", async (c) => {
-  const context = c.get("context");
+feedsRoutes.get("/:feedId/submissions", async (c) => {
   const feedId = c.req.param("feedId");
+  try {
+    // Check if feed exists before fetching submissions
+    const feedExists = await feedRepository.getFeedById(feedId);
+    if (!feedExists) {
+      return c.notFound();
+    }
+    const submissions = await feedRepository.getSubmissionsByFeed(feedId);
+    return c.json(submissions);
+  } catch (error) {
+    logger.error(`Error fetching submissions for feed ${feedId}:`, error);
+    return c.json({ error: "Failed to fetch submissions" }, 500);
+  }
+});
 
-  const feed = context.configService.getFeedConfig(feedId);
-  if (!feed) {
-    return c.notFound();
+/**
+ * Update an existing feed
+ */
+feedsRoutes.put("/:feedId", async (c) => {
+  const feedId = c.req.param("feedId");
+  const body = await c.req.json();
+  const validationResult = updateFeedSchema.safeParse(body);
+
+  if (!validationResult.success) {
+    return badRequest(c, "Invalid feed data", validationResult.error.flatten());
   }
 
-  return c.json(await feedRepository.getSubmissionsByFeed(feedId));
+  try {
+    const updatedFeed = await feedRepository.updateFeed(
+      feedId,
+      validationResult.data,
+    ); // Assumes this method exists
+    if (!updatedFeed) {
+      return c.notFound();
+    }
+    return c.json(updatedFeed);
+  } catch (error) {
+    logger.error(`Error updating feed ${feedId}:`, error);
+    return c.json({ error: "Failed to update feed" }, 500);
+  }
 });
 
 /**
  * Process approved submissions for a feed
  * Optional query parameter: distributors - comma-separated list of distributor plugins to use
- * Example: /api/feed/solana/process?distributors=@curatedotfun/rss
+ * Example: /api/feeds/solana/process?distributors=@curatedotfun/rss
  */
-feedRoutes.post("/:feedId/process", async (c) => {
+feedsRoutes.post("/:feedId/process", async (c) => {
   const context = c.get("context");
   const feedId = c.req.param("feedId");
 
-  const feed = context.configService.getFeedConfig(feedId);
-  if (!feed) {
-    return c.notFound();
+  let feed;
+  try {
+    feed = await feedRepository.getFeedById(feedId);
+    if (!feed) {
+      return c.notFound();
+    }
+  } catch (error) {
+    logger.error(`Error fetching feed ${feedId} for processing:`, error);
+    return c.json({ error: "Failed to fetch feed for processing" }, 500);
   }
+  const feedConfig = feed.config; // FeedConfig is nested under 'config' property
 
   // Get approved submissions for this feed
   const submissions = await feedRepository.getSubmissionsByFeed(feedId);
@@ -67,12 +151,12 @@ feedRoutes.post("/:feedId/process", async (c) => {
 
   for (const submission of approvedSubmissions) {
     try {
-      if (!feed.outputs.stream || !feed.outputs.stream.distribute) {
+      if (!feedConfig.outputs.stream || !feedConfig.outputs.stream.distribute) {
         continue;
       }
 
       // Create a copy of the stream config
-      const streamConfig: StreamConfig = { ...feed.outputs.stream };
+      const streamConfig: StreamConfig = { ...feedConfig.outputs.stream };
 
       // If no distributors specified, use all available
       if (!distributorsParam) {
@@ -140,4 +224,4 @@ feedRoutes.post("/:feedId/process", async (c) => {
   });
 });
 
-export { feedRoutes };
+export { feedsRoutes };
