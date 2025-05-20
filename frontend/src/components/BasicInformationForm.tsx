@@ -16,6 +16,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useAuthStore } from "../store/auth-store";
+import { toast } from "../hooks/use-toast";
+import { Loading } from "./ui/loading";
 
 const BasicInformationFormSchema = z.object({
   profileImage: z.string().optional(),
@@ -31,6 +33,7 @@ export default function BasicInformationForm() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { isLoggedIn, getUserInfo } = useWeb3Auth();
   const { showLoginModal } = useAuthStore();
+  const [isLoading, setLoading] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(BasicInformationFormSchema),
@@ -59,23 +62,33 @@ export default function BasicInformationForm() {
     }
   }, [isLoggedIn, getUserInfo]);
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (file) {
       try {
+        setLoading(true);
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append("file", file);
 
-        const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${import.meta.env.PUBLIC_PINATA_JWT_KEY}`,
+        if (!import.meta.env.PUBLIC_PINATA_JWT_KEY) {
+          throw new Error("Pinata JWT key is not configured");
+        }
+
+        const response = await fetch(
+          "https://api.pinata.cloud/pinning/pinFileToIPFS",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${import.meta.env.PUBLIC_PINATA_JWT_KEY || ""}`,
+            },
+            body: formData,
           },
-          body: formData,
-        });
+        );
 
         if (!response.ok) {
-          throw new Error('Failed to upload file to Pinata');
+          throw new Error("Failed to upload file to Pinata");
         }
 
         const data = await response.json();
@@ -83,7 +96,14 @@ export default function BasicInformationForm() {
         setImagePreview(ipfsUrl);
         form.setValue("profileImage", ipfsUrl);
       } catch (error) {
-        console.error('Error uploading file to Pinata:', error);
+        console.error("Error uploading file to Pinata:", error);
+        toast({
+          title: "Upload failed",
+          description: "Failed to upload image. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -110,7 +130,7 @@ export default function BasicInformationForm() {
                     <div className="flex items-start flex-col gap-1">
                       <div className="flex gap-4 items-center">
                         <div className="relative h-24 w-24 overflow-hidden rounded-full bg-gray-100 flex items-center justify-center">
-                          {imagePreview ? (
+                          {imagePreview && !isLoading ? (
                             <img
                               src={imagePreview}
                               alt="Profile Preview"
@@ -128,6 +148,11 @@ export default function BasicInformationForm() {
                                 ?.split(" ")
                                 .map((n) => n[0])
                                 .join("")}
+                            </div>
+                          )}
+                          {isLoading && (
+                            <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                              <Loading />
                             </div>
                           )}
                         </div>
