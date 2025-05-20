@@ -19,7 +19,6 @@ import { useAuthStore } from "../store/auth-store";
 import { toast } from "../hooks/use-toast";
 import { Loading } from "./ui/loading";
 
-
 const BasicInformationFormSchema = z.object({
   profileImage: z.string().optional(),
   feedName: z.string().min(3, "Feed name must be at least 3 characters"),
