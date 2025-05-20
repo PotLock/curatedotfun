@@ -1,19 +1,19 @@
 import { Tweet } from "agent-twitter-client";
-import { AppConfig } from "../../types/config";
+import { AppConfig } from "../types/config";
 import {
   Moderation,
   Submission,
   SubmissionFeed,
   SubmissionStatus,
-} from "../../types/twitter";
-import { logger } from "../../utils/logger";
+} from "../types/twitter";
+import { logger } from "../utils/logger";
 import {
   feedRepository,
   submissionRepository,
   twitterRepository,
-} from "../db/repositories";
-import { ProcessorService } from "../processor/processor.service";
-import { TwitterService } from "../twitter/client";
+} from "./db/repositories";
+import { ProcessorService } from "./processor.service";
+import { TwitterService } from "./twitter/client";
 
 export class SubmissionService {
   private checkInterval: NodeJS.Timeout | null = null;

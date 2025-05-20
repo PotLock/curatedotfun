@@ -1,16 +1,16 @@
 import { Hono } from "hono";
-import { PluginService } from "../../services/plugins/plugin.service";
 import { Env } from "types/app";
+import { PluginService } from "../../services/plugin.service";
 
-const router = new Hono<Env>();
+const pluginRoutes = new Hono<Env>();
 
 /**
  * Reload all plugins
  */
-router.post("/reload", async (c) => {
+pluginRoutes.post("/reload", async (c) => {
   const pluginService = PluginService.getInstance();
   await pluginService.reloadAllPlugins();
   return c.json({ success: true });
 });
 
-export default router;
+export { pluginRoutes };

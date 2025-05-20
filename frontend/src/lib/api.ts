@@ -5,13 +5,23 @@ import type { AppConfig, FeedConfig } from "../types/config";
 import type { SubmissionWithFeedData } from "../types/twitter";
 import { usernameSchema, UserProfile } from "./validation/user";
 
-export function useFeedConfig(feedId: string) {
-  return useQuery<FeedConfig>({
-    queryKey: ["feed", feedId],
+// TODO: Implement a shared types package
+export interface FeedDetails {
+  id: string;
+  name: string;
+  description: string | null;
+  config: FeedConfig;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export function useFeed(feedId: string) {
+  return useQuery<FeedDetails>({
+    queryKey: ["feed-details", feedId],
     queryFn: async () => {
-      const response = await fetch(`/api/config/${feedId}`);
+      const response = await fetch(`/api/feeds/${feedId}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch feed config");
+        throw new Error("Failed to fetch feed details");
       }
       return response.json();
     },
@@ -30,7 +40,7 @@ export function useFeedItems(
     [string, string, string | undefined],
     number
   >({
-    queryKey: ["feed-items-paginated", feedId, status],
+    queryKey: ["feed-submissions-paginated", feedId, status],
     queryFn: async ({ pageParam = 0 }) => {
       const statusParam = status ? `status=${status}` : "";
       const pageParamStr = `page=${pageParam}`;
@@ -41,10 +51,10 @@ export function useFeedItems(
         .filter((param) => param !== "")
         .join("&");
 
-      const url = `/api/feed/${feedId}?${queryParams}`;
+      const url = `/api/feeds/${feedId}/submissions?${queryParams}`;
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error("Failed to fetch feed items");
+        throw new Error("Failed to fetch feed submissions");
       }
       return response.json();
     },

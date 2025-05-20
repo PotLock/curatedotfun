@@ -2,21 +2,21 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { z } from "zod";
-import { Env } from "../types/app";
-import { ActivityServiceError } from "../types/errors";
-import { ServiceProvider } from "../utils/service-provider";
+import { Env } from "../../types/app";
+import { ActivityServiceError } from "../../types/errors";
+import { ServiceProvider } from "../../utils/service-provider";
 import {
   activityQueryOptionsSchema,
   leaderboardQueryOptionsSchema,
-} from "../validation/activity.validation";
+} from "../../validation/activity.validation";
 
-const activityController = new Hono<Env>();
+const activityRoutes = new Hono<Env>();
 
 /**
  * GET /api/activity/leaderboard
  * Get the leaderboard
  */
-activityController.get(
+activityRoutes.get(
   "/leaderboard",
   zValidator(
     "query",
@@ -42,7 +42,7 @@ activityController.get(
 
       return c.json({ leaderboard });
     } catch (error) {
-      console.error("Error in activityController.get('/leaderboard'):", error);
+      console.error("Error in activityRoutes.get('/leaderboard'):", error);
 
       if (error instanceof ActivityServiceError) {
         return c.json(
@@ -63,7 +63,7 @@ activityController.get(
  * GET /api/activity/stats
  * Get global activity statistics
  */
-activityController.get("/stats", async (c) => {
+activityRoutes.get("/stats", async (c) => {
   try {
     // Get the activity service from the service provider
     const activityService = ServiceProvider.getInstance().getActivityService();
@@ -71,7 +71,7 @@ activityController.get("/stats", async (c) => {
 
     return c.json({ stats });
   } catch (error) {
-    console.error("Error in activityController.get('/stats'):", error);
+    console.error("Error in activityRoutes.get('/stats'):", error);
 
     if (error instanceof ActivityServiceError) {
       return c.json(
@@ -88,7 +88,7 @@ activityController.get("/stats", async (c) => {
  * GET /api/activity/user/me
  * Get activity log for the authenticated user
  */
-activityController.get("/user/me", async (c) => {
+activityRoutes.get("/user/me", async (c) => {
   const jwtPayload = c.get("jwtPayload");
   const authProviderId = jwtPayload?.authProviderId;
 
@@ -117,7 +117,7 @@ activityController.get("/user/me", async (c) => {
 
     return c.json({ activities });
   } catch (error) {
-    console.error("Error in activityController.get('/user/me'):", error);
+    console.error("Error in activityRoutes.get('/user/me'):", error);
 
     if (error instanceof ActivityServiceError) {
       return c.json(
@@ -134,7 +134,7 @@ activityController.get("/user/me", async (c) => {
  * GET /api/activity/user/:userId
  * Get activity log for a specific user
  */
-activityController.get(
+activityRoutes.get(
   "/user/:userId",
   zValidator(
     "param",
@@ -183,7 +183,7 @@ activityController.get(
 
       return c.json({ activities });
     } catch (error) {
-      console.error("Error in activityController.get('/user/:userId'):", error);
+      console.error("Error in activityRoutes.get('/user/:userId'):", error);
 
       if (error instanceof ActivityServiceError) {
         return c.json(
@@ -204,7 +204,7 @@ activityController.get(
  * GET /api/activity/feeds/curated-by/me
  * Get feeds curated by the authenticated user
  */
-activityController.get("/feeds/curated-by/me", async (c) => {
+activityRoutes.get("/feeds/curated-by/me", async (c) => {
   const jwtPayload = c.get("jwtPayload");
   const authProviderId = jwtPayload?.authProviderId;
 
@@ -234,7 +234,7 @@ activityController.get("/feeds/curated-by/me", async (c) => {
     return c.json({ feeds });
   } catch (error) {
     console.error(
-      "Error in activityController.get('/feeds/curated-by/me'):",
+      "Error in activityRoutes.get('/feeds/curated-by/me'):",
       error,
     );
 
@@ -253,7 +253,7 @@ activityController.get("/feeds/curated-by/me", async (c) => {
  * GET /api/activity/feeds/approved-by/me
  * Get feeds approved by the authenticated user
  */
-activityController.get("/feeds/approved-by/me", async (c) => {
+activityRoutes.get("/feeds/approved-by/me", async (c) => {
   const jwtPayload = c.get("jwtPayload");
   const authProviderId = jwtPayload?.authProviderId;
 
@@ -283,7 +283,7 @@ activityController.get("/feeds/approved-by/me", async (c) => {
     return c.json({ feeds });
   } catch (error) {
     console.error(
-      "Error in activityController.get('/feeds/approved-by/me'):",
+      "Error in activityRoutes.get('/feeds/approved-by/me'):",
       error,
     );
 
@@ -302,7 +302,7 @@ activityController.get("/feeds/approved-by/me", async (c) => {
  * GET /api/activity/feeds/:feedId/my-rank
  * Get the user's rank for a specific feed
  */
-activityController.get(
+activityRoutes.get(
   "/feeds/:feedId/my-rank",
   zValidator(
     "param",
@@ -342,7 +342,7 @@ activityController.get(
       return c.json({ ranks });
     } catch (error) {
       console.error(
-        "Error in activityController.get('/feeds/:feedId/my-rank'):",
+        "Error in activityRoutes.get('/feeds/:feedId/my-rank'):",
         error,
       );
 
@@ -358,4 +358,4 @@ activityController.get(
   },
 );
 
-export { activityController };
+export { activityRoutes };

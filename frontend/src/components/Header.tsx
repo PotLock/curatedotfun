@@ -24,23 +24,28 @@ import {
 } from "lucide-react";
 import { AuthUserInfo } from "../types/web3auth";
 import UserMenu from "./UserMenu";
+import { useWalletSelector } from "@near-wallet-selector/react-hook";
+import { AvatarProfile } from "./AvatarProfile";
 
 const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const navigate = useNavigate();
 
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
   const { showLoginModal } = useAuthStore();
 
   const { isInitialized, isLoggedIn, logout, getUserInfo } = useWeb3Auth();
+  const { signedAccountId, signOut } = useWalletSelector();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
         const info = await getUserInfo();
         setUserInfo(info);
+        setImageError(false);
       } catch (error) {
         console.error("Error fetching user info:", error);
       }
@@ -52,6 +57,53 @@ const Header = () => {
       setUserInfo({});
     }
   }, [isLoggedIn, getUserInfo]);
+
+  // Profile image component with error handling
+  const ProfileImage = ({ size = "small" }) => {
+    const handleImageError = () => {
+      setImageError(true);
+    };
+
+    if (imageError || !userInfo?.profileImage) {
+      return (
+        <CircleUserRound className={size === "small" ? "h-7 w-7" : "h-6 w-6"} />
+      );
+    }
+
+    return (
+      <img
+        className="rounded-full"
+        style={{
+          height: size === "small" ? "28px" : "24px",
+          width: size === "small" ? "28px" : "24px",
+          objectFit: "cover",
+        }}
+        alt="Profile Image"
+        src={userInfo.profileImage}
+        onError={handleImageError}
+        loading="eager"
+        referrerPolicy="no-referrer"
+      />
+    );
+  };
+
+  const getUserDisplayName = () => {
+    if (signedAccountId) {
+      return signedAccountId;
+    }
+    return (
+      (userInfo as { name?: string }).name ||
+      (userInfo as { email?: string }).email
+    );
+  };
+
+  const handleLogout = () => {
+    if (signedAccountId) {
+      signOut();
+    } else {
+      logout();
+    }
+  };
 
   return (
     <>
@@ -181,19 +233,21 @@ const Header = () => {
             </div>
 
             <div className="w-full flex justify-center mt-4">
-              {isInitialized && isLoggedIn && userInfo ? (
+              {(isInitialized && isLoggedIn && userInfo) || signedAccountId ? (
                 <DropdownMenu onOpenChange={setDropdownOpen}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="flex w-full md:hidden">
                       <div className="flex gap-1 items-center justify-center">
-                        <img
-                          className="rounded-full h-7 w-7"
-                          alt="Profile Image"
-                          src={userInfo.profileImage}
-                        />
+                        {signedAccountId ? (
+                          <AvatarProfile
+                            accountId={signedAccountId}
+                            size="small"
+                          />
+                        ) : (
+                          <ProfileImage size="small" />
+                        )}
                         <p className="text-sm font-medium leading-6 sm:block">
-                          {(userInfo as { name?: string }).name ||
-                            (userInfo as { email?: string }).email}
+                          {getUserDisplayName()}
                         </p>
                         <ChevronDown
                           className={`h-4 w-4 transition-transform duration-200 ${
@@ -206,25 +260,30 @@ const Header = () => {
                   <DropdownMenuContent className="w-56 mt-4">
                     <DropdownMenuItem>
                       <div className="flex gap-2 w-full items-start">
-                        <img
-                          src={userInfo.profileImage}
-                          alt="Profile Image"
-                          height={24}
-                          width={24}
-                          className="rounded-full"
-                        />
+                        {signedAccountId ? (
+                          <AvatarProfile
+                            accountId={signedAccountId}
+                            size="medium"
+                          />
+                        ) : (
+                          <ProfileImage />
+                        )}
                         <div>
                           <p className="text-sm font-semibold leading-5">
-                            {(userInfo as { name?: string }).name}
+                            {signedAccountId ||
+                              (userInfo as { name?: string }).name}
                           </p>
-                          <p className="text-xs leading-5 text-gray-500">
-                            {(userInfo as { email?: string }).email}
-                          </p>
+                          {!signedAccountId && (
+                            <p className="text-xs leading-5 text-gray-500">
+                              {(userInfo as { email?: string }).email}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
+                      className="cursor-pointer hover:bg-gray-100"
                       onClick={() => {
                         navigate({ to: "/profile" });
                       }}
@@ -237,7 +296,7 @@ const Header = () => {
                       <span>Wallet</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={logout}
+                      onClick={handleLogout}
                       className="cursor-pointer hover:bg-gray-100"
                     >
                       <LogOut />

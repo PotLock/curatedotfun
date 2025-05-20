@@ -1,9 +1,9 @@
-import { DistributorConfig, TransformConfig } from "../../types/config";
-import { ProcessorError, TransformError } from "../../types/errors";
-import { DistributionService } from "../distribution/distribution.service";
-import { TransformationService } from "../transformation/transformation.service";
-import { logger } from "../../utils/logger";
-import { sanitizeJson } from "../../utils/sanitize";
+import { DistributorConfig, TransformConfig } from "../types/config";
+import { ProcessorError, TransformError } from "../types/errors";
+import { DistributionService } from "./distribution.service";
+import { TransformationService } from "./transformation.service";
+import { logger } from "./../utils/logger";
+import { sanitizeJson } from "./../utils/sanitize";
 
 interface ProcessConfig {
   enabled?: boolean;

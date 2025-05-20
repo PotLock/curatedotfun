@@ -3,6 +3,7 @@ import { useWeb3Auth } from "../hooks/use-web3-auth";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Modal } from "./Modal";
+import { useAuthStore } from "../store/auth-store";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface LoginModalProps {
 
 export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
   const { login } = useWeb3Auth();
+  const { showWalletLoginModal } = useAuthStore();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,8 +33,8 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="max-w-[425px] mx-auto">
-        <div className="mb-6">
+      <div className=" mx-auto">
+        <div>
           <h2 className="text-2xl font-bold">Log in</h2>
           <p className="text-gray-600">Choose your preferred login method</p>
         </div>
@@ -150,7 +152,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             </div>
 
             {/* Divider before Email Section */}
-            <div className="relative my-4">
+            <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
@@ -193,7 +195,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             </form>
 
             {/* Divider before Wallet Section */}
-            <div className="relative my-4">
+            <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
@@ -209,11 +211,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             <Button
               variant="secondary"
               className="w-full flex items-center justify-center gap-2"
-              onClick={() => {
-                // This is just a placeholder button, no actual logic to open NEAR modal
-                console.log("Connect NEAR wallet clicked");
-                onClose();
-              }}
+              onClick={showWalletLoginModal}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -230,7 +228,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
           </div>
         </div>
 
-        <div className="mt-6 flex justify-end">
+        <div className=" flex justify-end">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>

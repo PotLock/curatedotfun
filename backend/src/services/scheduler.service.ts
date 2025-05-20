@@ -6,10 +6,10 @@ import {
   JobNotFoundError,
   JobStatus,
 } from "@crosspost/scheduler-sdk";
-import { FeedRepository } from "../db/repositories/feed.repository";
-import { ProcessorService } from "../processor/processor.service";
-import { logger } from "../../utils/logger";
-import { RecapConfig, RecapState } from "../../types/recap";
+import { FeedRepository } from "./db/repositories/feed.repository";
+import { ProcessorService } from "./processor.service";
+import { logger } from "../utils/logger";
+import { RecapConfig, RecapState } from "../types/recap";
 
 /**
  * Configuration for a scheduled job

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { submissionRepository } from "../../services/db/repositories";
 import { Env } from "types/app";
+import { FeedConfig } from "types/config";
 
 export const statsRoutes = new Hono<Env>();
 
@@ -22,7 +23,7 @@ statsRoutes.get("/", async (c) => {
 
   // Count total distributions from all feeds' distribute arrays
   let distributionsCount = 0;
-  config.feeds.forEach((feed) => {
+  config.feeds.forEach((feed: FeedConfig) => {
     // Count stream distributions if enabled
     if (feed.outputs.stream?.enabled && feed.outputs.stream.distribute) {
       distributionsCount += feed.outputs.stream.distribute.length;
