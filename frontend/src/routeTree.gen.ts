@@ -17,7 +17,6 @@ import { Route as LayoutImport } from './routes/_layout'
 import { Route as LayoutIndexImport } from './routes/_layout/index'
 import { Route as LayoutLeaderboardImport } from './routes/_layout/leaderboard'
 import { Route as LayoutProfileIndexImport } from './routes/_layout/profile/index'
-import { Route as LayoutSubmissionsLayoutImport } from './routes/_layout/submissions/_layout'
 import { Route as LayoutProfileRootImport } from './routes/_layout/profile/_root'
 import { Route as LayoutFeedFeedIdImport } from './routes/_layout/feed/$feedId'
 import { Route as LayoutCreateFeedImport } from './routes/_layout/create/feed'
@@ -42,13 +41,6 @@ const LayoutRoute = LayoutImport.update({
   id: '/_layout',
   getParentRoute: () => rootRoute,
 } as any)
-
-const LayoutSubmissionsRoute = LayoutSubmissionsImport.update({
-  id: '/submissions',
-  path: '/submissions',
-  getParentRoute: () => LayoutRoute,
-} as any)
-
 const LayoutProfileRoute = LayoutProfileImport.update({
   id: '/profile',
   path: '/profile',
