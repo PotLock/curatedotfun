@@ -14,12 +14,13 @@ export class LeaderboardRepository {
   }
 
   /**
-   * Gets the leaderboard data.
+   * Gets the curator statistics leaderboard data, including submission, approval,
+   * and rejection counts, along with feed-specific submission details.
    *
    * @param timeRange The time range for the leaderboard (default: "all")
-   * @returns Array of leaderboard entries
+   * @returns Array of curator leaderboard entries
    */
-  async getLeaderboard(
+  async getCuratorStatsLeaderboard(
     timeRange: string = "all",
   ): Promise<queries.LeaderboardEntry[]> {
     return withErrorHandling(
@@ -150,7 +151,7 @@ export class LeaderboardRepository {
           this.db,
         ),
       {
-        operationName: "getLeaderboard",
+        operationName: "get curator stats leaderboard",
         additionalContext: { timeRange },
       },
       [],

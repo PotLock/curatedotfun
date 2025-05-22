@@ -1,13 +1,13 @@
 import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { DatabaseError } from "../../../types/errors";
 import {
   GlobalStats,
-  LeaderboardEntry,
+  UserRankingLeaderboardEntry,
 } from "../../../validation/activity.validation";
-import { DatabaseError } from "../../../types/errors";
 import * as schema from "../schema";
 import { ActivityType } from "../schema/activity";
+import { DB, InsertActivity, UpdateFeedUserStats, UpdateUserStats } from "../types";
 import { executeWithRetry, withErrorHandling } from "../utils";
-import { DB } from "../types";
 
 export class ActivityRepository {
   private readonly db: DB;
@@ -20,14 +20,7 @@ export class ActivityRepository {
    * Create a new activity entry
    */
   async createActivity(
-    data: {
-      user_id: number;
-      type: ActivityType;
-      feed_id?: string | null;
-      submission_id?: string | null;
-      data?: Record<string, any> | null;
-      metadata?: Record<string, any> | null;
-    },
+    data: InsertActivity,
     txDb: DB,
   ) {
     return withErrorHandling(
@@ -37,7 +30,7 @@ export class ActivityRepository {
           .insert(schema.activities)
           .values({
             user_id: data.user_id,
-            type: data.type,
+            type: data.type as ActivityType,
             feed_id: data.feed_id || null,
             submission_id: data.submission_id || null,
             data: (data.data ?? null) as unknown,
@@ -56,7 +49,7 @@ export class ActivityRepository {
         await this.updateUserStatsForActivity(
           txDb,
           data.user_id,
-          data.type,
+          data.type as ActivityType,
           data.feed_id,
         );
 
@@ -268,15 +261,16 @@ export class ActivityRepository {
   }
 
   /**
-   * Get the leaderboard
+   * Get the user ranking leaderboard based on points, submissions, and approvals.
+   * Can be filtered by time range and feed ID.
    */
-  async getLeaderboard(
+  async getUserRankingLeaderboard(
     options: {
       time_range?: string;
       feed_id?: string;
       limit?: number;
     } = {},
-  ): Promise<LeaderboardEntry[]> {
+  ): Promise<UserRankingLeaderboardEntry[]> {
     return withErrorHandling(
       async () => {
         return executeWithRetry(async (retryDb) => {
@@ -375,7 +369,7 @@ export class ActivityRepository {
         }, this.db);
       },
       {
-        operationName: "get leaderboard",
+        operationName: "getUserRankingLeaderboard",
         additionalContext: { options },
       },
       [],
@@ -457,13 +451,7 @@ export class ActivityRepository {
    */
   async updateUserStats(
     userId: number,
-    data: {
-      total_submissions?: number;
-      total_approvals?: number;
-      total_points?: number;
-      data?: Record<string, any>;
-      metadata?: Record<string, any>;
-    },
+    data: UpdateUserStats,
     txDb: DB,
   ) {
     return withErrorHandling(
@@ -565,15 +553,7 @@ export class ActivityRepository {
   async updateFeedUserStats(
     userId: number,
     feedId: string,
-    data: {
-      submissions_count?: number;
-      approvals_count?: number;
-      points?: number;
-      curator_rank?: number;
-      approver_rank?: number;
-      data?: Record<string, any>;
-      metadata?: Record<string, any>;
-    },
+    data: UpdateFeedUserStats,
     txDb: DB,
   ) {
     return withErrorHandling(

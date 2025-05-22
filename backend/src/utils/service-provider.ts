@@ -5,7 +5,7 @@ import { ConfigService } from "../services/config.service";
 import {
   activityRepository, db, feedRepository,
   lastProcessedStateRepository, submissionRepository,
-  userRepository
+  userRepository, leaderboardRepository
 } from "../services/db";
 import { DistributionService } from "../services/distribution.service";
 import { InboundService } from "../services/inbound.service";
@@ -72,7 +72,7 @@ export class ServiceProvider {
     this.services.set("userService", new UserService(userRepository, db, logger));
     this.services.set(
       "activityService",
-      new ActivityService(activityRepository),
+      new ActivityService(activityRepository, leaderboardRepository, db),
     );
     // TODO: Move services to injection, no singleton
     // TODO: Inject repositories into other services as needed (e.g., submissionService might need SubmissionRepository)

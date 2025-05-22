@@ -1,10 +1,11 @@
-import { InsertActivity, SelectFeedUserStats, SelectUserStats, UpdateFeedUserStats, UpdateUserStats } from "services/db/types";
+import { InsertActivity, SelectActivity, SelectFeedUserStats, SelectUserStats, UpdateFeedUserStats, UpdateUserStats } from "services/db/types";
 import {
   ActivityQueryOptions,
   GlobalStats,
-  LeaderboardQueryOptions
+  LeaderboardQueryOptions,
+  UserRankingLeaderboardEntry
 } from "../../validation/activity.validation";
-import { LeaderboardEntry } from "services/db/queries";
+import { LeaderboardEntry as CuratorStatsLeaderboardEntry } from "services/db/queries";
 
 export interface IActivityService {
   /**
@@ -12,7 +13,7 @@ export interface IActivityService {
    * @param data Activity data to insert
    * @returns The created activity
    */
-  createActivity(data: InsertActivity): Promise<any>;
+  createActivity(data: InsertActivity): Promise<SelectActivity>;
 
   /**
    * Get activities for a specific user
@@ -23,16 +24,25 @@ export interface IActivityService {
   getUserActivities(
     userId: number,
     options?: ActivityQueryOptions,
-  ): Promise<any[]>;
+  ): Promise<SelectActivity[]>;
 
   /**
-   * Get the leaderboard based on user activity
+   * Get the user ranking leaderboard based on user activity and points.
    * @param options Query options for filtering and customization
-   * @returns Array of leaderboard entries
+   * @returns Array of user ranking leaderboard entries
    */
-  getLeaderboard(
+  getUserRankingLeaderboard(
     options?: LeaderboardQueryOptions,
-  ): Promise<LeaderboardEntry[]>;
+  ): Promise<UserRankingLeaderboardEntry[]>;
+
+  /**
+   * Get the curator statistics leaderboard.
+   * @param timeRange The time range for the leaderboard (default: "all")
+   * @returns Array of curator statistics leaderboard entries
+   */
+  getCuratorStatsLeaderboard(
+    timeRange?: string,
+  ): Promise<CuratorStatsLeaderboardEntry[]>;
 
   /**
    * Get global statistics about content submissions and approvals

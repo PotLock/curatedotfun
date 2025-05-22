@@ -2,44 +2,42 @@ import { ActivityServiceError } from "../types/errors";
 import {
   ActivityQueryOptions,
   GlobalStats,
-  InsertActivityData,
-  LeaderboardEntry,
-  LeaderboardQueryOptions,
-  selectActivitySchema,
-  SelectFeedUserStatsData,
-  selectFeedUserStatsSchema,
-  SelectUserStatsData,
-  selectUserStatsSchema,
-  UpdateFeedUserStatsData,
-  UpdateUserStatsData,
+  UserRankingLeaderboardEntry, // This is for a custom leaderboard view, keep it here
+  LeaderboardQueryOptions,   // Specific to leaderboard queries, keep it here
 } from "../validation/activity.validation";
+import {
+  InsertActivity,
+  SelectActivity,
+  selectActivitySchema, 
+  SelectUserStats,
+  selectUserStatsSchema, 
+  UpdateUserStats,
+  SelectFeedUserStats,
+  selectFeedUserStatsSchema, 
+  UpdateFeedUserStats,
+  DB,
+} from "./db/types";
 import { ActivityRepository } from "./db/repositories/activity.repository";
-import { ActivityType } from "./db/schema/activity";
+import { LeaderboardRepository } from "./db/repositories/leaderboard.repository";
+import * as queries from "./db/queries";
+import { ActivityType } from "./db/schema/activity"; 
 import { IActivityService } from "./interfaces/activity.interface";
 
 export class ActivityService implements IActivityService {
-  constructor(private activityRepository: ActivityRepository) {}
+  constructor(
+    private activityRepository: ActivityRepository,
+    private leaderboardRepository: LeaderboardRepository,
+    private db: DB,
+  ) {}
 
   /**
    * Create a new activity entry
    */
-  async createActivity(data: InsertActivityData) {
+  async createActivity(data: InsertActivity): Promise<SelectActivity> {
     try {
-      const result = await this.activityRepository.createActivity({
-        user_id: data.user_id,
-        type: data.type as ActivityType,
-        feed_id: data.feed_id || null,
-        submission_id: data.submission_id || null,
-        data:
-          typeof data.data === "object" && data.data !== null
-            ? (data.data as Record<string, any>)
-            : null,
-        metadata:
-          typeof data.metadata === "object" && data.metadata !== null
-            ? (data.metadata as Record<string, any>)
-            : null,
+      const result = await this.db.transaction(async (tx) => {
+        return this.activityRepository.createActivity(data, tx);
       });
-
       return selectActivitySchema.parse(result);
     } catch (error) {
       throw new ActivityServiceError(
@@ -60,8 +58,9 @@ export class ActivityService implements IActivityService {
       );
 
       // Parse each activity through the schema
-      return activities.map((activity: any) =>
-        selectActivitySchema.parse(activity),
+      // Ensure 'activities' items match what selectActivitySchema expects
+      return activities.map((activity: any) => // Consider typing 'activity' if possible
+        selectActivitySchema.parse(activity), // Use selectActivitySchema from db/types
       );
     } catch (error) {
       throw new ActivityServiceError(
@@ -72,16 +71,20 @@ export class ActivityService implements IActivityService {
   }
 
   /**
-   * Get the leaderboard
+   * Get the user ranking leaderboard.
    */
-  async getLeaderboard(
+  async getUserRankingLeaderboard(
     options?: LeaderboardQueryOptions,
-  ): Promise<LeaderboardEntry[]> {
+  ): Promise<UserRankingLeaderboardEntry[]> {
     try {
-      return await this.activityRepository.getLeaderboard(options || {});
+      // Ensure the correct type is imported and used from activity.validation.ts
+      const result = await this.activityRepository.getUserRankingLeaderboard(
+        options || {},
+      );
+      return result; // Assuming result is already UserRankingLeaderboardEntry[]
     } catch (error) {
       throw new ActivityServiceError(
-        `Failed to get leaderboard: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to get user ranking leaderboard: ${error instanceof Error ? error.message : String(error)}`,
         { cause: error instanceof Error ? error : undefined },
       );
     }
@@ -104,7 +107,7 @@ export class ActivityService implements IActivityService {
   /**
    * Get user statistics
    */
-  async getUserStats(userId: number): Promise<SelectUserStatsData | null> {
+  async getUserStats(userId: number): Promise<SelectUserStats | null> { // Use SelectUserStats
     try {
       const stats = await this.activityRepository.getUserStats(userId);
 
@@ -112,7 +115,7 @@ export class ActivityService implements IActivityService {
         return null;
       }
 
-      return selectUserStatsSchema.parse(stats);
+      return selectUserStatsSchema.parse(stats); // Use selectUserStatsSchema from db/types
     } catch (error) {
       throw new ActivityServiceError(
         `Failed to get user stats: ${error instanceof Error ? error.message : String(error)}`,
@@ -126,23 +129,12 @@ export class ActivityService implements IActivityService {
    */
   async updateUserStats(
     userId: number,
-    data: UpdateUserStatsData,
-  ): Promise<SelectUserStatsData> {
+    data: UpdateUserStats,
+  ): Promise<SelectUserStats> {
     try {
-      const result = await this.activityRepository.updateUserStats(userId, {
-        total_submissions: data.total_submissions,
-        total_approvals: data.total_approvals,
-        total_points: data.total_points,
-        data:
-          typeof data.data === "object" && data.data !== null
-            ? (data.data as Record<string, any>)
-            : undefined,
-        metadata:
-          typeof data.metadata === "object" && data.metadata !== null
-            ? (data.metadata as Record<string, any>)
-            : undefined,
+      const result = await this.db.transaction(async (tx) => {
+        return this.activityRepository.updateUserStats(userId, data, tx);
       });
-
       return selectUserStatsSchema.parse(result);
     } catch (error) {
       throw new ActivityServiceError(
@@ -158,7 +150,7 @@ export class ActivityService implements IActivityService {
   async getFeedUserStats(
     userId: number,
     feedId: string,
-  ): Promise<SelectFeedUserStatsData | null> {
+  ): Promise<SelectFeedUserStats | null> { // Use SelectFeedUserStats
     try {
       const stats = await this.activityRepository.getFeedUserStats(
         userId,
@@ -169,7 +161,7 @@ export class ActivityService implements IActivityService {
         return null;
       }
 
-      return selectFeedUserStatsSchema.parse(stats);
+      return selectFeedUserStatsSchema.parse(stats); // Use selectFeedUserStatsSchema from db/types
     } catch (error) {
       throw new ActivityServiceError(
         `Failed to get feed user stats: ${error instanceof Error ? error.message : String(error)}`,
@@ -184,39 +176,34 @@ export class ActivityService implements IActivityService {
   async updateFeedUserStats(
     userId: number,
     feedId: string,
-    data: UpdateFeedUserStatsData,
-  ): Promise<SelectFeedUserStatsData> {
+    data: UpdateFeedUserStats,
+  ): Promise<SelectFeedUserStats> {
     try {
-      const result = await this.activityRepository.updateFeedUserStats(
-        userId,
-        feedId,
-        {
-          submissions_count:
-            data.submissions_count !== null
-              ? data.submissions_count
-              : undefined,
-          approvals_count:
-            data.approvals_count !== null ? data.approvals_count : undefined,
-          points: data.points !== null ? data.points : undefined,
-          curator_rank:
-            data.curator_rank !== null ? data.curator_rank : undefined,
-          approver_rank:
-            data.approver_rank !== null ? data.approver_rank : undefined,
-          data:
-            typeof data.data === "object" && data.data !== null
-              ? (data.data as Record<string, any>)
-              : undefined,
-          metadata:
-            typeof data.metadata === "object" && data.metadata !== null
-              ? (data.metadata as Record<string, any>)
-              : undefined,
-        },
-      );
-
+      const result = await this.db.transaction(async (tx) => {
+        return this.activityRepository.updateFeedUserStats(userId, feedId, data, tx);
+      });
       return selectFeedUserStatsSchema.parse(result);
     } catch (error) {
       throw new ActivityServiceError(
         `Failed to update feed user stats: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error instanceof Error ? error : undefined },
+      );
+    }
+  }
+
+  /**
+   * Get the curator statistics leaderboard.
+   */
+  async getCuratorStatsLeaderboard(
+    timeRange: string = "all",
+  ): Promise<queries.LeaderboardEntry[]> {
+    try {
+      return await this.leaderboardRepository.getCuratorStatsLeaderboard(
+        timeRange,
+      );
+    } catch (error) {
+      throw new ActivityServiceError(
+        `Failed to get curator stats leaderboard: ${error instanceof Error ? error.message : String(error)}`,
         { cause: error instanceof Error ? error : undefined },
       );
     }

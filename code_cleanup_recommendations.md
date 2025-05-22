@@ -60,19 +60,23 @@ This document provides recommendations for general code improvements, focusing o
             ```
         *   Services consuming these (e.g., `PluginService` consuming `ConfigService`) would then receive them via constructor injection from `ServiceProvider`.
 
-## 2. Repository and Service Consistency
+## 2. Repository and Service Consistency - COMPLETED
 
-*   **Issue**: `LeaderboardRepository` and `ActivityRepository` both have methods related to leaderboards/ranking.
-*   **Recommendation**:
-    *   Review the exact logic in `ActivityRepository.getLeaderboard()` and `LeaderboardRepository.getLeaderboard()`.
-    *   If they serve distinct purposes (e.g., one is for feed-specific activity points, another is for global submission-based leaderboards), ensure their naming and documentation clearly reflect this.
-    *   If there's significant overlap, consolidate the logic into one repository or a shared utility, with clear methods for different leaderboard types. The `ActivityService` should then be the primary consumer for leaderboard-related features.
+**Status: COMPLETED**
 
-*   **Issue**: `UserService` directly uses `this.dbConnection` (which is `DatabaseConnection`) for transactions, while repositories use the `DB` (Drizzle instance) passed to them.
-*   **Recommendation**:
-    *   Standardize on passing the Drizzle `DB` instance for operations.
-    *   If `DatabaseConnection` is a wrapper to manage read/write replicas or advanced transaction control, its role should be clear. For typical service-repository interactions, passing the Drizzle `db` instance (or a transaction-specific `txDb`) to repositories is common.
-    *   `UserService` should ideally delegate all database operations, including transactional boundaries if complex, to `UserRepository`. If `UserService` needs to orchestrate a transaction across multiple repository calls, it can obtain a transaction from `this.db.transaction(async (tx) => { ... })` and pass `tx` to repository methods.
+**Summary of Changes & Observations:**
+
+*   **Leaderboard/Activity Repository Methods**:
+    *   `ActivityRepository.getLeaderboard()` was renamed to `getUserRankingLeaderboard()` to clarify its purpose (user ranking by points/activity).
+    *   `LeaderboardRepository.getLeaderboard()` was renamed to `getCuratorStatsLeaderboard()` to clarify its purpose (curator-specific statistics).
+    *   `ActivityService` was updated to use these new method names and to be the primary consumer for both types of leaderboard data. It now depends on both `ActivityRepository` and `LeaderboardRepository` (with `DB` instance also injected for transactions).
+    *   Relevant interfaces (`IActivityService`), service provider (`ServiceProvider`), and route handlers (`routes/api/activity.ts`) were updated.
+    *   A TODO item was added to `TECH_DEBT_TODO.md` to consider consolidating `LeaderboardRepository`'s logic into `ActivityRepository` in the future.
+
+*   **UserService Database Interactions**:
+    *   The issue regarding `UserService` using a separate `dbConnection` for transactions appears to be outdated or already resolved.
+    *   Current `UserService` implementation correctly uses an injected Drizzle `DB` instance (`this.db`) to manage transactions (e.g., `this.db.transaction(async (tx) => ...)`) and passes the transactional `tx` object to `UserRepository` methods for database operations (`createUser`, `updateUser`, `deleteUser`).
+    *   This aligns with the recommended practice of services orchestrating transactions and repositories operating within the provided transaction context.
 
 ## 3. Configuration Access
 

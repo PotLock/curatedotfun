@@ -43,3 +43,19 @@ export type LeaderboardQueryOptions = z.infer<
   typeof leaderboardQueryOptionsSchema
 >;
 export type GlobalStats = z.infer<typeof globalStatsSchema>;
+
+/**
+ * Schema for a single entry in the user ranking leaderboard
+ */
+export const userRankingLeaderboardEntrySchema = z.object({
+  user_id: z.number(),
+  username: z.string(),
+  name: z.string().nullable(), // u.name from users table
+  total_points: z.number(),
+  total_submissions: z.number(),
+  total_approvals: z.number(),
+  rank: z.number(),
+});
+export type UserRankingLeaderboardEntry = z.infer<
+  typeof userRankingLeaderboardEntrySchema
+>;

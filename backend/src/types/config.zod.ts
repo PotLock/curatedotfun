@@ -110,11 +110,30 @@ export const FeedConfigSchema = z.object({
   }),
 });
 
+// Schema for NEAR Integration Config
+export const NearIntegrationConfigSchema = z.object({
+  parentAccountId: z.string().min(1),
+  parentKeyPair: z.string().min(1), // Sensitive value
+  networkId: z.string().min(1),
+  nodeUrl: z.string().url().optional(), // Optional, can be derived from networkId
+  walletUrl: z.string().url().optional(), // Optional
+  helperUrl: z.string().url().optional(), // Optional
+  explorerUrl: z.string().url().optional(), // Optional
+});
+export type NearIntegrationConfig = z.infer<typeof NearIntegrationConfigSchema>;
+
+// Schema for all Integrations
+export const IntegrationsConfigSchema = z.object({
+  near: NearIntegrationConfigSchema.optional(),
+});
+export type IntegrationsConfig = z.infer<typeof IntegrationsConfigSchema>;
+
 // Schema for the entire AppConfig
 export const AppConfigSchema = z.object({
   global: GlobalConfigSchema,
   plugins: z.record(PluginRegistrationConfigSchema), // Maps plugin name to its registration config
   feeds: z.array(FeedConfigSchema),
+  integrations: IntegrationsConfigSchema.optional(),
 });
 
 // TODO: CONSOLIDATE ALL CONFIGS TO HERE

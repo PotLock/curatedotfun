@@ -47,3 +47,9 @@ This file lists miscellaneous technical debt items, potential improvements, and 
         - Example from `ServiceProvider`: `// TODO: Move services to injection, no singleton` (This specific one is now largely addressed for ConfigService/PluginService, but the comment might still be there).
         - Example from `ServiceProvider`: `// TODO: Inject repositories into other services as needed (e.g., submissionService might need SubmissionRepository)` (This was done for SubmissionService).
     -   **Recommendation**: Address or remove obsolete TODOs. Create new tickets/tasks for valid ones.
+
+## Repository Layer
+-   **Consolidate Leaderboard Repositories**:
+    -   **Issue**: `LeaderboardRepository` and `ActivityRepository` both contain leaderboard-related logic. `ActivityRepository` handles user ranking based on points/activity, while `LeaderboardRepository` focuses on curator-specific statistics.
+    -   **Recommendation**: Consolidate `LeaderboardRepository` logic into `ActivityRepository` and remove `LeaderboardRepository`. Their functionalities are closely related to user activities and stats. `ActivityService` would then only depend on `ActivityRepository` for all leaderboard/ranking features. This would simplify dependencies and centralize activity/ranking data access.
+    -   *Files affected: `backend/src/services/db/repositories/activity.repository.ts`, `backend/src/services/db/repositories/leaderboard.repository.ts`, `backend/src/services/activity.service.ts`, `backend/src/utils/service-provider.ts`, `backend/src/services/db/index.ts`*
