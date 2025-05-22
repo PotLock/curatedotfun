@@ -1,56 +1,66 @@
 import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
-import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import {
   GlobalStats,
   LeaderboardEntry,
 } from "../../../validation/activity.validation";
+import { DatabaseError } from "../../../types/errors";
 import * as schema from "../schema";
 import { ActivityType } from "../schema/activity";
-import {
-  executeOperation,
-  executeTransaction,
-  withDatabaseErrorHandling,
-} from "../transaction";
+import { executeWithRetry, withErrorHandling } from "../utils";
+import { DB } from "../types";
 
 export class ActivityRepository {
+  private readonly db: DB;
+
+  constructor(db: DB) {
+    this.db = db;
+  }
+
   /**
    * Create a new activity entry
    */
-  async createActivity(data: {
-    user_id: number;
-    type: ActivityType;
-    feed_id?: string | null;
-    submission_id?: string | null;
-    data?: Record<string, any> | null;
-    metadata?: Record<string, any> | null;
-  }) {
-    return withDatabaseErrorHandling(
+  async createActivity(
+    data: {
+      user_id: number;
+      type: ActivityType;
+      feed_id?: string | null;
+      submission_id?: string | null;
+      data?: Record<string, any> | null;
+      metadata?: Record<string, any> | null;
+    },
+    txDb: DB,
+  ) {
+    return withErrorHandling(
       async () => {
-        return executeTransaction(async (db) => {
-          // Insert the activity
-          const [result] = await db
-            .insert(schema.activities)
-            .values({
-              user_id: data.user_id,
-              type: data.type,
-              feed_id: data.feed_id || null,
-              submission_id: data.submission_id || null,
-              data: (data.data ?? null) as unknown,
-              metadata: (data.metadata ?? null) as schema.Metadata | null,
-              timestamp: new Date(),
-            })
-            .returning();
+        // Insert the activity
+        const [activityResult] = await txDb
+          .insert(schema.activities)
+          .values({
+            user_id: data.user_id,
+            type: data.type,
+            feed_id: data.feed_id || null,
+            submission_id: data.submission_id || null,
+            data: (data.data ?? null) as unknown,
+            metadata: (data.metadata ?? null) as schema.Metadata | null,
+            timestamp: new Date(),
+          })
+          .returning();
 
-          // Update user stats based on activity type
-          await this.updateUserStatsForActivity(
-            db,
-            data.user_id,
-            data.type,
-            data.feed_id,
+        if (!activityResult) {
+          throw new DatabaseError(
+            "Failed to insert activity record after insert operation",
           );
+        }
 
-          return result;
-        }, true); // Write operation
+        // Update user stats based on activity type
+        await this.updateUserStatsForActivity(
+          txDb,
+          data.user_id,
+          data.type,
+          data.feed_id,
+        );
+
+        return activityResult;
       },
       {
         operationName: "create activity",
@@ -63,20 +73,20 @@ export class ActivityRepository {
    * Update user stats based on activity type
    */
   private async updateUserStatsForActivity(
-    db: NodePgDatabase<any>,
+    txDb: DB,
     userId: number,
     activityType: ActivityType,
     feedId?: string | null,
   ) {
     // Update global user stats
-    const userStatsExists = await db
+    const userStatsExists = await txDb
       .select({ count: count() })
       .from(schema.userStats)
       .where(eq(schema.userStats.user_id, userId));
 
     if (userStatsExists[0].count === 0) {
       // Create new user stats record
-      await db.insert(schema.userStats).values({
+      await txDb.insert(schema.userStats).values({
         user_id: userId,
         total_submissions:
           activityType === ActivityType.CONTENT_SUBMISSION ? 1 : 0,
@@ -87,7 +97,7 @@ export class ActivityRepository {
       });
     } else {
       // Update existing user stats
-      await db.execute(sql`
+      await txDb.execute(sql`
         UPDATE ${schema.userStats}
         SET
           total_submissions = CASE WHEN ${activityType} = ${ActivityType.CONTENT_SUBMISSION} THEN total_submissions + 1 ELSE total_submissions END,
@@ -99,7 +109,7 @@ export class ActivityRepository {
 
     // Update feed-specific user stats if feedId is provided
     if (feedId) {
-      const feedUserStatsExists = await db
+      const feedUserStatsExists = await txDb
         .select({ count: count() })
         .from(schema.feedUserStats)
         .where(
@@ -111,7 +121,7 @@ export class ActivityRepository {
 
       if (feedUserStatsExists[0].count === 0) {
         // Create new feed user stats record
-        await db.insert(schema.feedUserStats).values({
+        await txDb.insert(schema.feedUserStats).values({
           user_id: userId,
           feed_id: feedId,
           submissions_count:
@@ -124,7 +134,7 @@ export class ActivityRepository {
         });
       } else {
         // Update existing feed user stats
-        await db.execute(sql`
+        await txDb.execute(sql`
         UPDATE ${schema.feedUserStats}
         SET
           submissions_count = CASE WHEN ${activityType} = ${ActivityType.CONTENT_SUBMISSION} THEN submissions_count + 1 ELSE submissions_count END,
@@ -135,16 +145,16 @@ export class ActivityRepository {
       }
 
       // Update ranks for this feed
-      await this.updateFeedRanks(db, feedId);
+      await this.updateFeedRanks(txDb, feedId);
     }
   }
 
   /**
    * Update curator and approver ranks for a feed
    */
-  private async updateFeedRanks(db: NodePgDatabase<any>, feedId: string) {
+  private async updateFeedRanks(txDb: DB, feedId: string) {
     // Update curator ranks
-    await db.execute(sql`
+    await txDb.execute(sql`
       WITH ranked_curators AS (
         SELECT 
           user_id,
@@ -162,7 +172,7 @@ export class ActivityRepository {
     `);
 
     // Update approver ranks
-    await db.execute(sql`
+    await txDb.execute(sql`
       WITH ranked_approvers AS (
         SELECT 
           user_id,
@@ -194,15 +204,14 @@ export class ActivityRepository {
       to_date?: string;
     } = {},
   ) {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return executeOperation(async (db) => {
+        return executeWithRetry(async (retryDb) => {
           // Build conditions for the query
           const conditions = [eq(schema.activities.user_id, userId)];
           if (options.types && options.types.length > 0) {
-            conditions.push(
-              sql`${schema.activities.type} IN (${options.types.map((t) => `'${t}'`).join(",")})`,
-            );
+
+            conditions.push(sql`${schema.activities.type} IN ${options.types}`);
           }
           if (options.feed_id) {
             conditions.push(eq(schema.activities.feed_id, options.feed_id));
@@ -218,7 +227,7 @@ export class ActivityRepository {
             );
           }
 
-          const query = db
+          const query = retryDb
             .select({
               id: schema.activities.id,
               user_id: schema.activities.user_id,
@@ -248,7 +257,7 @@ export class ActivityRepository {
             .offset(options.offset || 0);
 
           return query;
-        }); // Read operation
+        }, this.db);
       },
       {
         operationName: "get user activities",
@@ -268,9 +277,9 @@ export class ActivityRepository {
       limit?: number;
     } = {},
   ): Promise<LeaderboardEntry[]> {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return executeOperation(async (db) => {
+        return executeWithRetry(async (retryDb) => {
           let startDate: Date | null = null;
           const now = new Date();
 
@@ -316,7 +325,7 @@ export class ActivityRepository {
             : sql``;
 
           // Use a CTE query to get the leaderboard data
-          const result = await db.execute(sql`
+          const result = await retryDb.execute(sql` 
             WITH user_activity_stats AS (
               -- Get user activity statistics
               SELECT 
@@ -363,7 +372,7 @@ export class ActivityRepository {
             total_approvals: Number(row.total_approvals),
             rank: Number(row.rank),
           }));
-        }); // Read operation
+        }, this.db);
       },
       {
         operationName: "get leaderboard",
@@ -377,17 +386,17 @@ export class ActivityRepository {
    * Get global statistics
    */
   async getGlobalStats(): Promise<GlobalStats> {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return executeOperation(async (db) => {
+        return executeWithRetry(async (retryDb) => {
           // Get total submissions
-          const submissionsResult = await db
+          const submissionsResult = await retryDb
             .select({ count: count() })
             .from(schema.activities)
             .where(eq(schema.activities.type, ActivityType.CONTENT_SUBMISSION));
 
           // Get total approvals
-          const approvalsResult = await db
+          const approvalsResult = await retryDb
             .select({ count: count() })
             .from(schema.activities)
             .where(eq(schema.activities.type, ActivityType.CONTENT_APPROVAL));
@@ -406,7 +415,7 @@ export class ActivityRepository {
             total_approvals: totalApprovals,
             approval_rate: approvalRate,
           };
-        }); // Read operation
+        }, this.db);
       },
       {
         operationName: "get global stats",
@@ -423,17 +432,17 @@ export class ActivityRepository {
    * Get user statistics
    */
   async getUserStats(userId: number) {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return executeOperation(async (db) => {
-          const result = await db
+        return executeWithRetry(async (retryDb) => {
+          const result = await retryDb
             .select()
             .from(schema.userStats)
             .where(eq(schema.userStats.user_id, userId))
             .limit(1);
 
           return result.length > 0 ? result[0] : null;
-        }); // Read operation
+        }, this.db);
       },
       {
         operationName: "get user stats",
@@ -455,65 +464,64 @@ export class ActivityRepository {
       data?: Record<string, any>;
       metadata?: Record<string, any>;
     },
+    txDb: DB,
   ) {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return executeTransaction(async (db) => {
-          // Check if user stats exist
-          const existingStats = await db
-            .select()
-            .from(schema.userStats)
+        // Check if user stats exist
+        const existingStats = await txDb
+          .select()
+          .from(schema.userStats)
+          .where(eq(schema.userStats.user_id, userId))
+          .limit(1);
+
+        if (existingStats.length === 0) {
+          // Create new user stats
+          const [result] = await txDb
+            .insert(schema.userStats)
+            .values({
+              user_id: userId,
+              total_submissions: data.total_submissions || 0,
+              total_approvals: data.total_approvals || 0,
+              total_points: data.total_points || 0,
+              data: (data.data ?? null) as unknown,
+              metadata: (data.metadata ?? null) as schema.Metadata | null,
+            })
+            .returning();
+
+          return result;
+        } else {
+          // Update existing user stats
+          const [result] = await txDb
+            .update(schema.userStats)
+            .set({
+              total_submissions:
+                data.total_submissions !== undefined
+                  ? data.total_submissions
+                  : existingStats[0].total_submissions,
+              total_approvals:
+                data.total_approvals !== undefined
+                  ? data.total_approvals
+                  : existingStats[0].total_approvals,
+              total_points:
+                data.total_points !== undefined
+                  ? data.total_points
+                  : existingStats[0].total_points,
+              data:
+                data.data !== undefined
+                  ? (data.data as unknown)
+                  : existingStats[0].data,
+              metadata:
+                data.metadata !== undefined
+                  ? (data.metadata as schema.Metadata | null)
+                  : existingStats[0].metadata,
+              updatedAt: new Date(),
+            })
             .where(eq(schema.userStats.user_id, userId))
-            .limit(1);
+            .returning();
 
-          if (existingStats.length === 0) {
-            // Create new user stats
-            const [result] = await db
-              .insert(schema.userStats)
-              .values({
-                user_id: userId,
-                total_submissions: data.total_submissions || 0,
-                total_approvals: data.total_approvals || 0,
-                total_points: data.total_points || 0,
-                data: (data.data ?? null) as unknown,
-                metadata: (data.metadata ?? null) as schema.Metadata | null,
-              })
-              .returning();
-
-            return result;
-          } else {
-            // Update existing user stats
-            const [result] = await db
-              .update(schema.userStats)
-              .set({
-                total_submissions:
-                  data.total_submissions !== undefined
-                    ? data.total_submissions
-                    : existingStats[0].total_submissions,
-                total_approvals:
-                  data.total_approvals !== undefined
-                    ? data.total_approvals
-                    : existingStats[0].total_approvals,
-                total_points:
-                  data.total_points !== undefined
-                    ? data.total_points
-                    : existingStats[0].total_points,
-                data:
-                  data.data !== undefined
-                    ? (data.data as unknown)
-                    : existingStats[0].data,
-                metadata:
-                  data.metadata !== undefined
-                    ? (data.metadata as schema.Metadata | null)
-                    : existingStats[0].metadata,
-                updatedAt: new Date(),
-              })
-              .where(eq(schema.userStats.user_id, userId))
-              .returning();
-
-            return result;
-          }
-        }, true); // Write operation
+          return result;
+        }
       },
       {
         operationName: "update user stats",
@@ -526,10 +534,10 @@ export class ActivityRepository {
    * Get feed-specific user statistics
    */
   async getFeedUserStats(userId: number, feedId: string) {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return executeOperation(async (db) => {
-          const result = await db
+        return executeWithRetry(async (retryDb) => {
+          const result = await retryDb
             .select()
             .from(schema.feedUserStats)
             .where(
@@ -541,7 +549,7 @@ export class ActivityRepository {
             .limit(1);
 
           return result.length > 0 ? result[0] : null;
-        }); // Read operation
+        }, this.db);
       },
       {
         operationName: "get feed user stats",
@@ -566,89 +574,88 @@ export class ActivityRepository {
       data?: Record<string, any>;
       metadata?: Record<string, any>;
     },
+    txDb: DB,
   ) {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return executeTransaction(async (db) => {
-          // Check if feed user stats exist
-          const existingStats = await db
-            .select()
-            .from(schema.feedUserStats)
+        // Check if feed user stats exist
+        const existingStats = await txDb
+          .select()
+          .from(schema.feedUserStats)
+          .where(
+            and(
+              eq(schema.feedUserStats.user_id, userId),
+              eq(schema.feedUserStats.feed_id, feedId),
+            ),
+          )
+          .limit(1);
+
+        if (existingStats.length === 0) {
+          // Create new feed user stats
+          const [result] = await txDb
+            .insert(schema.feedUserStats)
+            .values({
+              user_id: userId,
+              feed_id: feedId,
+              submissions_count: data.submissions_count || 0,
+              approvals_count: data.approvals_count || 0,
+              points: data.points || 0,
+              curator_rank: data.curator_rank || null,
+              approver_rank: data.approver_rank || null,
+              data: (data.data ?? null) as unknown,
+              metadata: (data.metadata ?? null) as schema.Metadata | null,
+            })
+            .returning();
+
+          return result;
+        } else {
+          // Update existing feed user stats
+          const [result] = await txDb
+            .update(schema.feedUserStats)
+            .set({
+              submissions_count:
+                data.submissions_count !== undefined
+                  ? data.submissions_count
+                  : existingStats[0].submissions_count,
+              approvals_count:
+                data.approvals_count !== undefined
+                  ? data.approvals_count
+                  : existingStats[0].approvals_count,
+              points:
+                data.points !== undefined
+                  ? data.points
+                  : existingStats[0].points,
+              curator_rank:
+                data.curator_rank !== undefined
+                  ? data.curator_rank
+                  : existingStats[0].curator_rank,
+              approver_rank:
+                data.approver_rank !== undefined
+                  ? data.approver_rank
+                  : existingStats[0].approver_rank,
+              data:
+                data.data !== undefined
+                  ? (data.data as unknown)
+                  : existingStats[0].data,
+              metadata:
+                data.metadata !== undefined
+                  ? (data.metadata as schema.Metadata | null)
+                  : existingStats[0].metadata,
+              updatedAt: new Date(),
+            })
             .where(
               and(
                 eq(schema.feedUserStats.user_id, userId),
                 eq(schema.feedUserStats.feed_id, feedId),
               ),
             )
-            .limit(1);
+            .returning();
 
-          if (existingStats.length === 0) {
-            // Create new feed user stats
-            const [result] = await db
-              .insert(schema.feedUserStats)
-              .values({
-                user_id: userId,
-                feed_id: feedId,
-                submissions_count: data.submissions_count || 0,
-                approvals_count: data.approvals_count || 0,
-                points: data.points || 0,
-                curator_rank: data.curator_rank || null,
-                approver_rank: data.approver_rank || null,
-                data: (data.data ?? null) as unknown,
-                metadata: (data.metadata ?? null) as schema.Metadata | null,
-              })
-              .returning();
+          // Update ranks for this feed
+          await this.updateFeedRanks(txDb, feedId);
 
-            return result;
-          } else {
-            // Update existing feed user stats
-            const [result] = await db
-              .update(schema.feedUserStats)
-              .set({
-                submissions_count:
-                  data.submissions_count !== undefined
-                    ? data.submissions_count
-                    : existingStats[0].submissions_count,
-                approvals_count:
-                  data.approvals_count !== undefined
-                    ? data.approvals_count
-                    : existingStats[0].approvals_count,
-                points:
-                  data.points !== undefined
-                    ? data.points
-                    : existingStats[0].points,
-                curator_rank:
-                  data.curator_rank !== undefined
-                    ? data.curator_rank
-                    : existingStats[0].curator_rank,
-                approver_rank:
-                  data.approver_rank !== undefined
-                    ? data.approver_rank
-                    : existingStats[0].approver_rank,
-                data:
-                  data.data !== undefined
-                    ? (data.data as unknown)
-                    : existingStats[0].data,
-                metadata:
-                  data.metadata !== undefined
-                    ? (data.metadata as schema.Metadata | null)
-                    : existingStats[0].metadata,
-                updatedAt: new Date(),
-              })
-              .where(
-                and(
-                  eq(schema.feedUserStats.user_id, userId),
-                  eq(schema.feedUserStats.feed_id, feedId),
-                ),
-              )
-              .returning();
-
-            // Update ranks for this feed
-            await this.updateFeedRanks(db, feedId);
-
-            return result;
-          }
-        }, true); // Write operation
+          return result;
+        }
       },
       {
         operationName: "update feed user stats",
@@ -661,10 +668,10 @@ export class ActivityRepository {
    * Get feeds that a user has curated for
    */
   async getFeedsCuratedByUser(userId: number) {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return executeOperation(async (db) => {
-          return db
+        return executeWithRetry(async (retryDb) => {
+          return retryDb
             .select({
               feed_id: schema.feedUserStats.feed_id,
               feed_name: schema.feeds.name,
@@ -686,7 +693,7 @@ export class ActivityRepository {
               ),
             )
             .orderBy(desc(schema.feedUserStats.submissions_count));
-        }); // Read operation
+        }, this.db);
       },
       {
         operationName: "get feeds curated by user",
@@ -700,10 +707,10 @@ export class ActivityRepository {
    * Get feeds that a user is an approver for
    */
   async getFeedsApprovedByUser(userId: number) {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return executeOperation(async (db) => {
-          return db
+        return executeWithRetry(async (retryDb) => {
+          return retryDb
             .select({
               feed_id: schema.feedUserStats.feed_id,
               feed_name: schema.feeds.name,
@@ -725,7 +732,7 @@ export class ActivityRepository {
               ),
             )
             .orderBy(desc(schema.feedUserStats.approvals_count));
-        }); // Read operation
+        }, this.db);
       },
       {
         operationName: "get feeds approved by user",
@@ -739,10 +746,10 @@ export class ActivityRepository {
    * Get a user's rank for a specific feed
    */
   async getUserFeedRanks(userId: number, feedId: string) {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return executeOperation(async (db) => {
-          const result = await db
+        return executeWithRetry(async (retryDb) => {
+          const result = await retryDb
             .select({
               curator_rank: schema.feedUserStats.curator_rank,
               approver_rank: schema.feedUserStats.approver_rank,
@@ -758,14 +765,14 @@ export class ActivityRepository {
 
           return result.length > 0
             ? {
-                curatorRank: result[0].curator_rank,
-                approverRank: result[0].approver_rank,
-              }
+              curatorRank: result[0].curator_rank,
+              approverRank: result[0].approver_rank,
+            }
             : {
-                curatorRank: null,
-                approverRank: null,
-              };
-        }); // Read operation
+              curatorRank: null,
+              approverRank: null,
+            };
+        }, this.db);
       },
       {
         operationName: "get user feed ranks",
@@ -778,6 +785,3 @@ export class ActivityRepository {
     );
   }
 }
-
-// Export a singleton instance
-export const activityRepository = new ActivityRepository();

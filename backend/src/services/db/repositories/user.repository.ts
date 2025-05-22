@@ -1,30 +1,33 @@
 import { eq } from "drizzle-orm";
 import { DatabaseError, NotFoundError } from "../../../types/errors";
 import * as schema from "../schema";
-import {
-  executeOperation,
-  executeTransaction,
-  withDatabaseErrorHandling,
-} from "../transaction";
+import { DB, InsertUser, UpdateUser } from "../types";
+import { executeWithRetry, withErrorHandling } from "../utils";
 
 export class UserRepository {
+  private readonly db: DB;
+
+  constructor(db: DB) {
+    this.db = db;
+  }
+
   /**
    * Find a user by their auth_provider_id
    * @param auth_provider_id The provider ID from Web3Auth
    * @returns The user if found, null otherwise
    */
   async findByAuthProviderId(auth_provider_id: string) {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return executeOperation(async (db) => {
-          const result = await db
+        return executeWithRetry(async (dbInstance) => {
+          const result = await dbInstance
             .select()
             .from(schema.users)
             .where(eq(schema.users.auth_provider_id, auth_provider_id))
             .limit(1);
 
           return result.length > 0 ? result[0] : null;
-        });
+        }, this.db);
       },
       {
         operationName: "find user by auth_provider_id",
@@ -40,17 +43,17 @@ export class UserRepository {
    * @returns The user if found, null otherwise
    */
   async findByNearAccountId(near_account_id: string) {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return executeOperation(async (db) => {
-          const result = await db
+        return executeWithRetry(async (dbInstance) => {
+          const result = await dbInstance
             .select()
             .from(schema.users)
             .where(eq(schema.users.near_account_id, near_account_id))
             .limit(1);
 
           return result.length > 0 ? result[0] : null;
-        });
+        }, this.db);
       },
       {
         operationName: "find user by NEAR account ID",
@@ -66,17 +69,17 @@ export class UserRepository {
    * @returns The user if found, null otherwise
    */
   async findByNearPublicKey(near_public_key: string) {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return executeOperation(async (db) => {
-          const result = await db
+        return executeWithRetry(async (dbInstance) => {
+          const result = await dbInstance
             .select()
             .from(schema.users)
             .where(eq(schema.users.near_public_key, near_public_key))
             .limit(1);
 
           return result.length > 0 ? result[0] : null;
-        });
+        }, this.db);
       },
       {
         operationName: "find user by NEAR public key",
@@ -92,50 +95,44 @@ export class UserRepository {
    * @returns The created user
    * @throws DatabaseError if the user could not be created
    */
-  async createUser(userData: {
-    auth_provider_id: string;
-    near_account_id: string;
-    near_public_key: string;
-    username?: string | null;
-    email?: string | null;
-  }) {
-    return withDatabaseErrorHandling(
+  async createUser(userData: InsertUser,
+    txDb: DB,
+  ) {
+    return withErrorHandling(
       async () => {
-        return executeTransaction(async (db) => {
-          try {
-            const insertResult = await db
-              .insert(schema.users)
-              .values({
-                auth_provider_id: userData.auth_provider_id,
-                near_account_id: userData.near_account_id,
-                near_public_key: userData.near_public_key,
-                username: userData.username || null,
-                email: userData.email || null,
-              })
-              .returning();
+        try {
+          const insertResult = await txDb
+            .insert(schema.users)
+            .values({
+              auth_provider_id: userData.auth_provider_id,
+              near_account_id: userData.near_account_id,
+              near_public_key: userData.near_public_key,
+              username: userData.username || null,
+              email: userData.email || null,
+            })
+            .returning();
 
-            const newUser = insertResult[0];
-            if (!newUser) {
-              throw new DatabaseError("Failed to insert user into database");
-            }
-
-            return newUser;
-          } catch (error: any) {
-            // Handle unique constraint violations
-            if (error?.code === "23505") {
-              // Extract the constraint name to provide a more specific error message
-              const constraintMatch = error.detail?.match(/Key \((.*?)\)=/);
-              const field = constraintMatch ? constraintMatch[1] : "unknown";
-
-              throw new DatabaseError(
-                `A user with this ${field} already exists`,
-                error.code,
-                error,
-              );
-            }
-            throw error;
+          const newUser = insertResult[0];
+          if (!newUser) {
+            throw new DatabaseError("Failed to insert user into database");
           }
-        }, true); // isWrite = true
+
+          return newUser;
+        } catch (error: any) {
+          // Handle unique constraint violations
+          if (error?.code === "23505") {
+            // Extract the constraint name to provide a more specific error message
+            const constraintMatch = error.detail?.match(/Key \((.*?)\)=/);
+            const field = constraintMatch ? constraintMatch[1] : "unknown";
+
+            throw new DatabaseError(
+              `A user with this ${field} already exists`,
+              error.code,
+              error,
+            );
+          }
+          throw error;
+        }
       },
       {
         operationName: "create user",
@@ -153,31 +150,26 @@ export class UserRepository {
    */
   async updateUser(
     auth_provider_id: string,
-    userData: {
-      username?: string | null;
-      email?: string | null;
-      name?: string | null;
-    },
+    userData: UpdateUser,
+    txDb: DB,
   ) {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return executeTransaction(async (db) => {
-          const updateResult = await db
-            .update(schema.users)
-            .set({
-              ...userData,
-              updatedAt: new Date(),
-            })
-            .where(eq(schema.users.auth_provider_id, auth_provider_id))
-            .returning();
+        const updateResult = await txDb
+          .update(schema.users)
+          .set({
+            ...userData,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.users.auth_provider_id, auth_provider_id))
+          .returning();
 
-          const updatedUser = updateResult[0];
-          if (!updatedUser) {
-            throw new NotFoundError("User", auth_provider_id);
-          }
+        const updatedUser = updateResult[0];
+        if (!updatedUser) {
+          throw new NotFoundError("User", auth_provider_id);
+        }
 
-          return updatedUser;
-        }, true); // isWrite = true
+        return updatedUser;
       },
       {
         operationName: "update user",
@@ -191,17 +183,15 @@ export class UserRepository {
    * @param auth_provider_id The provider ID of the user to delete
    * @returns True if the user was deleted, false otherwise
    */
-  async deleteUser(auth_provider_id: string) {
-    return withDatabaseErrorHandling(
+  async deleteUser(auth_provider_id: string, txDb: DB): Promise<boolean> {
+    return withErrorHandling(
       async () => {
-        return executeTransaction(async (db) => {
-          const deleteResult = await db
-            .delete(schema.users)
-            .where(eq(schema.users.auth_provider_id, auth_provider_id))
-            .returning();
+        const deleteResult = await txDb
+          .delete(schema.users)
+          .where(eq(schema.users.auth_provider_id, auth_provider_id))
+          .returning();
 
-          return deleteResult.length > 0;
-        }, true); // isWrite = true
+        return deleteResult.length > 0;
       },
       {
         operationName: "delete user",
@@ -211,5 +201,3 @@ export class UserRepository {
     );
   }
 }
-
-export const userRepository = new UserRepository();

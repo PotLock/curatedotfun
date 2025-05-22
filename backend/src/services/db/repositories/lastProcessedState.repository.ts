@@ -4,18 +4,25 @@ import {
   lastProcessedStateTable,
   type NewLastProcessedStateSchema,
 } from "../schema/lastProcessedState";
-import { executeOperation, withDatabaseErrorHandling } from "../transaction";
+import { executeWithRetry, withErrorHandling } from "../utils";
+import { DB } from "../types";
 
 export class LastProcessedStateRepository {
+  private readonly db: DB;
+
+  constructor(db: DB) {
+    this.db = db;
+  }
+
   async getState<T extends PlatformState>(
     feedId: string,
     sourcePluginName: string,
     searchId: string,
   ): Promise<LastProcessedState<T> | null> {
-    return withDatabaseErrorHandling(
-      async () => {
-        return executeOperation(async (db) => {
-          const result = await db
+    return withErrorHandling(
+      async () =>
+        executeWithRetry(async (retryDb) => {
+          const result = await retryDb
             .select({ stateJson: lastProcessedStateTable.stateJson })
             .from(lastProcessedStateTable)
             .where(
@@ -31,9 +38,12 @@ export class LastProcessedStateRepository {
             return null;
           }
           return result[0].stateJson as LastProcessedState<T>;
-        });
+        }, this.db),
+      {
+        operationName: "getState",
+        additionalContext: { feedId, sourcePluginName, searchId },
       },
-      { operationName: "getLastProcessedState" },
+      null,
     );
   }
 
@@ -42,33 +52,36 @@ export class LastProcessedStateRepository {
     sourcePluginName: string,
     searchId: string,
     state: LastProcessedState<T>,
+    txDb: DB,
   ): Promise<void> {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return executeOperation(async (db) => {
-          const values: NewLastProcessedStateSchema = {
-            feedId,
-            sourcePluginName,
-            searchId,
-            stateJson: state,
-          };
+        const values: NewLastProcessedStateSchema = {
+          feedId,
+          sourcePluginName,
+          searchId,
+          stateJson: state, // Drizzle handles JSON stringification
+        };
 
-          await db
-            .insert(lastProcessedStateTable)
-            .values(values)
-            .onConflictDoUpdate({
-              target: [
-                lastProcessedStateTable.feedId,
-                lastProcessedStateTable.sourcePluginName,
-                lastProcessedStateTable.searchId,
-              ],
-              set: {
-                stateJson: values.stateJson,
-              },
-            });
-        });
+        await txDb
+          .insert(lastProcessedStateTable)
+          .values(values)
+          .onConflictDoUpdate({
+            target: [
+              lastProcessedStateTable.feedId,
+              lastProcessedStateTable.sourcePluginName,
+              lastProcessedStateTable.searchId,
+            ],
+            set: {
+              stateJson: values.stateJson,
+              // Consider adding an updatedAt field here if your table has one
+            },
+          });
       },
-      { operationName: "saveLastProcessedState" },
+      {
+        operationName: "saveState",
+        additionalContext: { feedId, sourcePluginName, searchId /* state can be large */ },
+      },
     );
   }
 
@@ -76,24 +89,24 @@ export class LastProcessedStateRepository {
     feedId: string,
     sourcePluginName: string,
     searchId: string,
+    txDb: DB,
   ): Promise<void> {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return executeOperation(async (db) => {
-          await db
-            .delete(lastProcessedStateTable)
-            .where(
-              and(
-                eq(lastProcessedStateTable.feedId, feedId),
-                eq(lastProcessedStateTable.sourcePluginName, sourcePluginName),
-                eq(lastProcessedStateTable.searchId, searchId),
-              ),
-            );
-        });
+        await txDb
+          .delete(lastProcessedStateTable)
+          .where(
+            and(
+              eq(lastProcessedStateTable.feedId, feedId),
+              eq(lastProcessedStateTable.sourcePluginName, sourcePluginName),
+              eq(lastProcessedStateTable.searchId, searchId),
+            ),
+          );
       },
-      { operationName: "deleteLastProcessedState" },
+      {
+        operationName: "deleteState",
+        additionalContext: { feedId, sourcePluginName, searchId },
+      },
     );
   }
 }
-
-export const lastProcessedStateRepository = new LastProcessedStateRepository();

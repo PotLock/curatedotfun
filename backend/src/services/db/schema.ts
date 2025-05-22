@@ -11,11 +11,12 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-import { FeedConfig } from "../../types/config";
+import { FeedConfig } from "../../types/config.zod";
 import { Profile } from "../../types/zod/userProfile";
 import { sql } from "drizzle-orm";
 
 export * from "./schema/activity";
+export * from "./schema/lastProcessedState"; // Add this export
 
 export type Metadata = {
   type: string; // URL to the JSON schema, e.g., "/schemas/userProfile.v1.schema.json"
@@ -203,17 +204,3 @@ export const users = table(
     ),
   }),
 );
-
-// will not be needed after Masa
-export const twitterCookies = table("twitter_cookies", {
-  username: text("username").primaryKey(),
-  cookies: text("cookies").notNull(), // JSON string of TwitterCookie[]
-  ...timestamps,
-});
-
-// done differently after Masa
-export const twitterCache = table("twitter_cache", {
-  key: text("key").primaryKey(), // e.g., "last_tweet_id"
-  value: text("value").notNull(),
-  ...timestamps,
-});

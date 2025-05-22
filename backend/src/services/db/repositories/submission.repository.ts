@@ -1,26 +1,52 @@
+import { and, eq, sql } from "drizzle-orm";
 import {
+  FeedStatus,
   Moderation,
   Submission,
   SubmissionWithFeedData,
-} from "../../../types/twitter";
+} from "../../../types/submission";
 import * as queries from "../queries";
-import { executeOperation, withDatabaseErrorHandling } from "../transaction";
+import { feeds, moderationHistory, submissionCounts, submissionFeeds, submissions, SubmissionStatus } from "../schema";
+import { DB } from "../types";
+import { executeWithRetry, withErrorHandling } from "../utils";
 
 /**
  * Repository for submission-related database operations.
  */
 export class SubmissionRepository {
+  private readonly db: DB;
+
+  constructor(db: DB) {
+    this.db = db;
+  }
+
   /**
    * Saves a Twitter submission to the database.
+   * This method should be called within a service-managed transaction.
    *
    * @param submission The submission to save
+   * @param txDb The transactional DB instance
    */
-  async saveSubmission(submission: Submission): Promise<void> {
-    return withDatabaseErrorHandling(
+  async saveSubmission(submission: Submission, txDb: DB): Promise<void> {
+    return withErrorHandling(
       async () => {
-        await executeOperation(async (db) => {
-          await queries.saveSubmission(db, submission);
-        }, true); // Write operation
+        await txDb
+          .insert(submissions)
+          .values({
+            tweetId: submission.tweetId,
+            userId: submission.userId,
+            username: submission.username,
+            content: submission.content,
+            curatorNotes: submission.curatorNotes,
+            curatorId: submission.curatorId,
+            curatorUsername: submission.curatorUsername,
+            curatorTweetId: submission.curatorTweetId,
+            createdAt: new Date(submission.createdAt),
+            submittedAt: submission.submittedAt
+              ? new Date(submission.submittedAt)
+              : null,
+          } as any)
+          .execute();
       },
       {
         operationName: "save submission",
@@ -33,13 +59,22 @@ export class SubmissionRepository {
    * Saves a moderation action to the database.
    *
    * @param moderation The moderation action to save
+   * @param txDb The transactional DB instance
    */
-  async saveModerationAction(moderation: Moderation): Promise<void> {
-    return withDatabaseErrorHandling(
+  async saveModerationAction(moderation: Moderation, txDb: DB): Promise<void> {
+    return withErrorHandling(
       async () => {
-        await executeOperation(async (db) => {
-          await queries.saveModerationAction(db, moderation);
-        }, true); // Write operation
+        await txDb
+          .insert(moderationHistory)
+          .values({
+            tweetId: moderation.tweetId,
+            feedId: moderation.feedId,
+            adminId: moderation.adminId,
+            action: moderation.action,
+            note: moderation.note,
+            createdAt: moderation.timestamp,
+          } as any)
+          .execute();
       },
       {
         operationName: "save moderation action",
@@ -59,17 +94,15 @@ export class SubmissionRepository {
    * @returns The submission with feeds or null if not found
    */
   async getSubmission(tweetId: string): Promise<Submission | null> {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return await executeOperation(async (db) => {
-          return await queries.getSubmission(db, tweetId);
-        });
+        return executeWithRetry((retryDb) => queries.getSubmission(retryDb, tweetId), this.db);
       },
       {
-        operationName: "get submission with feeds",
+        operationName: "get submission",
         additionalContext: { tweetId },
       },
-      null, // Default value if operation fails
+      null,
     );
   }
 
@@ -82,20 +115,18 @@ export class SubmissionRepository {
   async getSubmissionByCuratorTweetId(
     curatorTweetId: string,
   ): Promise<Submission | null> {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return await executeOperation(async (db) => {
-          return await queries.getSubmissionByCuratorTweetId(
-            db,
-            curatorTweetId,
-          );
-        }); // Read operation
+        return executeWithRetry(
+          (retryDb) => queries.getSubmissionByCuratorTweetId(retryDb, curatorTweetId),
+          this.db,
+        );
       },
       {
         operationName: "get submission by curator tweet ID",
         additionalContext: { curatorTweetId },
       },
-      null, // Default value if operation fails
+      null,
     );
   }
 
@@ -106,17 +137,231 @@ export class SubmissionRepository {
    * @returns Array of submissions with feed data
    */
   async getAllSubmissions(status?: string): Promise<SubmissionWithFeedData[]> {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return await executeOperation(async (db) => {
-          return await queries.getAllSubmissions(db, status);
-        }); // Read operation
+        return executeWithRetry(async (retryDb) => {
+          // Build the query with or without status filter
+          const queryBuilder = status
+            ? retryDb
+              .select({
+                s: {
+                  tweetId: submissions.tweetId,
+                  userId: submissions.userId,
+                  username: submissions.username,
+                  content: submissions.content,
+                  curatorNotes: submissions.curatorNotes,
+                  curatorId: submissions.curatorId,
+                  curatorUsername: submissions.curatorUsername,
+                  curatorTweetId: submissions.curatorTweetId,
+                  createdAt: sql<string>`${submissions.createdAt}::text`,
+                  submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
+                },
+                m: {
+                  tweetId: moderationHistory.tweetId,
+                  adminId: moderationHistory.adminId,
+                  action: moderationHistory.action,
+                  note: moderationHistory.note,
+                  createdAt: moderationHistory.createdAt,
+                  feedId: moderationHistory.feedId,
+                  moderationResponseTweetId:
+                    submissionFeeds.moderationResponseTweetId,
+                },
+                sf: {
+                  submissionId: submissionFeeds.submissionId,
+                  feedId: submissionFeeds.feedId,
+                  status: submissionFeeds.status,
+                  moderationResponseTweetId:
+                    submissionFeeds.moderationResponseTweetId,
+                },
+                f: {
+                  id: feeds.id,
+                  name: feeds.name,
+                },
+              })
+              .from(submissions)
+              .leftJoin(
+                moderationHistory,
+                eq(submissions.tweetId, moderationHistory.tweetId),
+              )
+              .leftJoin(
+                submissionFeeds,
+                eq(submissions.tweetId, submissionFeeds.submissionId),
+              )
+              .leftJoin(feeds, eq(submissionFeeds.feedId, feeds.id))
+              .where(eq(submissionFeeds.status, status as SubmissionStatus))
+            : retryDb
+              .select({
+                s: {
+                  tweetId: submissions.tweetId,
+                  userId: submissions.userId,
+                  username: submissions.username,
+                  content: submissions.content,
+                  curatorNotes: submissions.curatorNotes,
+                  curatorId: submissions.curatorId,
+                  curatorUsername: submissions.curatorUsername,
+                  curatorTweetId: submissions.curatorTweetId,
+                  createdAt: sql<string>`${submissions.createdAt}::text`,
+                  submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
+                },
+                m: {
+                  tweetId: moderationHistory.tweetId,
+                  adminId: moderationHistory.adminId,
+                  action: moderationHistory.action,
+                  note: moderationHistory.note,
+                  createdAt: moderationHistory.createdAt,
+                  feedId: moderationHistory.feedId,
+                  moderationResponseTweetId:
+                    submissionFeeds.moderationResponseTweetId,
+                },
+                sf: {
+                  submissionId: submissionFeeds.submissionId,
+                  feedId: submissionFeeds.feedId,
+                  status: submissionFeeds.status,
+                  moderationResponseTweetId:
+                    submissionFeeds.moderationResponseTweetId,
+                },
+                f: {
+                  id: feeds.id,
+                  name: feeds.name,
+                },
+              })
+              .from(submissions)
+              .leftJoin(
+                moderationHistory,
+                eq(submissions.tweetId, moderationHistory.tweetId),
+              )
+              .leftJoin(
+                submissionFeeds,
+                eq(submissions.tweetId, submissionFeeds.submissionId),
+              )
+              .leftJoin(feeds, eq(submissionFeeds.feedId, feeds.id));
+
+          const results = await queryBuilder.orderBy(moderationHistory.createdAt);
+
+          // Group results by submission
+          const submissionMap = new Map<string, SubmissionWithFeedData>();
+          const feedStatusMap = new Map<string, Map<string, FeedStatus>>();
+
+          for (const result of results) {
+            // Initialize submission if not exists
+            if (!submissionMap.has(result.s.tweetId)) {
+              submissionMap.set(result.s.tweetId, {
+                tweetId: result.s.tweetId,
+                userId: result.s.userId,
+                username: result.s.username,
+                content: result.s.content,
+                curatorNotes: result.s.curatorNotes,
+                curatorId: result.s.curatorId,
+                curatorUsername: result.s.curatorUsername,
+                curatorTweetId: result.s.curatorTweetId,
+                createdAt: new Date(result.s.createdAt),
+                submittedAt: result.s.submittedAt
+                  ? new Date(result.s.submittedAt)
+                  : null,
+                moderationHistory: [],
+                status: status
+                  ? (status as SubmissionStatus)
+                  : SubmissionStatus.PENDING, // Use provided status or default
+                feedStatuses: [],
+              });
+
+              // Initialize feed status map for this submission
+              feedStatusMap.set(result.s.tweetId, new Map<string, FeedStatus>());
+            }
+
+            // Add moderation history
+            if (result.m && result.m.adminId !== null) {
+              const submission = submissionMap.get(result.s.tweetId)!;
+              submission.moderationHistory.push({
+                tweetId: result.s.tweetId,
+                feedId: result.m.feedId!,
+                adminId: result.m.adminId,
+                action: result.m.action as "approve" | "reject",
+                note: result.m.note,
+                timestamp: result.m.createdAt!,
+                moderationResponseTweetId:
+                  result.m.moderationResponseTweetId ?? undefined,
+              });
+            }
+
+            // Add feed status if available
+            if (result.sf?.feedId && result.f?.id) {
+              // If status is provided, only include feeds with that status
+              if (!status || result.sf.status === status) {
+                const feedStatusesForSubmission = feedStatusMap.get(result.s.tweetId)!;
+
+                if (!feedStatusesForSubmission.has(result.sf.feedId)) {
+                  feedStatusesForSubmission.set(result.sf.feedId, {
+                    feedId: result.sf.feedId,
+                    feedName: result.f.name,
+                    status: result.sf.status,
+                    moderationResponseTweetId:
+                      result.sf.moderationResponseTweetId ?? undefined,
+                  });
+                }
+              }
+            }
+          }
+
+          // Set the feed statuses and determine the main status for each submission
+          for (const [tweetId, submission] of submissionMap.entries()) {
+            const feedStatusesForSubmission = feedStatusMap.get(tweetId);
+            if (feedStatusesForSubmission) {
+              submission.feedStatuses = Array.from(feedStatusesForSubmission.values());
+
+              // Determine the main status based on priority (pending > rejected > approved)
+              let hasPending = false;
+              let hasRejected = false;
+              let hasApproved = false;
+
+              for (const feedStatus of submission.feedStatuses) {
+                if (feedStatus.status === SubmissionStatus.PENDING) {
+                  hasPending = true;
+                  submission.status = SubmissionStatus.PENDING;
+                  submission.moderationResponseTweetId =
+                    feedStatus.moderationResponseTweetId;
+                  break; // Pending has highest priority
+                } else if (feedStatus.status === SubmissionStatus.REJECTED) {
+                  hasRejected = true;
+                } else if (feedStatus.status === SubmissionStatus.APPROVED) {
+                  hasApproved = true;
+                }
+              }
+
+              if (!hasPending) {
+                if (hasRejected) {
+                  submission.status = SubmissionStatus.REJECTED;
+                  // Find first rejected status for moderationResponseTweetId
+                  const rejectedStatus = submission.feedStatuses.find(
+                    (fs) => fs.status === SubmissionStatus.REJECTED,
+                  );
+                  if (rejectedStatus) {
+                    submission.moderationResponseTweetId =
+                      rejectedStatus.moderationResponseTweetId;
+                  }
+                } else if (hasApproved) {
+                  submission.status = SubmissionStatus.APPROVED;
+                  // Find first approved status for moderationResponseTweetId
+                  const approvedStatus = submission.feedStatuses.find(
+                    (fs) => fs.status === SubmissionStatus.APPROVED,
+                  );
+                  if (approvedStatus) {
+                    submission.moderationResponseTweetId =
+                      approvedStatus.moderationResponseTweetId;
+                  }
+                }
+              }
+            }
+          }
+
+          return Array.from(submissionMap.values());
+        }, this.db);
       },
       {
         operationName: "get all submissions",
         additionalContext: status ? { status } : {},
       },
-      [], // Default empty array if operation fails
+      [],
     );
   }
 
@@ -127,23 +372,46 @@ export class SubmissionRepository {
    * @returns The daily submission count
    */
   async getDailySubmissionCount(userId: string): Promise<number> {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        // Clean up old entries first (write operation)
-        await executeOperation(async (db) => {
-          await queries.cleanupOldSubmissionCounts(db);
-        }, true);
+        return executeWithRetry(async (retryDb) => {
+          const results = await retryDb
+            .select({ count: submissionCounts.count })
+            .from(submissionCounts)
+            .where(
+              and(
+                eq(submissionCounts.userId, userId),
+                eq(sql`${submissionCounts.lastResetDate}::date`, sql`CURRENT_DATE`),
+              ),
+            );
 
-        // Then get the count (read operation)
-        return await executeOperation(async (db) => {
-          return await queries.getDailySubmissionCount(db, userId);
-        });
+          return results.length > 0 ? results[0].count : 0;
+        }, this.db);
       },
       {
         operationName: "get daily submission count",
         additionalContext: { userId },
       },
-      0, // Default to 0 if operation fails
+      0,
+    );
+  }
+
+  /**
+   * Cleans up old submission counts.
+   * This method should be called within a service-managed transaction.
+   * @param txDb The transactional DB instance
+   */
+  async cleanupOldSubmissionCounts(txDb: DB): Promise<void> {
+    return withErrorHandling(
+      async () => {
+        await txDb
+          .delete(submissionCounts)
+          .where(sql`${submissionCounts.lastResetDate}::date < CURRENT_DATE`)
+          .execute();
+      },
+      {
+        operationName: "cleanup old submission counts",
+      },
     );
   }
 
@@ -151,13 +419,31 @@ export class SubmissionRepository {
    * Increments the daily submission count for a user.
    *
    * @param userId The user ID
+   * @param txDb The transactional DB instance
    */
-  async incrementDailySubmissionCount(userId: string): Promise<void> {
-    return withDatabaseErrorHandling(
+  async incrementDailySubmissionCount(userId: string, txDb: DB): Promise<void> {
+    return withErrorHandling(
       async () => {
-        await executeOperation(async (db) => {
-          await queries.incrementDailySubmissionCount(db, userId);
-        }, true); // Write operation
+        await txDb
+          .insert(submissionCounts)
+          .values({
+            userId,
+            count: 1,
+            lastResetDate: sql`CURRENT_DATE`,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .onConflictDoUpdate({
+            target: submissionCounts.userId,
+            set: {
+              count: sql`CASE 
+          WHEN ${submissionCounts.lastResetDate}::date < CURRENT_DATE THEN 1
+          ELSE ${submissionCounts.count} + 1
+        END`,
+              lastResetDate: sql`CURRENT_DATE`,
+            },
+          })
+          .execute();
       },
       {
         operationName: "increment daily submission count",
@@ -172,14 +458,21 @@ export class SubmissionRepository {
    * @returns The total number of posts
    */
   async getPostsCount(): Promise<number> {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return await executeOperation(async (db) => {
-          return await queries.getPostsCount(db);
-        }); // Read operation
+        return executeWithRetry(async (retryDb) => {
+          // Count approved submissions
+          const result = await retryDb.execute(sql`
+    SELECT COUNT(DISTINCT submission_id) as count
+    FROM submission_feeds
+    WHERE status = 'approved'
+  `);
+
+          return result.rows.length > 0 ? Number(result.rows[0].count) : 0;
+        }, this.db);
       },
       { operationName: "get posts count" },
-      0, // Default value if operation fails
+      0,
     );
   }
 
@@ -189,17 +482,21 @@ export class SubmissionRepository {
    * @returns The total number of curators
    */
   async getCuratorsCount(): Promise<number> {
-    return withDatabaseErrorHandling(
+    return withErrorHandling(
       async () => {
-        return await executeOperation(async (db) => {
-          return await queries.getCuratorsCount(db);
-        }); // Read operation
+        return executeWithRetry(async (retryDb) => {
+          // Count unique curator IDs
+          const result = await retryDb.execute(sql`
+    SELECT COUNT(DISTINCT curator_id) as count
+    FROM submissions
+    WHERE curator_id IS NOT NULL
+  `);
+
+          return result.rows.length > 0 ? Number(result.rows[0].count) : 0;
+        }, this.db);
       },
       { operationName: "get curators count" },
-      0, // Default value if operation fails
+      0,
     );
   }
 }
-
-// Export a singleton instance
-export const submissionRepository = new SubmissionRepository();
