@@ -7,24 +7,12 @@ import { SubmissionService } from "../services/submission.service";
 import { TwitterService } from "../services/twitter/client";
 import { Hono } from "hono";
 
-export interface AppContext {
-  twitterService: TwitterService | null;
-  submissionService: SubmissionService | null;
-  distributionService: DistributionService | null;
-  processorService: ProcessorService | null;
-  configService: ConfigService;
-  // schedulerService: SchedulerService;
-  feedRepository: FeedRepository;
-}
-
 export type Env = {
   Variables: {
-    context: AppContext;
     db: ReturnType<typeof import("../services/db").getDatabase>; // TODO: better return type?
   } & JwtVariables;
 };
 
 export interface AppInstance {
   app: Hono<Env>;
-  context: AppContext;
 }

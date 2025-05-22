@@ -9,6 +9,8 @@ import {
   PluginType,
   PluginTypeMap,
   TransformerPlugin,
+  SourcePlugin,
+  SourceItem,
 } from "@curatedotfun/types";
 import { Hono } from "hono";
 import { logger } from "../utils/logger";
@@ -449,7 +451,10 @@ export class PluginService {
   ): instance is PluginTypeMap<TInput, TOutput, TConfig>[T] {
     if (!instance || typeof instance !== "object") return false;
     if (typeof instance.initialize !== "function") return false;
-    if (instance.type !== type) return false;
+    if (instance.type !== type) {
+      logger.warn(`Plugin instance type mismatch: expected ${type}, got ${instance.type}`, { name: (instance as any)?.constructor?.name });
+      return false;
+    }
 
     switch (type) {
       case "distributor":
@@ -464,11 +469,19 @@ export class PluginService {
           TConfig
         >;
         return (
-          typeof transformer.transform === "function" &&
-          transformer.type === "transformer"
+          typeof transformer.transform === "function"
+        );
+      }
+      case "source": {
+        const source = instance as SourcePlugin<SourceItem, TConfig>;
+        return (
+          typeof source.search === "function"
         );
       }
       default:
+        // This case should ideally not be reached if PluginType is a comprehensive union
+        // and all cases are handled.
+        logger.warn(`Unknown plugin type encountered in validation: ${type}`);
         return false;
     }
   }

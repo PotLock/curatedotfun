@@ -1,84 +1,23 @@
-import { Tweet } from "agent-twitter-client";
-import { AppConfig } from "../types/config";
+import { AppConfig, FeedConfig } from "../types/config.zod";
 import {
   Moderation,
   Submission,
   SubmissionFeed,
   SubmissionStatus,
-} from "../types/twitter";
+} from "../types/submission.types";
+import { ModerationCommandData } from "../types/inbound.types";
 import { logger } from "../utils/logger";
 import {
   feedRepository,
   submissionRepository,
-  twitterRepository,
 } from "./db/repositories";
 import { ProcessorService } from "./processor.service";
-import { TwitterService } from "./twitter/client";
 
 export class SubmissionService {
-  private checkInterval: NodeJS.Timeout | null = null;
-  private adminIdCache: Map<string, string> = new Map();
-
   constructor(
-    private readonly twitterService: TwitterService,
     private readonly processorService: ProcessorService,
     private readonly config: AppConfig,
   ) {}
-
-  private async initializeAdminIds(): Promise<void> {
-    try {
-      // Try to load admin IDs from cache first
-      const cachedAdminIds =
-        await twitterRepository.getTwitterCacheValue("admin_ids");
-      if (cachedAdminIds) {
-        try {
-          const adminMap = JSON.parse(cachedAdminIds);
-          for (const [userId, handle] of Object.entries(adminMap)) {
-            this.adminIdCache.set(userId, handle as string);
-          }
-          logger.info("Loaded admin IDs from cache");
-          return;
-        } catch (error) {
-          logger.error("Failed to parse cached admin IDs:", error);
-        }
-      }
-
-      // If no cache or parse error, fetch and cache admin IDs
-      const adminHandles = new Set<string>();
-      for (const feed of this.config.feeds) {
-        for (const handle of feed.moderation.approvers.twitter) {
-          adminHandles.add(handle);
-        }
-      }
-
-      logger.info("Fetching admin IDs for the first time...");
-      const adminMap: Record<string, string> = {};
-
-      for (const handle of adminHandles) {
-        try {
-          const userId =
-            await this.twitterService.getUserIdByScreenName(handle);
-          this.adminIdCache.set(userId, handle);
-          adminMap[userId] = handle;
-        } catch (error) {
-          logger.error(
-            `Failed to fetch ID for admin handle @${handle}:`,
-            error,
-          );
-        }
-      }
-
-      // Cache the admin IDs
-      await twitterRepository.setTwitterCacheValue(
-        "admin_ids",
-        JSON.stringify(adminMap),
-      );
-      logger.info("Cached admin IDs for future use");
-    } catch (error) {
-      logger.error("Failed to initialize admin IDs:", error);
-      throw error;
-    }
-  }
 
   private async initializeFeeds(): Promise<void> {
     try {
@@ -91,461 +30,299 @@ export class SubmissionService {
 
   async initialize(): Promise<void> {
     try {
-      // Initialize feeds
       await this.initializeFeeds();
-
-      // Initialize admin IDs with caching
-      await this.initializeAdminIds();
     } catch (error) {
       logger.error("Failed to initialize submission service:", error);
       throw error;
     }
   }
 
-  async startMentionsCheck(): Promise<void> {
-    // Do an immediate check
-    await this.checkMentions();
+  // Removed startMentionsCheck, checkMentions, stop
 
-    // Then check mentions
-    this.checkInterval = setInterval(async () => {
-      await this.checkMentions();
-    }, 60000); // every minute
-  }
+  /**
+   * Handles a new submission item that has been adapted from a source.
+   * @param newSubmission The submission data.
+   * @param targetFeedId The specific feed this submission is initially targeted for.
+   * @param platformKey Identifier for the source platform (e.g., plugin name) for moderation checks.
+   */
+  public async handleSubmission(
+    newSubmission: Submission,
+    targetFeedId: string,
+    platformKey: string, 
+  ): Promise<void> {
+    const {
+      tweetId: externalId,
+      userId: authorPlatformId,
+      username: authorUsername,
+      curatorId: curatorPlatformId,
+      curatorUsername,
+      curatorTweetId: curatorActionExternalId,
+    } = newSubmission;
 
-  private async checkMentions(): Promise<void> {
-    try {
-      logger.info("Checking mentions...");
-      const newTweets = await this.twitterService.fetchAllNewMentions();
-
-      if (newTweets.length === 0) {
-        logger.info("No new mentions");
-        return;
-      }
-
-      logger.info(`Found ${newTweets.length} new mentions`);
-
-      // Process new tweets
-      for (const tweet of newTweets) {
-        if (!tweet.id) continue;
-
-        // we have mentions, which can hold actions
-        // !submit, !approve, !reject
-        try {
-          if (this.isSubmission(tweet)) {
-            // submission
-            logger.info(`Received new submission: ${tweet.id}`);
-            await this.handleSubmission(tweet);
-          } else if (this.isModeration(tweet)) {
-            // or moderation
-            logger.info(`Received new moderation: ${tweet.id}`);
-            await this.handleModeration(tweet);
-          }
-        } catch (error) {
-          logger.error("Error processing tweet:", error);
-        }
-      }
-    } catch (error) {
-      logger.error("Error checking mentions:", error);
-    }
-  }
-
-  async stop(): Promise<void> {
-    if (this.checkInterval) {
-      clearInterval(this.checkInterval);
-      this.checkInterval = null;
-    }
-  }
-
-  private async handleSubmission(tweet: Tweet): Promise<void> {
-    const userId = tweet.userId;
-    if (!userId || !tweet.id) return; // no user or tweet
-
-    const inReplyToId = tweet.inReplyToStatusId; // this is specific to twitter (TODO: id of { platform: twitter })
-    if (!inReplyToId) {
-      logger.error(`${tweet.id}: Submission is not a reply to another tweet`);
-      return;
-    }
+    logger.info(`Handling submission for externalId: ${externalId}, curator: ${curatorUsername}`);
 
     try {
-      // Fetch full curator tweet data to ensure we have the username
-      const curatorTweet = await this.twitterService.getTweet(tweet.id!);
-      if (!curatorTweet || !curatorTweet.username) {
-        logger.error(`${tweet.id}: Could not fetch curator tweet details`);
-        return;
-      }
-
+      // Blacklist check (example, assuming curatorUsername is the relevant field)
+      // This might need to be more nuanced based on which platform the curator is from.
+      // For now, assumes a generic blacklist check on curatorUsername.
+      const globalBlacklist = this.config.global.blacklist["all"] || []; // Example generic blacklist
       if (
-        curatorTweet.username.toLowerCase() ===
-          this.config.global.botId.toLowerCase() || // if self
-        this.config.global.blacklist["twitter"].some(
-          (blacklisted) =>
-            blacklisted.toLowerCase() === curatorTweet.username?.toLowerCase(),
-        )
+        curatorUsername && (
+        curatorUsername.toLowerCase() === this.config.global.botId.toLowerCase() ||
+        globalBlacklist.some(b => b.toLowerCase() === curatorUsername.toLowerCase()))
       ) {
-        logger.error(`${tweet.id}: Submitted by bot or blacklisted user`);
-        // or blacklisted
+        logger.warn(`Submission from ${curatorUsername} (extId: ${externalId}) blocked: bot or blacklisted.`);
         return;
       }
 
-      // Extract feed IDs from hashtags
-      const feedIds = (tweet.hashtags || []).filter((tag) =>
-        this.config.feeds.some(
-          (feed) => feed.id.toLowerCase() === tag.toLowerCase(),
-        ),
-      );
+      // Check if this content was already submitted
+      const existingSubmission = await submissionRepository.getSubmission(externalId);
+      let submissionToProcess: Submission;
 
-      // Fetch original tweet
-      const originalTweet = await this.twitterService.getTweet(inReplyToId);
-      if (!originalTweet) {
-        logger.error(
-          `${tweet.id}: Could not fetch original tweet ${inReplyToId}`,
-        );
-        return;
-      }
-
-      // Check if this tweet was already submitted
-      const existingSubmission = await submissionRepository.getSubmission(
-        originalTweet.id!,
-      );
-      const existingFeeds = existingSubmission?.feeds || [];
-
-      // Create new submission if it doesn't exist
-      let submission: Submission | undefined;
       if (!existingSubmission) {
-        const dailyCount =
-          await submissionRepository.getDailySubmissionCount(userId);
-        const maxSubmissions = this.config.global.maxDailySubmissionsPerUser;
-
-        if (dailyCount >= maxSubmissions) {
-          // await this.twitterService.replyToTweet(
-          //   tweet.id,
-          //   "You've reached your daily submission limit. Please try again tomorrow.",
-          // );
-          logger.error(`${tweet.id}: User ${userId} has reached limit.`);
-          return;
+        // Daily submission limit check (example, using curatorPlatformId)
+        if (curatorPlatformId) {
+            const dailyCount = await submissionRepository.getDailySubmissionCount(curatorPlatformId);
+            if (dailyCount >= this.config.global.maxDailySubmissionsPerUser) {
+                logger.warn(`Curator ${curatorPlatformId} reached daily submission limit for ${externalId}.`);
+                return;
+            }
+            await submissionRepository.incrementDailySubmissionCount(curatorPlatformId);
         }
-
-        // curation
-        const curatorNotes = this.extractDescription(
-          originalTweet.username!,
-          tweet,
-        );
-        submission = {
-          userId: originalTweet.userId!, // user id
-          tweetId: originalTweet.id!, // ref id
-
-          // item data
-          content: originalTweet.text || "",
-          username: originalTweet.username!,
-          createdAt: originalTweet.timeParsed || new Date(), // reply to post // vs as self post
-
-          // curator data
-          curatorId: userId, // tweetId, userId(curator)
-          curatorUsername: curatorTweet.username,
-          // relationship with the tweet
-          curatorNotes,
-          curatorTweetId: tweet.id!,
-          submittedAt: new Date(),
-
-          // admin data (update)
-          moderationHistory: [], // moderatorId, userId, tweetId
-        };
-        await submissionRepository.saveSubmission(submission);
-        await submissionRepository.incrementDailySubmissionCount(userId);
+        
+        // Save the new submission. newSubmission should have most fields populated by AdapterService.
+        // Ensure all required fields are present.
+        submissionToProcess = { ...newSubmission }; // Use the already adapted submission
+        if (!submissionToProcess.submittedAt) submissionToProcess.submittedAt = new Date();
+        if (!submissionToProcess.moderationHistory) submissionToProcess.moderationHistory = [];
+        
+        await submissionRepository.saveSubmission(submissionToProcess);
+        logger.info(`New submission ${externalId} saved.`);
+      } else {
+        logger.info(`Content ${externalId} already submitted. Processing for additional feeds if any.`);
+        submissionToProcess = existingSubmission;
+        // Update curator details if this is a new curation of existing content by a different curator
+        // This logic might need refinement based on product requirements.
+        // For now, we assume the first curator's details are primary.
       }
 
-      // Process each feed
-      for (const feedId of [...feedIds, "all"]) {
-        const lowercaseFeedId = feedId.toLowerCase();
-        const feed = this.config.feeds.find(
-          (f: { id: string }) => f.id.toLowerCase() === lowercaseFeedId,
-        );
-        if (!feed) {
-          logger.error(
-            `${tweet.id}: Unable to find matching feed for ${feedId}`,
-          );
+      // Determine target feeds.
+      // The `targetFeedId` is the primary feed.
+      // The `newSubmission.feeds` might contain other feeds identified by AdapterService (e.g. from hashtags).
+      // For now, we'll simplify and assume `targetFeedId` is the one to process for.
+      // A more complex scenario would merge these.
+      const feedIdsToProcess = new Set<string>([targetFeedId]);
+      // If newSubmission.feeds (populated by adapter from hashtags for example) is available:
+      // (newSubmission.feeds || []).forEach(f => feedIdsToProcess.add(f.feedId));
+
+
+      for (const currentFeedId of feedIdsToProcess) {
+        const feedConfig = this.config.feeds.find(f => f.id.toLowerCase() === currentFeedId.toLowerCase());
+        if (!feedConfig) {
+          logger.warn(`Feed configuration not found for feedId: ${currentFeedId} for submission ${externalId}.`);
           continue;
         }
 
-        const isModerator = feed.moderation.approvers.twitter.some(
-          (approver) =>
-            approver.toLowerCase() === curatorTweet.username!.toLowerCase(),
+        // Check if submission already exists for this specific feed
+        const existingFeedEntry = (submissionToProcess.feeds || []).find(f => f.feedId.toLowerCase() === currentFeedId.toLowerCase());
+
+        if (existingFeedEntry) {
+          logger.info(`Submission ${externalId} already exists in feed ${currentFeedId} with status ${existingFeedEntry.status}.`);
+          // Potentially handle re-submission logic if needed
+          if (existingFeedEntry.status === SubmissionStatus.PENDING && curatorUsername && this.isModeratorForFeed(curatorUsername, feedConfig, platformKey)) {
+             logger.info(`Moderator ${curatorUsername} (platform: ${platformKey}) re-submitted to pending item ${externalId} in feed ${currentFeedId}. Approving.`);
+             await this.autoApproveSubmissionByModerator(submissionToProcess, feedConfig, curatorUsername, platformKey, curatorActionExternalId, newSubmission.curatorNotes);
+          }
+          continue;
+        }
+
+        // Save to feed with default status
+        await feedRepository.saveSubmissionToFeed(
+          externalId,
+          feedConfig.id,
+          this.config.global.defaultStatus,
         );
-        const existingFeed = existingFeeds.find(
-          (f) => f.feedId.toLowerCase() === lowercaseFeedId,
-        );
-
-        if (existingFeed) {
-          // If feed already exists and is pending, check if new curator is moderator
-          if (existingFeed.status === SubmissionStatus.PENDING && isModerator) {
-            // Save moderation action first
-            const moderation: Moderation = {
-              adminId: curatorTweet.username!,
-              action: "approve",
-              timestamp: curatorTweet.timeParsed || new Date(),
-              tweetId: originalTweet.id!,
-              feedId: feed.id,
-              note:
-                this.extractDescription(originalTweet.username!, tweet) || null,
-            };
-            await submissionRepository.saveModerationAction(moderation);
-
-            // Then update feed status
-            await feedRepository.updateSubmissionFeedStatus(
-              originalTweet.id!,
-              feed.id,
-              SubmissionStatus.APPROVED,
-              tweet.id!,
-            );
-
-            if (feed.outputs.stream?.enabled) {
-              await this.processorService.process(
-                existingSubmission || submission!,
-                feed.outputs.stream,
-              );
-            }
-          }
-        } else {
-          if (feed) {
-            await feedRepository.saveSubmissionToFeed(
-              originalTweet.id!,
-              feed.id,
-              this.config.global.defaultStatus,
-            );
-          }
-
-          // If moderator is submitting, process as an approval
-          if (isModerator) {
-            // Save moderation action first
-            const moderation: Moderation = {
-              adminId: curatorTweet.username!,
-              action: "approve",
-              timestamp: curatorTweet.timeParsed || new Date(),
-              tweetId: originalTweet.id!,
-              feedId: feed.id,
-              note:
-                this.extractDescription(originalTweet.username!, tweet) || null,
-            };
-            await submissionRepository.saveModerationAction(moderation);
-
-            // Then update feed status
-            await feedRepository.updateSubmissionFeedStatus(
-              originalTweet.id!,
-              feed.id,
-              SubmissionStatus.APPROVED,
-              tweet.id!,
-            );
-
-            if (feed.outputs.stream?.enabled) {
-              await this.processorService.process(
-                existingSubmission || submission!,
-                feed.outputs.stream,
-              );
-            }
-          }
+        logger.info(`Submission ${externalId} added to feed ${feedConfig.id} with status ${this.config.global.defaultStatus}.`);
+        
+        // If the curator is a moderator for this feed, auto-approve
+        if (curatorUsername && this.isModeratorForFeed(curatorUsername, feedConfig, platformKey)) {
+          logger.info(`Submission ${externalId} by moderator ${curatorUsername} (platform: ${platformKey}) for feed ${feedConfig.id}. Auto-approving.`);
+          await this.autoApproveSubmissionByModerator(submissionToProcess, feedConfig, curatorUsername, platformKey, curatorActionExternalId, newSubmission.curatorNotes);
         }
       }
-
-      await this.handleAcknowledgement(tweet);
-
-      logger.info(
-        `${tweet.id}: Successfully processed submission for tweet ${originalTweet.id}`,
-      );
     } catch (error) {
-      logger.error(error, `${tweet.id}: Error while handling submission`);
+      logger.error(`Error handling submission for externalId ${externalId}:`, error);
     }
   }
 
-  private async handleAcknowledgement(tweet: Tweet): Promise<void> {
-    // Like the tweet
-    await this.twitterService.likeTweet(tweet.id!);
+  private async autoApproveSubmissionByModerator(
+    submission: Submission,
+    feedConfig: FeedConfig,
+    moderatorUsername: string,
+    platformKey: string, // Added platformKey
+    moderatorActionExternalId: string | undefined,
+    moderatorNotes: string | null
+  ): Promise<void> {
+    const moderation: Moderation = {
+      adminId: `${moderatorUsername}@${platformKey}`, // Store adminId with platform context
+      action: "approve",
+      timestamp: new Date(),
+      tweetId: submission.tweetId, // The ID of the content being approved
+      feedId: feedConfig.id,
+      note: moderatorNotes, // Notes from the curator/moderator
+      moderationResponseTweetId: moderatorActionExternalId,
+    };
+    await submissionRepository.saveModerationAction(moderation);
+    await feedRepository.updateSubmissionFeedStatus(
+      submission.tweetId,
+      feedConfig.id,
+      SubmissionStatus.APPROVED,
+      moderatorActionExternalId ?? null, // Pass null if undefined
+    );
+    logger.info(`Auto-approved submission ${submission.tweetId} for feed ${feedConfig.id} by moderator ${moderatorUsername}.`);
 
-    // // Reply to curator's tweet confirming submission
-    // await this.twitterService.replyToTweet(
-    //   tweet.id,
-    //   "Successfully submitted!"
-    // );
+    if (feedConfig.outputs.stream?.enabled) {
+      // Fetch the full submission details again to ensure it has all latest feed statuses
+      const fullSubmission = await submissionRepository.getSubmission(submission.tweetId);
+      if (fullSubmission) {
+         await this.processorService.process(fullSubmission, feedConfig.outputs.stream);
+      }
+    }
   }
 
-  private async handleModeration(tweet: Tweet): Promise<void> {
-    const userId = tweet.userId;
-    if (!userId || !tweet.id) {
-      logger.error(`${tweet.id} or ${userId} is not valid.`);
+
+  /**
+   * Handles a moderation command that has been adapted from a source.
+   * @param command The moderation command data.
+   * @param targetFeedId The specific feed this command is initially targeted for.
+   * @param platformKey Identifier for the source platform of the command.
+   */
+  public async handleModeration(
+    command: ModerationCommandData,
+    targetFeedId: string,
+    platformKey: string, 
+  ): Promise<void> {
+    const {
+      targetExternalId,
+      action,
+      moderatorUsername,
+      notes,
+      commandExternalId,
+      commandTimestamp,
+    } = command;
+
+    logger.info(
+      `Handling moderation command: ${action} for ${targetExternalId} by ${moderatorUsername}@${platformKey} (commandId: ${commandExternalId})`,
+    );
+
+    // Use platformKey for admin check
+    if (!this.isGlobalAdminOrModeratorForPlatform(moderatorUsername, platformKey)) {
+      logger.warn(`User ${moderatorUsername}@${platformKey} is not an authorized moderator. Moderation command ${commandExternalId} rejected.`);
       return;
     }
 
-    if (!this.isAdmin(userId)) {
-      logger.error(`${tweet.id}: User ${userId} is not admin.`);
-      return;
-    }
-
-    // Get the curator's tweet that the moderator is replying to
-    const curatorTweetId = tweet.inReplyToStatusId;
-    if (!curatorTweetId) return;
-
-    const submission =
-      await submissionRepository.getSubmissionByCuratorTweetId(curatorTweetId);
+    const submission = await submissionRepository.getSubmission(targetExternalId);
     if (!submission) {
-      logger.error(`${tweet.id}: Received moderation for unsaved submission`);
+      logger.warn(`Moderation command ${commandExternalId} for non-existent submission ${targetExternalId}.`);
       return;
     }
 
-    const action = this.getModerationAction(tweet);
-    if (!action) {
-      logger.error(`${tweet.id}: No valid action determined`);
-      return;
-    }
+    // Determine which feeds this moderation applies to.
+    // Could be `targetFeedId` or all feeds the admin can moderate for this submission.
+    // For simplicity, let's assume it applies to `targetFeedId` if that feed is pending and moderated by this admin on this platform.
+    const feedsToModerate: FeedConfig[] = [];
+    const feedConfig = this.config.feeds.find(f => f.id.toLowerCase() === targetFeedId.toLowerCase());
 
-    const adminUsername = this.adminIdCache.get(userId);
-    if (!adminUsername) {
-      logger.error(
-        `${tweet.id}: Could not find username for admin ID ${userId}`,
-      );
-      return;
-    }
-
-    // Get submission feeds to determine which feed is being moderated
-    const pendingFeeds = submission
-      .feeds!.filter((feed) => feed.status === SubmissionStatus.PENDING)
-      .filter((feed) => {
-        const feedConfig = this.config.feeds.find(
-          (f: { id: string }) => f.id === feed.feedId,
-        );
-        return feedConfig?.moderation.approvers.twitter.some(
-          (approver) => approver.toLowerCase() === adminUsername.toLowerCase(),
-        );
-      });
-
-    if (pendingFeeds.length === 0) {
-      logger.info(
-        `${tweet.id}: No pending feeds found for submission that this moderator can moderate`,
-      );
-      return;
-    }
-
-    // Create moderation records for each feed this moderator can moderate
-    for (const pendingFeed of pendingFeeds) {
-      const moderation: Moderation = {
-        adminId: adminUsername,
-        action,
-        timestamp: tweet.timeParsed || new Date(),
-        tweetId: submission.tweetId,
-        feedId: pendingFeed.feedId,
-        note: this.extractNote(submission.username, tweet) || null,
-      };
-
-      // Save moderation action
-      await submissionRepository.saveModerationAction(moderation);
-    }
-
-    // Process based on action
-    if (action === "approve") {
-      await this.processApproval(tweet, submission, pendingFeeds);
+    if (feedConfig && this.isModeratorForFeed(moderatorUsername, feedConfig, platformKey)) {
+        const submissionFeedEntry = (submission.feeds || []).find((sf: SubmissionFeed) => sf.feedId.toLowerCase() === feedConfig.id.toLowerCase());
+        if (submissionFeedEntry && submissionFeedEntry.status === SubmissionStatus.PENDING) {
+            feedsToModerate.push(feedConfig);
+        } else {
+            logger.info(`Moderation command ${commandExternalId} for feed ${targetFeedId} by ${moderatorUsername}@${platformKey}, but submission is not pending or not in feed.`);
+        }
     } else {
-      await this.processRejection(tweet, submission, pendingFeeds);
+        logger.warn(`Moderator ${moderatorUsername}@${platformKey} cannot moderate feed ${targetFeedId} or feed not found.`);
+    }
+    
+    if (feedsToModerate.length === 0) {
+        logger.info(`No suitable pending feeds found for ${moderatorUsername}@${platformKey} to moderate for submission ${targetExternalId} via command ${commandExternalId}.`);
+        return;
     }
 
-    await this.handleAcknowledgement(tweet);
-  }
+    for (const feed of feedsToModerate) {
+      try {
+        const moderation: Moderation = {
+          adminId: `${moderatorUsername}@${platformKey}`, // Store adminId with platform context
+          action,
+          timestamp: commandTimestamp,
+          tweetId: targetExternalId,
+          feedId: feed.id,
+          note: notes || null,
+          moderationResponseTweetId: commandExternalId,
+        };
+        await submissionRepository.saveModerationAction(moderation);
 
-  private async processApproval(
-    tweet: Tweet,
-    submission: Submission,
-    pendingFeeds: SubmissionFeed[],
-  ): Promise<void> {
-    try {
-      // Process each pending feed
-      for (const pendingFeed of pendingFeeds) {
-        const feed = this.config.feeds.find(
-          (f: { id: string }) => f.id === pendingFeed.feedId,
+        const newStatus = action === "approve" ? SubmissionStatus.APPROVED : SubmissionStatus.REJECTED;
+        await feedRepository.updateSubmissionFeedStatus(
+          targetExternalId,
+          feed.id,
+          newStatus,
+          commandExternalId ?? null, // Pass null if undefined
         );
-        if (!feed) continue;
+        logger.info(`Moderation ${action} for ${targetExternalId} in feed ${feed.id} by ${moderatorUsername} processed.`);
 
-        // Only update if not already moderated
-        if (!pendingFeed.moderationResponseTweetId) {
-          await feedRepository.updateSubmissionFeedStatus(
-            submission.tweetId,
-            pendingFeed.feedId,
-            SubmissionStatus.APPROVED,
-            tweet.id!,
-          );
-
-          if (feed.outputs.stream?.enabled) {
-            await this.processorService.process(
-              submission,
-              feed.outputs.stream,
-            );
+        if (newStatus === SubmissionStatus.APPROVED && feed.outputs.stream?.enabled) {
+          // Fetch the full submission to pass to processor, ensuring it has latest state
+          const fullSubmission = await submissionRepository.getSubmission(targetExternalId);
+          if (fullSubmission) {
+            await this.processorService.process(fullSubmission, feed.outputs.stream);
           }
         }
+      } catch (error) {
+        logger.error(`Error processing moderation for ${targetExternalId} in feed ${feed.id}:`, error);
       }
-    } catch (error) {
-      logger.error(
-        error,
-        `${submission.tweetId}: Failed to process approved submission`,
-      );
     }
   }
 
-  private async processRejection(
-    tweet: Tweet,
-    submission: Submission,
-    pendingFeeds: SubmissionFeed[],
-  ): Promise<void> {
-    try {
-      // Process each pending feed
-      for (const pendingFeed of pendingFeeds) {
-        // Only update if not already moderated
-        if (!pendingFeed.moderationResponseTweetId) {
-          await feedRepository.updateSubmissionFeedStatus(
-            submission.tweetId,
-            pendingFeed.feedId,
-            SubmissionStatus.REJECTED,
-            tweet.id!,
-          );
+  // Check if a user is a global admin (e.g. listed in a global admin list if we had one)
+  // OR a moderator for the specific platform (any feed).
+  // This is a simplified check. A more robust system might have roles.
+  private isGlobalAdminOrModeratorForPlatform(username: string, platformKey: string): boolean {
+    // For now, we don't have a global admin list in config.
+    // So, this check effectively means: "is this user an approver for this platform on *any* feed?"
+    // This might be too broad. A stricter check would be `isModeratorForFeed(username, specificFeedConfig, platformKey)`
+    // The current call site in `handleModeration` already narrows it down to a specific feed.
+    // So, this function could just check if the platformKey exists in *any* feed's approvers for this user.
+    // However, the `handleModeration` logic already filters by `targetFeedId`'s `feedConfig`.
+    // So, this function can be simplified or its logic incorporated directly.
+    // Let's assume for now that if they are a moderator for *any* feed on that platform, they are "known".
+    // The actual authorization for a *specific* feed happens in `isModeratorForFeed`.
+    
+    // This check is primarily to see if the user is "known" to the system as a potential moderator on this platform.
+    // The more specific `isModeratorForFeed` handles per-feed authorization.
+    const normalizedUsername = username.toLowerCase();
+    for (const feed of this.config.feeds) {
+        const platformApprovers = feed.moderation.approvers?.[platformKey];
+        if (platformApprovers && platformApprovers.some(approver => approver.toLowerCase() === normalizedUsername)) {
+            return true; // Found as an approver for this platform on at least one feed
         }
-      }
-    } catch (error) {
-      logger.error(
-        `${submission.tweetId}: Failed to process rejected submission:`,
-        error,
-      );
     }
+    // Fallback: check a global admin list if it existed.
+    // e.g. if (this.config.global.admins?.[platformKey]?.includes(normalizedUsername)) return true;
+    return false; 
   }
 
-  private isAdmin(userId: string): boolean {
-    return this.adminIdCache.has(userId);
+  // Check if a user (by username) is a moderator for a specific feed on a specific platform
+  private isModeratorForFeed(username: string, feedConfig: FeedConfig, platformKey: string): boolean {
+    const normalizedUsername = username.toLowerCase();
+    const platformApprovers = feedConfig.moderation.approvers?.[platformKey];
+    if (platformApprovers) {
+      return platformApprovers.some(approver => approver.toLowerCase() === normalizedUsername);
+    }
+    return false;
   }
 
-  private getModerationAction(tweet: Tweet): "approve" | "reject" | null {
-    const text = tweet.text?.toLowerCase() || "";
-    if (text.includes("!approve")) return "approve";
-    if (text.includes("!reject")) return "reject";
-    return null;
-  }
-
-  private isModeration(tweet: Tweet): boolean {
-    return this.getModerationAction(tweet) !== null;
-  }
-
-  private isSubmission(tweet: Tweet): boolean {
-    return tweet.text?.toLowerCase().includes("!submit") || false;
-  }
-
-  private extractDescription(username: string, tweet: Tweet): string | null {
-    const text = tweet.text
-      ?.replace(/!submit\s+@\w+/i, "")
-      .replace(new RegExp(`@${username}`, "i"), "")
-      .replace(/#\w+/g, "")
-      .trim();
-    return text || null;
-  }
-
-  private extractNote(username: string, tweet: Tweet): string | null {
-    const text = tweet.text
-      ?.replace(/#\w+/g, "")
-      .replace(new RegExp(`@${this.config.global.botId}`, "i"), "")
-      .replace(new RegExp(`@${username}`, "i"), "")
-      .trim();
-    return text || null;
-  }
+  // Removed: handleAcknowledgement, processApproval, processRejection (merged into handleModeration)
+  // Removed: isAdmin (replaced by isAdminByUsername), getModerationAction, isModeration, isSubmission (moved to AdapterService)
+  // Removed: extractDescription, extractNote (moved to AdapterService or handled by it)
 }

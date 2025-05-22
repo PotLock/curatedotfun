@@ -1,7 +1,17 @@
 import { ActivityService } from "../services/activity.service";
+import { AdapterService } from "../services/adapter.service";
+import { ConfigService } from "../services/config.service";
 import { DatabaseConnection } from "../services/db/connection";
 import { UserRepository } from "../services/db/repositories";
 import { ActivityRepository } from "../services/db/repositories/activity.repository";
+import { lastProcessedStateRepository } from "../services/db/repositories/lastProcessedState.repository";
+import { DistributionService } from "../services/distribution.service";
+import { InboundService } from "../services/inbound.service";
+import { PluginService } from "../services/plugin.service";
+import { ProcessorService } from "../services/processor.service";
+import { SourceService } from "../services/source.service";
+import { SubmissionService } from "../services/submission.service";
+import { TransformationService } from "../services/transformation.service";
 import { UserService } from "../services/users.service";
 
 /**
@@ -17,13 +27,55 @@ export class ServiceProvider {
     const activityRepository = new ActivityRepository();
     const userRepository = new UserRepository();
 
+    // Core services
+    const configService = ConfigService.getInstance();
+    const appConfig = configService.getConfig(); 
+    const pluginService = PluginService.getInstance();
+
+    // Transformation and Distribution
+    const transformationService = new TransformationService(pluginService);
+    const distributionService = new DistributionService(pluginService);
+
+    // Processor Service
+    const processorService = new ProcessorService(
+      transformationService,
+      distributionService,
+    );
+
+    // Submission Service (refactored)
+    const submissionService = new SubmissionService(
+      processorService,
+      appConfig,
+    );
+
+    // Source Ingestion Services
+    const sourceService = new SourceService(
+      pluginService,
+      lastProcessedStateRepository,
+    );
+    const adapterService = new AdapterService(appConfig);
+    const inboundService = new InboundService(
+      adapterService,
+      submissionService,
+      appConfig,
+    );
+
     // Initialize services with their dependencies
     this.services.set("userService", new UserService(userRepository));
     this.services.set(
       "activityService",
       new ActivityService(activityRepository),
     );
-    // Add more services as needed
+    // TODO: Move services to injection, no singleton
+    this.services.set("configService", configService);
+    this.services.set("pluginService", pluginService);
+    this.services.set("transformationService", transformationService);
+    this.services.set("distributionService", distributionService);
+    this.services.set("processorService", processorService);
+    this.services.set("submissionService", submissionService);
+    this.services.set("sourceService", sourceService);
+    this.services.set("adapterService", adapterService);
+    this.services.set("inboundService", inboundService);
   }
 
   /**
@@ -80,5 +132,43 @@ export class ServiceProvider {
    */
   public getActivityService(): ActivityService {
     return this.getService<ActivityService>("activityService");
+  }
+
+  // Add getters for new services
+
+  public getConfigService(): ConfigService {
+    return this.getService<ConfigService>("configService");
+  }
+
+  public getPluginService(): PluginService {
+    return this.getService<PluginService>("pluginService");
+  }
+
+  public getTransformationService(): TransformationService {
+    return this.getService<TransformationService>("transformationService");
+  }
+
+  public getDistributionService(): DistributionService {
+    return this.getService<DistributionService>("distributionService");
+  }
+
+  public getProcessorService(): ProcessorService {
+    return this.getService<ProcessorService>("processorService");
+  }
+
+  public getSubmissionService(): SubmissionService {
+    return this.getService<SubmissionService>("submissionService");
+  }
+
+  public getSourceService(): SourceService {
+    return this.getService<SourceService>("sourceService");
+  }
+
+  public getAdapterService(): AdapterService {
+    return this.getService<AdapterService>("adapterService");
+  }
+
+  public getInboundService(): InboundService {
+    return this.getService<InboundService>("inboundService");
   }
 }
