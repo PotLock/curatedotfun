@@ -2,7 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import { logger } from "../../utils/logger";
-import { Env } from "../../types/app"; 
+import { Env } from "../../types/app";
 import { ServiceProvider } from "../../utils/service-provider";
 
 // Define validation schema for the recap job payload
@@ -39,7 +39,11 @@ triggerRoutes.post("/recap", zValidator("json", recapJobSchema), async (c) => {
     const sp = ServiceProvider.getInstance();
     const schedulerService = sp.getSchedulerService();
     // await schedulerService.runRecapJob(feedId, recapId); // This specific method call might need review based on SchedulerService capabilities
-    return c.json({ success: true, message: "Recap trigger acknowledged. Processing will be handled by SchedulerService." });
+    return c.json({
+      success: true,
+      message:
+        "Recap trigger acknowledged. Processing will be handled by SchedulerService.",
+    });
   } catch (error) {
     logger.error(`Error running recap job: ${feedId}/${recapId}`, error);
 
@@ -67,7 +71,10 @@ triggerRoutes.post("/ingest/:feedId", async (c) => {
   } catch (error) {
     logger.error(`Error triggering ingestion for feed ${feedId}:`, error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    return c.json({ error: `Failed to trigger ingestion: ${errorMessage}` }, 500);
+    return c.json(
+      { error: `Failed to trigger ingestion: ${errorMessage}` },
+      500,
+    );
   }
 });
 

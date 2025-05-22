@@ -122,11 +122,17 @@ export class SchedulerService {
       }
 
       // Sync ingestion schedule for the feed
-      if (feedConfig.ingestion && feedConfig.ingestion.enabled && feedConfig.ingestion.schedule) {
+      if (
+        feedConfig.ingestion &&
+        feedConfig.ingestion.enabled &&
+        feedConfig.ingestion.schedule
+      ) {
         const ingestionJobName = `ingest-${feedId}`;
         const ingestionTarget = `${this.backendUrl}/api/trigger/ingest/${feedId}`;
         const ingestionPayload = { feedId };
-        const ingestionScheduleConfig = this.parseSchedule(feedConfig.ingestion.schedule);
+        const ingestionScheduleConfig = this.parseSchedule(
+          feedConfig.ingestion.schedule,
+        );
 
         try {
           // Attempt to create/update the ingestion job.
@@ -135,15 +141,17 @@ export class SchedulerService {
           // A common pattern is delete-by-name then create, if supported, or use upsert.
           // Here, we'll log if creation fails, assuming it might be due to existence.
           // A more robust solution would involve fetching job by name, then update or create.
-          
-          logger.info(`Attempting to set up ingestion job: ${ingestionJobName}`);
-          
+
+          logger.info(
+            `Attempting to set up ingestion job: ${ingestionJobName}`,
+          );
+
           // This is a simplified approach: try to create.
           // In a real scenario, you'd need to manage existing jobs (delete/update).
           // For now, if this fails because job exists, it will log error.
           // If schedulerClient had an upsert or createOrUpdate, that would be ideal.
           // Or, one might try to delete by a predictable name first, then create.
-          
+
           // Let's try a delete then create pattern, catching error if delete fails (e.g. not found)
           try {
             // This assumes schedulerClient.deleteJob can take a name or that we have an ID.
@@ -167,19 +175,26 @@ export class SchedulerService {
             payload: ingestionPayload,
             ...ingestionScheduleConfig,
           });
-          logger.info(`Successfully created/updated ingestion job: ${ingestionJobName}`);
+          logger.info(
+            `Successfully created/updated ingestion job: ${ingestionJobName}`,
+          );
         } catch (jobError) {
-          logger.error(`Failed to create/update ingestion job ${ingestionJobName} for feed ${feedId}:`, jobError);
+          logger.error(
+            `Failed to create/update ingestion job ${ingestionJobName} for feed ${feedId}:`,
+            jobError,
+          );
           // If error is due to job already existing, that's okay for this simplified step.
         }
       } else {
         // Ingestion is not enabled or not configured, ensure no job exists.
         // This also requires a way to find and delete the job, likely by a stored ID or predictable name.
         const ingestionJobName = `ingest-${feedId}`;
-        logger.info(`Ingestion not enabled for ${feedId}. Ensuring job ${ingestionJobName} is removed (if it exists and can be found).`);
+        logger.info(
+          `Ingestion not enabled for ${feedId}. Ensuring job ${ingestionJobName} is removed (if it exists and can be found).`,
+        );
         // Similar to above, deleting by name is problematic without ID.
         // try {
-        //   await this.schedulerClient.deleteJob(ingestionJobName); 
+        //   await this.schedulerClient.deleteJob(ingestionJobName);
         //   logger.info(`Successfully deleted ingestion job ${ingestionJobName} as it's no longer enabled.`);
         // } catch (delError) {
         //   logger.warn(`Could not delete job ${ingestionJobName} (may not exist or delete by name unsupported):`, delError);
@@ -435,7 +450,9 @@ export class SchedulerService {
 
       // Get recap config
       const recaps: RecapConfig[] = feedConfig.outputs.recap || [];
-      const recapConfig = recaps.find((recap: RecapConfig) => recap.id === recapId);
+      const recapConfig = recaps.find(
+        (recap: RecapConfig) => recap.id === recapId,
+      );
 
       if (!recapConfig) {
         throw new Error(`Recap config not found: ${feedId}/${recapId}`);
@@ -497,30 +514,43 @@ export class SchedulerService {
     try {
       const feedConfig = await this.feedRepository.getFeedConfig(feedId);
       if (!feedConfig) {
-        logger.error(`[Scheduler-processFeedSources] Feed config not found for feedId: ${feedId}`);
+        logger.error(
+          `[Scheduler-processFeedSources] Feed config not found for feedId: ${feedId}`,
+        );
         return;
       }
 
       if (!feedConfig.sources || feedConfig.sources.length === 0) {
-        logger.info(`[Scheduler-processFeedSources] No sources configured for feed: ${feedId}`);
+        logger.info(
+          `[Scheduler-processFeedSources] No sources configured for feed: ${feedId}`,
+        );
         return;
       }
 
       // 1. Fetch items from all sources for the feed
-      const sourceItems = await this.sourceService.fetchAllSourcesForFeed(feedConfig);
-      logger.info(`[Scheduler-processFeedSources] Fetched ${sourceItems.length} items from sources for feed: ${feedId}`);
+      const sourceItems =
+        await this.sourceService.fetchAllSourcesForFeed(feedConfig);
+      logger.info(
+        `[Scheduler-processFeedSources] Fetched ${sourceItems.length} items from sources for feed: ${feedId}`,
+      );
 
       if (sourceItems.length === 0) {
-        logger.info(`[Scheduler-processFeedSources] No new items fetched for feed: ${feedId}. Skipping further processing.`);
+        logger.info(
+          `[Scheduler-processFeedSources] No new items fetched for feed: ${feedId}. Skipping further processing.`,
+        );
         return;
       }
 
       // 2. Process fetched items through the inbound service
       await this.inboundService.processInboundItems(sourceItems, feedConfig);
-      logger.info(`[Scheduler-processFeedSources] Successfully processed inbound items for feed: ${feedId}`);
-
+      logger.info(
+        `[Scheduler-processFeedSources] Successfully processed inbound items for feed: ${feedId}`,
+      );
     } catch (error) {
-      logger.error(`[Scheduler-processFeedSources] Error processing sources for feed ${feedId}:`, error);
+      logger.error(
+        `[Scheduler-processFeedSources] Error processing sources for feed ${feedId}:`,
+        error,
+      );
       // Depending on requirements, might want to update some state in feedRepository
       // to indicate failure for this run.
     }

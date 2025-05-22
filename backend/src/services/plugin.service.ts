@@ -452,7 +452,10 @@ export class PluginService {
     if (!instance || typeof instance !== "object") return false;
     if (typeof instance.initialize !== "function") return false;
     if (instance.type !== type) {
-      logger.warn(`Plugin instance type mismatch: expected ${type}, got ${instance.type}`, { name: (instance as any)?.constructor?.name });
+      logger.warn(
+        `Plugin instance type mismatch: expected ${type}, got ${instance.type}`,
+        { name: (instance as any)?.constructor?.name },
+      );
       return false;
     }
 
@@ -468,15 +471,11 @@ export class PluginService {
           TOutput,
           TConfig
         >;
-        return (
-          typeof transformer.transform === "function"
-        );
+        return typeof transformer.transform === "function";
       }
       case "source": {
         const source = instance as SourcePlugin<SourceItem, TConfig>;
-        return (
-          typeof source.search === "function"
-        );
+        return typeof source.search === "function";
       }
       default:
         // This case should ideally not be reached if PluginType is a comprehensive union

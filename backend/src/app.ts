@@ -21,7 +21,6 @@ export async function createApp(): Promise<AppInstance> {
   const initialConfigService = ConfigService.getInstance();
   await initialConfigService.loadConfig();
 
-
   // Create Hono app
   const app = new Hono<Env>();
 
@@ -40,7 +39,8 @@ export async function createApp(): Promise<AppInstance> {
         Authorization: `Bearer ${process.env.SCHEDULER_API_TOKEN || ""}`,
       },
     });
-    const backendUrl = process.env.CURATE_BACKEND_URL || "http://localhost:3000";
+    const backendUrl =
+      process.env.CURATE_BACKEND_URL || "http://localhost:3000";
     const schedulerService = new SchedulerService(
       feedRepository,
       sp.getProcessorService(),

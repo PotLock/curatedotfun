@@ -7,7 +7,11 @@ import {
   ModerationCommandData,
   AdaptedPendingSubmissionCommand, // Added
 } from "../types/inbound.types";
-import { Submission, Moderation, SubmissionStatus } from "../types/submission.types";
+import {
+  Submission,
+  Moderation,
+  SubmissionStatus,
+} from "../types/submission.types";
 import { AppConfig, FeedConfig } from "../types/config.zod"; // For potential config access
 import { logger } from "../utils/logger";
 
@@ -23,7 +27,14 @@ export class AdapterService {
     feedConfig: FeedConfig, // Feed context might be needed for adaptation rules
     searchId: string, // searchId that sourced this item
   ): AdaptedItem {
-    const { id: sourceInternalId, externalId, content, createdAt, author, metadata } = sourceItem;
+    const {
+      id: sourceInternalId,
+      externalId,
+      content,
+      createdAt,
+      author,
+      metadata,
+    } = sourceItem;
 
     // Basic command detection (very rudimentary for now)
     // A more robust system would involve dedicated command source plugins or more sophisticated parsing.
@@ -52,21 +63,28 @@ export class AdapterService {
     // will need to handle the "curation" aspect.
     // A dedicated "TwitterCommandSource" plugin would be better for this.
 
-    logger.info(`Adapting item ${sourceItem.externalId} as a potential submission command (treated as content).`);
+    logger.info(
+      `Adapting item ${sourceItem.externalId} as a potential submission command (treated as content).`,
+    );
     // For a true !submit, we'd need to fetch the replied-to item.
     // Here, we'll assume the sourceItem *is* the content if inReplyToId is not present,
     // or if the plugin is expected to resolve this.
 
     if (sourceItem.metadata?.inReplyToId) {
       // This is a command replying to another item. Adapt as PendingSubmissionCommand.
-      logger.info(`Adapting item ${sourceItem.externalId} as a PendingSubmissionCommand targeting ${sourceItem.metadata.inReplyToId}.`);
-      
-      const curatorNotes = this.extractCuratorNotes(sourceItem.content, "!submit", sourceItem.author?.username || "replied_user");
+      logger.info(
+        `Adapting item ${sourceItem.externalId} as a PendingSubmissionCommand targeting ${sourceItem.metadata.inReplyToId}.`,
+      );
+
+      const curatorNotes = this.extractCuratorNotes(
+        sourceItem.content,
+        "!submit",
+        sourceItem.author?.username || "replied_user",
+      );
 
       // TODO: Extract potentialTargetFeedIds from hashtags in sourceItem.content if needed.
       // For now, leaving it undefined.
       // const potentialTargetFeedIds = extractHashtagsAsFeedIds(sourceItem.content);
-
 
       return {
         type: "pendingSubmissionCommand",
@@ -76,30 +94,48 @@ export class AdapterService {
         searchId: searchId,
         targetExternalId: sourceItem.metadata.inReplyToId,
         curatorId: sourceItem.author?.id || "unknown_curator_id",
-        curatorUsername: sourceItem.author?.username || sourceItem.author?.displayName || "unknown_curator",
+        curatorUsername:
+          sourceItem.author?.username ||
+          sourceItem.author?.displayName ||
+          "unknown_curator",
         curatorPlatformId: sourceItem.author?.id, // Assuming platformId is same as id for now
         curatorActionExternalId: sourceItem.externalId, // The ID of the !submit command item
         curatorNotes: curatorNotes,
-        submittedAt: sourceItem.createdAt ? new Date(sourceItem.createdAt) : new Date(),
+        submittedAt: sourceItem.createdAt
+          ? new Date(sourceItem.createdAt)
+          : new Date(),
         // potentialTargetFeedIds: [] // Placeholder
       } as AdaptedPendingSubmissionCommand;
-
     } else {
       // This is a direct !submit command, or a command where the item itself is the content.
       // Adapt as a direct ContentSubmission.
-      logger.info(`Adapting item ${sourceItem.externalId} as a direct ContentSubmission (not a reply).`);
-      
+      logger.info(
+        `Adapting item ${sourceItem.externalId} as a direct ContentSubmission (not a reply).`,
+      );
+
       const submission: Partial<Submission> = {
         tweetId: sourceItem.externalId, // Using tweetId as it's the current field in Submission type
         userId: sourceItem.author?.id || "unknown_author_id",
-        username: sourceItem.author?.username || sourceItem.author?.displayName || "unknown_author",
+        username:
+          sourceItem.author?.username ||
+          sourceItem.author?.displayName ||
+          "unknown_author",
         content: sourceItem.content, // The content is the item itself
-        createdAt: sourceItem.createdAt ? new Date(sourceItem.createdAt) : new Date(),
+        createdAt: sourceItem.createdAt
+          ? new Date(sourceItem.createdAt)
+          : new Date(),
         submittedAt: new Date(), // When this adaptation/submission happens
         curatorId: sourceItem.author?.id || "unknown_curator_id", // The one who issued !submit is also the author here
-        curatorUsername: sourceItem.author?.username || sourceItem.author?.displayName || "unknown_curator",
+        curatorUsername:
+          sourceItem.author?.username ||
+          sourceItem.author?.displayName ||
+          "unknown_curator",
         curatorTweetId: sourceItem.externalId, // The !submit command tweet itself (or the content item)
-        curatorNotes: this.extractCuratorNotes(sourceItem.content, "!submit", ""), // No repliedToUsername if it's direct content
+        curatorNotes: this.extractCuratorNotes(
+          sourceItem.content,
+          "!submit",
+          "",
+        ), // No repliedToUsername if it's direct content
         media: sourceItem.media,
         status: this.appConfig.global.defaultStatus,
         moderationHistory: [],
@@ -107,7 +143,9 @@ export class AdapterService {
       };
 
       if (!submission.tweetId || !submission.content) {
-        logger.warn(`Failed to adapt ${sourceItem.externalId} as direct content submission: missing essential fields.`);
+        logger.warn(
+          `Failed to adapt ${sourceItem.externalId} as direct content submission: missing essential fields.`,
+        );
         return {
           type: "unknown",
           originalSourceItem: sourceItem,
@@ -117,7 +155,7 @@ export class AdapterService {
           error: "Missing essential fields for direct content submission.",
         } as AdaptedUnknownItem;
       }
-      
+
       return {
         type: "contentSubmission",
         originalSourceItem: sourceItem,
@@ -134,7 +172,9 @@ export class AdapterService {
     feedConfig: FeedConfig,
     searchId: string,
   ): AdaptedItem {
-    logger.info(`Adapting item ${sourceItem.externalId} as a moderation command.`);
+    logger.info(
+      `Adapting item ${sourceItem.externalId} as a moderation command.`,
+    );
     const contentLower = sourceItem.content.toLowerCase();
     let action: Moderation["action"] | null = null;
 
@@ -159,7 +199,9 @@ export class AdapterService {
       moderatorPlatformId: sourceItem.author?.id,
       notes: this.extractCuratorNotes(sourceItem.content, action, ""), // Basic note extraction
       commandExternalId: sourceItem.externalId,
-      commandTimestamp: sourceItem.createdAt ? new Date(sourceItem.createdAt) : new Date(),
+      commandTimestamp: sourceItem.createdAt
+        ? new Date(sourceItem.createdAt)
+        : new Date(),
     };
 
     return {
@@ -186,9 +228,14 @@ export class AdapterService {
     const submission: Partial<Submission> = {
       tweetId: sourceItem.externalId, // Using tweetId as it's the current field
       userId: sourceItem.author?.id || "source_author_id",
-      username: sourceItem.author?.username || sourceItem.author?.displayName || "Source Author",
+      username:
+        sourceItem.author?.username ||
+        sourceItem.author?.displayName ||
+        "Source Author",
       content: sourceItem.content,
-      createdAt: sourceItem.createdAt ? new Date(sourceItem.createdAt) : new Date(),
+      createdAt: sourceItem.createdAt
+        ? new Date(sourceItem.createdAt)
+        : new Date(),
       submittedAt: new Date(), // Or could be item's createdAt if not "curated"
       // Curator fields might be system-generated or based on feed config
       curatorId: "system", // Placeholder
@@ -202,7 +249,9 @@ export class AdapterService {
     };
 
     if (!submission.tweetId || !submission.content) {
-      logger.warn(`Failed to adapt ${sourceItem.externalId} as content: missing essential fields.`);
+      logger.warn(
+        `Failed to adapt ${sourceItem.externalId} as content: missing essential fields.`,
+      );
       return {
         type: "unknown",
         originalSourceItem: sourceItem,
@@ -222,17 +271,24 @@ export class AdapterService {
       submission: submission as Submission,
     } as AdaptedContentSubmission;
   }
-  
+
   // Basic note extraction, similar to old SubmissionService
-  private extractCuratorNotes(text: string, command: string, repliedToUsername: string): string | null {
+  private extractCuratorNotes(
+    text: string,
+    command: string,
+    repliedToUsername: string,
+  ): string | null {
     const commandRegex = new RegExp(`!${command}\\s*(@\\w+\\s*)?`, "i");
     let notes = text
       .replace(commandRegex, "")
       .replace(new RegExp(`@${this.appConfig.global.botId}`, "i"), "") // Remove bot mention
       .replace(/#\w+/g, "") // Remove hashtags
       .trim();
-    if (repliedToUsername) { // remove mention of the user being replied to if it's part of the notes
-        notes = notes.replace(new RegExp(`@${repliedToUsername}`, "i"), "").trim();
+    if (repliedToUsername) {
+      // remove mention of the user being replied to if it's part of the notes
+      notes = notes
+        .replace(new RegExp(`@${repliedToUsername}`, "i"), "")
+        .trim();
     }
     return notes || null;
   }

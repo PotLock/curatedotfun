@@ -1,13 +1,16 @@
-import type { LastProcessedState, PlatformState } from '@curatedotfun/types';
-import { and, eq } from 'drizzle-orm';
-import { lastProcessedStateTable, type NewLastProcessedStateSchema } from '../schema/lastProcessedState';
-import { executeOperation, withDatabaseErrorHandling } from '../transaction';
+import type { LastProcessedState, PlatformState } from "@curatedotfun/types";
+import { and, eq } from "drizzle-orm";
+import {
+  lastProcessedStateTable,
+  type NewLastProcessedStateSchema,
+} from "../schema/lastProcessedState";
+import { executeOperation, withDatabaseErrorHandling } from "../transaction";
 
 export class LastProcessedStateRepository {
   async getState<T extends PlatformState>(
     feedId: string,
     sourcePluginName: string,
-    searchId: string
+    searchId: string,
   ): Promise<LastProcessedState<T> | null> {
     return withDatabaseErrorHandling(
       async () => {
@@ -19,8 +22,8 @@ export class LastProcessedStateRepository {
               and(
                 eq(lastProcessedStateTable.feedId, feedId),
                 eq(lastProcessedStateTable.sourcePluginName, sourcePluginName),
-                eq(lastProcessedStateTable.searchId, searchId)
-              )
+                eq(lastProcessedStateTable.searchId, searchId),
+              ),
             )
             .limit(1);
 
@@ -30,7 +33,7 @@ export class LastProcessedStateRepository {
           return result[0].stateJson as LastProcessedState<T>;
         });
       },
-      { operationName: 'getLastProcessedState' }
+      { operationName: "getLastProcessedState" },
     );
   }
 
@@ -38,7 +41,7 @@ export class LastProcessedStateRepository {
     feedId: string,
     sourcePluginName: string,
     searchId: string,
-    state: LastProcessedState<T>
+    state: LastProcessedState<T>,
   ): Promise<void> {
     return withDatabaseErrorHandling(
       async () => {
@@ -65,14 +68,14 @@ export class LastProcessedStateRepository {
             });
         });
       },
-      { operationName: 'saveLastProcessedState' }
+      { operationName: "saveLastProcessedState" },
     );
   }
 
   async deleteState(
     feedId: string,
     sourcePluginName: string,
-    searchId: string
+    searchId: string,
   ): Promise<void> {
     return withDatabaseErrorHandling(
       async () => {
@@ -83,12 +86,12 @@ export class LastProcessedStateRepository {
               and(
                 eq(lastProcessedStateTable.feedId, feedId),
                 eq(lastProcessedStateTable.sourcePluginName, sourcePluginName),
-                eq(lastProcessedStateTable.searchId, searchId)
-              )
+                eq(lastProcessedStateTable.searchId, searchId),
+              ),
             );
         });
       },
-      { operationName: 'deleteLastProcessedState' }
+      { operationName: "deleteLastProcessedState" },
     );
   }
 }

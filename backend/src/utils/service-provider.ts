@@ -29,7 +29,7 @@ export class ServiceProvider {
 
     // Core services
     const configService = ConfigService.getInstance();
-    const appConfig = configService.getConfig(); 
+    const appConfig = configService.getConfig();
     const pluginService = PluginService.getInstance();
 
     // Transformation and Distribution

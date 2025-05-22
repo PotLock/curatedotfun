@@ -1,11 +1,11 @@
 import { SourceItem } from "@curatedotfun/types";
 import { FeedConfig, AppConfig } from "../types/config.zod";
-import { 
-  AdaptedItem, 
-  AdaptedContentSubmission, 
-  AdaptedModerationCommand, 
+import {
+  AdaptedItem,
+  AdaptedContentSubmission,
+  AdaptedModerationCommand,
   AdaptedPendingSubmissionCommand,
-  AdaptedUnknownItem
+  AdaptedUnknownItem,
 } from "../types/inbound.types";
 import { Submission } from "../types/submission.types"; // Added Submission
 import { AdapterService } from "./adapter.service";
@@ -28,9 +28,11 @@ export class InboundService {
       return;
     }
 
-    logger.info(`Processing ${sourceItems.length} inbound items for feed '${feedConfig.id}'.`);
+    logger.info(
+      `Processing ${sourceItems.length} inbound items for feed '${feedConfig.id}'.`,
+    );
 
-    const adaptedItems: AdaptedItem[] = sourceItems.map(sourceItem => {
+    const adaptedItems: AdaptedItem[] = sourceItems.map((sourceItem) => {
       const searchId = sourceItem.metadata?.searchId || "unknown_search_id";
       return this.adapterService.adaptItem(sourceItem, feedConfig, searchId);
     });
@@ -56,10 +58,14 @@ export class InboundService {
     // Process pending submission commands (stitching)
     for (const pendingCmd of pendingCommands) {
       try {
-        const targetContentSubmission = contentSubmissionsMap.get(pendingCmd.targetExternalId);
+        const targetContentSubmission = contentSubmissionsMap.get(
+          pendingCmd.targetExternalId,
+        );
         if (targetContentSubmission) {
-          logger.info(`Found target content ${pendingCmd.targetExternalId} for pending command ${pendingCmd.originalSourceItem.externalId}. Stitching submission.`);
-          
+          logger.info(
+            `Found target content ${pendingCmd.targetExternalId} for pending command ${pendingCmd.originalSourceItem.externalId}. Stitching submission.`,
+          );
+
           const finalSubmission: Submission = {
             // Content from targetContentSubmission.submission
             tweetId: targetContentSubmission.submission.tweetId,
@@ -68,7 +74,7 @@ export class InboundService {
             content: targetContentSubmission.submission.content,
             createdAt: targetContentSubmission.submission.createdAt,
             media: targetContentSubmission.submission.media, // Ensure media is copied
-            
+
             // Curator info from pendingCmd
             curatorId: pendingCmd.curatorId,
             curatorUsername: pendingCmd.curatorUsername,
@@ -76,7 +82,7 @@ export class InboundService {
             curatorTweetId: pendingCmd.curatorActionExternalId,
             curatorNotes: pendingCmd.curatorNotes,
             submittedAt: pendingCmd.submittedAt,
-            
+
             // Default/initial values
             status: this.appConfig.global.defaultStatus, // Use global default status
             moderationHistory: [],
@@ -85,34 +91,61 @@ export class InboundService {
             // potentialTargetFeedIds: pendingCmd.potentialTargetFeedIds, // If needed by SubmissionService
           };
 
-          await this.submissionService.handleSubmission(finalSubmission, pendingCmd.feedId, pendingCmd.sourcePluginName);
+          await this.submissionService.handleSubmission(
+            finalSubmission,
+            pendingCmd.feedId,
+            pendingCmd.sourcePluginName,
+          );
           contentSubmissionsMap.delete(pendingCmd.targetExternalId); // Mark as processed
         } else {
-          logger.warn(`Target content ${pendingCmd.targetExternalId} for pending command ${pendingCmd.originalSourceItem.externalId} (plugin: ${pendingCmd.sourcePluginName}) not found in current batch. Command might be orphaned.`);
+          logger.warn(
+            `Target content ${pendingCmd.targetExternalId} for pending command ${pendingCmd.originalSourceItem.externalId} (plugin: ${pendingCmd.sourcePluginName}) not found in current batch. Command might be orphaned.`,
+          );
           // Optionally, store orphaned command for later retry or error handling
         }
       } catch (error) {
-        logger.error(`Error processing stitched submission for pending command ${pendingCmd.originalSourceItem.externalId} (target: ${pendingCmd.targetExternalId}):`, error);
+        logger.error(
+          `Error processing stitched submission for pending command ${pendingCmd.originalSourceItem.externalId} (target: ${pendingCmd.targetExternalId}):`,
+          error,
+        );
       }
     }
 
     // Process remaining content submissions (direct submissions)
     for (const contentSub of contentSubmissionsMap.values()) {
       try {
-        logger.info(`Routing direct adapted content submission (extId: ${contentSub.submission.tweetId}, plugin: ${contentSub.sourcePluginName}) to SubmissionService.`);
-        await this.submissionService.handleSubmission(contentSub.submission, contentSub.feedId, contentSub.sourcePluginName);
+        logger.info(
+          `Routing direct adapted content submission (extId: ${contentSub.submission.tweetId}, plugin: ${contentSub.sourcePluginName}) to SubmissionService.`,
+        );
+        await this.submissionService.handleSubmission(
+          contentSub.submission,
+          contentSub.feedId,
+          contentSub.sourcePluginName,
+        );
       } catch (error) {
-        logger.error(`Error processing direct content submission ${contentSub.submission.tweetId} from plugin ${contentSub.sourcePluginName}:`, error);
+        logger.error(
+          `Error processing direct content submission ${contentSub.submission.tweetId} from plugin ${contentSub.sourcePluginName}:`,
+          error,
+        );
       }
     }
 
     // Process moderation commands
     for (const modCmd of moderationCommands) {
       try {
-        logger.info(`Routing adapted moderation command (target: ${modCmd.command.targetExternalId}, plugin: ${modCmd.sourcePluginName}) to SubmissionService.`);
-        await this.submissionService.handleModeration(modCmd.command, modCmd.feedId, modCmd.sourcePluginName);
+        logger.info(
+          `Routing adapted moderation command (target: ${modCmd.command.targetExternalId}, plugin: ${modCmd.sourcePluginName}) to SubmissionService.`,
+        );
+        await this.submissionService.handleModeration(
+          modCmd.command,
+          modCmd.feedId,
+          modCmd.sourcePluginName,
+        );
       } catch (error) {
-        logger.error(`Error processing moderation command for target ${modCmd.command.targetExternalId} from plugin ${modCmd.sourcePluginName}:`, error);
+        logger.error(
+          `Error processing moderation command for target ${modCmd.command.targetExternalId} from plugin ${modCmd.sourcePluginName}:`,
+          error,
+        );
       }
     }
 
@@ -123,6 +156,8 @@ export class InboundService {
       );
     }
 
-    logger.info(`Finished processing inbound items for feed '${feedConfig.id}'.`);
+    logger.info(
+      `Finished processing inbound items for feed '${feedConfig.id}'.`,
+    );
   }
 }

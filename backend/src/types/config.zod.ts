@@ -65,17 +65,18 @@ export const RecapConfigSchema = z.object({
 export type RecapConfig = z.infer<typeof RecapConfigSchema>;
 
 // Schema for individual search configuration within a source
-export const SourceSearchConfigSchema = z.object({
-  searchId: z.string(), // Unique ID for this search block to manage its state
-  type: z.string(), // Type of search within the plugin (e.g., "twitter-scraper", "reddit-posts")
-  query: z.string().optional(), // General query string
-  pageSize: z.number().int().positive().optional(),
-  language: z.string().optional(), // e.g., "en", "es"
-  platformArgs: z.record(z.unknown()).optional(), // Platform-specific arguments
-  // Allow other dynamic properties
-}).catchall(z.unknown());
+export const SourceSearchConfigSchema = z
+  .object({
+    searchId: z.string(), // Unique ID for this search block to manage its state
+    type: z.string(), // Type of search within the plugin (e.g., "twitter-scraper", "reddit-posts")
+    query: z.string().optional(), // General query string
+    pageSize: z.number().int().positive().optional(),
+    language: z.string().optional(), // e.g., "en", "es"
+    platformArgs: z.record(z.unknown()).optional(), // Platform-specific arguments
+    // Allow other dynamic properties
+  })
+  .catchall(z.unknown());
 export type SourceSearchConfig = z.infer<typeof SourceSearchConfigSchema>;
-
 
 // Schema for SourceConfig (part of FeedConfig)
 export const SourceConfigSchema = z.object({
@@ -94,7 +95,6 @@ export const IngestionConfigSchema = z.object({
   enabled: z.boolean().default(false).optional(),
   schedule: z.string().min(1),
 });
-
 
 // Schema for FeedConfig
 export const FeedConfigSchema = z.object({
@@ -134,6 +134,12 @@ export type FeedConfig = z.infer<typeof FeedConfigSchema>;
 export type AppConfig = z.infer<typeof AppConfigSchema>;
 
 // Example of how to get a specific plugin config type if needed, though usually generic is fine
-export type TransformerPluginRegistrationConfig = z.infer<typeof PluginRegistrationConfigSchema> & { type: "transformer" };
-export type DistributorPluginRegistrationConfig = z.infer<typeof PluginRegistrationConfigSchema> & { type: "distributor" };
-export type SourcePluginRegistrationConfig = z.infer<typeof PluginRegistrationConfigSchema> & { type: "source" };
+export type TransformerPluginRegistrationConfig = z.infer<
+  typeof PluginRegistrationConfigSchema
+> & { type: "transformer" };
+export type DistributorPluginRegistrationConfig = z.infer<
+  typeof PluginRegistrationConfigSchema
+> & { type: "distributor" };
+export type SourcePluginRegistrationConfig = z.infer<
+  typeof PluginRegistrationConfigSchema
+> & { type: "source" };
