@@ -13,6 +13,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { ChevronDown, CircleUserRound, CreditCard, LogOut } from "lucide-react";
 import { useAuthStore } from "../store/auth-store";
 import { AuthUserInfo } from "../types/web3auth";
+import { useWalletSelector } from "@near-wallet-selector/react-hook";
+import { AvatarProfile } from "./AvatarProfile";
 
 export default function UserMenu() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -22,13 +24,13 @@ export default function UserMenu() {
   const { showLoginModal } = useAuthStore();
 
   const { isInitialized, isLoggedIn, logout, getUserInfo } = useWeb3Auth();
+  const { signedAccountId, signOut } = useWalletSelector();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
         const info = await getUserInfo();
         setUserInfo(info);
-        // Reset image error state when we get new user info
         setImageError(false);
       } catch (error) {
         console.error("Error fetching user info:", error);
@@ -60,28 +62,49 @@ export default function UserMenu() {
         style={{
           height: size === "small" ? "28px" : "24px",
           width: size === "small" ? "28px" : "24px",
-          objectFit: "cover", // Add this to ensure image fits properly
+          objectFit: "cover",
         }}
         alt="Profile Image"
         src={userInfo.profileImage}
         onError={handleImageError}
-        loading="eager" // Make image loading priority high
-        referrerPolicy="no-referrer" // Help with potential CORS issues
+        loading="eager"
+        referrerPolicy="no-referrer"
       />
     );
   };
 
+  const getUserDisplayName = () => {
+    if (signedAccountId) {
+      return signedAccountId;
+    }
+    return (
+      (userInfo as { name?: string }).name ||
+      (userInfo as { email?: string }).email
+    );
+  };
+
+  const handleLogout = () => {
+    if (signedAccountId) {
+      signOut();
+    } else {
+      logout();
+    }
+  };
+
   return (
     <>
-      {isInitialized && isLoggedIn && userInfo ? (
+      {(isInitialized && isLoggedIn && userInfo) || signedAccountId ? (
         <DropdownMenu onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="hidden md:flex">
               <div className="flex gap-1 items-center justify-center">
-                <ProfileImage size="small" />
+                {signedAccountId ? (
+                  <AvatarProfile accountId={signedAccountId} size="small" />
+                ) : (
+                  <ProfileImage size="small" />
+                )}
                 <p className="text-sm font-medium leading-6 hidden sm:block">
-                  {(userInfo as { name?: string }).name ||
-                    (userInfo as { email?: string }).email}
+                  {getUserDisplayName()}
                 </p>
                 <ChevronDown
                   className={`h-4 w-4 transition-transform duration-200 ${
@@ -94,14 +117,20 @@ export default function UserMenu() {
           <DropdownMenuContent className="w-56 mt-4">
             <DropdownMenuItem>
               <div className="flex gap-2 w-full items-start">
-                <ProfileImage />
+                {signedAccountId ? (
+                  <AvatarProfile accountId={signedAccountId} size="medium" />
+                ) : (
+                  <ProfileImage />
+                )}
                 <div>
                   <p className="text-sm font-semibold leading-5">
-                    {(userInfo as { name?: string }).name}
+                    {signedAccountId || (userInfo as { name?: string }).name}
                   </p>
-                  <p className="text-xs leading-5 text-gray-500">
-                    {(userInfo as { email?: string }).email}
-                  </p>
+                  {!signedAccountId && (
+                    <p className="text-xs leading-5 text-gray-500">
+                      {(userInfo as { email?: string }).email}
+                    </p>
+                  )}
                 </div>
               </div>
             </DropdownMenuItem>
@@ -120,7 +149,7 @@ export default function UserMenu() {
               <span>Wallet</span>
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={logout}
+              onClick={handleLogout}
               className="cursor-pointer hover:bg-gray-100"
             >
               <LogOut />
