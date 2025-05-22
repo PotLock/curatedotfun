@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AuthUserInfo } from "../types/web3auth";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
+import { useFeedCreationStore } from "../store/feed-creation-store";
 import {
   Form,
   FormControl,
@@ -34,14 +35,21 @@ export default function BasicInformationForm() {
   const { isLoggedIn, getUserInfo } = useWeb3Auth();
   const { showLoginModal } = useAuthStore();
   const [isLoading, setLoading] = useState(false);
+  const {
+    profileImage: storedProfileImage,
+    feedName,
+    description,
+    hashtags,
+    setBasicInfo,
+  } = useFeedCreationStore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(BasicInformationFormSchema),
     defaultValues: {
-      profileImage: "",
-      feedName: "",
-      description: "",
-      hashtags: "",
+      profileImage: storedProfileImage || "",
+      feedName: feedName || "",
+      description: description || "",
+      hashtags: hashtags || "",
     },
   });
 
@@ -81,7 +89,7 @@ export default function BasicInformationForm() {
           {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${import.meta.env.PUBLIC_PINATA_JWT_KEY || ""}`,
+              Authorization: `Bearer ${import.meta.env.PUBLIC_PINATA_JWT_KEY}`,
             },
             body: formData,
           },
@@ -93,8 +101,17 @@ export default function BasicInformationForm() {
 
         const data = await response.json();
         const ipfsUrl = `https://ipfs.io/ipfs/${data.IpfsHash}`;
+
+        // Update local state for immediate UI feedback
         setImagePreview(ipfsUrl);
+
+        // Update form state
         form.setValue("profileImage", ipfsUrl);
+
+        // Update global store state to make it available to FeedReviewForm
+        setBasicInfo({ profileImage: ipfsUrl });
+
+        console.log("Image uploaded successfully:", ipfsUrl);
       } catch (error) {
         console.error("Error uploading file to Pinata:", error);
         toast({
@@ -102,6 +119,9 @@ export default function BasicInformationForm() {
           description: "Failed to upload image. Please try again.",
           variant: "destructive",
         });
+
+        // Clear the image preview on error
+        setImagePreview(null);
       } finally {
         setLoading(false);
       }
@@ -110,6 +130,10 @@ export default function BasicInformationForm() {
 
   const onSubmit = (data: FormValues) => {
     console.log("Form submitted:", data);
+    setBasicInfo({
+      ...data,
+      createdAt: new Date(),
+    });
     // Here you would handle the form submission, like sending the data to an API
   };
 
@@ -122,8 +146,7 @@ export default function BasicInformationForm() {
             <FormField
               control={form.control}
               name="profileImage"
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              render={({ field: { onChange, value, ...rest } }) => (
+              render={({ field }) => (
                 <FormItem>
                   {/* <FormLabel>Profile Image</FormLabel> */}
                   <FormControl>
@@ -170,10 +193,10 @@ export default function BasicInformationForm() {
                             accept="image/*"
                             className="hidden"
                             onChange={(e) => {
+                              // Only handle the image upload here
+                              // The form value will be set inside handleImageUpload
                               handleImageUpload(e);
-                              onChange(e);
                             }}
-                            {...rest}
                           />
                         </div>
                       </div>
@@ -195,7 +218,14 @@ export default function BasicInformationForm() {
                 <FormItem>
                   <FormLabel>Feed Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Name of your feed" {...field} />
+                    <Input
+                      placeholder="Name of your feed"
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setBasicInfo({ feedName: e.target.value });
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -214,6 +244,10 @@ export default function BasicInformationForm() {
                       placeholder="Description"
                       className="min-h-[100px]"
                       {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setBasicInfo({ description: e.target.value });
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -229,7 +263,14 @@ export default function BasicInformationForm() {
                 <FormItem>
                   <FormLabel>Hashtag (without #)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Tag" {...field} />
+                    <Input
+                      placeholder="Tag"
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setBasicInfo({ hashtags: e.target.value });
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                   <p className="text-sm font-normal text-[#64748b]">

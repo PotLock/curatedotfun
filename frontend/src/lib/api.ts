@@ -28,6 +28,36 @@ export function useFeed(feedId: string) {
   });
 }
 
+export async function createFeed(
+  feed: Omit<FeedConfig, "id"> & { id: string },
+) {
+  // Create the proper structure expected by the backend
+  const feedData = {
+    id: feed.id,
+    name: feed.name,
+    description: feed.description,
+    config: feed, // Include the entire feed object as the config
+  };
+
+  return fetch("/api/feeds", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(feedData),
+  }).then(async (response) => {
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || `Failed to create feed (HTTP ${response.status})`,
+      );
+    }
+
+    return data;
+  });
+}
+
 export function useFeedItems(
   feedId: string,
   limit: number = 20,

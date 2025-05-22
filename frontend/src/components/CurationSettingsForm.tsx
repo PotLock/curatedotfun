@@ -1,6 +1,7 @@
 import ContentApprovers from "./ContentApprovers";
 import ContentProgress from "./ContentProgress";
 import PublishingIntegrations from "./PublishIntegrations";
+import SubmissionRules from "./SubmissionRules";
 
 // Extracted component for step headers
 const StepHeader = ({
@@ -57,7 +58,7 @@ const steps: Step[] = [
   },
   {
     title: "Submission Rules",
-    description: "Define how content is processed before being published",
+    description: "Set requirements for content submissions to your feed",
 
     id: 4,
     component: <SubmissionRules />,
@@ -80,8 +81,4 @@ export default function CurationSettingsForm() {
       ))}
     </div>
   );
-}
-
-function SubmissionRules() {
-  return <div>Submission Rules</div>;
 }
