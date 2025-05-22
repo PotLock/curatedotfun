@@ -1,21 +1,46 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { Plus } from "lucide-react";
+import { Input } from "./ui/input";
+import { Plus, X } from "lucide-react";
+import { useFeedCreationStore } from "../store/feed-creation-store";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 export default function ContentApprovers() {
-  const [approvers, setApprovers] = useState([
-    { id: 1, name: "Cuppy Cupperson", handle: "djcuppy" },
-    { id: 2, name: "John Smith", handle: "jsmith" },
-  ]);
+  const { approvers, setApprovers } = useFeedCreationStore();
+  const [showForm, setShowForm] = useState(false);
+  const [handle, setHandle] = useState("");
+  const [platform, setPlatform] = useState("Twitter");
 
   const handleDeleteApprover = (id: number) => {
     setApprovers(approvers.filter((approver) => approver.id !== id));
   };
 
   const handleAddApprover = () => {
-    const newId =
-      approvers.length > 0 ? Math.max(...approvers.map((a) => a.id)) + 1 : 1;
-    setApprovers([...approvers, { id: newId, name: "", handle: "" }]);
+    setShowForm(true);
+  };
+
+  const handleSaveApprover = () => {
+    if (handle.trim()) {
+      const newId =
+        approvers.length > 0 ? Math.max(...approvers.map((a) => a.id)) + 1 : 1;
+      setApprovers([
+        ...approvers,
+        { id: newId, name: "", handle: handle.trim() },
+      ]);
+      setHandle("");
+      setShowForm(false);
+    }
+  };
+
+  const handleCancelForm = () => {
+    setHandle("");
+    setShowForm(false);
   };
 
   return (
@@ -37,6 +62,66 @@ export default function ContentApprovers() {
           Add Approver
         </Button>
       </div>
+
+      {showForm && (
+        <div className="mt-4 p-4 border border-neutral-300 rounded-lg bg-neutral-50">
+          <div className="flex flex-col space-y-3">
+            <div>
+              <label
+                htmlFor="handle"
+                className="block text-sm font-medium mb-1"
+              >
+                Twitter Handle
+              </label>
+              <div className="flex items-center">
+                <span className="mr-1 text-neutral-500">@</span>
+                <Input
+                  id="handle"
+                  value={handle}
+                  onChange={(e) => setHandle(e.target.value)}
+                  placeholder="username"
+                  className="flex-1"
+                />
+              </div>
+            </div>
+            <div>
+              <label
+                htmlFor="platform"
+                className="block text-sm font-medium mb-1"
+              >
+                Platform
+              </label>
+              <Select value={platform} onValueChange={setPlatform} disabled>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select platform" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Twitter">Twitter</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end space-x-2 mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCancelForm}
+                className="flex items-center gap-1"
+              >
+                <X size={16} />
+                Cancel
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleSaveApprover}
+                className="flex items-center gap-1"
+              >
+                Add Approver
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3 mt-6">
         {approvers.map((approver) => (
