@@ -3,6 +3,7 @@ import { useWeb3Auth } from "../hooks/use-web3-auth";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Modal } from "./Modal";
+import { useAuthStore } from "../store/auth-store";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface LoginModalProps {
 
 export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
   const { login } = useWeb3Auth();
+  const { showWalletLoginModal } = useAuthStore();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -209,11 +211,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             <Button
               variant="secondary"
               className="w-full flex items-center justify-center gap-2"
-              onClick={() => {
-                // This is just a placeholder button, no actual logic to open NEAR modal
-                console.log("Connect NEAR wallet clicked");
-                onClose();
-              }}
+              onClick={showWalletLoginModal}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
