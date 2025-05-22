@@ -2,7 +2,23 @@
 
 This document provides recommendations for general code improvements, focusing on consistency, dependency management, and clarity within the `curatedotfun` backend.
 
-## 1. ServiceProvider and Dependency Injection (DI)
+## 1. ServiceProvider and Dependency Injection (DI) - COMPLETED
+
+**Status: COMPLETED**
+
+**Summary of Changes Made:**
+*   `ConfigService` and `PluginService` were refactored to remove their singleton patterns. They are now instantiated directly by `ServiceProvider`.
+*   `ServiceProvider`'s constructor and initialization were updated to accept `AppConfig` and manage the lifecycle of `ConfigService` and `PluginService`.
+*   Database connection management was centralized. `ServiceProvider` and other services now use the `db` instance exported from `backend/src/services/db/index.ts`, and the old `DatabaseConnection` wrapper was removed from the DI flow.
+*   Services like `UserService`, `SubmissionService`, and the newly created `FeedService` now receive all their dependencies (repositories, other services, `db`, `logger`, `appConfig`) via constructor injection managed by `ServiceProvider`.
+*   `FeedService` (`backend/src/services/feed.service.ts`) was created to encapsulate business logic for feed operations.
+*   `SubmissionService` (`backend/src/services/submission.service.ts`) was augmented with methods for reading submission data.
+*   Route handlers in `backend/src/routes/api/feeds.ts` and `backend/src/routes/api/submission.ts` were refactored to use these services, obtaining them from `ServiceProvider` via the Hono context (`c.get('sp')`), instead of directly accessing repositories.
+*   The Hono context environment type (`Env` in `backend/src/types/app.ts`) was updated to include the `ServiceProvider` instance (`sp`).
+*   `backend/src/app.ts` was updated to initialize `ServiceProvider` early with `appConfig` and set the `sp` instance on the Hono context.
+*   `backend/src/index.ts` was updated to reflect changes in database connection management for graceful shutdown.
+
+**Original Recommendation Details (for historical reference):**
 
 *   **Issue**: While `ServiceProvider` exists, its usage and the way dependencies (especially repositories) are provided to services are inconsistent. Some services get repositories injected, while others might be expected to import them or the `ServiceProvider` itself has discrepancies (e.g., `SubmissionService` constructor). Some route handlers also import repositories directly.
 *   **Recommendation**:

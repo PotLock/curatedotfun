@@ -14,7 +14,7 @@ const pool = new Pool({
 });
 const db: NodePgDatabase<typeof schema> = drizzle(pool, { schema });
 
-export { db };
+export { db, pool };
 
 export const activityRepository = new ActivityRepository(db);
 export const feedRepository = new FeedRepository(db);

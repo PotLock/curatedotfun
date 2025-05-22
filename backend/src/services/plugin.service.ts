@@ -83,12 +83,10 @@ type PluginContainer<
  * initialization, caching, endpoint registration, and cleanup.
  */
 export class PluginService {
-  private static instance: PluginService;
   private remotes: Map<string, RemoteState> = new Map();
   private instances: Map<string, InstanceState<PluginType>> = new Map();
   private endpoints: Map<string, PluginEndpoint[]> = new Map();
   private app: Hono | null = null;
-  private configService: ConfigService;
 
   // Time in milliseconds before cached items are considered stale
   private readonly instanceCacheTimeout: number = 7 * 24 * 60 * 60 * 1000; // 7 days (instance of a plugin with config)
@@ -98,18 +96,7 @@ export class PluginService {
   private readonly maxAuthFailures: number = 2; // one less than 3 to avoid locking
   private readonly retryDelays: number[] = [1000, 5000]; // Delays between retries in ms
 
-  private constructor() {
-    this.configService = ConfigService.getInstance();
-  }
-
-  /**
-   * Gets the singleton instance of PluginService
-   */
-  public static getInstance(): PluginService {
-    if (!PluginService.instance) {
-      PluginService.instance = new PluginService();
-    }
-    return PluginService.instance;
+  public constructor(private configService: ConfigService) {
   }
 
   /**

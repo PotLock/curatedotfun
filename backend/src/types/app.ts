@@ -1,11 +1,12 @@
-import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Hono } from "hono";
 import { JwtVariables } from "hono/jwt";
-import * as schema from "../services/db/schema";
+import { DB } from "../services/db/types";
+import { ServiceProvider } from "../utils/service-provider";
 
 export type Env = {
   Variables: {
-    db: ReturnType<typeof import("../services/db").getDatabase>; // TODO: better return type?
+    db: DB;
+    sp: ServiceProvider;
   } & JwtVariables;
 };
 

@@ -5,7 +5,7 @@ import {
   FeedConfig,
   PluginConfig,
   PluginsConfig,
-} from "../types/config";
+} from "../types/config.zod";
 import { hydrateConfigValues } from "../utils/config";
 import { logger } from "../utils/logger";
 
@@ -18,11 +18,10 @@ console.log(
   process.env.RAILWAY_ENVIRONMENT_NAME ?? process.env.NODE_ENV,
 );
 export class ConfigService {
-  private static instance: ConfigService;
   private config: AppConfig | null = null;
   private configPath: string;
 
-  private constructor() {
+  public constructor() {
     if (!isProduction) {
       this.configPath = path.resolve(
         process.cwd(),
@@ -34,13 +33,6 @@ export class ConfigService {
     }
 
     logger.info(`Using configuration from: ${this.configPath}`);
-  }
-
-  public static getInstance(): ConfigService {
-    if (!ConfigService.instance) {
-      ConfigService.instance = new ConfigService();
-    }
-    return ConfigService.instance;
   }
 
   public async loadConfig(): Promise<AppConfig> {

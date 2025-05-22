@@ -23,6 +23,16 @@ export class SubmissionService {
     private logger: Logger,
   ) { }
 
+  public async getAllSubmissions(status?: SubmissionStatus): Promise<Submission[]> {
+    this.logger.info({ status }, "SubmissionService: getAllSubmissions called");
+    return this.submissionRepository.getAllSubmissions(status);
+  }
+
+  public async getSubmissionById(submissionId: string): Promise<Submission | null> {
+    this.logger.info({ submissionId }, "SubmissionService: getSubmissionById called");
+    return this.submissionRepository.getSubmission(submissionId);
+  }
+
   /**
    * Handles a new submission item that has been adapted from a source.
    * @param newSubmission The submission data.

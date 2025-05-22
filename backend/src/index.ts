@@ -5,7 +5,7 @@ loadEnvConfig();
 import { serve } from "@hono/node-server";
 import { AppInstance } from "types/app";
 import { createApp } from "./app";
-import { dbConnection } from "./services/db";
+import { pool } from "./services/db";
 import {
   cleanup,
   createHighlightBox,
@@ -38,42 +38,10 @@ async function getInstance(): Promise<AppInstance> {
   return instance;
 }
 
-/**
- * Initialize the database connection
- * @returns Promise<boolean> - true if connection was successful
- */
-async function initializeDatabaseConnection(): Promise<boolean> {
-  logger.info("Initializing database connection...");
-
-  try {
-    await dbConnection.connect();
-    return true;
-  } catch (error) {
-    // Check if it's a DATABASE_URL error
-    if (error instanceof Error && error.message.includes("DATABASE_URL")) {
-      logger.error("DATABASE_URL environment variable is not set or invalid");
-      logger.error(
-        "Please check your .env file and ensure DATABASE_URL is correctly configured",
-      );
-      logger.error(`Current working directory: ${process.cwd()}`);
-    } else {
-      logger.error(
-        "Database connection failed. Application cannot continue without database.",
-      );
-    }
-    return false;
-  }
-}
 
 async function startServer() {
   try {
     createSection("⚡ STARTING SERVER ⚡");
-
-    const dbConnected = await initializeDatabaseConnection();
-    if (!dbConnected) {
-      logger.error("Exiting application due to database connection failure");
-      process.exit(1);
-    }
 
     const { app, context } = await getInstance();
 
@@ -144,10 +112,11 @@ async function startServer() {
           logger.info("Distribution service stopped");
         }
 
-        shutdownPromises.push(dbConnection.disconnect());
+        shutdownPromises.push(
+          pool.end().then(() => logger.info("Database connection pool closed."))
+        );
 
         await Promise.all(shutdownPromises);
-        logger.info("Database connections closed");
 
         // Reset instance for clean restart
         instance = null;
@@ -160,8 +129,9 @@ async function startServer() {
       }
     };
 
-    // Handle manual shutdown (Ctrl+C)
+    // Handle manual shutdown (Ctrl+C) and SIGTERM
     process.once("SIGINT", () => gracefulShutdown("SIGINT"));
+    process.once("SIGTERM", () => gracefulShutdown("SIGTERM"));
   } catch (error) {
     logger.error("Error during startup:", error);
     cleanup();

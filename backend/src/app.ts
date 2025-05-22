@@ -6,8 +6,7 @@ import path from "path";
 import { apiRoutes } from "./routes/api";
 import { configureStaticRoutes, staticRoutes } from "./routes/static";
 import { ConfigService, isProduction } from "./services/config.service";
-import { getDatabase } from "./services/db";
-import { feedRepository } from "./services/db/repositories";
+import { db, feedRepository } from "./services/db";
 import { SchedulerService } from "./services/scheduler.service";
 import { AppInstance, Env } from "./types/app";
 import { web3AuthJwtMiddleware } from "./utils/auth";
@@ -18,22 +17,33 @@ import { ServiceProvider } from "./utils/service-provider";
 const ALLOWED_ORIGINS = getAllowedOrigins();
 
 export async function createApp(): Promise<AppInstance> {
-  const initialConfigService = ConfigService.getInstance();
-  await initialConfigService.loadConfig();
+  // --- Start: Initialize Config and ServiceProvider early ---
+  // 1. Load AppConfig first
+  const tempConfigService = new ConfigService(); // Will be updated in Sub-Phase 1.B
+  const appConfig = await tempConfigService.loadConfig();
+
+  // 2. Initialize ServiceProvider with appConfig
+  // ServiceProvider.initialize now only takes appConfig (or nothing, if we make appConfig a param later)
+  // For now, assuming ServiceProvider's constructor will be updated to take appConfig in Sub-Phase 1.B
+  // And initialize will be updated to ServiceProvider.initialize(appConfig)
+  // Let's prepare for that by calling it with appConfig.
+  // The actual change to ServiceProvider.initialize signature will happen in Sub-Phase 1.B
+  ServiceProvider.initialize(appConfig);
+  const sp = ServiceProvider.getInstance();
+  // --- End: Initialize Config and ServiceProvider early ---
 
   // Create Hono app
   const app = new Hono<Env>();
 
-  // Inject database into context
   app.use("*", async (c, next) => {
-    const dbInstance = getDatabase();
-    c.set("db", dbInstance);
-
-    ServiceProvider.initialize(dbInstance);
-    const sp = ServiceProvider.getInstance();
-
-    // Instantiate SchedulerService
-    const schedulerClient = new SchedulerClient({
+    c.set("db", db);
+    c.set("sp", sp);
+    await next();
+  });
+  
+  // Instantiate SchedulerService (moved out of the general middleware)
+  // It now uses the globally available 'sp'
+  const schedulerClient = new SchedulerClient({
       baseUrl: process.env.SCHEDULER_BASE_URL || "http://localhost:3001",
       headers: {
         Authorization: `Bearer ${process.env.SCHEDULER_API_TOKEN || ""}`,
@@ -54,9 +64,6 @@ export async function createApp(): Promise<AppInstance> {
     schedulerService.initialize().catch((err) => {
       console.error("Failed to initialize scheduler service:", err);
     });
-
-    await next();
-  });
 
   // Handle errors
   app.onError((err, c) => {
