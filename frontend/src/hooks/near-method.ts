@@ -1,4 +1,7 @@
 import { JsonRpcProvider } from "near-api-js/lib/providers";
+import { uint8ArrayToBase64 } from "near-sign-verify";
+import type { keyStores } from "near-api-js";
+import * as nearApi from "near-api-js";
 
 interface RpcResponse {
   result: Uint8Array | Array<number>;
@@ -26,6 +29,13 @@ interface Transaction {
   receiverId: string;
   callbackUrl?: string;
   actions: FunctionCallAction[];
+}
+
+interface AccessTokenPayload {
+  token: string;
+  tokenHash: Uint8Array;
+  signatureBytes: Uint8Array;
+  publicKeyBytes: Uint8Array;
 }
 
 const getRpcProvider = (): JsonRpcProvider => {
@@ -116,3 +126,75 @@ export const CallMethod = async (
     throw error;
   }
 };
+
+export async function getWalletConnection(keyStore: keyStores.KeyStore) {
+  const networkId = process.env.PUBLIC_NETWORK || "testnet";
+  const near = await nearApi.connect({
+    nodeUrl:
+      networkId === "mainnet"
+        ? "https://rpc.mainnet.near.org"
+        : "https://rpc.testnet.near.org",
+    walletUrl:
+      networkId === "mainnet"
+        ? "https://app.mynearwallet.com"
+        : "https://testnet.mynearwallet.com",
+    networkId,
+    keyStore,
+  });
+  const walletConnection = new nearApi.WalletConnection(near, "my-near-wallet");
+  return walletConnection;
+}
+
+export async function createAccessTokenPayload(
+  keyStore: keyStores.KeyStore,
+  accountId: string,
+): Promise<AccessTokenPayload> {
+  try {
+    const networkId = process.env.PUBLIC_NETWORK || "testnet";
+
+    if (!accountId) {
+      throw new Error("No account ID found. Please connect your wallet first.");
+    }
+
+    // Try to get the key pair
+    const keyPair = await keyStore.getKey(networkId, accountId);
+
+    if (!keyPair) {
+      // If no key found, try to get the function call key
+      const functionCallKey = localStorage.getItem("functionCallKey");
+      if (functionCallKey) {
+        const { privateKey } = JSON.parse(functionCallKey);
+        const keyPair = nearApi.KeyPair.fromString(privateKey);
+        await keyStore.setKey(networkId, accountId, keyPair);
+      } else {
+        throw new Error(
+          "No keys found for the account. Please reconnect your wallet.",
+        );
+      }
+    }
+
+    const tokenPayload = JSON.stringify({
+      iat: new Date().getTime(),
+      accountId,
+      publicKey: keyPair.getPublicKey().toString(),
+    });
+    const tokenBytes = new TextEncoder().encode(tokenPayload);
+    const tokenHash = new Uint8Array(
+      await crypto.subtle.digest("SHA-256", tokenBytes),
+    );
+
+    const signatureObj = await keyPair.sign(tokenHash);
+
+    const signatureBytes = signatureObj.signature;
+    const token = `${await uint8ArrayToBase64(tokenBytes)}.${await uint8ArrayToBase64(signatureBytes)}`;
+    return {
+      token,
+      tokenHash,
+      signatureBytes,
+      publicKeyBytes: keyPair.getPublicKey().data,
+    };
+  } catch (error) {
+    console.error("Error creating access token:", error);
+    throw error;
+  }
+}

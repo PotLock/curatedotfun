@@ -26,6 +26,9 @@ import { AuthUserInfo } from "../types/web3auth";
 import UserMenu from "./UserMenu";
 import { useWalletSelector } from "@near-wallet-selector/react-hook";
 import { AvatarProfile } from "./AvatarProfile";
+import * as nearApi from "near-api-js";
+import { createAccessTokenPayload } from "../hooks/near-method";
+import { useCreateUserProfile } from "../lib/api";
 
 const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
@@ -37,8 +40,16 @@ const Header = () => {
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
   const { showLoginModal } = useAuthStore();
 
-  const { isInitialized, isLoggedIn, logout, getUserInfo } = useWeb3Auth();
-  const { signedAccountId, signOut } = useWalletSelector();
+  const {
+    isInitialized,
+    isLoggedIn,
+    logout,
+    getUserInfo,
+    setCurrentUserProfile,
+  } = useWeb3Auth();
+  const { signedAccountId, signOut, walletSelector } = useWalletSelector();
+
+  const createUserMutation = useCreateUserProfile();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -57,6 +68,30 @@ const Header = () => {
       setUserInfo({});
     }
   }, [isLoggedIn, getUserInfo]);
+
+  useEffect(() => {
+    const getToken = async () => {
+      if (signedAccountId && walletSelector) {
+        try {
+          const keyStore = new nearApi.keyStores.BrowserLocalStorageKeyStore();
+          const { publicKeyBytes, token, signatureBytes, tokenHash } =
+            await createAccessTokenPayload(keyStore, signedAccountId);
+          const publicKey = publicKeyBytes.toString();
+          console.log("data", {
+            publicKey,
+            signedAccountId,
+            token,
+            signatureBytes,
+            tokenHash,
+          });
+        } catch (error) {
+          console.error("Failed to create access token or profile:", error);
+        }
+      }
+    };
+
+    getToken();
+  }, [signedAccountId, walletSelector]);
 
   // Profile image component with error handling
   const ProfileImage = ({ size = "small" }) => {
