@@ -1,6 +1,6 @@
 import { config } from "dotenv";
 import path from "path";
-import { isTest } from "../services/config/config.service";
+import { isTest } from "../services/config.service";
 import { logger } from "./logger";
 
 /**

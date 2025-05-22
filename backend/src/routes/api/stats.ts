@@ -1,11 +1,12 @@
-import { HonoApp } from "../../types/app";
+import { Hono } from "hono";
 import { submissionRepository } from "../../services/db/repositories";
+import { Env } from "types/app";
+import { FeedConfig } from "types/config";
 
-// Create stats routes
-export const statsRoutes = HonoApp();
+export const statsRoutes = new Hono<Env>();
 
 /**
- * Get platform statistics
+ * Get platform statistics (used by landing page)
  */
 statsRoutes.get("/", async (c) => {
   const context = c.get("context");
@@ -22,7 +23,7 @@ statsRoutes.get("/", async (c) => {
 
   // Count total distributions from all feeds' distribute arrays
   let distributionsCount = 0;
-  config.feeds.forEach((feed) => {
+  config.feeds.forEach((feed: FeedConfig) => {
     // Count stream distributions if enabled
     if (feed.outputs.stream?.enabled && feed.outputs.stream.distribute) {
       distributionsCount += feed.outputs.stream.distribute.length;

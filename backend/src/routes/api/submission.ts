@@ -1,19 +1,19 @@
-import {
-  submissionRepository,
-  feedRepository,
-} from "../../services/db/repositories";
-import { HonoApp } from "../../types/app";
-import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
+import { Hono } from "hono";
+import { z } from "zod";
+import {
+  feedRepository,
+  submissionRepository,
+} from "../../services/db/repositories";
+import { Env } from "../../types/app";
 import { SubmissionStatus } from "../../types/twitter";
 
-// Create submission routes
-const router = HonoApp();
+const submissionRoutes = new Hono<Env>();
 
 /**
  * Get all submissions with optional status filtering and pagination
  */
-router.get(
+submissionRoutes.get(
   "/",
   zValidator(
     "query",
@@ -67,7 +67,7 @@ router.get(
 /**
  * Get a specific submission by ID
  */
-router.get("/single/:submissionId", async (c) => {
+submissionRoutes.get("/single/:submissionId", async (c) => {
   const submissionId = c.req.param("submissionId");
   const content = await submissionRepository.getSubmission(submissionId);
 
@@ -81,7 +81,7 @@ router.get("/single/:submissionId", async (c) => {
 /**
  * Get submissions for a specific feed
  */
-router.get("/feed/:feedId", async (c) => {
+submissionRoutes.get("/feed/:feedId", async (c) => {
   const context = c.get("context");
   const feedId = c.req.param("feedId");
   const status = c.req.query("status");
@@ -100,4 +100,4 @@ router.get("/feed/:feedId", async (c) => {
   return c.json(submissions);
 });
 
-export default router;
+export { submissionRoutes };
