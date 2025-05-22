@@ -39,11 +39,11 @@ export class UserService implements IUserService {
     const new_near_account_id = `${username}.${parentAccountId}`;
 
     try {
-      const parentPrivateKey = process.env.USERS_MASTER_KEYPAIR;
+      const parentPrivateKey = process.env.NEAR_PARENT_KEYPAIR;
 
       if (!parentPrivateKey) {
         throw new NearAccountError(
-          "Missing USERS_MASTER_KEYPAIR environment variable",
+          "Missing NEAR_PARENT_KEYPAIR environment variable",
         );
       }
 
@@ -162,10 +162,10 @@ export class UserService implements IUserService {
       process.env.NEAR_PARENT_ACCOUNT_ID || "users.curatedotfun.testnet";
 
     try {
-      const parentPrivateKey = process.env.USERS_MASTER_KEYPAIR;
+      const parentPrivateKey = process.env.NEAR_PARENT_KEYPAIR;
       if (!parentPrivateKey) {
         throw new NearAccountError(
-          "Missing USERS_MASTER_KEYPAIR environment variable for account deletion",
+          "Missing NEAR_PARENT_KEYPAIR environment variable for account deletion",
         );
       }
 

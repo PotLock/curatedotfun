@@ -15,7 +15,6 @@ import {
 } from "../utils/test-data";
 import {
   cleanupTestServer,
-  mockTwitterSearchTimeline,
   setupTestServer,
 } from "../utils/test-helpers";
 
