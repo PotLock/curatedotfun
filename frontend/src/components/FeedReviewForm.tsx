@@ -169,9 +169,11 @@ export default function FeedReviewForm() {
             <p className="font-semibold">What Happens Next?</p>
             <div className="text-sm">
               <p>After creating your feed, you&apos;ll be able to:</p>
-              <li>Add content sources (Twitter, RSS feeds, etc.)</li>
-              <li>Configure content generation templates</li>
-              <li>Set up distribution channels.</li>
+              <ul className="list-disc pl-5 mt-2">
+                <li>Add content sources (Twitter, RSS feeds, etc.)</li>
+                <li>Configure content generation templates</li>
+                <li>Set up distribution channels.</li>
+              </ul>
             </div>
           </div>
         </div>

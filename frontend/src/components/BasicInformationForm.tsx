@@ -220,6 +220,7 @@ export default function BasicInformationForm() {
                   <FormControl>
                     <Input
                       placeholder="Name of your feed"
+                      required
                       {...field}
                       onChange={(e) => {
                         field.onChange(e);
@@ -243,6 +244,7 @@ export default function BasicInformationForm() {
                     <Textarea
                       placeholder="Description"
                       className="min-h-[100px]"
+                      required
                       {...field}
                       onChange={(e) => {
                         field.onChange(e);
@@ -265,6 +267,7 @@ export default function BasicInformationForm() {
                   <FormControl>
                     <Input
                       placeholder="Tag"
+                      required
                       {...field}
                       onChange={(e) => {
                         field.onChange(e);

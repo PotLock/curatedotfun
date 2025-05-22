@@ -31,9 +31,17 @@ export default function SubmissionRules() {
           <Checkbox
             id="minFollowers"
             checked={minFollowersEnabled}
-            onCheckedChange={(checked) =>
-              setSubmissionRules({ minFollowersEnabled: checked === true })
-            }
+            onCheckedChange={(checked) => {
+              if (checked === true) {
+                setSubmissionRules({ minFollowersEnabled: true });
+              } else {
+                // Reset minFollowers to 0 when disabling the checkbox
+                setSubmissionRules({
+                  minFollowersEnabled: false,
+                  minFollowers: 0,
+                });
+              }
+            }}
             className="h-4 w-4 rounded-[4px]"
           />
           <Label
@@ -58,9 +66,19 @@ export default function SubmissionRules() {
           className="h-12 border rounded-lg"
           type="number"
           value={minFollowers}
-          onChange={(e) =>
-            setSubmissionRules({ minFollowers: parseInt(e.target.value) })
-          }
+          onChange={(e) => {
+            const value = e.target.value;
+            const parsedValue = parseInt(value, 10);
+
+            // Only update if it's a valid non-negative number
+            if (!isNaN(parsedValue) && parsedValue >= 0) {
+              setSubmissionRules({ minFollowers: parsedValue });
+            } else if (value === "") {
+              // Handle empty input by setting to 0
+              setSubmissionRules({ minFollowers: 0 });
+            }
+            // If invalid (negative or NaN), we don't update the state
+          }}
           disabled={!minFollowersEnabled}
         />
       </div>
@@ -71,9 +89,17 @@ export default function SubmissionRules() {
           <Checkbox
             id="minAccountAge"
             checked={minAccountAgeEnabled}
-            onCheckedChange={(checked) =>
-              setSubmissionRules({ minAccountAgeEnabled: checked === true })
-            }
+            onCheckedChange={(checked) => {
+              if (checked === true) {
+                setSubmissionRules({ minAccountAgeEnabled: true });
+              } else {
+                // Reset minAccountAge to 0 when disabling the checkbox
+                setSubmissionRules({
+                  minAccountAgeEnabled: false,
+                  minAccountAge: 0,
+                });
+              }
+            }}
             className="h-4 w-4 rounded-[4px]"
           />
           <Label
@@ -98,9 +124,19 @@ export default function SubmissionRules() {
           className="h-12 border rounded-lg"
           type="number"
           value={minAccountAge}
-          onChange={(e) =>
-            setSubmissionRules({ minAccountAge: parseInt(e.target.value) })
-          }
+          onChange={(e) => {
+            const value = e.target.value;
+            const parsedValue = parseInt(value, 10);
+
+            // Only update if it's a valid non-negative number
+            if (!isNaN(parsedValue) && parsedValue >= 0) {
+              setSubmissionRules({ minAccountAge: parsedValue });
+            } else if (value === "") {
+              // Handle empty input by setting to 0
+              setSubmissionRules({ minAccountAge: 0 });
+            }
+            // If invalid (negative or NaN), we don't update the state
+          }}
           disabled={!minAccountAgeEnabled}
         />
       </div>

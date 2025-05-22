@@ -30,8 +30,12 @@ export function useFeed(feedId: string) {
 
 export async function createFeed(
   feed: Omit<FeedConfig, "id"> & { id: string },
+  idToken: string,
 ) {
   // Create the proper structure expected by the backend
+  if (!feed.id || !feed.name) {
+    throw new Error("Feed must have id and name properties");
+  }
   const feedData = {
     id: feed.id,
     name: feed.name,
@@ -43,7 +47,9 @@ export async function createFeed(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`,
     },
+
     body: JSON.stringify(feedData),
   }).then(async (response) => {
     const data = await response.json();
@@ -58,6 +64,17 @@ export async function createFeed(
   });
 }
 
+export function useCreateFeed() {
+  const { web3auth } = useWeb3Auth();
+
+  return useMutation({
+    mutationFn: async (feed: Omit<FeedConfig, "id"> & { id: string }) => {
+      if (!web3auth) throw new Error("Web3Auth not initialized");
+      const authResult = await web3auth.authenticateUser();
+      return createFeed(feed, authResult.idToken);
+    },
+  });
+}
 export function useFeedItems(
   feedId: string,
   limit: number = 20,

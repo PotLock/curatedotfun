@@ -9,7 +9,7 @@ import FeedReviewForm from "./FeedReviewForm";
 import { useFeedCreationStore } from "../store/feed-creation-store";
 import { toast } from "../hooks/use-toast";
 import { useNavigate } from "@tanstack/react-router";
-import { createFeed } from "../lib/api";
+import { useCreateFeed } from "../lib/api";
 
 // Define step content types
 type Step = {
@@ -23,6 +23,7 @@ export default function CurationFormSteps() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const feedData = useFeedCreationStore();
   const navigate = useNavigate();
+  const createFeedMutation = useCreateFeed();
 
   // Define the steps
   const steps: Step[] = [
@@ -168,7 +169,7 @@ export default function CurationFormSteps() {
 
                 // Call the API
                 try {
-                  await createFeed(feedConfig);
+                  await createFeedMutation.mutateAsync(feedConfig);
                   toast({
                     title: "Feed Created Successfully!",
                     description: `Your feed "${feedData.feedName}" has been created.`,
