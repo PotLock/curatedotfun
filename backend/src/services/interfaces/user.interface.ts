@@ -22,6 +22,7 @@ export interface IUserService {
    * @returns The updated user or null if not found
    */
   updateUser(
+    auth_provider_id: string,
     data: UpdateUser,
   ): Promise<any | null>;
 

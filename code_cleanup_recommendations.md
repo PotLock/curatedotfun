@@ -78,8 +78,23 @@ This document provides recommendations for general code improvements, focusing o
     *   Current `UserService` implementation correctly uses an injected Drizzle `DB` instance (`this.db`) to manage transactions (e.g., `this.db.transaction(async (tx) => ...)`) and passes the transactional `tx` object to `UserRepository` methods for database operations (`createUser`, `updateUser`, `deleteUser`).
     *   This aligns with the recommended practice of services orchestrating transactions and repositories operating within the provided transaction context.
 
-## 3. Configuration Access
+## 3. Configuration Access - COMPLETED
 
+**Status: COMPLETED**
+
+**Summary of Changes Made:**
+*   Introduced `NearIntegrationConfigSchema` and `IntegrationsConfigSchema` in `backend/src/types/config.zod.ts`.
+*   Added an optional `integrations: IntegrationsConfigSchema.optional()` field to `AppConfigSchema` in `backend/src/types/config.zod.ts`.
+*   Updated `backend/test/curate.config.test.json` to include an `integrations.near` section with placeholders for environment variables (e.g., `{NEAR_PARENT_ACCOUNT_ID}`). This allows `ConfigService` and `hydrateConfigValues` to load these values into `AppConfig`.
+*   Modified `UserService` (`backend/src/services/users.service.ts`):
+    *   The constructor now accepts `nearConfig: NearIntegrationConfig` as a parameter.
+    *   Internal logic for NEAR account creation and deletion now uses values from the injected `nearConfig` object (e.g., `this.nearConfig.parentAccountId`, `this.nearConfig.parentKeyPair`, `this.nearConfig.networkId`, and optional URLs) instead of directly accessing `process.env`.
+*   Updated `ServiceProvider` (`backend/src/utils/service-provider.ts`):
+    *   It now retrieves `appConfig.integrations?.near`.
+    *   It passes this `nearIntegrationConfig` to the `UserService` constructor during instantiation.
+    *   Includes a check to ensure `nearIntegrationConfig` is present, throwing an error if it's missing, as it's a required dependency for `UserService`.
+
+**Original Recommendation Details (for historical reference):**
 *   **Issue**: `UserService` directly accesses `process.env` for NEAR credentials.
 *   **Recommendation**:
     *   These credentials should be part of `AppConfig.global` (or a new dedicated section like `AppConfig.integrations.near`).

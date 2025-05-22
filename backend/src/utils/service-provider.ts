@@ -69,7 +69,19 @@ export class ServiceProvider {
 
     // Initialize services with their dependencies
     // UserService now takes the imported db instance directly
-    this.services.set("userService", new UserService(userRepository, db, logger));
+    const nearIntegrationConfig = this.appConfig.integrations?.near;
+    if (!nearIntegrationConfig) {
+      logger.error(
+        "CRITICAL: NEAR integration configuration (appConfig.integrations.near) is missing. UserService requires this configuration to function.",
+      );
+      throw new Error(
+        "NEAR integration configuration (appConfig.integrations.near) is missing.",
+      );
+    }
+    this.services.set(
+      "userService",
+      new UserService(userRepository, db, logger, nearIntegrationConfig),
+    );
     this.services.set(
       "activityService",
       new ActivityService(activityRepository, leaderboardRepository, db),

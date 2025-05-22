@@ -6,6 +6,7 @@ import {
   NotFoundError,
   UserServiceError,
 } from "../types/errors";
+import { NearIntegrationConfig } from "../types/config.zod";
 import { selectUserSchema } from "../validation/users.validation";
 import { UserRepository } from "./db/repositories/user.repository";
 import { DB, InsertUser, UpdateUser } from "./db/types";
@@ -18,6 +19,7 @@ export class UserService implements IUserService {
     private userRepository: UserRepository,
     private db: DB,
     private logger: Logger,
+    private nearConfig: NearIntegrationConfig,
   ) { }
 
   async findUserByAuthProviderId(auth_provider_id: string) {
@@ -33,32 +35,31 @@ export class UserService implements IUserService {
 
   async createUser(data: InsertUser) {
     const { auth_provider_id, username, near_public_key, email } = data;
-    const parentAccountId =
-      process.env.NEAR_PARENT_ACCOUNT_ID || "users.curatedotfun.testnet";
+    const parentAccountId = this.nearConfig.parentAccountId;
     const new_near_account_id = `${username}.${parentAccountId}`;
 
     try {
-      const parentPrivateKey = process.env.NEAR_PARENT_KEYPAIR;
+      const parentPrivateKey = this.nearConfig.parentKeyPair;
 
       if (!parentPrivateKey) {
         throw new NearAccountError(
-          "Missing NEAR_PARENT_KEYPAIR environment variable",
+          "Missing parentKeyPair in NEAR integration config",
         );
       }
 
-      const networkId = process.env.NEAR_NETWORK_ID || "testnet";
+      const networkId = this.nearConfig.networkId;
 
       const keyStore = new keyStores.InMemoryKeyStore();
-      const parentKeyPair = KeyPair.fromString(parentPrivateKey as any);
+      const parentKeyPair = KeyPair.fromString(parentPrivateKey as KeyPairString);
       await keyStore.setKey(networkId, parentAccountId, parentKeyPair);
 
       const connectionConfig = {
         networkId,
         keyStore,
-        nodeUrl: `https://rpc.${networkId}.near.org`,
-        walletUrl: `https://wallet.${networkId}.near.org`,
-        helperUrl: `https://helper.${networkId}.near.org`,
-        explorerUrl: `https://explorer.${networkId}.near.org`,
+        nodeUrl: this.nearConfig.nodeUrl || `https://rpc.${networkId}.near.org`,
+        walletUrl: this.nearConfig.walletUrl || `https://wallet.${networkId}.near.org`,
+        helperUrl: this.nearConfig.helperUrl || `https://helper.${networkId}.near.org`,
+        explorerUrl: this.nearConfig.explorerUrl || `https://explorer.${networkId}.near.org`,
       };
 
       const nearConnection = await connect(connectionConfig);
@@ -177,18 +178,17 @@ export class UserService implements IUserService {
     }
 
     const { near_account_id } = user;
-    const parentAccountId =
-      process.env.NEAR_PARENT_ACCOUNT_ID || "users.curatedotfun.testnet";
+    const parentAccountId = this.nearConfig.parentAccountId;
 
     try {
-      const parentPrivateKey = process.env.NEAR_PARENT_KEYPAIR;
+      const parentPrivateKey = this.nearConfig.parentKeyPair;
       if (!parentPrivateKey) {
         throw new NearAccountError(
-          "Missing NEAR_PARENT_KEYPAIR environment variable for account deletion",
+          "Missing parentKeyPair in NEAR integration config for account deletion",
         );
       }
 
-      const networkId = process.env.NEAR_NETWORK_ID || "testnet";
+      const networkId = this.nearConfig.networkId;
       const keyStore = new keyStores.InMemoryKeyStore();
       const parentKeyPair = KeyPair.fromString(
         parentPrivateKey as KeyPairString,
@@ -198,7 +198,7 @@ export class UserService implements IUserService {
       const connectionConfig = {
         networkId,
         keyStore,
-        nodeUrl: `https://rpc.${networkId}.near.org`,
+        nodeUrl: this.nearConfig.nodeUrl || `https://rpc.${networkId}.near.org`,
       };
 
       const nearConnection = await connect(connectionConfig);

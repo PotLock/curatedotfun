@@ -29,6 +29,17 @@
       "url": "https://unpkg.com/@curatedotfun/ai-transform@latest/dist/remoteEntry.js"
     }
   },
+  "integrations": {
+    "near": {
+      "parentAccountId": "{NEAR_PARENT_ACCOUNT_ID}",
+      "parentKeyPair": "{NEAR_PARENT_KEYPAIR}",
+      "networkId": "{NEAR_NETWORK_ID}",
+      "nodeUrl": "{NEAR_NODE_URL}",
+      "walletUrl": "{NEAR_WALLET_URL}",
+      "helperUrl": "{NEAR_HELPER_URL}",
+      "explorerUrl": "{NEAR_EXPLORER_URL}"
+    }
+  },
   "feeds": [
     {
       "id": "test",
