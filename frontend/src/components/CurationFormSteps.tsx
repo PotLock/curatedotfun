@@ -5,6 +5,11 @@ import BasicInformationForm from "./BasicInformationForm";
 import CurationSettingsForm from "./CurationSettingsForm";
 import { AuthUserInfo } from "../types/web3auth";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
+import FeedReviewForm from "./FeedReviewForm";
+import { useFeedCreationStore } from "../store/feed-creation-store";
+import { toast } from "../hooks/use-toast";
+import { useNavigate } from "@tanstack/react-router";
+import { useCreateFeed } from "../lib/api";
 
 // Define step content types
 type Step = {
@@ -15,6 +20,10 @@ type Step = {
 
 export default function CurationFormSteps() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const feedData = useFeedCreationStore();
+  const navigate = useNavigate();
+  const createFeedMutation = useCreateFeed();
 
   // Define the steps
   const steps: Step[] = [
@@ -41,6 +50,15 @@ export default function CurationFormSteps() {
   // Navigation handlers
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
+      // If moving from BasicInformationForm to the next step, set createdAt and show toast
+      if (currentStep === 0) {
+        feedData.setBasicInfo({ createdAt: new Date() });
+        toast({
+          title: "Information Saved",
+          description: "Your feed information has been saved.",
+          variant: "default",
+        });
+      }
       setCurrentStep(currentStep + 1);
     }
   };
@@ -120,19 +138,72 @@ export default function CurationFormSteps() {
             Previous
           </Button>
 
-          <Button
-            onClick={handleNext}
-            disabled={currentStep === steps.length - 1 || !isLoggedIn}
-            className="text-sm md:text-base"
-          >
-            Next
-          </Button>
+          {currentStep === steps.length - 1 ? (
+            <Button
+              onClick={async () => {
+                setIsSubmitting(true);
+
+                // Format the approvers data for the API
+                const twitterHandles = feedData.approvers.map(
+                  (approver) => approver.handle,
+                );
+
+                // Create the feed config object
+                const feedConfig = {
+                  id: feedData.hashtags.replace(/^#/, ""), // Remove # if present
+                  name: feedData.feedName,
+                  description: feedData.description,
+                  moderation: {
+                    approvers: {
+                      twitter: twitterHandles,
+                    },
+                  },
+                  outputs: {
+                    stream: {
+                      enabled: true,
+                    },
+                  },
+                };
+
+                console.log("Feed config to submit:", feedConfig);
+
+                // Call the API
+                try {
+                  await createFeedMutation.mutateAsync(feedConfig);
+                  toast({
+                    title: "Feed Created Successfully!",
+                    description: `Your feed "${feedData.feedName}" has been created.`,
+                    variant: "default",
+                  });
+                  navigate({ to: "/submissions" });
+                } catch (error) {
+                  console.error("Error creating feed:", error);
+                  toast({
+                    title: "Error Creating Feed",
+                    description:
+                      "There was an error creating your feed. Please try again.",
+                    variant: "destructive",
+                  });
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+              disabled={!isLoggedIn || isSubmitting}
+              className="text-sm md:text-base "
+            >
+              {isSubmitting ? "Submitting..." : "Create Feed"}
+            </Button>
+          ) : (
+            <Button
+              onClick={handleNext}
+              disabled={!isLoggedIn}
+              className="text-sm md:text-base"
+            >
+              Next
+            </Button>
+          )}
         </div>
       </div>
     </div>
   );
-}
-
-function FeedReviewForm() {
-  return <div>Feed Review Form Content</div>;
 }
