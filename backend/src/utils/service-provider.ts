@@ -2,11 +2,17 @@ import { ActivityService } from "../services/activity.service";
 import { AdapterService } from "../services/adapter.service";
 import { ConfigService } from "../services/config.service";
 import { DatabaseConnection } from "../services/db/connection";
-import { UserRepository } from "../services/db/repositories";
-import { ActivityRepository } from "../services/db/repositories/activity.repository";
-import { lastProcessedStateRepository } from "../services/db/repositories/lastProcessedState.repository";
+import { 
+  UserRepository,
+  ActivityRepository,
+  FeedRepository,
+  SubmissionRepository,
+  LastProcessedStateRepository,
+  LeaderboardRepository,
+} from "../services/db/repositories";
 import { DistributionService } from "../services/distribution.service";
 import { InboundService } from "../services/inbound.service";
+import { logger } from "./logger";
 import { PluginService } from "../services/plugin.service";
 import { ProcessorService } from "../services/processor.service";
 import { SourceService } from "../services/source.service";
@@ -23,12 +29,18 @@ export class ServiceProvider {
   private services: Map<string, any> = new Map();
 
   private constructor(private dbConnection: DatabaseConnection) {
-    // Get repository instances
-    const activityRepository = new ActivityRepository();
-    const userRepository = new UserRepository();
+    const db = this.dbConnection.getWriteDb();
+
+    // Instantiate all repositories
+    const activityRepository = new ActivityRepository(db);
+    const userRepository = new UserRepository(db);
+    const feedRepository = new FeedRepository(db); 
+    const submissionRepository = new SubmissionRepository(db); 
+    const lastProcessedStateRepositoryInstance = new LastProcessedStateRepository(db); 
+    const leaderboardRepository = new LeaderboardRepository(db); 
 
     // Core services
-    const configService = ConfigService.getInstance();
+    const configService = ConfigService.getInstance(); // TODO: Refactor singletons
     const appConfig = configService.getConfig();
     const pluginService = PluginService.getInstance();
 
@@ -51,7 +63,7 @@ export class ServiceProvider {
     // Source Ingestion Services
     const sourceService = new SourceService(
       pluginService,
-      lastProcessedStateRepository,
+      lastProcessedStateRepositoryInstance, 
     );
     const adapterService = new AdapterService(appConfig);
     const inboundService = new InboundService(
@@ -61,12 +73,13 @@ export class ServiceProvider {
     );
 
     // Initialize services with their dependencies
-    this.services.set("userService", new UserService(userRepository));
+    this.services.set("userService", new UserService(userRepository, this.dbConnection, logger)); 
     this.services.set(
       "activityService",
-      new ActivityService(activityRepository),
+      new ActivityService(activityRepository), // Assuming ActivityService constructor is (ActivityRepository)
     );
     // TODO: Move services to injection, no singleton
+    // TODO: Inject repositories into other services as needed (e.g., submissionService might need SubmissionRepository)
     this.services.set("configService", configService);
     this.services.set("pluginService", pluginService);
     this.services.set("transformationService", transformationService);

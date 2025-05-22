@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SubmissionStatus } from "./submission.types";
+import { SubmissionStatus } from "./submission";
 
 // Schema for GlobalConfig
 export const GlobalConfigSchema = z.object({

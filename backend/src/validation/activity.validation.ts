@@ -1,72 +1,7 @@
 import { z } from "zod";
-import {
-  createInsertSchema,
-  createSelectSchema,
-  createUpdateSchema,
-} from "drizzle-zod";
 import * as schema from "../services/db/schema";
 
 export const activityTypeEnum = z.nativeEnum(schema.ActivityType);
-
-// Activity schemas
-export const insertActivitySchema = createInsertSchema(schema.activities, {
-  id: z.undefined(),
-  createdAt: z.undefined(),
-  updatedAt: z.undefined(),
-  timestamp: z.undefined(),
-});
-
-export const selectActivitySchema = createSelectSchema(schema.activities);
-
-export const updateActivitySchema = createUpdateSchema(schema.activities, {
-  id: z.undefined(),
-  user_id: z.undefined(),
-  type: z.undefined(),
-  timestamp: z.undefined(),
-  createdAt: z.undefined(),
-  updatedAt: z.undefined(),
-});
-
-// User Stats schemas
-export const insertUserStatsSchema = createInsertSchema(schema.userStats, {
-  createdAt: z.undefined(),
-  updatedAt: z.undefined(),
-});
-
-export const selectUserStatsSchema = createSelectSchema(schema.userStats);
-
-export const updateUserStatsSchema = createUpdateSchema(schema.userStats, {
-  user_id: z.undefined(),
-  createdAt: z.undefined(),
-  updatedAt: z.undefined(),
-});
-
-// Feed User Stats schemas
-export const insertFeedUserStatsSchema = createInsertSchema(
-  schema.feedUserStats,
-  {
-    id: z.undefined(),
-    createdAt: z.undefined(),
-    updatedAt: z.undefined(),
-  },
-);
-
-export const selectFeedUserStatsSchema = createSelectSchema(
-  schema.feedUserStats,
-);
-
-export const updateFeedUserStatsSchema = createUpdateSchema(
-  schema.feedUserStats,
-  {
-    id: z.undefined(),
-    user_id: z.undefined(),
-    feed_id: z.undefined(),
-    createdAt: z.undefined(),
-    updatedAt: z.undefined(),
-  },
-);
-
-// Additional schemas for API requests and responses
 
 /**
  * Schema for activity query options
@@ -93,19 +28,6 @@ export const leaderboardQueryOptionsSchema = z.object({
 });
 
 /**
- * Schema for leaderboard entry
- */
-export const leaderboardEntrySchema = z.object({
-  user_id: z.number(),
-  username: z.string().nullable(),
-  name: z.string().nullable(),
-  total_points: z.number(),
-  total_submissions: z.number(),
-  total_approvals: z.number(),
-  rank: z.number(),
-});
-
-/**
  * Schema for global stats
  */
 export const globalStatsSchema = z.object({
@@ -115,23 +37,9 @@ export const globalStatsSchema = z.object({
 });
 
 // Type exports for convenience
-export type InsertActivityData = z.infer<typeof insertActivitySchema>;
-export type UpdateActivityData = z.infer<typeof updateActivitySchema>;
-export type SelectActivityData = z.infer<typeof selectActivitySchema>;
 export type ActivityType = z.infer<typeof activityTypeEnum>;
 export type ActivityQueryOptions = z.infer<typeof activityQueryOptionsSchema>;
 export type LeaderboardQueryOptions = z.infer<
   typeof leaderboardQueryOptionsSchema
 >;
-export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>;
 export type GlobalStats = z.infer<typeof globalStatsSchema>;
-
-// User Stats types
-export type InsertUserStatsData = z.infer<typeof insertUserStatsSchema>;
-export type UpdateUserStatsData = z.infer<typeof updateUserStatsSchema>;
-export type SelectUserStatsData = z.infer<typeof selectUserStatsSchema>;
-
-// Feed User Stats types
-export type InsertFeedUserStatsData = z.infer<typeof insertFeedUserStatsSchema>;
-export type UpdateFeedUserStatsData = z.infer<typeof updateFeedUserStatsSchema>;
-export type SelectFeedUserStatsData = z.infer<typeof selectFeedUserStatsSchema>;

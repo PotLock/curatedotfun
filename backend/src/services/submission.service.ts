@@ -1,40 +1,27 @@
+import { Logger } from "pino";
 import { AppConfig, FeedConfig } from "../types/config.zod";
+import { SubmissionServiceError } from "../types/errors";
+import { ModerationCommandData } from "../types/inbound.types";
 import {
   Moderation,
   Submission,
   SubmissionFeed,
   SubmissionStatus,
-} from "../types/submission.types";
-import { ModerationCommandData } from "../types/inbound.types";
-import { logger } from "../utils/logger";
-import { feedRepository, submissionRepository } from "./db/repositories";
+} from "../types/submission";
+import { FeedRepository } from "./db/repositories/feed.repository";
+import { SubmissionRepository } from "./db/repositories/submission.repository";
+import { DB } from "./db/types";
 import { ProcessorService } from "./processor.service";
 
 export class SubmissionService {
   constructor(
-    private readonly processorService: ProcessorService,
-    private readonly config: AppConfig,
-  ) {}
-
-  private async initializeFeeds(): Promise<void> {
-    try {
-      await feedRepository.upsertFeeds(this.config.feeds);
-    } catch (error) {
-      logger.error("Failed to initialize feeds:", error);
-      throw error;
-    }
-  }
-
-  async initialize(): Promise<void> {
-    try {
-      await this.initializeFeeds();
-    } catch (error) {
-      logger.error("Failed to initialize submission service:", error);
-      throw error;
-    }
-  }
-
-  // Removed startMentionsCheck, checkMentions, stop
+    private submissionRepository: SubmissionRepository,
+    private feedRepository: FeedRepository,
+    private processorService: ProcessorService,
+    private db: DB,
+    private config: AppConfig,
+    private logger: Logger,
+  ) { }
 
   /**
    * Handles a new submission item that has been adapted from a source.
@@ -56,109 +43,141 @@ export class SubmissionService {
       curatorTweetId: curatorActionExternalId,
     } = newSubmission;
 
-    logger.info(
+    this.logger.info(
+      { externalId, curatorUsername, targetFeedId, platformKey },
       `Handling submission for externalId: ${externalId}, curator: ${curatorUsername}`,
     );
 
     try {
-      // Blacklist check (example, assuming curatorUsername is the relevant field)
-      // This might need to be more nuanced based on which platform the curator is from.
-      // For now, assumes a generic blacklist check on curatorUsername.
-      const globalBlacklist = this.config.global.blacklist["all"] || []; // Example generic blacklist
-      if (
-        curatorUsername &&
-        (curatorUsername.toLowerCase() ===
-          this.config.global.botId.toLowerCase() ||
-          globalBlacklist.some(
-            (b) => b.toLowerCase() === curatorUsername.toLowerCase(),
-          ))
-      ) {
-        logger.warn(
-          `Submission from ${curatorUsername} (extId: ${externalId}) blocked: bot or blacklisted.`,
-        );
-        return;
-      }
+      await this.db.transaction(async (tx) => {
+        // Blacklist check
+        const globalBlacklist = this.config.global.blacklist["all"] || [];
+        if (
+          curatorUsername &&
+          (curatorUsername.toLowerCase() ===
+            this.config.global.botId.toLowerCase() ||
+            globalBlacklist.some(
+              (b) => b.toLowerCase() === curatorUsername.toLowerCase(),
+            ))
+        ) {
+          this.logger.warn(
+            { externalId, curatorUsername },
+            `Submission from ${curatorUsername} (extId: ${externalId}) blocked: bot or blacklisted.`,
+          );
+          return;
+        }
 
-      // Check if this content was already submitted
-      const existingSubmission =
-        await submissionRepository.getSubmission(externalId);
-      let submissionToProcess: Submission;
+        // Check if this content was already submitted
+        let submissionToProcess =
+          await this.submissionRepository.getSubmission(externalId);
 
-      if (!existingSubmission) {
-        // Daily submission limit check (example, using curatorPlatformId)
-        if (curatorPlatformId) {
-          const dailyCount =
-            await submissionRepository.getDailySubmissionCount(
+        if (!submissionToProcess) {
+          if (curatorPlatformId) {
+            const dailyCount =
+              await this.submissionRepository.getDailySubmissionCount(
+                curatorPlatformId,
+              );
+            if (dailyCount >= this.config.global.maxDailySubmissionsPerUser) {
+              this.logger.warn(
+                { curatorPlatformId, externalId },
+                `Curator ${curatorPlatformId} reached daily submission limit for ${externalId}.`,
+              );
+              return;
+            }
+            await this.submissionRepository.incrementDailySubmissionCount(
               curatorPlatformId,
+              tx,
             );
-          if (dailyCount >= this.config.global.maxDailySubmissionsPerUser) {
-            logger.warn(
-              `Curator ${curatorPlatformId} reached daily submission limit for ${externalId}.`,
-            );
-            return;
           }
-          await submissionRepository.incrementDailySubmissionCount(
-            curatorPlatformId,
+
+          submissionToProcess = { ...newSubmission };
+          if (!submissionToProcess.submittedAt)
+            submissionToProcess.submittedAt = new Date();
+          if (!submissionToProcess.moderationHistory)
+            submissionToProcess.moderationHistory = [];
+
+          await this.submissionRepository.saveSubmission(
+            submissionToProcess,
+            tx,
+          );
+          this.logger.info(
+            { externalId },
+            `New submission ${externalId} saved.`,
+          );
+        } else {
+          this.logger.info(
+            { externalId },
+            `Content ${externalId} already submitted. Processing for additional feeds if any.`,
           );
         }
 
-        // Save the new submission. newSubmission should have most fields populated by AdapterService.
-        // Ensure all required fields are present.
-        submissionToProcess = { ...newSubmission }; // Use the already adapted submission
-        if (!submissionToProcess.submittedAt)
-          submissionToProcess.submittedAt = new Date();
-        if (!submissionToProcess.moderationHistory)
-          submissionToProcess.moderationHistory = [];
+        const feedIdsToProcess = new Set<string>([targetFeedId]);
 
-        await submissionRepository.saveSubmission(submissionToProcess);
-        logger.info(`New submission ${externalId} saved.`);
-      } else {
-        logger.info(
-          `Content ${externalId} already submitted. Processing for additional feeds if any.`,
-        );
-        submissionToProcess = existingSubmission;
-        // Update curator details if this is a new curation of existing content by a different curator
-        // This logic might need refinement based on product requirements.
-        // For now, we assume the first curator's details are primary.
-      }
-
-      // Determine target feeds.
-      // The `targetFeedId` is the primary feed.
-      // The `newSubmission.feeds` might contain other feeds identified by AdapterService (e.g. from hashtags).
-      // For now, we'll simplify and assume `targetFeedId` is the one to process for.
-      // A more complex scenario would merge these.
-      const feedIdsToProcess = new Set<string>([targetFeedId]);
-      // If newSubmission.feeds (populated by adapter from hashtags for example) is available:
-      // (newSubmission.feeds || []).forEach(f => feedIdsToProcess.add(f.feedId));
-
-      for (const currentFeedId of feedIdsToProcess) {
-        const feedConfig = this.config.feeds.find(
-          (f) => f.id.toLowerCase() === currentFeedId.toLowerCase(),
-        );
-        if (!feedConfig) {
-          logger.warn(
-            `Feed configuration not found for feedId: ${currentFeedId} for submission ${externalId}.`,
+        for (const currentFeedId of feedIdsToProcess) {
+          const feedConfig = this.config.feeds.find(
+            (f) => f.id.toLowerCase() === currentFeedId.toLowerCase(),
           );
-          continue;
-        }
+          if (!feedConfig) {
+            this.logger.warn(
+              { currentFeedId, externalId },
+              `Feed configuration not found for feedId: ${currentFeedId} for submission ${externalId}.`,
+            );
+            continue;
+          }
 
-        // Check if submission already exists for this specific feed
-        const existingFeedEntry = (submissionToProcess.feeds || []).find(
-          (f) => f.feedId.toLowerCase() === currentFeedId.toLowerCase(),
-        );
-
-        if (existingFeedEntry) {
-          logger.info(
-            `Submission ${externalId} already exists in feed ${currentFeedId} with status ${existingFeedEntry.status}.`,
+          const existingFeedEntry = (submissionToProcess.feeds || []).find(
+            (f) => f.feedId.toLowerCase() === currentFeedId.toLowerCase(),
           );
-          // Potentially handle re-submission logic if needed
+
+          if (existingFeedEntry) {
+            this.logger.info(
+              { externalId, currentFeedId, status: existingFeedEntry.status },
+              `Submission ${externalId} already exists in feed ${currentFeedId} with status ${existingFeedEntry.status}.`,
+            );
+            if (
+              existingFeedEntry.status === SubmissionStatus.PENDING &&
+              curatorUsername &&
+              this.isModeratorForFeed(curatorUsername, feedConfig, platformKey)
+            ) {
+              this.logger.info(
+                { curatorUsername, platformKey, externalId, currentFeedId },
+                `Moderator ${curatorUsername} (platform: ${platformKey}) re-submitted to pending item ${externalId} in feed ${currentFeedId}. Approving.`,
+              );
+              await this.autoApproveSubmissionByModerator(
+                submissionToProcess,
+                feedConfig,
+                curatorUsername,
+                platformKey,
+                curatorActionExternalId,
+                newSubmission.curatorNotes,
+                tx,
+              );
+            }
+            continue;
+          }
+
+          await this.feedRepository.saveSubmissionToFeed(
+            externalId,
+            feedConfig.id,
+            this.config.global.defaultStatus,
+            tx,
+          );
+          this.logger.info(
+            {
+              externalId,
+              feedId: feedConfig.id,
+              status: this.config.global.defaultStatus,
+            },
+            `Submission ${externalId} added to feed ${feedConfig.id} with status ${this.config.global.defaultStatus}.`,
+          );
+
           if (
-            existingFeedEntry.status === SubmissionStatus.PENDING &&
             curatorUsername &&
             this.isModeratorForFeed(curatorUsername, feedConfig, platformKey)
           ) {
-            logger.info(
-              `Moderator ${curatorUsername} (platform: ${platformKey}) re-submitted to pending item ${externalId} in feed ${currentFeedId}. Approving.`,
+            this.logger.info(
+              { externalId, curatorUsername, platformKey, feedId: feedConfig.id },
+              `Submission ${externalId} by moderator ${curatorUsername} (platform: ${platformKey}) for feed ${feedConfig.id}. Auto-approving.`,
             );
             await this.autoApproveSubmissionByModerator(
               submissionToProcess,
@@ -167,42 +186,22 @@ export class SubmissionService {
               platformKey,
               curatorActionExternalId,
               newSubmission.curatorNotes,
+              tx,
             );
           }
-          continue;
         }
-
-        // Save to feed with default status
-        await feedRepository.saveSubmissionToFeed(
-          externalId,
-          feedConfig.id,
-          this.config.global.defaultStatus,
-        );
-        logger.info(
-          `Submission ${externalId} added to feed ${feedConfig.id} with status ${this.config.global.defaultStatus}.`,
-        );
-
-        // If the curator is a moderator for this feed, auto-approve
-        if (
-          curatorUsername &&
-          this.isModeratorForFeed(curatorUsername, feedConfig, platformKey)
-        ) {
-          logger.info(
-            `Submission ${externalId} by moderator ${curatorUsername} (platform: ${platformKey}) for feed ${feedConfig.id}. Auto-approving.`,
-          );
-          await this.autoApproveSubmissionByModerator(
-            submissionToProcess,
-            feedConfig,
-            curatorUsername,
-            platformKey,
-            curatorActionExternalId,
-            newSubmission.curatorNotes,
-          );
-        }
+      });
+    } catch (error: any) {
+      this.logger.error(
+        { err: error, externalId },
+        `Error handling submission for externalId ${externalId}`,
+      );
+      if (error instanceof SubmissionServiceError) {
+        throw error;
       }
-    } catch (error) {
-      logger.error(
-        `Error handling submission for externalId ${externalId}:`,
+      throw new SubmissionServiceError(
+        `Failed to handle submission ${externalId}: ${error.message}`,
+        500,
         error,
       );
     }
@@ -212,36 +211,47 @@ export class SubmissionService {
     submission: Submission,
     feedConfig: FeedConfig,
     moderatorUsername: string,
-    platformKey: string, // Added platformKey
+    platformKey: string,
     moderatorActionExternalId: string | undefined,
     moderatorNotes: string | null,
+    tx: DB,
   ): Promise<void> {
     const moderation: Moderation = {
-      adminId: `${moderatorUsername}@${platformKey}`, // Store adminId with platform context
+      adminId: `${moderatorUsername}@${platformKey}`,
       action: "approve",
       timestamp: new Date(),
-      tweetId: submission.tweetId, // The ID of the content being approved
+      tweetId: submission.tweetId,
       feedId: feedConfig.id,
-      note: moderatorNotes, // Notes from the curator/moderator
+      note: moderatorNotes,
       moderationResponseTweetId: moderatorActionExternalId,
     };
-    await submissionRepository.saveModerationAction(moderation);
-    await feedRepository.updateSubmissionFeedStatus(
+
+    await this.submissionRepository.saveModerationAction(moderation, tx);
+    await this.feedRepository.updateSubmissionFeedStatus(
       submission.tweetId,
       feedConfig.id,
       SubmissionStatus.APPROVED,
-      moderatorActionExternalId ?? null, // Pass null if undefined
+      moderatorActionExternalId ?? null,
+      tx,
     );
-    logger.info(
+    this.logger.info(
+      {
+        submissionId: submission.tweetId,
+        feedId: feedConfig.id,
+        moderator: moderatorUsername,
+      },
       `Auto-approved submission ${submission.tweetId} for feed ${feedConfig.id} by moderator ${moderatorUsername}.`,
     );
 
     if (feedConfig.outputs.stream?.enabled) {
-      // Fetch the full submission details again to ensure it has all latest feed statuses
-      const fullSubmission = await submissionRepository.getSubmission(
+      // For consistency within a transaction, if this read needs to be part of the same snapshot, tx might be preferred
+      // However, getSubmission in repo uses executeWithRetry(this.db), so it's not using the tx.
+      // This is generally fine for reads unless strict serializable isolation is needed for this read relative to writes.
+      const fullSubmission = await this.submissionRepository.getSubmission(
         submission.tweetId,
       );
       if (fullSubmission) {
+        // processorService.process is not a DB operation, so it's outside the tx scope concern
         await this.processorService.process(
           fullSubmission,
           feedConfig.outputs.stream,
@@ -270,115 +280,131 @@ export class SubmissionService {
       commandTimestamp,
     } = command;
 
-    logger.info(
-      `Handling moderation command: ${action} for ${targetExternalId} by ${moderatorUsername}@${platformKey} (commandId: ${commandExternalId})`,
+    this.logger.info(
+      { action, targetExternalId, moderatorUsername, platformKey, commandExternalId },
+      `Handling moderation command: ${action} for ${targetExternalId} by ${moderatorUsername}@${platformKey}`,
     );
 
-    // Use platformKey for admin check
-    if (
-      !this.isGlobalAdminOrModeratorForPlatform(moderatorUsername, platformKey)
-    ) {
-      logger.warn(
-        `User ${moderatorUsername}@${platformKey} is not an authorized moderator. Moderation command ${commandExternalId} rejected.`,
-      );
-      return;
-    }
+    try {
+      await this.db.transaction(async (tx) => {
+        if (
+          !this.isGlobalAdminOrModeratorForPlatform(
+            moderatorUsername,
+            platformKey,
+          )
+        ) {
+          this.logger.warn(
+            { moderatorUsername, platformKey, commandExternalId },
+            `User ${moderatorUsername}@${platformKey} is not an authorized moderator. Moderation command ${commandExternalId} rejected.`,
+          );
+          return;
+        }
 
-    const submission =
-      await submissionRepository.getSubmission(targetExternalId);
-    if (!submission) {
-      logger.warn(
-        `Moderation command ${commandExternalId} for non-existent submission ${targetExternalId}.`,
-      );
-      return;
-    }
+        const submission =
+          await this.submissionRepository.getSubmission(targetExternalId);
+        if (!submission) {
+          this.logger.warn(
+            { commandExternalId, targetExternalId },
+            `Moderation command ${commandExternalId} for non-existent submission ${targetExternalId}.`,
+          );
+          return;
+        }
 
-    // Determine which feeds this moderation applies to.
-    // Could be `targetFeedId` or all feeds the admin can moderate for this submission.
-    // For simplicity, let's assume it applies to `targetFeedId` if that feed is pending and moderated by this admin on this platform.
-    const feedsToModerate: FeedConfig[] = [];
-    const feedConfig = this.config.feeds.find(
-      (f) => f.id.toLowerCase() === targetFeedId.toLowerCase(),
-    );
-
-    if (
-      feedConfig &&
-      this.isModeratorForFeed(moderatorUsername, feedConfig, platformKey)
-    ) {
-      const submissionFeedEntry = (submission.feeds || []).find(
-        (sf: SubmissionFeed) =>
-          sf.feedId.toLowerCase() === feedConfig.id.toLowerCase(),
-      );
-      if (
-        submissionFeedEntry &&
-        submissionFeedEntry.status === SubmissionStatus.PENDING
-      ) {
-        feedsToModerate.push(feedConfig);
-      } else {
-        logger.info(
-          `Moderation command ${commandExternalId} for feed ${targetFeedId} by ${moderatorUsername}@${platformKey}, but submission is not pending or not in feed.`,
-        );
-      }
-    } else {
-      logger.warn(
-        `Moderator ${moderatorUsername}@${platformKey} cannot moderate feed ${targetFeedId} or feed not found.`,
-      );
-    }
-
-    if (feedsToModerate.length === 0) {
-      logger.info(
-        `No suitable pending feeds found for ${moderatorUsername}@${platformKey} to moderate for submission ${targetExternalId} via command ${commandExternalId}.`,
-      );
-      return;
-    }
-
-    for (const feed of feedsToModerate) {
-      try {
-        const moderation: Moderation = {
-          adminId: `${moderatorUsername}@${platformKey}`, // Store adminId with platform context
-          action,
-          timestamp: commandTimestamp,
-          tweetId: targetExternalId,
-          feedId: feed.id,
-          note: notes || null,
-          moderationResponseTweetId: commandExternalId,
-        };
-        await submissionRepository.saveModerationAction(moderation);
-
-        const newStatus =
-          action === "approve"
-            ? SubmissionStatus.APPROVED
-            : SubmissionStatus.REJECTED;
-        await feedRepository.updateSubmissionFeedStatus(
-          targetExternalId,
-          feed.id,
-          newStatus,
-          commandExternalId ?? null, // Pass null if undefined
-        );
-        logger.info(
-          `Moderation ${action} for ${targetExternalId} in feed ${feed.id} by ${moderatorUsername} processed.`,
+        const feedsToModerate: FeedConfig[] = [];
+        const feedConfig = this.config.feeds.find(
+          (f) => f.id.toLowerCase() === targetFeedId.toLowerCase(),
         );
 
         if (
-          newStatus === SubmissionStatus.APPROVED &&
-          feed.outputs.stream?.enabled
+          feedConfig &&
+          this.isModeratorForFeed(moderatorUsername, feedConfig, platformKey)
         ) {
-          // Fetch the full submission to pass to processor, ensuring it has latest state
-          const fullSubmission =
-            await submissionRepository.getSubmission(targetExternalId);
-          if (fullSubmission) {
-            await this.processorService.process(
-              fullSubmission,
-              feed.outputs.stream,
+          const submissionFeedEntry = (submission.feeds || []).find(
+            (sf: SubmissionFeed) =>
+              sf.feedId.toLowerCase() === feedConfig.id.toLowerCase(),
+          );
+          if (
+            submissionFeedEntry &&
+            submissionFeedEntry.status === SubmissionStatus.PENDING
+          ) {
+            feedsToModerate.push(feedConfig);
+          } else {
+            this.logger.info(
+              { commandExternalId, targetFeedId, moderatorUsername, platformKey },
+              `Moderation command ${commandExternalId} for feed ${targetFeedId} by ${moderatorUsername}@${platformKey}, but submission is not pending or not in feed.`,
             );
           }
+        } else {
+          this.logger.warn(
+            { moderatorUsername, platformKey, targetFeedId },
+            `Moderator ${moderatorUsername}@${platformKey} cannot moderate feed ${targetFeedId} or feed not found.`,
+          );
         }
-      } catch (error) {
-        logger.error(
-          `Error processing moderation for ${targetExternalId} in feed ${feed.id}:`,
-          error,
-        );
+
+        if (feedsToModerate.length === 0) {
+          this.logger.info(
+            { moderatorUsername, platformKey, targetExternalId, commandExternalId },
+            `No suitable pending feeds found for ${moderatorUsername}@${platformKey} to moderate for submission ${targetExternalId} via command ${commandExternalId}.`,
+          );
+          return;
+        }
+
+        for (const feed of feedsToModerate) {
+          const moderation: Moderation = {
+            adminId: `${moderatorUsername}@${platformKey}`,
+            action,
+            timestamp: commandTimestamp,
+            tweetId: targetExternalId,
+            feedId: feed.id,
+            note: notes || null,
+            moderationResponseTweetId: commandExternalId,
+          };
+          await this.submissionRepository.saveModerationAction(moderation, tx);
+
+          const newStatus =
+            action === "approve"
+              ? SubmissionStatus.APPROVED
+              : SubmissionStatus.REJECTED;
+          await this.feedRepository.updateSubmissionFeedStatus(
+            targetExternalId,
+            feed.id,
+            newStatus,
+            commandExternalId ?? null,
+            tx,
+          );
+          this.logger.info(
+            { action, targetExternalId, feedId: feed.id, moderatorUsername },
+            `Moderation ${action} for ${targetExternalId} in feed ${feed.id} by ${moderatorUsername} processed.`,
+          );
+
+          if (
+            newStatus === SubmissionStatus.APPROVED &&
+            feed.outputs.stream?.enabled
+          ) {
+            const fullSubmission =
+              await this.submissionRepository.getSubmission(targetExternalId);
+            if (fullSubmission) {
+              await this.processorService.process(
+                fullSubmission,
+                feed.outputs.stream,
+              );
+            }
+          }
+        }
+      });
+    } catch (error: any) {
+      this.logger.error(
+        { err: error, targetExternalId, action, commandExternalId },
+        `Error processing moderation for ${targetExternalId} (command ${commandExternalId})`,
+      );
+      if (error instanceof SubmissionServiceError) {
+        throw error;
       }
+      throw new SubmissionServiceError(
+        `Failed to handle moderation for ${targetExternalId}: ${error.message}`,
+        500,
+        error,
+      );
     }
   }
 
@@ -433,8 +459,4 @@ export class SubmissionService {
     }
     return false;
   }
-
-  // Removed: handleAcknowledgement, processApproval, processRejection (merged into handleModeration)
-  // Removed: isAdmin (replaced by isAdminByUsername), getModerationAction, isModeration, isSubmission (moved to AdapterService)
-  // Removed: extractDescription, extractNote (moved to AdapterService or handled by it)
 }

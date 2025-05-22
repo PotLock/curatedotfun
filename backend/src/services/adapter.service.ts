@@ -1,18 +1,17 @@
 import { SourceItem } from "@curatedotfun/types";
+import { AppConfig, FeedConfig } from "../types/config.zod"; // For potential config access
 import {
-  AdaptedItem,
   AdaptedContentSubmission,
+  AdaptedItem,
   AdaptedModerationCommand,
+  AdaptedPendingSubmissionCommand,
   AdaptedUnknownItem,
   ModerationCommandData,
-  AdaptedPendingSubmissionCommand, // Added
 } from "../types/inbound.types";
 import {
-  Submission,
   Moderation,
-  SubmissionStatus,
-} from "../types/submission.types";
-import { AppConfig, FeedConfig } from "../types/config.zod"; // For potential config access
+  Submission
+} from "../types/submission";
 import { logger } from "../utils/logger";
 
 export class AdapterService {

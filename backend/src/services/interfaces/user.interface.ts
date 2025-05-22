@@ -1,14 +1,4 @@
-import { z } from "zod";
-import {
-  insertUserSchema,
-  updateUserSchema,
-} from "../../validation/users.validation";
-
-export type InsertUserData = z.infer<typeof insertUserSchema> & {
-  auth_provider_id: string;
-};
-
-export type UpdateUserData = z.infer<typeof updateUserSchema>;
+import { InsertUser, UpdateUser } from "services/db/types";
 
 export interface IUserService {
   /**
@@ -23,7 +13,7 @@ export interface IUserService {
    * @param data User data including NEAR public key
    * @returns The created user
    */
-  createUser(data: InsertUserData): Promise<any>;
+  createUser(data: InsertUser): Promise<any>;
 
   /**
    * Update an existing user
@@ -32,8 +22,7 @@ export interface IUserService {
    * @returns The updated user or null if not found
    */
   updateUser(
-    auth_provider_id: string,
-    data: UpdateUserData,
+    data: UpdateUser,
   ): Promise<any | null>;
 
   /**

@@ -1,5 +1,5 @@
 import { SourceItem } from "@curatedotfun/types";
-import { Submission, Moderation, SubmissionStatus } from "./submission.types"; // Added SubmissionStatus
+import { Submission, Moderation, SubmissionStatus } from "./submission"; // Added SubmissionStatus
 
 // Discriminated union for different types of adapted items
 export type AdaptedItemType =

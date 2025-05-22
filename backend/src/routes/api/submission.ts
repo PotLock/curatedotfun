@@ -6,7 +6,7 @@ import {
   submissionRepository,
 } from "../../services/db/repositories";
 import { Env } from "../../types/app";
-import { SubmissionStatus } from "../../types/twitter";
+import { SubmissionStatus } from "../../types/submission";
 
 const submissionRoutes = new Hono<Env>();
 
@@ -82,17 +82,11 @@ submissionRoutes.get("/single/:submissionId", async (c) => {
  * Get submissions for a specific feed
  */
 submissionRoutes.get("/feed/:feedId", async (c) => {
-  const context = c.get("context");
   const feedId = c.req.param("feedId");
   const status = c.req.query("status");
 
-  const feed = context.configService.getFeedConfig(feedId);
-  if (!feed) {
-    return c.notFound();
-  }
-
   let submissions = await feedRepository.getSubmissionsByFeed(feedId);
-
+  // TODO: Could be a better query
   if (status) {
     submissions = submissions.filter((sub) => sub.status === status);
   }

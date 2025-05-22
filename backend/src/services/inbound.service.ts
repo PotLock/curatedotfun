@@ -7,7 +7,7 @@ import {
   AdaptedPendingSubmissionCommand,
   AdaptedUnknownItem,
 } from "../types/inbound.types";
-import { Submission } from "../types/submission.types"; // Added Submission
+import { Submission } from "../types/submission"; // Added Submission
 import { AdapterService } from "./adapter.service";
 import { SubmissionService } from "./submission.service";
 import { logger } from "../utils/logger";

@@ -1,15 +1,10 @@
-import { z } from "zod";
+import { InsertActivity, SelectFeedUserStats, SelectUserStats, UpdateFeedUserStats, UpdateUserStats } from "services/db/types";
 import {
-  InsertActivityData,
   ActivityQueryOptions,
-  LeaderboardQueryOptions,
-  LeaderboardEntry,
   GlobalStats,
-  UpdateUserStatsData,
-  SelectUserStatsData,
-  UpdateFeedUserStatsData,
-  SelectFeedUserStatsData,
+  LeaderboardQueryOptions
 } from "../../validation/activity.validation";
+import { LeaderboardEntry } from "services/db/queries";
 
 export interface IActivityService {
   /**
@@ -17,7 +12,7 @@ export interface IActivityService {
    * @param data Activity data to insert
    * @returns The created activity
    */
-  createActivity(data: InsertActivityData): Promise<any>;
+  createActivity(data: InsertActivity): Promise<any>;
 
   /**
    * Get activities for a specific user
@@ -50,7 +45,7 @@ export interface IActivityService {
    * @param userId The user ID to get stats for
    * @returns User stats or null if not found
    */
-  getUserStats(userId: number): Promise<SelectUserStatsData | null>;
+  getUserStats(userId: number): Promise<SelectUserStats | null>;
 
   /**
    * Update user statistics
@@ -60,8 +55,8 @@ export interface IActivityService {
    */
   updateUserStats(
     userId: number,
-    data: UpdateUserStatsData,
-  ): Promise<SelectUserStatsData>;
+    data: UpdateUserStats,
+  ): Promise<SelectUserStats>;
 
   /**
    * Get feed-specific user statistics
@@ -72,7 +67,7 @@ export interface IActivityService {
   getFeedUserStats(
     userId: number,
     feedId: string,
-  ): Promise<SelectFeedUserStatsData | null>;
+  ): Promise<SelectFeedUserStats | null>;
 
   /**
    * Update feed-specific user statistics
@@ -84,8 +79,8 @@ export interface IActivityService {
   updateFeedUserStats(
     userId: number,
     feedId: string,
-    data: UpdateFeedUserStatsData,
-  ): Promise<SelectFeedUserStatsData>;
+    data: UpdateFeedUserStats,
+  ): Promise<SelectFeedUserStats>;
 
   /**
    * Get feeds that a user has curated for

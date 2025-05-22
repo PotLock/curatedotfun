@@ -1,5 +1,7 @@
-import { JwtVariables } from "hono/jwt";
+import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Hono } from "hono";
+import { JwtVariables } from "hono/jwt";
+import * as schema from "../services/db/schema";
 
 export type Env = {
   Variables: {
