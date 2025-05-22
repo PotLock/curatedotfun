@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { FeedConfig } from "types/config.zod";
 import { RecapState } from "../../../types/recap";
 import {
@@ -7,11 +7,6 @@ import {
   SubmissionStatus,
   SubmissionWithFeedData,
 } from "../../../types/submission";
-import {
-  InsertFeedData,
-  SelectFeedData,
-  UpdateFeedData,
-} from "../../../validation/feed.validation";
 import * as queries from "../queries";
 import {
   feedRecapsState,
@@ -20,8 +15,8 @@ import {
   submissionFeeds,
   submissions,
 } from "../schema";
+import { DB, InsertFeed, SelectFeed, UpdateFeed } from "../types";
 import { executeWithRetry, withErrorHandling } from "../utils";
-import { DB } from "../types";
 
 /**
  * Represents an approved submission for recap processing
@@ -47,7 +42,7 @@ export class FeedRepository {
   /**
    * Get a feed by ID
    */
-  async getFeedById(feedId: string): Promise<SelectFeedData | null> {
+  async getFeedById(feedId: string): Promise<SelectFeed | null> {
     return withErrorHandling(
       async () =>
         executeWithRetry(async (dbInstance) => {
@@ -56,7 +51,7 @@ export class FeedRepository {
             .from(feeds)
             .where(eq(feeds.id, feedId))
             .limit(1);
-          return result.length > 0 ? (result[0] as SelectFeedData) : null;
+          return result.length > 0 ? (result[0] as SelectFeed) : null;
         }, this.db),
       { operationName: "getFeedById", additionalContext: { feedId } },
       null,
@@ -66,12 +61,12 @@ export class FeedRepository {
   /**
    * Get all feeds
    */
-  async getAllFeeds(): Promise<SelectFeedData[]> {
+  async getAllFeeds(): Promise<SelectFeed[]> {
     return withErrorHandling(
       async () =>
         executeWithRetry(async (dbInstance) => {
           const result = await dbInstance.select().from(feeds);
-          return result as SelectFeedData[];
+          return result as SelectFeed[];
         }, this.db),
       { operationName: "getAllFeeds" },
       [],
@@ -81,11 +76,11 @@ export class FeedRepository {
   /**
    * Create a new feed.
    */
-  async createFeed(data: InsertFeedData, txDb: DB): Promise<SelectFeedData> {
+  async createFeed(data: InsertFeed, txDb: DB): Promise<SelectFeed> {
     return withErrorHandling(
       async () => {
         const result = await txDb.insert(feeds).values(data).returning();
-        return result[0] as SelectFeedData;
+        return result[0] as SelectFeed;
       },
       { operationName: "createFeed", additionalContext: { data } },
     );
@@ -96,9 +91,9 @@ export class FeedRepository {
    */
   async updateFeed(
     feedId: string,
-    data: UpdateFeedData,
+    data: UpdateFeed,
     txDb: DB,
-  ): Promise<SelectFeedData | null> {
+  ): Promise<SelectFeed | null> {
     return withErrorHandling(
       async () => {
         const result = await txDb
@@ -106,7 +101,7 @@ export class FeedRepository {
           .set({ ...data, updatedAt: new Date() })
           .where(eq(feeds.id, feedId))
           .returning();
-        return result.length > 0 ? (result[0] as SelectFeedData) : null;
+        return result.length > 0 ? (result[0] as SelectFeed) : null;
       },
       { operationName: "updateFeed", additionalContext: { feedId, data } },
     );

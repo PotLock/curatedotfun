@@ -238,7 +238,6 @@ The API is built with Hono.js. `routes/api/index.ts` aggregates sub-routers for 
     *   `/api/feeds`: Feed management (list, create, get, update, get submissions for feed, process approved submissions for a feed).
     *   `/api/submissions`: Submission retrieval (list all with pagination/status, get single, get by feed).
     *   `/api/activity`: Activity and stats retrieval.
-    *   `/api/leaderboard`: Leaderboard data.
     *   `/api/config`: (Likely for fetching parts of the app config).
     *   `/api/plugins`: e.g., `POST /reload` to reload all plugins.
     *   `/api/stats`: (Likely for global application stats).

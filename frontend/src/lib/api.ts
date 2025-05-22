@@ -194,12 +194,12 @@ export function useLeaderboard(
     queryKey: ["leaderboard", timeRange, feedId, limit],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (timeRange) params.append("timeRange", timeRange);
-      if (feedId) params.append("feedId", feedId);
+      if (timeRange) params.append("time_range", timeRange);
+      if (feedId) params.append("feed_id", feedId);
       if (limit !== undefined) params.append("limit", limit.toString());
 
       const queryString = params.toString();
-      const url = `/api/leaderboard${queryString ? `?${queryString}` : ""}`;
+      const url = `/api/activity/leaderboard${queryString ? `?${queryString}` : ""}`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch leaderboard");
