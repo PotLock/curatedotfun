@@ -1,14 +1,6 @@
 import { z } from "zod";
 import { SubmissionStatus } from "./submission";
 
-// Schema for GlobalConfig
-export const GlobalConfigSchema = z.object({
-  botId: z.string(),
-  defaultStatus: z.nativeEnum(SubmissionStatus),
-  maxDailySubmissionsPerUser: z.number().int().positive(),
-  blacklist: z.record(z.array(z.string())), // e.g. { "twitter": ["user1", "user2"] }
-});
-
 // Schema for basic plugin registration (used in top-level plugins config)
 export const PluginRegistrationConfigSchema = z.object({
   type: z.enum(["transformer", "distributor", "source"]),
@@ -24,6 +16,7 @@ export const ModerationConfigSchema = z.object({
   approvers: z.record(z.string(), z.array(z.string())).optional(),
   // Key is the platform identifier,
   // value is an array of approver usernames or IDs for that platform.
+  blacklist: z.record(z.string(), z.array(z.string())).optional(), // e.g. { "twitter": ["user1", "user2"], "all": ["global_spammer"] }
 
   // TODO: usernames can change, and so we should root in userIds per platform (on feed creation)
 });
@@ -132,7 +125,6 @@ export type IntegrationsConfig = z.infer<typeof IntegrationsConfigSchema>;
 
 // Schema for the entire AppConfig
 export const AppConfigSchema = z.object({
-  global: GlobalConfigSchema,
   plugins: z.record(PluginRegistrationConfigSchema), // Maps plugin name to its registration config
   feeds: z.array(FeedConfigSchema),
   integrations: IntegrationsConfigSchema.optional(),
@@ -141,7 +133,6 @@ export const AppConfigSchema = z.object({
 // TODO: CONSOLIDATE ALL CONFIGS TO HERE
 
 // Infer TypeScript types from Zod schemas
-export type GlobalConfig = z.infer<typeof GlobalConfigSchema>;
 // PluginRegistrationConfig already exported
 // ModerationConfig already exported via FeedConfig or directly if needed
 // TransformConfig already exported

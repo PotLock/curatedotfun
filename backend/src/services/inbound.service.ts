@@ -7,7 +7,7 @@ import {
   AdaptedPendingSubmissionCommand,
   AdaptedUnknownItem,
 } from "../types/inbound.types";
-import { Submission } from "../types/submission"; // Added Submission
+import { Submission, SubmissionStatus } from "../types/submission"; // Added Submission
 import { AdapterService } from "./adapter.service";
 import { SubmissionService } from "./submission.service";
 import { logger } from "../utils/logger";
@@ -84,7 +84,7 @@ export class InboundService {
             submittedAt: pendingCmd.submittedAt,
 
             // Default/initial values
-            status: this.appConfig.global.defaultStatus, // Use global default status
+            status: SubmissionStatus.PENDING,
             moderationHistory: [],
             feeds: [], // SubmissionService will handle adding to feeds
             recapId: null, // Not part of initial submission via command

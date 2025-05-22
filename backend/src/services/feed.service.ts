@@ -1,25 +1,20 @@
+import { Logger } from "pino";
 import {
-  AppConfig,
   DistributorConfig,
   StreamConfig,
 } from "../types/config.zod";
-import { InsertFeed, UpdateFeed } from "./db/types";
-import { FeedRepository } from "./db/repositories/feed.repository";
-import { ProcessorService } from "./processor.service";
-import { DB } from "./db/types";
-import { logger } from "../utils/logger";
 import { SubmissionStatus } from "../types/submission";
-import { serviceUnavailable } from "../utils/error";
-import { Logger } from "pino";
+import { FeedRepository } from "./db/repositories/feed.repository";
+import { DB, InsertFeed, UpdateFeed } from "./db/types";
+import { ProcessorService } from "./processor.service";
 
 export class FeedService {
   constructor(
     private feedRepository: FeedRepository,
     private processorService: ProcessorService,
-    private appConfig: AppConfig, // For feedConfig access if needed, or defaultStatus
     private db: DB, // For transactions if complex operations arise
     private logger: Logger,
-  ) {}
+  ) { }
 
   async getAllFeeds() {
     this.logger.info("FeedService: getAllFeeds called");
@@ -74,17 +69,11 @@ export class FeedService {
       throw new Error(`Feed not found: ${feedId}`); // Or a custom NotFoundError
     }
 
-    // Ensure feed.config is correctly typed and accessed.
-    // The route had: const feedConfig = feed.config;
-    // Assuming feed from repository has a 'config' property of type FeedConfig from AppConfig
-    // This might need adjustment based on the actual structure of 'feed' object from repository
-    const feedConfig = this.appConfig.feeds.find(
-      (f) => f.id.toLowerCase() === feedId.toLowerCase(),
-    );
+    const feedConfig = await this.feedRepository.getFeedConfig(feedId); // Get config from DB
     if (!feedConfig) {
       this.logger.error(
         { feedId },
-        "FeedService: processFeed - Feed configuration not found in AppConfig",
+        "FeedService: processFeed - Feed configuration not found in database",
       );
       throw new Error(`Feed configuration not found for feedId: ${feedId}`);
     }
@@ -108,12 +97,12 @@ export class FeedService {
     for (const submission of approvedSubmissions) {
       try {
         if (
-          !feedConfig.outputs.stream ||
-          !feedConfig.outputs.stream.distribute
+          !feedConfig.outputs?.stream?.distribute ||
+          feedConfig.outputs.stream.distribute.length === 0
         ) {
           this.logger.info(
             { submissionId: submission.tweetId, feedId },
-            "FeedService: processFeed - No stream output or distributors configured for this feed.",
+            "FeedService: processFeed - No stream output or no distributors configured for this feed.",
           );
           continue;
         }
@@ -153,7 +142,7 @@ export class FeedService {
           } else {
             streamConfig.distribute = streamConfig.distribute?.filter(
               (
-                d: any, // TODO: Type 'any' for d
+                d: DistributorConfig,
               ) => validDistributors.includes(d.plugin),
             );
             validDistributors.forEach((d) => usedDistributors.add(d));

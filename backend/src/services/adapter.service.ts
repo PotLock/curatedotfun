@@ -1,4 +1,4 @@
-import { SourceItem } from "@curatedotfun/types";
+import type { SourceItem } from '@curatedotfun/types';
 import { AppConfig, FeedConfig } from "../types/config.zod"; // For potential config access
 import {
   AdaptedContentSubmission,
@@ -8,11 +8,11 @@ import {
   AdaptedUnknownItem,
   ModerationCommandData,
 } from "../types/inbound.types";
-import { Moderation, Submission } from "../types/submission";
+import { Moderation, Submission, SubmissionStatus } from "../types/submission";
 import { logger } from "../utils/logger";
 
 export class AdapterService {
-  constructor(private appConfig: AppConfig) {}
+  constructor(private appConfig: AppConfig) { }
 
   /**
    * Adapts a raw SourceItem into a structured AdaptedItem.
@@ -133,7 +133,7 @@ export class AdapterService {
           "",
         ), // No repliedToUsername if it's direct content
         media: sourceItem.media,
-        status: this.appConfig.global.defaultStatus,
+        status: SubmissionStatus.PENDING,
         moderationHistory: [],
         feeds: [], // SubmissionService will populate this
       };
@@ -193,7 +193,7 @@ export class AdapterService {
       action: action,
       moderatorUsername: sourceItem.author?.username || "unknown_moderator",
       moderatorPlatformId: sourceItem.author?.id,
-      notes: this.extractCuratorNotes(sourceItem.content, action, ""), // Basic note extraction
+      notes: this.extractCuratorNotes(sourceItem.content, action, ""),
       commandExternalId: sourceItem.externalId,
       commandTimestamp: sourceItem.createdAt
         ? new Date(sourceItem.createdAt)
@@ -239,7 +239,7 @@ export class AdapterService {
       curatorTweetId: sourceItem.id, // Using internal source item ID as a reference
       curatorNotes: undefined,
       media: sourceItem.media,
-      status: this.appConfig.global.defaultStatus,
+      status: SubmissionStatus.PENDING,
       moderationHistory: [],
       feeds: [],
     };
@@ -276,8 +276,8 @@ export class AdapterService {
   ): string | null {
     const commandRegex = new RegExp(`!${command}\\s*(@\\w+\\s*)?`, "i");
     let notes = text
-      .replace(commandRegex, "")
-      .replace(new RegExp(`@${this.appConfig.global.botId}`, "i"), "") // Remove bot mention
+      .replace(commandRegex, "") // TODO: need better bot handling...
+      .replace(new RegExp(`@curatedotfun`, "i"), "") // Remove bot mention
       .replace(/#\w+/g, "") // Remove hashtags
       .trim();
     if (repliedToUsername) {

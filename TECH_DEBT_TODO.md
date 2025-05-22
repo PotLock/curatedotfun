@@ -8,16 +8,6 @@ This file lists miscellaneous technical debt items, potential improvements, and 
     -   **Recommendation**: Consider moving the status filtering logic into `FeedService.getSubmissionsByFeed` itself. The method could accept an optional `status` parameter. This would make the service method more versatile and keep the route handler cleaner.
     -   *File affected: `backend/src/services/feed.service.ts`, `backend/src/routes/api/submission.ts`*
 
--   **Type Safety in `FeedService.processFeed` for Distributor Config**:
-    -   In `backend/src/services/feed.service.ts`, within the `processFeed` method, there's a `TODO: Type 'any' for d` comment:
-        ```typescript
-        streamConfig.distribute = streamConfig.distribute?.filter((d: any) => // TODO: Type 'any' for d
-          validDistributors.includes(d.plugin),
-        );
-        ```
-    -   **Recommendation**: Replace `any` with the correct type for the distributor configuration object (`DistributorConfig` from `../types/config.zod`).
-    -   *File affected: `backend/src/services/feed.service.ts`*
-
 -   **Review `AppInstance` type and `context` usage in `index.ts`**:
     -   The `AppInstance` type in `backend/src/types/app.ts` is currently just `{ app: Hono<Env> }`.
     -   `backend/src/index.ts` accesses `context.twitterService`, `context.submissionService`, etc. It's not immediately clear if `createApp()` in `app.ts` is returning this `context` object as part of `AppInstance` or if these services are accessed via `ServiceProvider.getInstance()` within `index.ts`.

@@ -67,23 +67,6 @@ export class SubmissionService {
 
     try {
       await this.db.transaction(async (tx) => {
-        // Blacklist check
-        const globalBlacklist = this.config.global.blacklist["all"] || [];
-        if (
-          curatorUsername &&
-          (curatorUsername.toLowerCase() ===
-            this.config.global.botId.toLowerCase() ||
-            globalBlacklist.some(
-              (b) => b.toLowerCase() === curatorUsername.toLowerCase(),
-            ))
-        ) {
-          this.logger.warn(
-            { externalId, curatorUsername },
-            `Submission from ${curatorUsername} (extId: ${externalId}) blocked: bot or blacklisted.`,
-          );
-          return;
-        }
-
         // Check if this content was already submitted
         let submissionToProcess =
           await this.submissionRepository.getSubmission(externalId);
@@ -94,10 +77,12 @@ export class SubmissionService {
               await this.submissionRepository.getDailySubmissionCount(
                 curatorPlatformId,
               );
-            if (dailyCount >= this.config.global.maxDailySubmissionsPerUser) {
+            // Read MAX_DAILY_SUBMISSIONS_PER_USER from environment variable, default to 10
+            const maxDailySubmissions = parseInt(process.env.MAX_DAILY_SUBMISSIONS_PER_USER || "10", 10);
+            if (dailyCount >= maxDailySubmissions) {
               this.logger.warn(
-                { curatorPlatformId, externalId },
-                `Curator ${curatorPlatformId} reached daily submission limit for ${externalId}.`,
+                { curatorPlatformId, externalId, maxDailySubmissions },
+                `Curator ${curatorPlatformId} reached daily submission limit (${maxDailySubmissions}) for ${externalId}.`,
               );
               return;
             }
@@ -142,6 +127,34 @@ export class SubmissionService {
             continue;
           }
 
+          // Feed-specific blacklist check for author and curator
+          if (feedConfig.moderation.blacklist) {
+            const platformBlacklist = feedConfig.moderation.blacklist[platformKey] || [];
+            const allPlatformsBlacklist = feedConfig.moderation.blacklist["all"] || [];
+            const combinedBlacklist = [...platformBlacklist, ...allPlatformsBlacklist].map(b => b.toLowerCase());
+
+            if (
+              authorUsername &&
+              combinedBlacklist.includes(authorUsername.toLowerCase())
+            ) {
+              this.logger.warn(
+                { externalId, authorUsername, currentFeedId, platformKey },
+                `Author ${authorUsername} of submission ${externalId} (platform: ${platformKey}) is blacklisted in feed ${currentFeedId}. Skipping processing for this feed.`,
+              );
+              continue;
+            }
+            if (
+              curatorUsername &&
+              combinedBlacklist.includes(curatorUsername.toLowerCase())
+            ) {
+               this.logger.warn(
+                { externalId, curatorUsername, currentFeedId, platformKey },
+                `Curator ${curatorUsername} for submission ${externalId} (platform: ${platformKey}) is blacklisted in feed ${currentFeedId}. Skipping processing for this feed.`,
+              );
+              continue;
+            }
+          }
+
           const existingFeedEntry = (submissionToProcess.feeds || []).find(
             (f) => f.feedId.toLowerCase() === currentFeedId.toLowerCase(),
           );
@@ -176,16 +189,16 @@ export class SubmissionService {
           await this.feedRepository.saveSubmissionToFeed(
             externalId,
             feedConfig.id,
-            this.config.global.defaultStatus,
+            SubmissionStatus.PENDING, // Hardcoded default status
             tx,
           );
           this.logger.info(
             {
               externalId,
               feedId: feedConfig.id,
-              status: this.config.global.defaultStatus,
+              status: SubmissionStatus.PENDING,
             },
-            `Submission ${externalId} added to feed ${feedConfig.id} with status ${this.config.global.defaultStatus}.`,
+            `Submission ${externalId} added to feed ${feedConfig.id} with status ${SubmissionStatus.PENDING}.`,
           );
 
           if (

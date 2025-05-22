@@ -7,20 +7,20 @@ import {
   db,
   feedRepository,
   lastProcessedStateRepository,
+  leaderboardRepository,
   submissionRepository,
   userRepository,
-  leaderboardRepository,
 } from "../services/db";
 import { DistributionService } from "../services/distribution.service";
+import { FeedService } from "../services/feed.service";
 import { InboundService } from "../services/inbound.service";
+import { IBackgroundTaskService } from "../services/interfaces/background-task.interface";
 import { PluginService } from "../services/plugin.service";
 import { ProcessorService } from "../services/processor.service";
 import { SourceService } from "../services/source.service";
 import { SubmissionService } from "../services/submission.service";
 import { TransformationService } from "../services/transformation.service";
 import { UserService } from "../services/users.service";
-import { FeedService } from "../services/feed.service";
-import { IBackgroundTaskService } from "../services/interfaces/background-task.interface";
 import { logger } from "./logger";
 
 /**
@@ -96,7 +96,6 @@ export class ServiceProvider {
     const feedService = new FeedService(
       feedRepository,
       processorService,
-      this.appConfig,
       db,
       logger,
     );
