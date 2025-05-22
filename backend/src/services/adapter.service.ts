@@ -8,10 +8,7 @@ import {
   AdaptedUnknownItem,
   ModerationCommandData,
 } from "../types/inbound.types";
-import {
-  Moderation,
-  Submission
-} from "../types/submission";
+import { Moderation, Submission } from "../types/submission";
 import { logger } from "../utils/logger";
 
 export class AdapterService {

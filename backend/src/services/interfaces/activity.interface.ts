@@ -1,9 +1,16 @@
-import { InsertActivity, SelectActivity, SelectFeedUserStats, SelectUserStats, UpdateFeedUserStats, UpdateUserStats } from "services/db/types";
+import {
+  InsertActivity,
+  SelectActivity,
+  SelectFeedUserStats,
+  SelectUserStats,
+  UpdateFeedUserStats,
+  UpdateUserStats,
+} from "services/db/types";
 import {
   ActivityQueryOptions,
   GlobalStats,
   LeaderboardQueryOptions,
-  UserRankingLeaderboardEntry
+  UserRankingLeaderboardEntry,
 } from "../../validation/activity.validation";
 import { LeaderboardEntry as CuratorStatsLeaderboardEntry } from "services/db/queries";
 

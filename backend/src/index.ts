@@ -6,6 +6,8 @@ import { serve } from "@hono/node-server";
 import { AppInstance } from "types/app";
 import { createApp } from "./app";
 import { pool } from "./services/db";
+import { ServiceProvider } from "./utils/service-provider";
+import { IBackgroundTaskService } from "./services/interfaces/background-task.interface";
 import {
   cleanup,
   createHighlightBox,
@@ -38,22 +40,25 @@ async function getInstance(): Promise<AppInstance> {
   return instance;
 }
 
-
 async function startServer() {
   try {
     createSection("⚡ STARTING SERVER ⚡");
 
-    const { app, context } = await getInstance();
+    // getInstance now primarily ensures ServiceProvider is initialized via createApp
+    const { app } = await getInstance();
+    const sp = ServiceProvider.getInstance();
 
     // Add health check route
     app.get("/health", (c) => {
+      // Services are now obtained from ServiceProvider
       const health = {
         status: "OK",
         timestamp: new Date().toISOString(),
         services: {
-          twitter: context.twitterService ? "up" : "down",
-          submission: context.submissionService ? "up" : "down",
-          distribution: context.distributionService ? "up" : "down",
+          // twitter: sp.getTwitterService() ? "up" : "down", // Assuming getTwitterService exists if needed
+          submission: sp.getSubmissionService() ? "up" : "down",
+          distribution: sp.getDistributionService() ? "up" : "down",
+          source: sp.getSourceService() ? "up" : "down",
         },
       };
       return c.json(health);
@@ -79,9 +84,25 @@ async function startServer() {
 
     createSection("SERVICES");
 
-    // Start checking for mentions only if Twitter service is available
-    if (context.submissionService) {
-      await context.submissionService.startMentionsCheck();
+    // Start all background task services
+    const backgroundServices = sp.getBackgroundTaskServices();
+    if (backgroundServices.length > 0) {
+      logger.info(
+        `Starting ${backgroundServices.length} background task service(s)...`,
+      );
+      for (const bgService of backgroundServices) {
+        // Assuming service name can be inferred or logged by the service itself
+        bgService
+          .start()
+          .catch((err) =>
+            logger.error(
+              `Error starting background service: ${err.message}`,
+              err,
+            ),
+          );
+      }
+    } else {
+      logger.info("No background task services configured to start.");
     }
 
     // Graceful shutdown handler
@@ -97,23 +118,52 @@ async function startServer() {
         logger.info("HTTP server closed");
 
         const shutdownPromises = [];
-        if (context.twitterService) {
-          shutdownPromises.push(context.twitterService.stop());
-          logger.info("Twitter service stopped");
+
+        // Stop all background task services
+        const bgServicesToStop = sp.getBackgroundTaskServices(); // Get fresh list in case it changed
+        if (bgServicesToStop.length > 0) {
+          logger.info(
+            `Stopping ${bgServicesToStop.length} background task service(s)...`,
+          );
+          for (const bgService of bgServicesToStop) {
+            shutdownPromises.push(
+              bgService
+                .stop()
+                .catch((err) =>
+                  logger.error(
+                    `Error stopping background service: ${err.message}`,
+                    err,
+                  ),
+                ),
+            );
+          }
         }
 
-        if (context.submissionService) {
-          shutdownPromises.push(context.submissionService.stop());
-          logger.info("Submission service stopped");
+        // Handle other specific service shutdowns if they are not IBackgroundTaskService
+        // For example, if twitterService and distributionService have specific shutdown logic
+        // and are not managed by the IBackgroundTaskService loop.
+        // const twitterService = sp.getTwitterService(); // Hypothetical
+        // if (twitterService && typeof twitterService.stop === 'function') {
+        //   shutdownPromises.push(twitterService.stop().then(() => logger.info("Twitter service stopped")));
+        // }
+
+        const distributionService = sp.getDistributionService();
+        if (
+          distributionService &&
+          typeof distributionService.shutdown === "function"
+        ) {
+          shutdownPromises.push(
+            distributionService
+              .shutdown()
+              .then(() => logger.info("Distribution service stopped")),
+          );
         }
 
-        if (context.distributionService) {
-          shutdownPromises.push(context.distributionService.shutdown());
-          logger.info("Distribution service stopped");
-        }
-
+        // Database pool
         shutdownPromises.push(
-          pool.end().then(() => logger.info("Database connection pool closed."))
+          pool
+            .end()
+            .then(() => logger.info("Database connection pool closed.")),
         );
 
         await Promise.all(shutdownPromises);

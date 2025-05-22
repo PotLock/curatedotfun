@@ -6,7 +6,14 @@ import {
   SubmissionWithFeedData,
 } from "../../../types/submission";
 import * as queries from "../queries";
-import { feeds, moderationHistory, submissionCounts, submissionFeeds, submissions, SubmissionStatus } from "../schema";
+import {
+  feeds,
+  moderationHistory,
+  submissionCounts,
+  submissionFeeds,
+  submissions,
+  SubmissionStatus,
+} from "../schema";
 import { DB } from "../types";
 import { executeWithRetry, withErrorHandling } from "../utils";
 
@@ -96,7 +103,10 @@ export class SubmissionRepository {
   async getSubmission(tweetId: string): Promise<Submission | null> {
     return withErrorHandling(
       async () => {
-        return executeWithRetry((retryDb) => queries.getSubmission(retryDb, tweetId), this.db);
+        return executeWithRetry(
+          (retryDb) => queries.getSubmission(retryDb, tweetId),
+          this.db,
+        );
       },
       {
         operationName: "get submission",
@@ -118,7 +128,8 @@ export class SubmissionRepository {
     return withErrorHandling(
       async () => {
         return executeWithRetry(
-          (retryDb) => queries.getSubmissionByCuratorTweetId(retryDb, curatorTweetId),
+          (retryDb) =>
+            queries.getSubmissionByCuratorTweetId(retryDb, curatorTweetId),
           this.db,
         );
       },
@@ -143,100 +154,102 @@ export class SubmissionRepository {
           // Build the query with or without status filter
           const queryBuilder = status
             ? retryDb
-              .select({
-                s: {
-                  tweetId: submissions.tweetId,
-                  userId: submissions.userId,
-                  username: submissions.username,
-                  content: submissions.content,
-                  curatorNotes: submissions.curatorNotes,
-                  curatorId: submissions.curatorId,
-                  curatorUsername: submissions.curatorUsername,
-                  curatorTweetId: submissions.curatorTweetId,
-                  createdAt: sql<string>`${submissions.createdAt}::text`,
-                  submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
-                },
-                m: {
-                  tweetId: moderationHistory.tweetId,
-                  adminId: moderationHistory.adminId,
-                  action: moderationHistory.action,
-                  note: moderationHistory.note,
-                  createdAt: moderationHistory.createdAt,
-                  feedId: moderationHistory.feedId,
-                  moderationResponseTweetId:
-                    submissionFeeds.moderationResponseTweetId,
-                },
-                sf: {
-                  submissionId: submissionFeeds.submissionId,
-                  feedId: submissionFeeds.feedId,
-                  status: submissionFeeds.status,
-                  moderationResponseTweetId:
-                    submissionFeeds.moderationResponseTweetId,
-                },
-                f: {
-                  id: feeds.id,
-                  name: feeds.name,
-                },
-              })
-              .from(submissions)
-              .leftJoin(
-                moderationHistory,
-                eq(submissions.tweetId, moderationHistory.tweetId),
-              )
-              .leftJoin(
-                submissionFeeds,
-                eq(submissions.tweetId, submissionFeeds.submissionId),
-              )
-              .leftJoin(feeds, eq(submissionFeeds.feedId, feeds.id))
-              .where(eq(submissionFeeds.status, status as SubmissionStatus))
+                .select({
+                  s: {
+                    tweetId: submissions.tweetId,
+                    userId: submissions.userId,
+                    username: submissions.username,
+                    content: submissions.content,
+                    curatorNotes: submissions.curatorNotes,
+                    curatorId: submissions.curatorId,
+                    curatorUsername: submissions.curatorUsername,
+                    curatorTweetId: submissions.curatorTweetId,
+                    createdAt: sql<string>`${submissions.createdAt}::text`,
+                    submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
+                  },
+                  m: {
+                    tweetId: moderationHistory.tweetId,
+                    adminId: moderationHistory.adminId,
+                    action: moderationHistory.action,
+                    note: moderationHistory.note,
+                    createdAt: moderationHistory.createdAt,
+                    feedId: moderationHistory.feedId,
+                    moderationResponseTweetId:
+                      submissionFeeds.moderationResponseTweetId,
+                  },
+                  sf: {
+                    submissionId: submissionFeeds.submissionId,
+                    feedId: submissionFeeds.feedId,
+                    status: submissionFeeds.status,
+                    moderationResponseTweetId:
+                      submissionFeeds.moderationResponseTweetId,
+                  },
+                  f: {
+                    id: feeds.id,
+                    name: feeds.name,
+                  },
+                })
+                .from(submissions)
+                .leftJoin(
+                  moderationHistory,
+                  eq(submissions.tweetId, moderationHistory.tweetId),
+                )
+                .leftJoin(
+                  submissionFeeds,
+                  eq(submissions.tweetId, submissionFeeds.submissionId),
+                )
+                .leftJoin(feeds, eq(submissionFeeds.feedId, feeds.id))
+                .where(eq(submissionFeeds.status, status as SubmissionStatus))
             : retryDb
-              .select({
-                s: {
-                  tweetId: submissions.tweetId,
-                  userId: submissions.userId,
-                  username: submissions.username,
-                  content: submissions.content,
-                  curatorNotes: submissions.curatorNotes,
-                  curatorId: submissions.curatorId,
-                  curatorUsername: submissions.curatorUsername,
-                  curatorTweetId: submissions.curatorTweetId,
-                  createdAt: sql<string>`${submissions.createdAt}::text`,
-                  submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
-                },
-                m: {
-                  tweetId: moderationHistory.tweetId,
-                  adminId: moderationHistory.adminId,
-                  action: moderationHistory.action,
-                  note: moderationHistory.note,
-                  createdAt: moderationHistory.createdAt,
-                  feedId: moderationHistory.feedId,
-                  moderationResponseTweetId:
-                    submissionFeeds.moderationResponseTweetId,
-                },
-                sf: {
-                  submissionId: submissionFeeds.submissionId,
-                  feedId: submissionFeeds.feedId,
-                  status: submissionFeeds.status,
-                  moderationResponseTweetId:
-                    submissionFeeds.moderationResponseTweetId,
-                },
-                f: {
-                  id: feeds.id,
-                  name: feeds.name,
-                },
-              })
-              .from(submissions)
-              .leftJoin(
-                moderationHistory,
-                eq(submissions.tweetId, moderationHistory.tweetId),
-              )
-              .leftJoin(
-                submissionFeeds,
-                eq(submissions.tweetId, submissionFeeds.submissionId),
-              )
-              .leftJoin(feeds, eq(submissionFeeds.feedId, feeds.id));
+                .select({
+                  s: {
+                    tweetId: submissions.tweetId,
+                    userId: submissions.userId,
+                    username: submissions.username,
+                    content: submissions.content,
+                    curatorNotes: submissions.curatorNotes,
+                    curatorId: submissions.curatorId,
+                    curatorUsername: submissions.curatorUsername,
+                    curatorTweetId: submissions.curatorTweetId,
+                    createdAt: sql<string>`${submissions.createdAt}::text`,
+                    submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
+                  },
+                  m: {
+                    tweetId: moderationHistory.tweetId,
+                    adminId: moderationHistory.adminId,
+                    action: moderationHistory.action,
+                    note: moderationHistory.note,
+                    createdAt: moderationHistory.createdAt,
+                    feedId: moderationHistory.feedId,
+                    moderationResponseTweetId:
+                      submissionFeeds.moderationResponseTweetId,
+                  },
+                  sf: {
+                    submissionId: submissionFeeds.submissionId,
+                    feedId: submissionFeeds.feedId,
+                    status: submissionFeeds.status,
+                    moderationResponseTweetId:
+                      submissionFeeds.moderationResponseTweetId,
+                  },
+                  f: {
+                    id: feeds.id,
+                    name: feeds.name,
+                  },
+                })
+                .from(submissions)
+                .leftJoin(
+                  moderationHistory,
+                  eq(submissions.tweetId, moderationHistory.tweetId),
+                )
+                .leftJoin(
+                  submissionFeeds,
+                  eq(submissions.tweetId, submissionFeeds.submissionId),
+                )
+                .leftJoin(feeds, eq(submissionFeeds.feedId, feeds.id));
 
-          const results = await queryBuilder.orderBy(moderationHistory.createdAt);
+          const results = await queryBuilder.orderBy(
+            moderationHistory.createdAt,
+          );
 
           // Group results by submission
           const submissionMap = new Map<string, SubmissionWithFeedData>();
@@ -266,7 +279,10 @@ export class SubmissionRepository {
               });
 
               // Initialize feed status map for this submission
-              feedStatusMap.set(result.s.tweetId, new Map<string, FeedStatus>());
+              feedStatusMap.set(
+                result.s.tweetId,
+                new Map<string, FeedStatus>(),
+              );
             }
 
             // Add moderation history
@@ -288,7 +304,9 @@ export class SubmissionRepository {
             if (result.sf?.feedId && result.f?.id) {
               // If status is provided, only include feeds with that status
               if (!status || result.sf.status === status) {
-                const feedStatusesForSubmission = feedStatusMap.get(result.s.tweetId)!;
+                const feedStatusesForSubmission = feedStatusMap.get(
+                  result.s.tweetId,
+                )!;
 
                 if (!feedStatusesForSubmission.has(result.sf.feedId)) {
                   feedStatusesForSubmission.set(result.sf.feedId, {
@@ -307,7 +325,9 @@ export class SubmissionRepository {
           for (const [tweetId, submission] of submissionMap.entries()) {
             const feedStatusesForSubmission = feedStatusMap.get(tweetId);
             if (feedStatusesForSubmission) {
-              submission.feedStatuses = Array.from(feedStatusesForSubmission.values());
+              submission.feedStatuses = Array.from(
+                feedStatusesForSubmission.values(),
+              );
 
               // Determine the main status based on priority (pending > rejected > approved)
               let hasPending = false;
@@ -381,7 +401,10 @@ export class SubmissionRepository {
             .where(
               and(
                 eq(submissionCounts.userId, userId),
-                eq(sql`${submissionCounts.lastResetDate}::date`, sql`CURRENT_DATE`),
+                eq(
+                  sql`${submissionCounts.lastResetDate}::date`,
+                  sql`CURRENT_DATE`,
+                ),
               ),
             );
 

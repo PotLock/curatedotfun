@@ -101,6 +101,8 @@ export const FeedConfigSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
+  enabled: z.boolean().optional().default(true),
+  pollingIntervalMs: z.number().int().positive().optional(),
   moderation: ModerationConfigSchema,
   sources: z.array(SourceConfigSchema).optional(),
   ingestion: IngestionConfigSchema.optional(), // Configuration for source ingestion scheduling

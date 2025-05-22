@@ -13,7 +13,7 @@ const feedsRoutes = new Hono<Env>();
  * Get all feeds
  */
 feedsRoutes.get("/", async (c) => {
-  const sp = c.get('sp');
+  const sp = c.get("sp");
   const feedService = sp.getFeedService();
   try {
     const feeds = await feedService.getAllFeeds();
@@ -35,7 +35,7 @@ feedsRoutes.post("/", async (c) => {
     return badRequest(c, "Invalid feed data", validationResult.error.flatten());
   }
 
-  const sp = c.get('sp');
+  const sp = c.get("sp");
   const feedService = sp.getFeedService();
   try {
     const newFeed = await feedService.createFeed(validationResult.data);
@@ -51,7 +51,7 @@ feedsRoutes.post("/", async (c) => {
  */
 feedsRoutes.get("/:feedId", async (c) => {
   const feedId = c.req.param("feedId");
-  const sp = c.get('sp');
+  const sp = c.get("sp");
   const feedService = sp.getFeedService();
   try {
     const feed = await feedService.getFeedById(feedId);
@@ -70,7 +70,7 @@ feedsRoutes.get("/:feedId", async (c) => {
  */
 feedsRoutes.get("/:feedId/submissions", async (c) => {
   const feedId = c.req.param("feedId");
-  const sp = c.get('sp');
+  const sp = c.get("sp");
   const feedService = sp.getFeedService();
   try {
     const submissions = await feedService.getSubmissionsByFeed(feedId);
@@ -96,7 +96,7 @@ feedsRoutes.put("/:feedId", async (c) => {
     return badRequest(c, "Invalid feed data", validationResult.error.flatten());
   }
 
-  const sp = c.get('sp');
+  const sp = c.get("sp");
   const feedService = sp.getFeedService();
   try {
     const updatedFeed = await feedService.updateFeed(
@@ -119,7 +119,7 @@ feedsRoutes.put("/:feedId", async (c) => {
  * Example: /api/feeds/solana/process?distributors=@curatedotfun/rss
  */
 feedsRoutes.post("/:feedId/process", async (c) => {
-  const sp = c.get('sp');
+  const sp = c.get("sp");
   const feedService = sp.getFeedService();
 
   const feedId = c.req.param("feedId");
@@ -135,7 +135,10 @@ feedsRoutes.post("/:feedId/process", async (c) => {
     if (error.message && error.message.startsWith("Feed not found")) {
       return c.json({ error: error.message }, 404);
     }
-    if (error.message && error.message.startsWith("Feed configuration not found")) {
+    if (
+      error.message &&
+      error.message.startsWith("Feed configuration not found")
+    ) {
       return c.json({ error: error.message }, 404); // Or 500 if it's an internal config issue
     }
     return c.json({ error: "Failed to process feed" }, 500);

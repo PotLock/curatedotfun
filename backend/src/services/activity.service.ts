@@ -3,24 +3,24 @@ import {
   ActivityQueryOptions,
   GlobalStats,
   UserRankingLeaderboardEntry, // This is for a custom leaderboard view, keep it here
-  LeaderboardQueryOptions,   // Specific to leaderboard queries, keep it here
+  LeaderboardQueryOptions, // Specific to leaderboard queries, keep it here
 } from "../validation/activity.validation";
 import {
   InsertActivity,
   SelectActivity,
-  selectActivitySchema, 
+  selectActivitySchema,
   SelectUserStats,
-  selectUserStatsSchema, 
+  selectUserStatsSchema,
   UpdateUserStats,
   SelectFeedUserStats,
-  selectFeedUserStatsSchema, 
+  selectFeedUserStatsSchema,
   UpdateFeedUserStats,
   DB,
 } from "./db/types";
 import { ActivityRepository } from "./db/repositories/activity.repository";
 import { LeaderboardRepository } from "./db/repositories/leaderboard.repository";
 import * as queries from "./db/queries";
-import { ActivityType } from "./db/schema/activity"; 
+import { ActivityType } from "./db/schema/activity";
 import { IActivityService } from "./interfaces/activity.interface";
 
 export class ActivityService implements IActivityService {
@@ -59,8 +59,10 @@ export class ActivityService implements IActivityService {
 
       // Parse each activity through the schema
       // Ensure 'activities' items match what selectActivitySchema expects
-      return activities.map((activity: any) => // Consider typing 'activity' if possible
-        selectActivitySchema.parse(activity), // Use selectActivitySchema from db/types
+      return activities.map(
+        (
+          activity: any, // Consider typing 'activity' if possible
+        ) => selectActivitySchema.parse(activity), // Use selectActivitySchema from db/types
       );
     } catch (error) {
       throw new ActivityServiceError(
@@ -107,7 +109,8 @@ export class ActivityService implements IActivityService {
   /**
    * Get user statistics
    */
-  async getUserStats(userId: number): Promise<SelectUserStats | null> { // Use SelectUserStats
+  async getUserStats(userId: number): Promise<SelectUserStats | null> {
+    // Use SelectUserStats
     try {
       const stats = await this.activityRepository.getUserStats(userId);
 
@@ -150,7 +153,8 @@ export class ActivityService implements IActivityService {
   async getFeedUserStats(
     userId: number,
     feedId: string,
-  ): Promise<SelectFeedUserStats | null> { // Use SelectFeedUserStats
+  ): Promise<SelectFeedUserStats | null> {
+    // Use SelectFeedUserStats
     try {
       const stats = await this.activityRepository.getFeedUserStats(
         userId,
@@ -180,7 +184,12 @@ export class ActivityService implements IActivityService {
   ): Promise<SelectFeedUserStats> {
     try {
       const result = await this.db.transaction(async (tx) => {
-        return this.activityRepository.updateFeedUserStats(userId, feedId, data, tx);
+        return this.activityRepository.updateFeedUserStats(
+          userId,
+          feedId,
+          data,
+          tx,
+        );
       });
       return selectFeedUserStatsSchema.parse(result);
     } catch (error) {

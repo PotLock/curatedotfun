@@ -1,4 +1,8 @@
-import { AppConfig, DistributorConfig, StreamConfig } from "../types/config.zod";
+import {
+  AppConfig,
+  DistributorConfig,
+  StreamConfig,
+} from "../types/config.zod";
 import { InsertFeed, UpdateFeed } from "./db/types";
 import { FeedRepository } from "./db/repositories/feed.repository";
 import { ProcessorService } from "./processor.service";
@@ -40,37 +44,50 @@ export class FeedService {
     const feedExists = await this.feedRepository.getFeedById(feedId);
     if (!feedExists) {
       // Or throw a NotFoundError
-      return null; 
+      return null;
     }
     return this.feedRepository.getSubmissionsByFeed(feedId);
   }
 
   async updateFeed(feedId: string, data: UpdateFeed) {
-    this.logger.info({ feedId, updateData: data }, "FeedService: updateFeed called");
+    this.logger.info(
+      { feedId, updateData: data },
+      "FeedService: updateFeed called",
+    );
     return this.db.transaction(async (tx) => {
       return this.feedRepository.updateFeed(feedId, data, tx);
     });
   }
 
   async processFeed(feedId: string, distributorsParam?: string) {
-    this.logger.info({ feedId, distributorsParam }, "FeedService: processFeed called");
+    this.logger.info(
+      { feedId, distributorsParam },
+      "FeedService: processFeed called",
+    );
 
     const feed = await this.feedRepository.getFeedById(feedId);
     if (!feed) {
-      this.logger.error({ feedId }, "FeedService: processFeed - Feed not found");
+      this.logger.error(
+        { feedId },
+        "FeedService: processFeed - Feed not found",
+      );
       throw new Error(`Feed not found: ${feedId}`); // Or a custom NotFoundError
     }
-    
+
     // Ensure feed.config is correctly typed and accessed.
-    // The route had: const feedConfig = feed.config; 
+    // The route had: const feedConfig = feed.config;
     // Assuming feed from repository has a 'config' property of type FeedConfig from AppConfig
     // This might need adjustment based on the actual structure of 'feed' object from repository
-    const feedConfig = this.appConfig.feeds.find(f => f.id.toLowerCase() === feedId.toLowerCase());
+    const feedConfig = this.appConfig.feeds.find(
+      (f) => f.id.toLowerCase() === feedId.toLowerCase(),
+    );
     if (!feedConfig) {
-        this.logger.error({ feedId }, "FeedService: processFeed - Feed configuration not found in AppConfig");
-        throw new Error(`Feed configuration not found for feedId: ${feedId}`);
+      this.logger.error(
+        { feedId },
+        "FeedService: processFeed - Feed configuration not found in AppConfig",
+      );
+      throw new Error(`Feed configuration not found for feedId: ${feedId}`);
     }
-
 
     const submissions = await this.feedRepository.getSubmissionsByFeed(feedId);
     const approvedSubmissions = submissions.filter(
@@ -78,7 +95,10 @@ export class FeedService {
     );
 
     if (approvedSubmissions.length === 0) {
-      this.logger.info({ feedId }, "FeedService: processFeed - No approved submissions to process.");
+      this.logger.info(
+        { feedId },
+        "FeedService: processFeed - No approved submissions to process.",
+      );
       return { processed: 0, distributors: [] };
     }
 
@@ -87,8 +107,14 @@ export class FeedService {
 
     for (const submission of approvedSubmissions) {
       try {
-        if (!feedConfig.outputs.stream || !feedConfig.outputs.stream.distribute) {
-          this.logger.info({ submissionId: submission.tweetId, feedId }, "FeedService: processFeed - No stream output or distributors configured for this feed.");
+        if (
+          !feedConfig.outputs.stream ||
+          !feedConfig.outputs.stream.distribute
+        ) {
+          this.logger.info(
+            { submissionId: submission.tweetId, feedId },
+            "FeedService: processFeed - No stream output or distributors configured for this feed.",
+          );
           continue;
         }
 
@@ -99,8 +125,11 @@ export class FeedService {
             usedDistributors.add(d.plugin),
           );
         } else {
-          const requestedDistributors = distributorsParam.split(",").map((d) => d.trim());
-          const availableDistributors = streamConfig.distribute?.map((d) => d.plugin) || [];
+          const requestedDistributors = distributorsParam
+            .split(",")
+            .map((d) => d.trim());
+          const availableDistributors =
+            streamConfig.distribute?.map((d) => d.plugin) || [];
           const validDistributors = requestedDistributors.filter((d) =>
             availableDistributors.includes(d),
           );
@@ -116,11 +145,16 @@ export class FeedService {
           }
 
           if (validDistributors.length === 0) {
-            this.logger.warn({ feedId, requestedDistributors }, `No valid distributors specified for feed ${feedId}. Skipping distribution for submission ${submission.tweetId}.`);
+            this.logger.warn(
+              { feedId, requestedDistributors },
+              `No valid distributors specified for feed ${feedId}. Skipping distribution for submission ${submission.tweetId}.`,
+            );
             continue;
           } else {
-            streamConfig.distribute = streamConfig.distribute?.filter((d: any) => // TODO: Type 'any' for d
-              validDistributors.includes(d.plugin),
+            streamConfig.distribute = streamConfig.distribute?.filter(
+              (
+                d: any, // TODO: Type 'any' for d
+              ) => validDistributors.includes(d.plugin),
             );
             validDistributors.forEach((d) => usedDistributors.add(d));
             this.logger.info(
@@ -129,7 +163,7 @@ export class FeedService {
             );
           }
         }
-        
+
         // Ensure submission has all necessary fields for processorService.process
         // The submission from getSubmissionsByFeed might be a partial type.
         // If processorService needs the full Submission object, we might need to fetch it individually.
@@ -137,7 +171,10 @@ export class FeedService {
         await this.processorService.process(submission, streamConfig);
         processedCount++;
       } catch (error) {
-        this.logger.error({ error, submissionId: submission.tweetId, feedId }, `Error processing submission ${submission.tweetId} for feed ${feedId}`);
+        this.logger.error(
+          { error, submissionId: submission.tweetId, feedId },
+          `Error processing submission ${submission.tweetId} for feed ${feedId}`,
+        );
         // Decide if one error should stop all processing or just skip this one
       }
     }

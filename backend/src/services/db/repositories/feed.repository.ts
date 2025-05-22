@@ -13,7 +13,13 @@ import {
   UpdateFeedData,
 } from "../../../validation/feed.validation";
 import * as queries from "../queries";
-import { feedRecapsState, feeds, moderationHistory, submissionFeeds, submissions } from "../schema";
+import {
+  feedRecapsState,
+  feeds,
+  moderationHistory,
+  submissionFeeds,
+  submissions,
+} from "../schema";
 import { executeWithRetry, withErrorHandling } from "../utils";
 import { DB } from "../types";
 
@@ -438,91 +444,89 @@ export class FeedRepository {
   async getSubmissionsByFeed(feedId: string): Promise<Submission[]> {
     return withErrorHandling(
       async () =>
-        executeWithRetry(
-          async (dbInstance) => {
-            const results = await dbInstance
-              .select({
-                s: {
-                  tweetId: submissions.tweetId,
-                  userId: submissions.userId,
-                  username: submissions.username,
-                  content: submissions.content,
-                  curatorNotes: submissions.curatorNotes,
-                  curatorId: submissions.curatorId,
-                  curatorUsername: submissions.curatorUsername,
-                  curatorTweetId: submissions.curatorTweetId,
-                  createdAt: sql<string>`${submissions.createdAt}::text`,
-                  submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
-                },
-                sf: {
-                  status: submissionFeeds.status,
-                },
-                m: {
-                  tweetId: moderationHistory.tweetId,
-                  adminId: moderationHistory.adminId,
-                  action: moderationHistory.action,
-                  note: moderationHistory.note,
-                  createdAt: moderationHistory.createdAt,
-                  feedId: moderationHistory.feedId,
-                  moderationResponseTweetId: submissionFeeds.moderationResponseTweetId,
-                },
-              })
-              .from(submissions)
-              .innerJoin(
-                submissionFeeds,
-                eq(submissions.tweetId, submissionFeeds.submissionId),
-              )
-              .leftJoin(
-                moderationHistory,
-                eq(submissions.tweetId, moderationHistory.tweetId),
-              )
-              .where(eq(submissionFeeds.feedId, feedId))
-              .orderBy(moderationHistory.createdAt);
+        executeWithRetry(async (dbInstance) => {
+          const results = await dbInstance
+            .select({
+              s: {
+                tweetId: submissions.tweetId,
+                userId: submissions.userId,
+                username: submissions.username,
+                content: submissions.content,
+                curatorNotes: submissions.curatorNotes,
+                curatorId: submissions.curatorId,
+                curatorUsername: submissions.curatorUsername,
+                curatorTweetId: submissions.curatorTweetId,
+                createdAt: sql<string>`${submissions.createdAt}::text`,
+                submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
+              },
+              sf: {
+                status: submissionFeeds.status,
+              },
+              m: {
+                tweetId: moderationHistory.tweetId,
+                adminId: moderationHistory.adminId,
+                action: moderationHistory.action,
+                note: moderationHistory.note,
+                createdAt: moderationHistory.createdAt,
+                feedId: moderationHistory.feedId,
+                moderationResponseTweetId:
+                  submissionFeeds.moderationResponseTweetId,
+              },
+            })
+            .from(submissions)
+            .innerJoin(
+              submissionFeeds,
+              eq(submissions.tweetId, submissionFeeds.submissionId),
+            )
+            .leftJoin(
+              moderationHistory,
+              eq(submissions.tweetId, moderationHistory.tweetId),
+            )
+            .where(eq(submissionFeeds.feedId, feedId))
+            .orderBy(moderationHistory.createdAt);
 
-            // Group results by submission
-            const submissionMap = new Map<string, SubmissionWithFeedData>();
+          // Group results by submission
+          const submissionMap = new Map<string, SubmissionWithFeedData>();
 
-            for (const result of results) {
-              if (!submissionMap.has(result.s.tweetId)) {
-                submissionMap.set(result.s.tweetId, {
-                  tweetId: result.s.tweetId,
-                  userId: result.s.userId,
-                  username: result.s.username,
-                  content: result.s.content,
-                  curatorNotes: result.s.curatorNotes,
-                  curatorId: result.s.curatorId,
-                  curatorUsername: result.s.curatorUsername,
-                  curatorTweetId: result.s.curatorTweetId,
-                  createdAt: new Date(result.s.createdAt),
-                  submittedAt: result.s.submittedAt
-                    ? new Date(result.s.submittedAt)
-                    : null,
-                  moderationHistory: [],
-                  status: result.sf.status,
-                  moderationResponseTweetId:
-                    result.m?.moderationResponseTweetId ?? undefined,
-                });
-              }
-
-              if (result.m && result.m.adminId !== null) {
-                const submission = submissionMap.get(result.s.tweetId)!;
-                submission.moderationHistory.push({
-                  tweetId: result.s.tweetId,
-                  feedId: result.m.feedId!,
-                  adminId: result.m.adminId!,
-                  action: result.m.action as "approve" | "reject",
-                  note: result.m.note,
-                  timestamp: result.m.createdAt!,
-                  moderationResponseTweetId:
-                    result.m.moderationResponseTweetId ?? undefined,
-                });
-              }
+          for (const result of results) {
+            if (!submissionMap.has(result.s.tweetId)) {
+              submissionMap.set(result.s.tweetId, {
+                tweetId: result.s.tweetId,
+                userId: result.s.userId,
+                username: result.s.username,
+                content: result.s.content,
+                curatorNotes: result.s.curatorNotes,
+                curatorId: result.s.curatorId,
+                curatorUsername: result.s.curatorUsername,
+                curatorTweetId: result.s.curatorTweetId,
+                createdAt: new Date(result.s.createdAt),
+                submittedAt: result.s.submittedAt
+                  ? new Date(result.s.submittedAt)
+                  : null,
+                moderationHistory: [],
+                status: result.sf.status,
+                moderationResponseTweetId:
+                  result.m?.moderationResponseTweetId ?? undefined,
+              });
             }
 
-            return Array.from(submissionMap.values());
-          },
-          this.db,
-        ),
+            if (result.m && result.m.adminId !== null) {
+              const submission = submissionMap.get(result.s.tweetId)!;
+              submission.moderationHistory.push({
+                tweetId: result.s.tweetId,
+                feedId: result.m.feedId!,
+                adminId: result.m.adminId!,
+                action: result.m.action as "approve" | "reject",
+                note: result.m.note,
+                timestamp: result.m.createdAt!,
+                moderationResponseTweetId:
+                  result.m.moderationResponseTweetId ?? undefined,
+              });
+            }
+          }
+
+          return Array.from(submissionMap.values());
+        }, this.db),
       {
         operationName: "getSubmissionsByFeed",
         additionalContext: { feedId },
@@ -549,7 +553,7 @@ export class FeedRepository {
           feedId,
           status,
           // @ts-expect-error need better update with moderation
-          moderationResponseTweetId, 
+          moderationResponseTweetId,
         );
       },
       {

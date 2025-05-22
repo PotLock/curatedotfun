@@ -26,7 +26,7 @@ submissionRoutes.get(
     }),
   ),
   async (c) => {
-    const sp = c.get('sp');
+    const sp = c.get("sp");
     const submissionService = sp.getSubmissionService();
     // Extract validated parameters
     const { page, limit, status } = c.req.valid("query");
@@ -67,7 +67,7 @@ submissionRoutes.get(
  */
 submissionRoutes.get("/single/:submissionId", async (c) => {
   const submissionId = c.req.param("submissionId");
-  const sp = c.get('sp');
+  const sp = c.get("sp");
   const submissionService = sp.getSubmissionService();
   const content = await submissionService.getSubmissionById(submissionId);
 
@@ -84,7 +84,7 @@ submissionRoutes.get("/single/:submissionId", async (c) => {
 submissionRoutes.get("/feed/:feedId", async (c) => {
   const feedId = c.req.param("feedId");
   const status = c.req.query("status") as SubmissionStatus | undefined; // Cast for safety
-  const sp = c.get('sp');
+  const sp = c.get("sp");
   const feedService = sp.getFeedService();
 
   // In FeedService, getSubmissionsByFeed doesn't currently filter by status.
@@ -92,7 +92,8 @@ submissionRoutes.get("/feed/:feedId", async (c) => {
   // For now, keeping it here to match existing behavior.
   let submissions = await feedService.getSubmissionsByFeed(feedId);
 
-  if (submissions === null) { // If feed itself not found
+  if (submissions === null) {
+    // If feed itself not found
     return c.notFound();
   }
 

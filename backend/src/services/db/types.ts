@@ -1,9 +1,13 @@
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'drizzle-zod';
-import { z } from 'zod';
+import { NodePgDatabase } from "drizzle-orm/node-postgres";
+import {
+  createInsertSchema,
+  createSelectSchema,
+  createUpdateSchema,
+} from "drizzle-zod";
+import { z } from "zod";
 import * as schema from "./schema";
 
-export type DB = NodePgDatabase<typeof schema>
+export type DB = NodePgDatabase<typeof schema>;
 
 const {
   users,
@@ -93,12 +97,21 @@ export type UpdateSubmissionFeed = z.infer<typeof updateSubmissionFeedSchema>;
 export type SelectSubmissionFeed = z.infer<typeof selectSubmissionFeedSchema>;
 
 // ModerationHistory Schemas and Types
-export const insertModerationHistorySchema = createInsertSchema(moderationHistory);
-export const updateModerationHistorySchema = createUpdateSchema(moderationHistory); // Likely append-only
-export const selectModerationHistorySchema = createSelectSchema(moderationHistory);
-export type InsertModerationHistory = z.infer<typeof insertModerationHistorySchema>;
-export type UpdateModerationHistory = z.infer<typeof updateModerationHistorySchema>;
-export type SelectModerationHistory = z.infer<typeof selectModerationHistorySchema>;
+export const insertModerationHistorySchema =
+  createInsertSchema(moderationHistory);
+export const updateModerationHistorySchema =
+  createUpdateSchema(moderationHistory); // Likely append-only
+export const selectModerationHistorySchema =
+  createSelectSchema(moderationHistory);
+export type InsertModerationHistory = z.infer<
+  typeof insertModerationHistorySchema
+>;
+export type UpdateModerationHistory = z.infer<
+  typeof updateModerationHistorySchema
+>;
+export type SelectModerationHistory = z.infer<
+  typeof selectModerationHistorySchema
+>;
 
 // SubmissionCounts Schemas and Types
 export const insertSubmissionCountSchema = createInsertSchema(submissionCounts);

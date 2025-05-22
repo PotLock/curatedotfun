@@ -10,9 +10,7 @@ import { NearIntegrationConfig } from "../types/config.zod";
 import { selectUserSchema } from "../validation/users.validation";
 import { UserRepository } from "./db/repositories/user.repository";
 import { DB, InsertUser, UpdateUser } from "./db/types";
-import {
-  IUserService,
-} from "./interfaces/user.interface";
+import { IUserService } from "./interfaces/user.interface";
 
 export class UserService implements IUserService {
   constructor(
@@ -20,7 +18,7 @@ export class UserService implements IUserService {
     private db: DB,
     private logger: Logger,
     private nearConfig: NearIntegrationConfig,
-  ) { }
+  ) {}
 
   async findUserByAuthProviderId(auth_provider_id: string) {
     const user =
@@ -50,16 +48,22 @@ export class UserService implements IUserService {
       const networkId = this.nearConfig.networkId;
 
       const keyStore = new keyStores.InMemoryKeyStore();
-      const parentKeyPair = KeyPair.fromString(parentPrivateKey as KeyPairString);
+      const parentKeyPair = KeyPair.fromString(
+        parentPrivateKey as KeyPairString,
+      );
       await keyStore.setKey(networkId, parentAccountId, parentKeyPair);
 
       const connectionConfig = {
         networkId,
         keyStore,
         nodeUrl: this.nearConfig.nodeUrl || `https://rpc.${networkId}.near.org`,
-        walletUrl: this.nearConfig.walletUrl || `https://wallet.${networkId}.near.org`,
-        helperUrl: this.nearConfig.helperUrl || `https://helper.${networkId}.near.org`,
-        explorerUrl: this.nearConfig.explorerUrl || `https://explorer.${networkId}.near.org`,
+        walletUrl:
+          this.nearConfig.walletUrl || `https://wallet.${networkId}.near.org`,
+        helperUrl:
+          this.nearConfig.helperUrl || `https://helper.${networkId}.near.org`,
+        explorerUrl:
+          this.nearConfig.explorerUrl ||
+          `https://explorer.${networkId}.near.org`,
       };
 
       const nearConnection = await connect(connectionConfig);
@@ -130,7 +134,10 @@ export class UserService implements IUserService {
       return selectUserSchema.parse(newUser);
     } catch (error: any) {
       // If the error is already a UserServiceError or NearAccountError, rethrow it
-      if (error instanceof UserServiceError || error instanceof NearAccountError) {
+      if (
+        error instanceof UserServiceError ||
+        error instanceof NearAccountError
+      ) {
         throw error;
       }
       console.error("Error inserting user into database:", error);
@@ -238,11 +245,9 @@ export class UserService implements IUserService {
     }
 
     try {
-      const dbDeletionResult = await this.db.transaction(
-        async (tx) => {
-          return this.userRepository.deleteUser(auth_provider_id, tx);
-        }
-      );
+      const dbDeletionResult = await this.db.transaction(async (tx) => {
+        return this.userRepository.deleteUser(auth_provider_id, tx);
+      });
 
       if (dbDeletionResult) {
         console.log(
@@ -258,7 +263,11 @@ export class UserService implements IUserService {
       // and the DB deletion attempt concluded, even if the user was already gone from DB.
       return true;
     } catch (error: any) {
-      if (error instanceof UserServiceError || error instanceof NotFoundError || error instanceof NearAccountError) {
+      if (
+        error instanceof UserServiceError ||
+        error instanceof NotFoundError ||
+        error instanceof NearAccountError
+      ) {
         throw error;
       }
       console.error(

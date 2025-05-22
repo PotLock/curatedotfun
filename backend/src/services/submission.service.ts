@@ -21,15 +21,22 @@ export class SubmissionService {
     private db: DB,
     private config: AppConfig,
     private logger: Logger,
-  ) { }
+  ) {}
 
-  public async getAllSubmissions(status?: SubmissionStatus): Promise<Submission[]> {
+  public async getAllSubmissions(
+    status?: SubmissionStatus,
+  ): Promise<Submission[]> {
     this.logger.info({ status }, "SubmissionService: getAllSubmissions called");
     return this.submissionRepository.getAllSubmissions(status);
   }
 
-  public async getSubmissionById(submissionId: string): Promise<Submission | null> {
-    this.logger.info({ submissionId }, "SubmissionService: getSubmissionById called");
+  public async getSubmissionById(
+    submissionId: string,
+  ): Promise<Submission | null> {
+    this.logger.info(
+      { submissionId },
+      "SubmissionService: getSubmissionById called",
+    );
     return this.submissionRepository.getSubmission(submissionId);
   }
 
@@ -186,7 +193,12 @@ export class SubmissionService {
             this.isModeratorForFeed(curatorUsername, feedConfig, platformKey)
           ) {
             this.logger.info(
-              { externalId, curatorUsername, platformKey, feedId: feedConfig.id },
+              {
+                externalId,
+                curatorUsername,
+                platformKey,
+                feedId: feedConfig.id,
+              },
               `Submission ${externalId} by moderator ${curatorUsername} (platform: ${platformKey}) for feed ${feedConfig.id}. Auto-approving.`,
             );
             await this.autoApproveSubmissionByModerator(
@@ -291,7 +303,13 @@ export class SubmissionService {
     } = command;
 
     this.logger.info(
-      { action, targetExternalId, moderatorUsername, platformKey, commandExternalId },
+      {
+        action,
+        targetExternalId,
+        moderatorUsername,
+        platformKey,
+        commandExternalId,
+      },
       `Handling moderation command: ${action} for ${targetExternalId} by ${moderatorUsername}@${platformKey}`,
     );
 
@@ -340,7 +358,12 @@ export class SubmissionService {
             feedsToModerate.push(feedConfig);
           } else {
             this.logger.info(
-              { commandExternalId, targetFeedId, moderatorUsername, platformKey },
+              {
+                commandExternalId,
+                targetFeedId,
+                moderatorUsername,
+                platformKey,
+              },
               `Moderation command ${commandExternalId} for feed ${targetFeedId} by ${moderatorUsername}@${platformKey}, but submission is not pending or not in feed.`,
             );
           }
@@ -353,7 +376,12 @@ export class SubmissionService {
 
         if (feedsToModerate.length === 0) {
           this.logger.info(
-            { moderatorUsername, platformKey, targetExternalId, commandExternalId },
+            {
+              moderatorUsername,
+              platformKey,
+              targetExternalId,
+              commandExternalId,
+            },
             `No suitable pending feeds found for ${moderatorUsername}@${platformKey} to moderate for submission ${targetExternalId} via command ${commandExternalId}.`,
           );
           return;

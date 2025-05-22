@@ -24,6 +24,11 @@ This file lists miscellaneous technical debt items, potential improvements, and 
     -   **Recommendation**: Clarify how services with background tasks (like `SubmissionService.startMentionsCheck`) are accessed and managed at the application's entry point (`index.ts`). Ensure `AppInstance` accurately reflects what `createApp` returns and how `index.ts` consumes it. This relates to Section 4 ("Lifecycle Management for Background Tasks") of the original `code_cleanup_recommendations.md`.
     -   *Files affected: `backend/src/types/app.ts`, `backend/src/index.ts`, `backend/src/app.ts`*
 
+-   **Robust Background Task Service Discovery in `ServiceProvider`**:
+    -   `ServiceProvider.getBackgroundTaskServices()` currently uses duck-typing (checks for `start` and `stop` methods and `instanceof SourceService`) to find background task services.
+    -   **Recommendation**: Implement a more robust mechanism, such as explicit registration of services that implement `IBackgroundTaskService` with the `ServiceProvider`. This could involve maintaining a separate list or using a decorator/metadata system if a more advanced DI framework were adopted.
+    -   *Files affected: `backend/src/utils/service-provider.ts`, `backend/src/services/interfaces/background-task.interface.ts`*
+
 ## Type System & Errors
 -   **Resolve `SubmissionServiceError` Import**:
     -   `backend/src/services/submission.service.ts` has a TypeScript error: `Module '"../types/errors"' has no exported member 'SubmissionServiceError'`.
@@ -53,3 +58,9 @@ This file lists miscellaneous technical debt items, potential improvements, and 
     -   **Issue**: `LeaderboardRepository` and `ActivityRepository` both contain leaderboard-related logic. `ActivityRepository` handles user ranking based on points/activity, while `LeaderboardRepository` focuses on curator-specific statistics.
     -   **Recommendation**: Consolidate `LeaderboardRepository` logic into `ActivityRepository` and remove `LeaderboardRepository`. Their functionalities are closely related to user activities and stats. `ActivityService` would then only depend on `ActivityRepository` for all leaderboard/ranking features. This would simplify dependencies and centralize activity/ranking data access.
     -   *Files affected: `backend/src/services/db/repositories/activity.repository.ts`, `backend/src/services/db/repositories/leaderboard.repository.ts`, `backend/src/services/activity.service.ts`, `backend/src/utils/service-provider.ts`, `backend/src/services/db/index.ts`*
+
+## Background Tasks / Polling
+-   **Configurable Async Job Polling in `SourceService`**:
+    -   In `backend/src/services/source.service.ts`, the `fetchFromSearchConfig` method uses hardcoded default values for `DEFAULT_ASYNC_JOB_POLLING_INTERVAL_MS` and `DEFAULT_MAX_ASYNC_JOB_POLLING_ATTEMPTS`.
+    -   **Recommendation**: Consider making these polling parameters (interval and max attempts) configurable, potentially per plugin or per search configuration. This could be part of the `SourceSearchConfig` or `SourceConfig` in `config.zod.ts`.
+    -   *Files affected: `backend/src/services/source.service.ts`, `backend/src/types/config.zod.ts`*

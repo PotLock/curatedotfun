@@ -40,30 +40,29 @@ export async function createApp(): Promise<AppInstance> {
     c.set("sp", sp);
     await next();
   });
-  
+
   // Instantiate SchedulerService (moved out of the general middleware)
   // It now uses the globally available 'sp'
   const schedulerClient = new SchedulerClient({
-      baseUrl: process.env.SCHEDULER_BASE_URL || "http://localhost:3001",
-      headers: {
-        Authorization: `Bearer ${process.env.SCHEDULER_API_TOKEN || ""}`,
-      },
-    });
-    const backendUrl =
-      process.env.CURATE_BACKEND_URL || "http://localhost:3000";
-    const schedulerService = new SchedulerService(
-      feedRepository,
-      sp.getProcessorService(),
-      sp.getSourceService(),
-      sp.getInboundService(),
-      schedulerClient,
-      backendUrl,
-    );
+    baseUrl: process.env.SCHEDULER_BASE_URL || "http://localhost:3001",
+    headers: {
+      Authorization: `Bearer ${process.env.SCHEDULER_API_TOKEN || ""}`,
+    },
+  });
+  const backendUrl = process.env.CURATE_BACKEND_URL || "http://localhost:3000";
+  const schedulerService = new SchedulerService(
+    feedRepository,
+    sp.getProcessorService(),
+    sp.getSourceService(),
+    sp.getInboundService(),
+    schedulerClient,
+    backendUrl,
+  );
 
-    // Initialize scheduler on startup (non-blocking)
-    schedulerService.initialize().catch((err) => {
-      console.error("Failed to initialize scheduler service:", err);
-    });
+  // Initialize scheduler on startup (non-blocking)
+  schedulerService.initialize().catch((err) => {
+    console.error("Failed to initialize scheduler service:", err);
+  });
 
   // Handle errors
   app.onError((err, c) => {

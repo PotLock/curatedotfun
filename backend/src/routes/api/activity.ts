@@ -38,7 +38,8 @@ activityRoutes.get(
       // Get the activity service from the service provider
       const activityService =
         ServiceProvider.getInstance().getActivityService();
-      const leaderboard = await activityService.getUserRankingLeaderboard(options);
+      const leaderboard =
+        await activityService.getUserRankingLeaderboard(options);
 
       return c.json({ leaderboard });
     } catch (error) {

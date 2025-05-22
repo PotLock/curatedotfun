@@ -96,8 +96,7 @@ export class PluginService {
   private readonly maxAuthFailures: number = 2; // one less than 3 to avoid locking
   private readonly retryDelays: number[] = [1000, 5000]; // Delays between retries in ms
 
-  public constructor(private configService: ConfigService) {
-  }
+  public constructor(private configService: ConfigService) {}
 
   /**
    * Sets the Elysia app instance for endpoint registration

@@ -95,9 +95,7 @@ export class UserRepository {
    * @returns The created user
    * @throws DatabaseError if the user could not be created
    */
-  async createUser(userData: InsertUser,
-    txDb: DB,
-  ) {
+  async createUser(userData: InsertUser, txDb: DB) {
     return withErrorHandling(
       async () => {
         try {
@@ -148,11 +146,7 @@ export class UserRepository {
    * @returns The updated user
    * @throws NotFoundError if the user does not exist
    */
-  async updateUser(
-    auth_provider_id: string,
-    userData: UpdateUser,
-    txDb: DB,
-  ) {
+  async updateUser(auth_provider_id: string, userData: UpdateUser, txDb: DB) {
     return withErrorHandling(
       async () => {
         const updateResult = await txDb

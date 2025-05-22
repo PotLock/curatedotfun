@@ -25,41 +25,44 @@ export class LeaderboardRepository {
   ): Promise<queries.LeaderboardEntry[]> {
     return withErrorHandling(
       async () =>
-        executeWithRetry(
-          async (dbInstance) => {
-            let startDate: Date | null = null;
-            const now = new Date();
+        executeWithRetry(async (dbInstance) => {
+          let startDate: Date | null = null;
+          const now = new Date();
 
-            switch (timeRange) {
-              case "month":
-                startDate = new Date(
-                  Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
-                );
-                break;
-              case "week":
-                startDate = new Date(now);
-                const dayOfWeek = startDate.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
-                const diff = startDate.getUTCDate() - dayOfWeek;
-                startDate.setUTCDate(diff);
-                startDate.setUTCHours(0, 0, 0, 0);
-                break;
-              case "today":
-                startDate = new Date(
-                  Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-                );
-                break;
-              default: // "all"
-                startDate = null;
-                break;
-            }
+          switch (timeRange) {
+            case "month":
+              startDate = new Date(
+                Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+              );
+              break;
+            case "week":
+              startDate = new Date(now);
+              const dayOfWeek = startDate.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
+              const diff = startDate.getUTCDate() - dayOfWeek;
+              startDate.setUTCDate(diff);
+              startDate.setUTCHours(0, 0, 0, 0);
+              break;
+            case "today":
+              startDate = new Date(
+                Date.UTC(
+                  now.getUTCFullYear(),
+                  now.getUTCMonth(),
+                  now.getUTCDate(),
+                ),
+              );
+              break;
+            default: // "all"
+              startDate = null;
+              break;
+          }
 
-            // Build the date filter SQL fragment conditionally
-            const dateFilterSql = startDate
-              ? sql`AND s.created_at >= ${startDate}`
-              : sql``;
+          // Build the date filter SQL fragment conditionally
+          const dateFilterSql = startDate
+            ? sql`AND s.created_at >= ${startDate}`
+            : sql``;
 
-            // Use a single query with Common Table Expressions (CTEs) for better performance
-            const result = await dbInstance.execute(sql`
+          // Use a single query with Common Table Expressions (CTEs) for better performance
+          const result = await dbInstance.execute(sql`
     WITH feed_totals AS (
       -- Get total submissions per feed
       SELECT
@@ -132,24 +135,22 @@ export class LeaderboardRepository {
       cs.submissioncount DESC
   `);
 
-            // Map the results to the expected format
-            return result.rows.map((row: any) => ({
-              curatorId: String(row.curatorid),
-              curatorUsername: String(row.curatorusername),
-              submissionCount: Number(row.submissioncount),
-              approvalCount: Number(row.approvalcount),
-              rejectionCount: Number(row.rejectioncount),
-              feedSubmissions: Array.isArray(row.feedsubmissions)
-                ? row.feedsubmissions.map((fs: any) => ({
+          // Map the results to the expected format
+          return result.rows.map((row: any) => ({
+            curatorId: String(row.curatorid),
+            curatorUsername: String(row.curatorusername),
+            submissionCount: Number(row.submissioncount),
+            approvalCount: Number(row.approvalcount),
+            rejectionCount: Number(row.rejectioncount),
+            feedSubmissions: Array.isArray(row.feedsubmissions)
+              ? row.feedsubmissions.map((fs: any) => ({
                   feedId: String(fs.feedId),
                   count: Number(fs.count),
                   totalInFeed: Number(fs.totalInFeed),
                 }))
-                : [],
-            }));
-          },
-          this.db,
-        ),
+              : [],
+          }));
+        }, this.db),
       {
         operationName: "get curator stats leaderboard",
         additionalContext: { timeRange },

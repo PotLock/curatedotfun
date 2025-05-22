@@ -1,23 +1,33 @@
 import {
-  SourceItem,
-  SourcePlugin,
   LastProcessedState,
   PlatformState,
+  SourceItem,
   SourcePluginSearchOptions,
 } from "@curatedotfun/types";
 import {
+  AppConfig,
   FeedConfig,
   SourceConfig,
   SourceSearchConfig,
 } from "../types/config.zod";
-import { PluginService } from "./plugin.service";
 import { logger } from "../utils/logger";
 import { LastProcessedStateRepository } from "./db/repositories/lastProcessedState.repository";
+import { DB } from "./db/types";
+import { InboundService } from "./inbound.service";
+import { IBackgroundTaskService } from "./interfaces/background-task.interface";
+import { PluginService } from "./plugin.service";
 
-export class SourceService {
+export class SourceService implements IBackgroundTaskService {
+  private pollingIntervals: NodeJS.Timeout[] = [];
+  private static readonly DEFAULT_ASYNC_JOB_POLLING_INTERVAL_MS = 5000;
+  private static readonly DEFAULT_MAX_ASYNC_JOB_POLLING_ATTEMPTS = 12; // 12 * 5s = 1 minute
+
   constructor(
     private pluginService: PluginService,
-    private lastProcessedStateRepository: LastProcessedStateRepository, // Placeholder
+    private lastProcessedStateRepository: LastProcessedStateRepository,
+    private inboundService: InboundService,
+    private db: DB,
+    private appConfig: AppConfig,
   ) {}
 
   /**
@@ -42,51 +52,125 @@ export class SourceService {
         sourcePluginName,
         {
           type: "source",
-          config: sourcePluginInstanceConfig || {}, // Plugin instance config
+          config: sourcePluginInstanceConfig || {},
         },
       );
 
-      const lastState = await this.lastProcessedStateRepository.getState(
-        feedId,
-        sourcePluginName,
-        searchId,
-      );
+      const initialPluginState =
+        await this.lastProcessedStateRepository.getState(
+          feedId,
+          sourcePluginName,
+          searchId,
+        );
 
       const searchOptions: SourcePluginSearchOptions = {
         type,
-        query: query || "", // Ensure query is a string
+        query: query || "",
         pageSize,
         platformArgs,
-        ...rest, // Pass through any other dynamic properties from searchConfig
+        ...rest,
       };
 
-      // Type assertion for lastState if necessary, assuming repository returns compatible type
-      const results = await plugin.search(
-        lastState as LastProcessedState<PlatformState> | null,
-        searchOptions,
-      );
+      let currentPluginState = initialPluginState;
+      let itemsToReturn: SourceItem[] = [];
+      let pollingAttempts = 0;
 
-      if (results.nextLastProcessedState) {
+      // TODO: Consider making polling interval and max attempts configurable per plugin/search
+      const pollingIntervalMs =
+        SourceService.DEFAULT_ASYNC_JOB_POLLING_INTERVAL_MS;
+      const maxPollingAttempts =
+        SourceService.DEFAULT_MAX_ASYNC_JOB_POLLING_ATTEMPTS;
+
+      while (pollingAttempts < maxPollingAttempts) {
+        const results = await plugin.search(
+          currentPluginState as LastProcessedState<PlatformState> | null,
+          searchOptions,
+        );
+
+        itemsToReturn = results.items; // Assume items are valid unless job status indicates otherwise
+
+        if (!results.nextLastProcessedState) {
+          logger.info(
+            `Plugin ${sourcePluginName} (searchId: ${searchId}, feed: ${feedId}) returned no nextLastProcessedState. Assuming process complete.`,
+          );
+          currentPluginState = null;
+          break;
+        }
+
+        currentPluginState = results.nextLastProcessedState;
+
+        const jobStatus =
+          currentPluginState.data?.currentAsyncJob?.status ??
+          currentPluginState.data?.currentMasaJob?.status;
+
+        if (
+          jobStatus === "submitted" ||
+          jobStatus === "pending" ||
+          jobStatus === "processing"
+        ) {
+          logger.info(
+            `Feed '${feedId}', plugin '${sourcePluginName}', searchId '${searchId}': Job status is ${jobStatus}. Polling again in ${pollingIntervalMs / 1000}s (Attempt ${pollingAttempts + 1}/${maxPollingAttempts}).`,
+          );
+          await new Promise((resolve) =>
+            setTimeout(resolve, pollingIntervalMs),
+          );
+          pollingAttempts++;
+        } else if (jobStatus === "done") {
+          logger.info(
+            `Feed '${feedId}', plugin '${sourcePluginName}', searchId '${searchId}': Job status is 'done'.`,
+          );
+          break;
+        } else if (jobStatus === "error" || jobStatus === "timeout") {
+          logger.error(
+            `Feed '${feedId}', plugin '${sourcePluginName}', searchId '${searchId}': Job status is '${jobStatus}'. Aborting poll.`,
+          );
+          itemsToReturn = []; // Discard items on job error/timeout
+          break;
+        } else {
+          logger.info(
+            `Feed '${feedId}', plugin '${sourcePluginName}', searchId '${searchId}': No active async job status found or job completed without explicit 'done' status. Proceeding.`,
+          );
+          break;
+        }
+      }
+
+      if (pollingAttempts >= maxPollingAttempts) {
+        const lastJobStatus =
+          currentPluginState?.data?.currentAsyncJob?.status ??
+          currentPluginState?.data?.currentMasaJob?.status;
+        logger.warn(
+          `Feed '${feedId}', plugin '${sourcePluginName}', searchId '${searchId}': Max polling attempts (${maxPollingAttempts}) reached. Last job status: ${lastJobStatus || "unknown"}.`,
+        );
+        if (
+          lastJobStatus === "submitted" ||
+          lastJobStatus === "pending" ||
+          lastJobStatus === "processing"
+        ) {
+          itemsToReturn = []; // Don't return items if job is still processing at max attempts
+        }
+      }
+
+      if (currentPluginState) {
         await this.lastProcessedStateRepository.saveState(
           feedId,
           sourcePluginName,
           searchId,
-          results.nextLastProcessedState,
+          currentPluginState,
+          this.db,
         );
       } else {
-        // If plugin returns null for nextLastProcessedState, it might mean the source is exhausted
-        // or state is not relevant for this search. We might want to clear existing state.
         logger.info(
-          `Plugin ${sourcePluginName} (searchId: ${searchId}) returned no nextLastProcessedState.`,
+          `Plugin ${sourcePluginName} (searchId: ${searchId}, feed: ${feedId}) resulted in a null final state. Not saving state.`,
         );
-        // Optionally, clear the state:
+        // Optionally clear existing state:
         // await this.lastProcessedStateRepository.clearState(feedId, sourcePluginName, searchId);
       }
 
       logger.info(
-        `Fetched ${results.items.length} items from plugin '${sourcePluginName}', searchId '${searchId}'.`,
+        `Fetched ${itemsToReturn.length} items from plugin '${sourcePluginName}', searchId '${searchId}' for feed '${feedId}' after polling logic.`,
       );
-      return results.items.map((item) => ({
+
+      return itemsToReturn.map((item) => ({
         ...item,
         metadata: {
           ...item.metadata,
@@ -96,7 +180,7 @@ export class SourceService {
       }));
     } catch (error) {
       logger.error(
-        `Error fetching from plugin ${sourcePluginName} (searchId: ${searchId}) for feed ${feedId}:`,
+        `Error during plugin execution or polling for ${sourcePluginName} (searchId: ${searchId}) for feed ${feedId}:`,
         error,
       );
       // Depending on desired error handling, could rethrow, return empty, or return partials if supported
@@ -181,5 +265,69 @@ export class SourceService {
     logger.info(
       "SourceService shutdown initiated. Relies on PluginService for plugin cleanup.",
     );
+    // This existing shutdown can be part of the stop() logic if needed,
+    // or stop() can focus on clearing intervals.
+    // For now, let pluginService handle its own plugin cleanup.
+  }
+
+  public async start(): Promise<void> {
+    logger.info("SourceService: Starting background polling for all feeds.");
+    if (!this.appConfig.feeds || this.appConfig.feeds.length === 0) {
+      logger.warn("SourceService: No feeds configured to poll.");
+      return;
+    }
+
+    for (const feedConfig of this.appConfig.feeds) {
+      if (!feedConfig.enabled) {
+        logger.info(
+          `SourceService: Feed '${feedConfig.id}' is disabled, skipping polling.`,
+        );
+        continue;
+      }
+      // Use a default polling interval if not specified, e.g., 5 minutes
+      // TODO: Make polling interval configurable per feed in FeedConfig
+      const pollingIntervalMs = feedConfig.pollingIntervalMs || 5 * 60 * 1000; // Default to 5 minutes
+
+      logger.info(
+        `SourceService: Setting up polling for feed '${feedConfig.id}' every ${pollingIntervalMs / 1000} seconds.`,
+      );
+
+      const pollFeed = async () => {
+        try {
+          logger.info(`SourceService: Polling feed '${feedConfig.id}'...`);
+          const sourceItems = await this.fetchAllSourcesForFeed(feedConfig);
+          if (sourceItems.length > 0) {
+            await this.inboundService.processInboundItems(
+              sourceItems,
+              feedConfig,
+            );
+          } else {
+            logger.info(
+              `SourceService: No new items fetched for feed '${feedConfig.id}'.`,
+            );
+          }
+        } catch (error) {
+          logger.error(
+            `SourceService: Error polling feed '${feedConfig.id}':`,
+            error,
+          );
+        }
+      };
+
+      // Initial poll immediately
+      pollFeed();
+      // Then set up interval
+      const intervalId = setInterval(pollFeed, pollingIntervalMs);
+      this.pollingIntervals.push(intervalId);
+    }
+  }
+
+  public async stop(): Promise<void> {
+    logger.info("SourceService: Stopping background polling for all feeds.");
+    this.pollingIntervals.forEach((intervalId) => clearInterval(intervalId));
+    this.pollingIntervals = [];
+    // Call existing shutdown if it has other responsibilities like plugin cleanup
+    await this.shutdown(); // Assuming this handles plugin resource cleanup via PluginService
+    logger.info("SourceService: All polling stopped.");
   }
 }

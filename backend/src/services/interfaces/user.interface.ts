@@ -21,10 +21,7 @@ export interface IUserService {
    * @param data The user data to update
    * @returns The updated user or null if not found
    */
-  updateUser(
-    auth_provider_id: string,
-    data: UpdateUser,
-  ): Promise<any | null>;
+  updateUser(auth_provider_id: string, data: UpdateUser): Promise<any | null>;
 
   /**
    * Delete a user and their associated NEAR account

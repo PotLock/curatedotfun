@@ -80,7 +80,11 @@ export class LastProcessedStateRepository {
       },
       {
         operationName: "saveState",
-        additionalContext: { feedId, sourcePluginName, searchId /* state can be large */ },
+        additionalContext: {
+          feedId,
+          sourcePluginName,
+          searchId /* state can be large */,
+        },
       },
     );
   }

@@ -3,9 +3,13 @@ import { ActivityService } from "../services/activity.service";
 import { AdapterService } from "../services/adapter.service";
 import { ConfigService } from "../services/config.service";
 import {
-  activityRepository, db, feedRepository,
-  lastProcessedStateRepository, submissionRepository,
-  userRepository, leaderboardRepository
+  activityRepository,
+  db,
+  feedRepository,
+  lastProcessedStateRepository,
+  submissionRepository,
+  userRepository,
+  leaderboardRepository,
 } from "../services/db";
 import { DistributionService } from "../services/distribution.service";
 import { InboundService } from "../services/inbound.service";
@@ -16,6 +20,7 @@ import { SubmissionService } from "../services/submission.service";
 import { TransformationService } from "../services/transformation.service";
 import { UserService } from "../services/users.service";
 import { FeedService } from "../services/feed.service";
+import { IBackgroundTaskService } from "../services/interfaces/background-task.interface";
 import { logger } from "./logger";
 
 /**
@@ -27,8 +32,6 @@ export class ServiceProvider {
   private services: Map<string, any> = new Map();
 
   private constructor(private appConfig: AppConfig) {
-
-
     // Core services
     const configService = new ConfigService();
     const pluginService = new PluginService(configService);
@@ -51,19 +54,21 @@ export class ServiceProvider {
       processorService,
       db,
       this.appConfig,
-      logger
+      logger,
     );
 
-    // Source Ingestion Services
-    const sourceService = new SourceService(
-      pluginService,
-      lastProcessedStateRepository,
-    );
-    // AdapterService and InboundService use appConfig from constructor
     const adapterService = new AdapterService(this.appConfig);
     const inboundService = new InboundService(
       adapterService,
       submissionService,
+      this.appConfig,
+    );
+
+    const sourceService = new SourceService(
+      pluginService,
+      lastProcessedStateRepository,
+      inboundService,
+      db,
       this.appConfig,
     );
 
@@ -88,8 +93,14 @@ export class ServiceProvider {
     );
     // TODO: Move services to injection, no singleton
     // TODO: Inject repositories into other services as needed (e.g., submissionService might need SubmissionRepository)
-    const feedService = new FeedService(feedRepository, processorService, this.appConfig, db, logger);
-    this.services.set("feedService", feedService); 
+    const feedService = new FeedService(
+      feedRepository,
+      processorService,
+      this.appConfig,
+      db,
+      logger,
+    );
+    this.services.set("feedService", feedService);
     this.services.set("configService", configService);
     this.services.set("pluginService", pluginService);
     this.services.set("transformationService", transformationService);
@@ -198,5 +209,34 @@ export class ServiceProvider {
 
   public getFeedService(): FeedService {
     return this.getService<FeedService>("feedService");
+  }
+
+  /**
+   * Get all services that implement IBackgroundTaskService
+   * @returns An array of background task services
+   */
+  public getBackgroundTaskServices(): IBackgroundTaskService[] {
+    const backgroundServices: IBackgroundTaskService[] = [];
+    for (const service of this.services.values()) {
+      if (
+        service &&
+        typeof service.start === "function" &&
+        typeof service.stop === "function"
+      ) {
+        // Further check if it's likely an IBackgroundTaskService.
+        // This is a duck-typing approach. A more robust way would be for services
+        // to register themselves as background tasks or use instanceof with a base class.
+        // For now, this check should suffice for services like SourceService.
+        if (service instanceof SourceService) {
+          // Add other known background services here if any
+          backgroundServices.push(service as IBackgroundTaskService);
+        }
+        // Add more specific checks if other services implement IBackgroundTaskService
+        // else if (service instanceof SomeOtherBackgroundTaskService) {
+        //   backgroundServices.push(service as IBackgroundTaskService);
+        // }
+      }
+    }
+    return backgroundServices;
   }
 }

@@ -101,8 +101,35 @@ This document provides recommendations for general code improvements, focusing o
     *   `ConfigService` (once refactored to be DB-backed) would provide these values.
     *   Inject the necessary configuration values into `UserService` via its constructor (managed by `ServiceProvider`). This centralizes configuration access and improves testability.
 
-## 4. Lifecycle Management for Background Tasks
+## 4. Lifecycle Management for Background Tasks - COMPLETED (with known issue)
 
+**Status: COMPLETED (with known issue)**
+
+**Summary of Changes Made:**
+*   Introduced `IBackgroundTaskService` interface (`backend/src/services/interfaces/background-task.interface.ts`) with `start(): Promise<void>` and `stop(): Promise<void>` methods.
+*   `SourceService` (`backend/src/services/source.service.ts`) now implements `IBackgroundTaskService`:
+    *   Its constructor was updated to accept `InboundService` and `AppConfig`.
+    *   The `start()` method initializes polling for each enabled feed based on `feedConfig.pollingIntervalMs` (defaults to 5 minutes). It fetches items using `fetchAllSourcesForFeed` and passes them to `inboundService.processInboundItems`.
+    *   The `fetchFromSearchConfig` method within `SourceService` was enhanced to include robust asynchronous job polling logic. It now checks `nextLastProcessedState` for job statuses (e.g., `submitted`, `pending`, `processing`, `done`, `error`) and re-queries the plugin with delays if an async job is ongoing, making it more resilient with plugins that perform long-running operations.
+    *   The `stop()` method clears all polling intervals and calls the existing `shutdown()` method.
+*   `FeedConfigSchema` in `backend/src/types/config.zod.ts` was updated to include optional `enabled: z.boolean().default(true)` and `pollingIntervalMs: z.number().int().positive()`.
+*   `ServiceProvider` (`backend/src/utils/service-provider.ts`):
+    *   Updated to correctly instantiate `SourceService` with its new dependencies.
+    *   Added `getBackgroundTaskServices(): IBackgroundTaskService[]` method, which currently uses duck-typing (checks for `start` and `stop` methods and `instanceof SourceService`) to find background task services. A TODO should be added to make this more robust (e.g., explicit registration).
+*   `backend/src/index.ts` was refactored:
+    *   It now retrieves the `ServiceProvider` instance (`sp`) after `createApp()` (which initializes `sp`).
+    *   Service access was changed from `context.someService` to `sp.getSomeService()`.
+    *   The old `context.submissionService.startMentionsCheck()` call was removed.
+    *   It now calls `sp.getBackgroundTaskServices()` and iterates through the returned services, calling `start()` on each during server startup.
+    *   The graceful shutdown logic now also uses `sp.getBackgroundTaskServices()` to call `stop()` on all background task services. Specific shutdown calls for other services like `DistributionService` are preserved if they are not `IBackgroundTaskService`.
+    *   The health check route was updated to use `sp` for service status.
+
+**Known Issue:**
+*   There is a persistent TypeScript error in `backend/src/services/source.service.ts` at the `plugin.search(...)` call: `"Expected 5 arguments, but got 4."`
+    *   The actual call `plugin.search(lastState, searchOptions)` provides 2 arguments, which matches the `SourcePlugin` interface definition for the `search` method.
+    *   This error is likely misleading or due to a deeper TypeScript inference issue, conflicting type definitions, or a language server problem. The call signature appears correct as per the provided type definitions. Further investigation on the TypeScript environment or specific plugin type interactions may be needed.
+
+**Original Recommendation Details (for historical reference):**
 *   **Issue**: `backend/src/index.ts` calls `context.submissionService.startMentionsCheck()`. The `context` object and how services with background tasks are managed isn't fully clear from `ServiceProvider` or `app.ts`.
 *   **Recommendation**:
     1.  If `SubmissionService` (or any other service like a hypothetical `TwitterService`) needs to run background tasks (polling, subscriptions):

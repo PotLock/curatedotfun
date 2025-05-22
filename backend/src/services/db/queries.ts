@@ -341,7 +341,6 @@ export async function getDailySubmissionCount(
   return results.length > 0 ? results[0].count : 0;
 }
 
-
 export async function removeFromSubmissionFeed(
   db: DB,
   submissionId: string,

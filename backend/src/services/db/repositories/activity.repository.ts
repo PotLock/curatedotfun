@@ -6,7 +6,12 @@ import {
 } from "../../../validation/activity.validation";
 import * as schema from "../schema";
 import { ActivityType } from "../schema/activity";
-import { DB, InsertActivity, UpdateFeedUserStats, UpdateUserStats } from "../types";
+import {
+  DB,
+  InsertActivity,
+  UpdateFeedUserStats,
+  UpdateUserStats,
+} from "../types";
 import { executeWithRetry, withErrorHandling } from "../utils";
 
 export class ActivityRepository {
@@ -19,10 +24,7 @@ export class ActivityRepository {
   /**
    * Create a new activity entry
    */
-  async createActivity(
-    data: InsertActivity,
-    txDb: DB,
-  ) {
+  async createActivity(data: InsertActivity, txDb: DB) {
     return withErrorHandling(
       async () => {
         // Insert the activity
@@ -203,7 +205,6 @@ export class ActivityRepository {
           // Build conditions for the query
           const conditions = [eq(schema.activities.user_id, userId)];
           if (options.types && options.types.length > 0) {
-
             conditions.push(sql`${schema.activities.type} IN ${options.types}`);
           }
           if (options.feed_id) {
@@ -449,11 +450,7 @@ export class ActivityRepository {
   /**
    * Update user statistics
    */
-  async updateUserStats(
-    userId: number,
-    data: UpdateUserStats,
-    txDb: DB,
-  ) {
+  async updateUserStats(userId: number, data: UpdateUserStats, txDb: DB) {
     return withErrorHandling(
       async () => {
         // Check if user stats exist
@@ -745,13 +742,13 @@ export class ActivityRepository {
 
           return result.length > 0
             ? {
-              curatorRank: result[0].curator_rank,
-              approverRank: result[0].approver_rank,
-            }
+                curatorRank: result[0].curator_rank,
+                approverRank: result[0].approver_rank,
+              }
             : {
-              curatorRank: null,
-              approverRank: null,
-            };
+                curatorRank: null,
+                approverRank: null,
+              };
         }, this.db);
       },
       {
