@@ -45,6 +45,7 @@ export const WalletLoginModal = ({
               className="w-full flex items-center justify-center gap-2"
               onClick={() => handleWalletSelect("solana")}
               variant="secondary"
+              disabled
             >
               <img
                 width={18}
@@ -53,6 +54,7 @@ export const WalletLoginModal = ({
                 alt="Solana"
               />
               Solana
+              <span className="text-xs text-gray-500 ml-1">(Coming Soon)</span>
             </Button>
 
             {/* EVM Wallet Button */}
@@ -60,6 +62,7 @@ export const WalletLoginModal = ({
               className="w-full flex items-center justify-center gap-2"
               onClick={() => handleWalletSelect("evm")}
               variant="secondary"
+              disabled
             >
               <img
                 width={18}
@@ -68,6 +71,7 @@ export const WalletLoginModal = ({
                 alt="metamask"
               />
               Metamask
+              <span className="text-xs text-gray-500 ml-1">(Coming Soon)</span>
             </Button>
           </div>
         </div>

@@ -127,24 +127,6 @@ export const CallMethod = async (
   }
 };
 
-export async function getWalletConnection(keyStore: keyStores.KeyStore) {
-  const networkId = process.env.PUBLIC_NETWORK || "testnet";
-  const near = await nearApi.connect({
-    nodeUrl:
-      networkId === "mainnet"
-        ? "https://rpc.mainnet.near.org"
-        : "https://rpc.testnet.near.org",
-    walletUrl:
-      networkId === "mainnet"
-        ? "https://app.mynearwallet.com"
-        : "https://testnet.mynearwallet.com",
-    networkId,
-    keyStore,
-  });
-  const walletConnection = new nearApi.WalletConnection(near, "my-near-wallet");
-  return walletConnection;
-}
-
 export async function createAccessTokenPayload(
   keyStore: keyStores.KeyStore,
   accountId: string,

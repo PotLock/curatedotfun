@@ -28,7 +28,6 @@ import { useWalletSelector } from "@near-wallet-selector/react-hook";
 import { AvatarProfile } from "./AvatarProfile";
 import * as nearApi from "near-api-js";
 import { createAccessTokenPayload } from "../hooks/near-method";
-import { useCreateUserProfile } from "../lib/api";
 
 const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
@@ -40,16 +39,8 @@ const Header = () => {
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
   const { showLoginModal } = useAuthStore();
 
-  const {
-    isInitialized,
-    isLoggedIn,
-    logout,
-    getUserInfo,
-    setCurrentUserProfile,
-  } = useWeb3Auth();
+  const { isInitialized, isLoggedIn, logout, getUserInfo } = useWeb3Auth();
   const { signedAccountId, signOut, walletSelector } = useWalletSelector();
-
-  const createUserMutation = useCreateUserProfile();
 
   useEffect(() => {
     const fetchUserInfo = async () => {

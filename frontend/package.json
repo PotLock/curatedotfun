@@ -52,6 +52,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
+    "intear-wallet": "^69.0.0",
     "lucide-react": "^0.483.0",
     "near-api-js": "4.0.4",
     "near-sign-verify": "^0.1.3",
