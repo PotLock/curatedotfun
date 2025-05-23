@@ -2168,6 +2168,40 @@
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "@afrobeats_party"
               }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "title": "{{title}}",
+                      "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
+                      "description": "{{summary}}",
+                      "link": "{{source}}",
+                      "publishedAt": "{{createdAt}}",
+                      "author": {
+                        "name": "{{username}}",
+                        "link": "https://x.com/{{author}}"
+                      },
+                      "categories": ["afrobeats", "{{tags}}"],
+                      "source": {
+                        "url": "{{source}}",
+                        "title": "twitter"
+                      }
+                    }
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/rss",
+              "config": {
+                "serviceUrl": "https://afrobeats-rss.up.railway.app",
+                "apiSecret": "{AFROBEATS_RSS_API_SECRET}",
+                "feedConfig": {
+                  "title": "Afrobeats",
+                  "description": "Everything Afrobeats from new music, festival, events, clubs, dances and more!"
+                }
+              }
             }
           ]
         }
@@ -3730,7 +3764,7 @@
       },
       "outputs": {
         "stream": {
-          "enabled": true,
+          "enabled": false,
           "transform": [
             {
               "plugin": "@curatedotfun/object-transform",
@@ -3774,34 +3808,16 @@
             {
               "transform": [
                 {
-                  "plugin": "@curatedotfun/object-transform",
+                  "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "mappings": {
-                      "title": "{{title}}",
-                      "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
-                      "description": "{{summary}}",
-                      "link": "{{source}}",
-                      "author": {
-                        "name": "{{username}}",
-                        "link": "https://x.com/{{author}}"
-                      },
-                      "categories": ["{{tags}}"],
-                      "source": {
-                        "url": "{{source}}",
-                        "title": "twitter"
-                      }
-                    }
+                    "template": "*[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
-              "plugin": "@curatedotfun/rss",
+              "plugin": "@curatedotfun/telegram",
               "config": {
-                "serviceUrl": "https://xpostbounty1-rss.up.railway.app",
-                "apiSecret": "{XPOSTBOUNTY1_RSS_API_SECRET}",
-                "feedConfig": {
-                  "title": "XPOST Bounty 1",
-                  "description": "Curated submissions for the XPOST Bounty 1"
-                }
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "@open_crosspost"
               }
             }
           ]
@@ -3810,7 +3826,7 @@
     },
     {
       "id": "lukso",
-      "name": "Lukso Updates",
+      "name": "Lukso Underground",
       "description": "Everything about the blockchain built for social, culture, and creators.",
       "moderation": {
         "approvers": {
@@ -3873,34 +3889,16 @@
             {
               "transform": [
                 {
-                  "plugin": "@curatedotfun/object-transform",
+                  "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "mappings": {
-                      "title": "{{title}}",
-                      "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
-                      "description": "{{summary}}",
-                      "link": "{{source}}",
-                      "author": {
-                        "name": "{{username}}",
-                        "link": "https://x.com/{{author}}"
-                      },
-                      "categories": ["lukso", "{{tags}}"],
-                      "source": {
-                        "url": "{{source}}",
-                        "title": "twitter"
-                      }
-                    }
+                    "template": "*[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
                   }
                 }
               ],
-              "plugin": "@curatedotfun/rss",
+              "plugin": "@curatedotfun/telegram",
               "config": {
-                "serviceUrl": "https://lukso-rss.up.railway.app",
-                "apiSecret": "{LUKSO_RSS_API_SECRET}",
-                "feedConfig": {
-                  "title": "Lukso Updates",
-                  "description": "Everything about the blockchain built for social, culture, and creators."
-                }
+                "botToken": "{TELEGRAM_BOT_TOKEN}",
+                "channelId": "@lukso_underground"
               }
             }
           ]
