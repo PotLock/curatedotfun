@@ -3782,23 +3782,16 @@
             {
               "plugin": "@curatedotfun/ai-transform",
               "config": {
-                "prompt": "Summarize the content into a concise climate news flash, highlighting key environmental impacts, policy developments, or sustainability efforts. Incorporate relevant details from the curator's notes while maintaining a neutral, third-person tone. Mention the author if relevant, or focus on the core climate-related information.",
+                "prompt": "The provided content is a submission to our bounty and should be adhere to one of the tracks: 1. a walkthrough on how to create a Potlock campaign (tag with POTLOCK), 2. a walkthrough on how to curate for Curatedotfun (tag with CURATEDOTFUN). Then you should also assess the bit of content you can read (you will only be provided the first message of a thread), and give a short, <100 character review of the content. Grading on quality of content (uniqueness, thoroughness) and grammar, accuracy (well written, truth to actual). You will not have enough context to give an educated review, but you can give an initial feedback. Short succinct.",
                 "apiKey": "{OPENROUTER_API_KEY}",
                 "schema": {
-                  "title": {
+                  "track": {
                     "type": "string",
-                    "description": "Title derived from summary of content"
+                    "description": "Track enum determined from the content, either POTLOCK or CURATEDOTFUN"
                   },
-                  "summary": {
+                  "review": {
                     "type": "string",
-                    "description": "Summary of content influenced by curator notes"
-                  },
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "Relevant tags for the content"
+                    "description": "A short (<100 chars) review, depending on the content's quality"
                   }
                 }
               }
@@ -3810,7 +3803,7 @@
                 {
                   "plugin": "@curatedotfun/simple-transform",
                   "config": {
-                    "template": "*[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})"
+                    "template": "*{{track}} submitted by [@{{author}}](https://x.com/{{author}})*\n\n{{content}}...\n\n[{{view full}}](<{{source}}>)*\n\nAI SHORT REVIEW: {{review}}\n\n"
                   }
                 }
               ],
@@ -3818,6 +3811,68 @@
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "@open_crosspost"
+              }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "Name": "{{author}} submission",
+                      "author": "{{author}}",
+                      "link": "{{source}}",
+                      "category": "{{track}}",
+                      "review": "{{review}}"
+                    }
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/notion",
+              "config": {
+                "token": "{XPOSTBOUNTY1_NOTION_TOKEN}",
+                "databaseId": "1fcabb02c52c80728d10d01813acaab8",
+                "fields": {
+                  "Name": "title",
+                  "author": "rich_text",
+                  "link": "rich_text",
+                  "category": "rich_text",
+                  "review": "rich_text"
+                }
+              }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "title": "{{title}}",
+                      "content": "<h2>[{{track}}] Submission: {{author}}</h2><p>{{content}}</p>",
+                      "description": "{{content}}",
+                      "link": "{{source}}",
+                      "publishedAt": "{{createdAt}}",
+                      "author": {
+                        "name": "{{username}}",
+                        "link": "https://x.com/{{author}}"
+                      },
+                      "categories": ["xpostbounty1", "{{track}}", "{{tags}}"],
+                      "source": {
+                        "url": "{{source}}",
+                        "title": "twitter"
+                      }
+                    }
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/rss",
+              "config": {
+                "serviceUrl": "https://xpostbounty1.up.railway.app/rss.xml",
+                "apiSecret": "{XPOSTBOUNTY1_RSS_API_SECRET}",
+                "feedConfig": {
+                  "title": "XPOST Bounty 1",
+                  "description": "Curated submissions for the XPOST Bounty 1"
+                }
               }
             }
           ]
