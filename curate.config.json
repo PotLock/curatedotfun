@@ -3867,7 +3867,7 @@
               ],
               "plugin": "@curatedotfun/rss",
               "config": {
-                "serviceUrl": "https://xpostbounty1.up.railway.app/rss.xml",
+                "serviceUrl": "https://xpostbounty1-rss.up.railway.app/",
                 "apiSecret": "{XPOSTBOUNTY1_RSS_API_SECRET}",
                 "feedConfig": {
                   "title": "XPOST Bounty 1",
