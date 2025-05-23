@@ -97,8 +97,8 @@ importers:
         version: 3.24.5(zod@3.24.4)
     devDependencies:
       '@curatedotfun/types':
-        specifier: ^0.0.5
-        version: 0.0.5
+        specifier: ^0.0.6
+        version: 0.0.6
       '@module-federation/node':
         specifier: ^2.6.30
         version: 2.6.33(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.6.3)(webpack@5.99.7(esbuild@0.19.12))
@@ -505,6 +505,9 @@ packages:
 
   '@curatedotfun/types@0.0.5':
     resolution: {integrity: sha512-thb89PXZHEA2BkVvRbA6b2imiglNDVzPOrdUZswF7q/tsnxGoOCwg7B1u6Y3YrajF7IdWto+TzfNnXUSadjWrA==}
+
+  '@curatedotfun/types@0.0.6':
+    resolution: {integrity: sha512-m2/O2s6W0b0h/Oq/cGOnmMJP6rHqtBgfZYuQlFIEtIhvvFWkahMAGPRGD2VW2D6SJeIrdnHgSqJlosW4+TfQaA==}
 
   '@discoveryjs/json-ext@0.5.7':
     resolution: {integrity: sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==}
@@ -6492,6 +6495,8 @@ snapshots:
       zod: 3.24.4
 
   '@curatedotfun/types@0.0.5': {}
+
+  '@curatedotfun/types@0.0.6': {}
 
   '@discoveryjs/json-ext@0.5.7': {}
 

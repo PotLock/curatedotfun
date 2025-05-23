@@ -5,12 +5,12 @@ import {
   SourcePluginSearchOptions,
 } from "@curatedotfun/types";
 import {
-  AppConfig,
   FeedConfig,
   SourceConfig,
   SourceSearchConfig,
 } from "../types/config.zod";
 import { logger } from "../utils/logger";
+import { FeedRepository } from "./db/repositories/feed.repository";
 import { LastProcessedStateRepository } from "./db/repositories/lastProcessedState.repository";
 import { DB } from "./db/types";
 import { InboundService } from "./inbound.service";
@@ -27,7 +27,7 @@ export class SourceService implements IBackgroundTaskService {
     private lastProcessedStateRepository: LastProcessedStateRepository,
     private inboundService: InboundService,
     private db: DB,
-    private appConfig: AppConfig,
+    private feedRepository: FeedRepository,
   ) {}
 
   /**
@@ -162,8 +162,11 @@ export class SourceService implements IBackgroundTaskService {
         logger.info(
           `Plugin ${sourcePluginName} (searchId: ${searchId}, feed: ${feedId}) resulted in a null final state. Not saving state.`,
         );
-        // Optionally clear existing state:
-        // await this.lastProcessedStateRepository.clearState(feedId, sourcePluginName, searchId);
+        await this.lastProcessedStateRepository.clearState(
+          feedId,
+          sourcePluginName,
+          searchId,
+        );
       }
 
       logger.info(
@@ -216,7 +219,6 @@ export class SourceService implements IBackgroundTaskService {
         );
         allItems = allItems.concat(items);
       } catch (error) {
-        // Logged in fetchFromSearchConfig, continue with other search configs
         logger.error(
           `Skipping searchId ${searchConfig.searchId} for plugin ${pluginName} due to error.`,
         );
@@ -259,9 +261,6 @@ export class SourceService implements IBackgroundTaskService {
   }
 
   async shutdown(): Promise<void> {
-    // SourceService itself might not need specific shutdown logic beyond what PluginService handles,
-    // unless it manages its own resources (e.g., direct connections, intervals).
-    // PluginService.cleanup() will handle shutting down individual plugins.
     logger.info(
       "SourceService shutdown initiated. Relies on PluginService for plugin cleanup.",
     );
@@ -272,18 +271,27 @@ export class SourceService implements IBackgroundTaskService {
 
   public async start(): Promise<void> {
     logger.info("SourceService: Starting background polling for all feeds.");
-    if (!this.appConfig.feeds || this.appConfig.feeds.length === 0) {
-      logger.warn("SourceService: No feeds configured to poll.");
+    const allDbFeeds = await this.feedRepository.getAllFeeds();
+
+    if (!allDbFeeds || allDbFeeds.length === 0) {
+      logger.warn("SourceService: No feeds found in database to poll.");
       return;
     }
 
-    for (const feedConfig of this.appConfig.feeds) {
-      if (!feedConfig.enabled) {
-        logger.info(
-          `SourceService: Feed '${feedConfig.id}' is disabled, skipping polling.`,
-        );
-        continue;
-      }
+    const feedsToPoll = allDbFeeds.filter(
+      (dbFeed) => dbFeed.config && dbFeed.config.enabled,
+    );
+
+    if (feedsToPoll.length === 0) {
+      logger.warn(
+        "SourceService: No enabled feeds with valid configurations found to poll.",
+      );
+      return;
+    }
+
+    for (const dbFeed of feedsToPoll) {
+      const feedConfig = dbFeed.config as FeedConfig;
+
       // Use a default polling interval if not specified, e.g., 5 minutes
       // TODO: Make polling interval configurable per feed in FeedConfig
       const pollingIntervalMs = feedConfig.pollingIntervalMs || 5 * 60 * 1000; // Default to 5 minutes
@@ -294,16 +302,37 @@ export class SourceService implements IBackgroundTaskService {
 
       const pollFeed = async () => {
         try {
-          logger.info(`SourceService: Polling feed '${feedConfig.id}'...`);
-          const sourceItems = await this.fetchAllSourcesForFeed(feedConfig);
+          // Fetch the latest feed config before polling, in case it changed
+          const currentDbFeed = await this.feedRepository.getFeedById(
+            feedConfig.id,
+          );
+          if (
+            !currentDbFeed ||
+            !currentDbFeed.config ||
+            !currentDbFeed.config.enabled
+          ) {
+            logger.info(
+              `SourceService: Feed '${feedConfig.id}' is no longer enabled or found. Stopping poll for this feed.`,
+            );
+            // Find and clear this specific interval if we stored them with IDs
+            // For now, this will just stop future executions of *this* pollFeed instance
+            return;
+          }
+          const currentFeedConfig = currentDbFeed.config as FeedConfig;
+
+          logger.info(
+            `SourceService: Polling feed '${currentFeedConfig.id}'...`,
+          );
+          const sourceItems =
+            await this.fetchAllSourcesForFeed(currentFeedConfig);
           if (sourceItems.length > 0) {
             await this.inboundService.processInboundItems(
               sourceItems,
-              feedConfig,
+              currentFeedConfig,
             );
           } else {
             logger.info(
-              `SourceService: No new items fetched for feed '${feedConfig.id}'.`,
+              `SourceService: No new items fetched for feed '${currentFeedConfig.id}'.`,
             );
           }
         } catch (error) {
@@ -326,8 +355,7 @@ export class SourceService implements IBackgroundTaskService {
     logger.info("SourceService: Stopping background polling for all feeds.");
     this.pollingIntervals.forEach((intervalId) => clearInterval(intervalId));
     this.pollingIntervals = [];
-    // Call existing shutdown if it has other responsibilities like plugin cleanup
-    await this.shutdown(); // Assuming this handles plugin resource cleanup via PluginService
+    await this.shutdown();
     logger.info("SourceService: All polling stopped.");
   }
 }

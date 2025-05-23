@@ -1,8 +1,5 @@
 import { Logger } from "pino";
-import {
-  DistributorConfig,
-  StreamConfig,
-} from "../types/config.zod";
+import { DistributorConfig, StreamConfig } from "../types/config.zod";
 import { SubmissionStatus } from "../types/submission";
 import { FeedRepository } from "./db/repositories/feed.repository";
 import { DB, InsertFeed, UpdateFeed } from "./db/types";
@@ -12,9 +9,9 @@ export class FeedService {
   constructor(
     private feedRepository: FeedRepository,
     private processorService: ProcessorService,
-    private db: DB, // For transactions if complex operations arise
+    private db: DB,
     private logger: Logger,
-  ) { }
+  ) {}
 
   async getAllFeeds() {
     this.logger.info("FeedService: getAllFeeds called");
@@ -141,9 +138,7 @@ export class FeedService {
             continue;
           } else {
             streamConfig.distribute = streamConfig.distribute?.filter(
-              (
-                d: DistributorConfig,
-              ) => validDistributors.includes(d.plugin),
+              (d: DistributorConfig) => validDistributors.includes(d.plugin),
             );
             validDistributors.forEach((d) => usedDistributors.add(d));
             this.logger.info(

@@ -3,8 +3,8 @@ import path from "path";
 import {
   AppConfig,
   FeedConfig,
-  PluginConfig,
-  PluginsConfig,
+  PluginsConfig, // Now correctly imported
+  PluginRegistrationConfig, // Was PluginConfig
 } from "../types/config.zod";
 import { hydrateConfigValues } from "../utils/config";
 import { logger } from "../utils/logger";
@@ -76,7 +76,9 @@ export class ConfigService {
     return config.plugins;
   }
 
-  public getPluginByName(pluginName: string): PluginConfig | undefined {
+  public getPluginByName(
+    pluginName: string,
+  ): PluginRegistrationConfig | undefined {
     if (!this.config) {
       throw new Error("Config not loaded. Call loadConfig() first.");
     }

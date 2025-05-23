@@ -144,6 +144,7 @@ export type StreamConfig = z.infer<typeof StreamConfigSchema>;
 export type IngestionConfig = z.infer<typeof IngestionConfigSchema>; // Ensure IngestionConfig type is exported
 export type FeedConfig = z.infer<typeof FeedConfigSchema>;
 export type AppConfig = z.infer<typeof AppConfigSchema>;
+export type PluginsConfig = Record<string, PluginRegistrationConfig>; // Added export
 
 // Example of how to get a specific plugin config type if needed, though usually generic is fine
 export type TransformerPluginRegistrationConfig = z.infer<

@@ -1,5 +1,5 @@
 import { Logger } from "pino";
-import { AppConfig, FeedConfig } from "../types/config.zod";
+import { FeedConfig } from "../types/config.zod"; // AppConfig removed
 import { SubmissionServiceError } from "../types/errors";
 import { ModerationCommandData } from "../types/inbound.types";
 import {
@@ -19,7 +19,6 @@ export class SubmissionService {
     private feedRepository: FeedRepository,
     private processorService: ProcessorService,
     private db: DB,
-    private config: AppConfig,
     private logger: Logger,
   ) {}
 
@@ -78,7 +77,10 @@ export class SubmissionService {
                 curatorPlatformId,
               );
             // Read MAX_DAILY_SUBMISSIONS_PER_USER from environment variable, default to 10
-            const maxDailySubmissions = parseInt(process.env.MAX_DAILY_SUBMISSIONS_PER_USER || "10", 10);
+            const maxDailySubmissions = parseInt(
+              process.env.MAX_DAILY_SUBMISSIONS_PER_USER || "10",
+              10,
+            );
             if (dailyCount >= maxDailySubmissions) {
               this.logger.warn(
                 { curatorPlatformId, externalId, maxDailySubmissions },
@@ -115,10 +117,10 @@ export class SubmissionService {
 
         const feedIdsToProcess = new Set<string>([targetFeedId]);
 
+        // The loop body is now async due to fetching feedConfig
         for (const currentFeedId of feedIdsToProcess) {
-          const feedConfig = this.config.feeds.find(
-            (f) => f.id.toLowerCase() === currentFeedId.toLowerCase(),
-          );
+          const feedConfig =
+            await this.feedRepository.getFeedConfig(currentFeedId);
           if (!feedConfig) {
             this.logger.warn(
               { currentFeedId, externalId },
@@ -129,9 +131,14 @@ export class SubmissionService {
 
           // Feed-specific blacklist check for author and curator
           if (feedConfig.moderation.blacklist) {
-            const platformBlacklist = feedConfig.moderation.blacklist[platformKey] || [];
-            const allPlatformsBlacklist = feedConfig.moderation.blacklist["all"] || [];
-            const combinedBlacklist = [...platformBlacklist, ...allPlatformsBlacklist].map(b => b.toLowerCase());
+            const platformBlacklist =
+              feedConfig.moderation.blacklist[platformKey] || [];
+            const allPlatformsBlacklist =
+              feedConfig.moderation.blacklist["all"] || [];
+            const combinedBlacklist = [
+              ...platformBlacklist,
+              ...allPlatformsBlacklist,
+            ].map((b) => b.toLowerCase());
 
             if (
               authorUsername &&
@@ -147,7 +154,7 @@ export class SubmissionService {
               curatorUsername &&
               combinedBlacklist.includes(curatorUsername.toLowerCase())
             ) {
-               this.logger.warn(
+              this.logger.warn(
                 { externalId, curatorUsername, currentFeedId, platformKey },
                 `Curator ${curatorUsername} for submission ${externalId} (platform: ${platformKey}) is blacklisted in feed ${currentFeedId}. Skipping processing for this feed.`,
               );
@@ -329,10 +336,11 @@ export class SubmissionService {
     try {
       await this.db.transaction(async (tx) => {
         if (
-          !this.isGlobalAdminOrModeratorForPlatform(
+          !(await this.isGlobalAdminOrModeratorForPlatform(
+            // Added await
             moderatorUsername,
             platformKey,
-          )
+          ))
         ) {
           this.logger.warn(
             { moderatorUsername, platformKey, commandExternalId },
@@ -352,9 +360,8 @@ export class SubmissionService {
         }
 
         const feedsToModerate: FeedConfig[] = [];
-        const feedConfig = this.config.feeds.find(
-          (f) => f.id.toLowerCase() === targetFeedId.toLowerCase(),
-        );
+        const feedConfig =
+          await this.feedRepository.getFeedConfig(targetFeedId);
 
         if (
           feedConfig &&
@@ -462,32 +469,30 @@ export class SubmissionService {
   // Check if a user is a global admin (e.g. listed in a global admin list if we had one)
   // OR a moderator for the specific platform (any feed).
   // This is a simplified check. A more robust system might have roles.
-  private isGlobalAdminOrModeratorForPlatform(
+  private async isGlobalAdminOrModeratorForPlatform(
+    // Made async
     username: string,
     platformKey: string,
-  ): boolean {
-    // For now, we don't have a global admin list in config.
-    // So, this check effectively means: "is this user an approver for this platform on *any* feed?"
-    // This might be too broad. A stricter check would be `isModeratorForFeed(username, specificFeedConfig, platformKey)`
-    // The current call site in `handleModeration` already narrows it down to a specific feed.
-    // So, this function could just check if the platformKey exists in *any* feed's approvers for this user.
-    // However, the `handleModeration` logic already filters by `targetFeedId`'s `feedConfig`.
-    // So, this function can be simplified or its logic incorporated directly.
-    // Let's assume for now that if they are a moderator for *any* feed on that platform, they are "known".
-    // The actual authorization for a *specific* feed happens in `isModeratorForFeed`.
-
+  ): Promise<boolean> {
+    // Returns Promise<boolean>
     // This check is primarily to see if the user is "known" to the system as a potential moderator on this platform.
     // The more specific `isModeratorForFeed` handles per-feed authorization.
     const normalizedUsername = username.toLowerCase();
-    for (const feed of this.config.feeds) {
-      const platformApprovers = feed.moderation.approvers?.[platformKey];
-      if (
-        platformApprovers &&
-        platformApprovers.some(
-          (approver) => approver.toLowerCase() === normalizedUsername,
-        )
-      ) {
-        return true; // Found as an approver for this platform on at least one feed
+    const allFeedConfigs = await this.feedRepository.getAllFeedConfigs(); // Fetch all configs
+
+    for (const feed of allFeedConfigs) {
+      // Iterate over fetched configs
+      if (feed && feed.moderation?.approvers) {
+        // Ensure feed and approvers exist
+        const platformApprovers = feed.moderation.approvers[platformKey];
+        if (
+          platformApprovers &&
+          platformApprovers.some(
+            (approver: string) => approver.toLowerCase() === normalizedUsername, // Added type for approver
+          )
+        ) {
+          return true; // Found as an approver for this platform on at least one feed
+        }
       }
     }
     // Fallback: check a global admin list if it existed.
@@ -505,7 +510,7 @@ export class SubmissionService {
     const platformApprovers = feedConfig.moderation.approvers?.[platformKey];
     if (platformApprovers) {
       return platformApprovers.some(
-        (approver) => approver.toLowerCase() === normalizedUsername,
+        (approver: string) => approver.toLowerCase() === normalizedUsername, // Added type for approver
       );
     }
     return false;

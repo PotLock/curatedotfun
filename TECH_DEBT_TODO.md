@@ -36,9 +36,19 @@ This file lists miscellaneous technical debt items, potential improvements, and 
     -   **Recommendation**: Verify the export names and paths from `backend/src/types/config.zod.ts`. It's possible these types are nested or named differently (e.g., part of `AppConfig`).
     -   *Files affected: `backend/src/services/config.service.ts`, `backend/src/types/config.zod.ts`*
 
+-   **Missing `curatorPlatformId` on `Submission` type**:
+    -   `backend/src/services/inbound.service.ts` attempts to assign `curatorPlatformId` when creating `finalSubmission`, but this property does not exist on the `Submission` type (from `backend/src/types/submission.ts`).
+    -   **Recommendation**: Review if `curatorPlatformId` is a necessary field for `Submission`. If so, add it to the `Submission` type definition and ensure it's handled correctly throughout the submission lifecycle. If not, remove its usage from `InboundService`.
+    -   *Files affected: `backend/src/services/inbound.service.ts`, `backend/src/types/submission.ts`*
+
+-   **Missing `recapId` on `Submission` type**:
+    -   `backend/src/services/inbound.service.ts` attempts to assign `recapId` (currently commented with `// FIXME: Property 'recapId' does not exist on type 'Submission'.`) when creating `finalSubmission`.
+    -   **Recommendation**: Review if `recapId` is a necessary field for `Submission` at the point of creation in `InboundService`. If so, add it to the `Submission` type definition. If it's only relevant later, ensure it's not assigned prematurely or handle its optionality.
+    -   *Files affected: `backend/src/services/inbound.service.ts`, `backend/src/types/submission.ts`*
+
 ## General
 -   **Review TODO comments**:
-    -   Search the codebase for `// TODO:` comments and evaluate if they represent actionable technical debt.
+    -   Search the codebase for `// TODO:` and `// FIXME:` comments and evaluate if they represent actionable technical debt.
         - Example from `ServiceProvider`: `// TODO: Move services to injection, no singleton` (This specific one is now largely addressed for ConfigService/PluginService, but the comment might still be there).
         - Example from `ServiceProvider`: `// TODO: Inject repositories into other services as needed (e.g., submissionService might need SubmissionRepository)` (This was done for SubmissionService).
     -   **Recommendation**: Address or remove obsolete TODOs. Create new tickets/tasks for valid ones.

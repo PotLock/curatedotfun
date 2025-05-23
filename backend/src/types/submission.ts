@@ -20,6 +20,8 @@ export interface Submission {
   moderationHistory: Moderation[];
   status?: SubmissionStatus;
   feeds?: SubmissionFeed[];
+  curatorPlatformId?: string; // Added
+  recapId?: string; // Added
 }
 export interface SubmissionWithFeedData extends Omit<Submission, "feeds"> {
   status: SubmissionStatus;

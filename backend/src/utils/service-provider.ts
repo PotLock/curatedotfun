@@ -15,6 +15,7 @@ import { DistributionService } from "../services/distribution.service";
 import { FeedService } from "../services/feed.service";
 import { InboundService } from "../services/inbound.service";
 import { IBackgroundTaskService } from "../services/interfaces/background-task.interface";
+import { InterpretationService } from "../services/interpretation.service";
 import { PluginService } from "../services/plugin.service";
 import { ProcessorService } from "../services/processor.service";
 import { SourceService } from "../services/source.service";
@@ -32,49 +33,44 @@ export class ServiceProvider {
   private services: Map<string, any> = new Map();
 
   private constructor(private appConfig: AppConfig) {
-    // Core services
+    // TODO: every service take a logger (or don't)
     const configService = new ConfigService();
     const pluginService = new PluginService(configService);
-
-    // Transformation and Distribution
     const transformationService = new TransformationService(pluginService);
     const distributionService = new DistributionService(pluginService);
-
-    // Processor Service
     const processorService = new ProcessorService(
       transformationService,
       distributionService,
     );
-
-    // Submission Service (refactored)
-    // Uses appConfig from constructor
     const submissionService = new SubmissionService(
       submissionRepository,
       feedRepository,
       processorService,
       db,
-      this.appConfig,
       logger,
     );
-
-    const adapterService = new AdapterService(this.appConfig);
+    const adapterService = new AdapterService();
+    const interpretationService = new InterpretationService();
     const inboundService = new InboundService(
       adapterService,
+      interpretationService,
       submissionService,
-      this.appConfig,
     );
-
     const sourceService = new SourceService(
       pluginService,
       lastProcessedStateRepository,
       inboundService,
       db,
-      this.appConfig,
+      feedRepository,
+    );
+    const feedService = new FeedService(
+      feedRepository,
+      processorService,
+      db,
+      logger,
     );
 
-    // Initialize services with their dependencies
-    // UserService now takes the imported db instance directly
-    const nearIntegrationConfig = this.appConfig.integrations?.near;
+    const nearIntegrationConfig = this.appConfig.integrations?.near; // get from env
     if (!nearIntegrationConfig) {
       logger.error(
         "CRITICAL: NEAR integration configuration (appConfig.integrations.near) is missing. UserService requires this configuration to function.",
@@ -91,14 +87,7 @@ export class ServiceProvider {
       "activityService",
       new ActivityService(activityRepository, leaderboardRepository, db),
     );
-    // TODO: Move services to injection, no singleton
-    // TODO: Inject repositories into other services as needed (e.g., submissionService might need SubmissionRepository)
-    const feedService = new FeedService(
-      feedRepository,
-      processorService,
-      db,
-      logger,
-    );
+
     this.services.set("feedService", feedService);
     this.services.set("configService", configService);
     this.services.set("pluginService", pluginService);
@@ -108,6 +97,7 @@ export class ServiceProvider {
     this.services.set("submissionService", submissionService);
     this.services.set("sourceService", sourceService);
     this.services.set("adapterService", adapterService);
+    this.services.set("interpretationService", interpretationService);
     this.services.set("inboundService", inboundService);
   }
 
@@ -168,8 +158,6 @@ export class ServiceProvider {
     return this.getService<ActivityService>("activityService");
   }
 
-  // Add getters for new services
-
   public getConfigService(): ConfigService {
     return this.getService<ConfigService>("configService");
   }
@@ -206,6 +194,10 @@ export class ServiceProvider {
     return this.getService<InboundService>("inboundService");
   }
 
+  public getInterpretationService(): InterpretationService {
+    return this.getService<InterpretationService>("interpretationService");
+  }
+
   public getFeedService(): FeedService {
     return this.getService<FeedService>("feedService");
   }
@@ -230,10 +222,6 @@ export class ServiceProvider {
           // Add other known background services here if any
           backgroundServices.push(service as IBackgroundTaskService);
         }
-        // Add more specific checks if other services implement IBackgroundTaskService
-        // else if (service instanceof SomeOtherBackgroundTaskService) {
-        //   backgroundServices.push(service as IBackgroundTaskService);
-        // }
       }
     }
     return backgroundServices;

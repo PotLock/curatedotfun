@@ -1,22 +1,17 @@
 import { SourceItem } from "@curatedotfun/types";
-import { FeedConfig, AppConfig } from "../types/config.zod";
-import {
-  AdaptedItem,
-  AdaptedContentSubmission,
-  AdaptedModerationCommand,
-  AdaptedPendingSubmissionCommand,
-  AdaptedUnknownItem,
-} from "../types/inbound.types";
-import { Submission, SubmissionStatus } from "../types/submission"; // Added Submission
+import { FeedConfig } from "../types/config.zod";
+import { AdaptedSourceItem, InterpretedIntent } from "../types/inbound.types";
+import { Submission, SubmissionStatus } from "../types/submission";
 import { AdapterService } from "./adapter.service";
+import { InterpretationService } from "./interpretation.service";
 import { SubmissionService } from "./submission.service";
 import { logger } from "../utils/logger";
 
 export class InboundService {
   constructor(
     private adapterService: AdapterService,
+    private interpretationService: InterpretationService,
     private submissionService: SubmissionService,
-    private appConfig: AppConfig, // Kept for potential future use, not directly used in this refactor
   ) {}
 
   public async processInboundItems(
@@ -32,128 +27,142 @@ export class InboundService {
       `Processing ${sourceItems.length} inbound items for feed '${feedConfig.id}'.`,
     );
 
-    const adaptedItems: AdaptedItem[] = sourceItems.map((sourceItem) => {
-      const searchId = sourceItem.metadata?.searchId || "unknown_search_id";
-      return this.adapterService.adaptItem(sourceItem, feedConfig, searchId);
+    // Step 1: Adapt all source items
+    const adaptedSourceItems: AdaptedSourceItem[] = sourceItems.map(
+      (sourceItem) => {
+        const searchId = sourceItem.metadata?.searchId || "unknown_search_id";
+        return this.adapterService.adaptItem(sourceItem, feedConfig, searchId);
+      },
+    );
+
+    // Step 2: Interpret all adapted items
+    const interpretedIntents: InterpretedIntent[] = adaptedSourceItems.map(
+      (adaptedItem) => {
+        return this.interpretationService.interpretItem(
+          adaptedItem,
+          feedConfig, // Pass feedConfig to interpretation service
+        );
+      },
+    );
+
+    // Store adapted items by their external ID for quick lookup if they are potential targets
+    // for pending submission commands.
+    const potentialTargetsMap = new Map<string, AdaptedSourceItem>();
+    adaptedSourceItems.forEach((item) => {
+      if (item.externalId) {
+        potentialTargetsMap.set(item.externalId, item);
+      }
     });
 
-    const contentSubmissionsMap = new Map<string, AdaptedContentSubmission>();
-    const pendingCommands: AdaptedPendingSubmissionCommand[] = [];
-    const moderationCommands: AdaptedModerationCommand[] = [];
-    const unknownItems: AdaptedUnknownItem[] = [];
-
-    for (const item of adaptedItems) {
-      if (item.type === "contentSubmission") {
-        // Assuming submission.tweetId is the unique external ID for content
-        contentSubmissionsMap.set(item.submission.tweetId, item);
-      } else if (item.type === "pendingSubmissionCommand") {
-        pendingCommands.push(item);
-      } else if (item.type === "moderationCommand") {
-        moderationCommands.push(item);
-      } else if (item.type === "unknown") {
-        unknownItems.push(item);
-      }
-    }
-
-    // Process pending submission commands (stitching)
-    for (const pendingCmd of pendingCommands) {
+    // Process intents
+    for (const intent of interpretedIntents) {
       try {
-        const targetContentSubmission = contentSubmissionsMap.get(
-          pendingCmd.targetExternalId,
-        );
-        if (targetContentSubmission) {
-          logger.info(
-            `Found target content ${pendingCmd.targetExternalId} for pending command ${pendingCmd.originalSourceItem.externalId}. Stitching submission.`,
-          );
+        switch (intent.type) {
+          case "pendingSubmissionCommandIntent":
+            // Attempt to find the target item in the current batch
+            const targetAdaptedItem = potentialTargetsMap.get(
+              intent.targetExternalId,
+            );
 
-          const finalSubmission: Submission = {
-            // Content from targetContentSubmission.submission
-            tweetId: targetContentSubmission.submission.tweetId,
-            userId: targetContentSubmission.submission.userId,
-            username: targetContentSubmission.submission.username,
-            content: targetContentSubmission.submission.content,
-            createdAt: targetContentSubmission.submission.createdAt,
-            media: targetContentSubmission.submission.media, // Ensure media is copied
+            if (targetAdaptedItem) {
+              logger.info(
+                `InboundService: Found target content ${intent.targetExternalId} for pending command ${intent.adaptedSourceItem.externalId}. Stitching submission.`,
+              );
 
-            // Curator info from pendingCmd
-            curatorId: pendingCmd.curatorId,
-            curatorUsername: pendingCmd.curatorUsername,
-            curatorPlatformId: pendingCmd.curatorPlatformId,
-            curatorTweetId: pendingCmd.curatorActionExternalId,
-            curatorNotes: pendingCmd.curatorNotes,
-            submittedAt: pendingCmd.submittedAt,
+              // Construct the final submission from the target's content and the command's curator info
+              const finalSubmission: Submission = {
+                tweetId:
+                  targetAdaptedItem.externalId ||
+                  targetAdaptedItem.sourceInternalId,
+                userId: targetAdaptedItem.author?.id || "unknown_author_id",
+                username:
+                  targetAdaptedItem.author?.username ||
+                  targetAdaptedItem.author?.displayName ||
+                  "unknown_author",
+                content: targetAdaptedItem.content,
+                createdAt: targetAdaptedItem.createdAt,
+                media: targetAdaptedItem.media,
 
-            // Default/initial values
-            status: SubmissionStatus.PENDING,
-            moderationHistory: [],
-            feeds: [], // SubmissionService will handle adding to feeds
-            recapId: null, // Not part of initial submission via command
-            // potentialTargetFeedIds: pendingCmd.potentialTargetFeedIds, // If needed by SubmissionService
-          };
+                curatorId: intent.curatorId,
+                curatorUsername: intent.curatorUsername,
+                curatorPlatformId: intent.curatorPlatformId,
+                curatorTweetId: intent.curatorActionExternalId,
+                curatorNotes: intent.curatorNotes || null, // Ensure null if undefined
+                submittedAt: intent.submittedAt,
 
-          await this.submissionService.handleSubmission(
-            finalSubmission,
-            pendingCmd.feedId,
-            pendingCmd.sourcePluginName,
-          );
-          contentSubmissionsMap.delete(pendingCmd.targetExternalId); // Mark as processed
-        } else {
-          logger.warn(
-            `Target content ${pendingCmd.targetExternalId} for pending command ${pendingCmd.originalSourceItem.externalId} (plugin: ${pendingCmd.sourcePluginName}) not found in current batch. Command might be orphaned.`,
-          );
-          // Optionally, store orphaned command for later retry or error handling
+                status: SubmissionStatus.PENDING,
+                moderationHistory: [],
+                feeds: [],
+                // TODO: Future - SubmissionService and Submission type need to be updated to handle potentialTargetFeedNames for routing.
+                // For now, intent.potentialTargetFeedNames is available but not used beyond this point.
+              };
+
+              await this.submissionService.handleSubmission(
+                finalSubmission,
+                intent.feedConfig.id, // Use feedId from intent's feedConfig
+                intent.adaptedSourceItem.metadata.sourcePlugin,
+              );
+            } else {
+              // TODO: Handle orphaned pending commands.
+              // For now, we log. Could involve fetching from DB or queueing.
+              logger.warn(
+                `InboundService: Target content ${intent.targetExternalId} for pending command ${intent.adaptedSourceItem.externalId} (plugin: ${intent.adaptedSourceItem.metadata.sourcePlugin}) not found in current batch. Command might be orphaned.`,
+              );
+            }
+            break;
+
+          case "directSubmissionIntent":
+            logger.info(
+              `InboundService: Routing DirectSubmissionIntent (extId: ${intent.submissionData.tweetId}, plugin: ${intent.adaptedSourceItem.metadata.sourcePlugin}) to SubmissionService.`,
+            );
+            await this.submissionService.handleSubmission(
+              intent.submissionData as Submission, // Cast as it's Partial<Submission>
+              intent.feedConfig.id,
+              intent.adaptedSourceItem.metadata.sourcePlugin,
+            );
+            break;
+
+          case "contentItemIntent":
+            logger.info(
+              `InboundService: Routing ContentItemIntent (extId: ${intent.submissionData.tweetId}, plugin: ${intent.adaptedSourceItem.metadata.sourcePlugin}) to SubmissionService.`,
+            );
+            await this.submissionService.handleSubmission(
+              intent.submissionData as Submission, // Cast as it's Partial<Submission>
+              intent.feedConfig.id,
+              intent.adaptedSourceItem.metadata.sourcePlugin,
+            );
+            break;
+
+          case "moderationCommandIntent":
+            logger.info(
+              `InboundService: Routing ModerationCommandIntent (target: ${intent.commandData.targetExternalId}, plugin: ${intent.adaptedSourceItem.metadata.sourcePlugin}) to SubmissionService.`,
+            );
+            await this.submissionService.handleModeration(
+              intent.commandData,
+              intent.feedConfig.id,
+              intent.adaptedSourceItem.metadata.sourcePlugin,
+            );
+            break;
+
+          case "unknownIntent":
+            logger.warn(
+              `InboundService: Encountered an UnknownIntent for item (extId: ${intent.adaptedSourceItem.externalId}, srcId: ${intent.adaptedSourceItem.sourceInternalId}). Error: ${intent.error}`,
+            );
+            break;
+
+          default:
+            // Should not happen with a well-defined discriminated union
+            logger.error(
+              // @ts-expect-error intent will be `never` here if all cases are handled
+              `InboundService: Unhandled interpreted intent type: ${intent.type}`,
+            );
         }
       } catch (error) {
         logger.error(
-          `Error processing stitched submission for pending command ${pendingCmd.originalSourceItem.externalId} (target: ${pendingCmd.targetExternalId}):`,
+          `InboundService: Error processing interpreted intent (type: ${intent.type}, extId: ${intent.adaptedSourceItem.externalId}):`,
           error,
         );
       }
-    }
-
-    // Process remaining content submissions (direct submissions)
-    for (const contentSub of contentSubmissionsMap.values()) {
-      try {
-        logger.info(
-          `Routing direct adapted content submission (extId: ${contentSub.submission.tweetId}, plugin: ${contentSub.sourcePluginName}) to SubmissionService.`,
-        );
-        await this.submissionService.handleSubmission(
-          contentSub.submission,
-          contentSub.feedId,
-          contentSub.sourcePluginName,
-        );
-      } catch (error) {
-        logger.error(
-          `Error processing direct content submission ${contentSub.submission.tweetId} from plugin ${contentSub.sourcePluginName}:`,
-          error,
-        );
-      }
-    }
-
-    // Process moderation commands
-    for (const modCmd of moderationCommands) {
-      try {
-        logger.info(
-          `Routing adapted moderation command (target: ${modCmd.command.targetExternalId}, plugin: ${modCmd.sourcePluginName}) to SubmissionService.`,
-        );
-        await this.submissionService.handleModeration(
-          modCmd.command,
-          modCmd.feedId,
-          modCmd.sourcePluginName,
-        );
-      } catch (error) {
-        logger.error(
-          `Error processing moderation command for target ${modCmd.command.targetExternalId} from plugin ${modCmd.sourcePluginName}:`,
-          error,
-        );
-      }
-    }
-
-    // Log unknown items
-    for (const unknown of unknownItems) {
-      logger.warn(
-        `Encountered an unknown adapted item type for item (extId: ${unknown.originalSourceItem.externalId}, srcId: ${unknown.originalSourceItem.id}). Error: ${unknown.error}`,
-      );
     }
 
     logger.info(
