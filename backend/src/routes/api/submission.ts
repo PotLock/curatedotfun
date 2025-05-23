@@ -1,12 +1,8 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import {
-  feedRepository,
-  submissionRepository,
-} from "../../services/db/repositories";
 import { Env } from "../../types/app";
-import { SubmissionStatus } from "../../types/twitter";
+import { SubmissionStatus } from "../../types/submission";
 
 const submissionRoutes = new Hono<Env>();
 
@@ -30,11 +26,13 @@ submissionRoutes.get(
     }),
   ),
   async (c) => {
+    const sp = c.get("sp");
+    const submissionService = sp.getSubmissionService();
     // Extract validated parameters
     const { page, limit, status } = c.req.valid("query");
 
     // Get all submissions with the given status
-    const allSubmissions = await submissionRepository.getAllSubmissions(status);
+    const allSubmissions = await submissionService.getAllSubmissions(status);
 
     // Sort submissions by submittedAt date (newest first)
     allSubmissions.sort(
@@ -69,7 +67,9 @@ submissionRoutes.get(
  */
 submissionRoutes.get("/single/:submissionId", async (c) => {
   const submissionId = c.req.param("submissionId");
-  const content = await submissionRepository.getSubmission(submissionId);
+  const sp = c.get("sp");
+  const submissionService = sp.getSubmissionService();
+  const content = await submissionService.getSubmissionById(submissionId);
 
   if (!content) {
     return c.notFound();
@@ -82,16 +82,20 @@ submissionRoutes.get("/single/:submissionId", async (c) => {
  * Get submissions for a specific feed
  */
 submissionRoutes.get("/feed/:feedId", async (c) => {
-  const context = c.get("context");
   const feedId = c.req.param("feedId");
-  const status = c.req.query("status");
+  const status = c.req.query("status") as SubmissionStatus | undefined; // Cast for safety
+  const sp = c.get("sp");
+  const feedService = sp.getFeedService();
 
-  const feed = context.configService.getFeedConfig(feedId);
-  if (!feed) {
+  // In FeedService, getSubmissionsByFeed doesn't currently filter by status.
+  // We can keep the filtering logic here or enhance FeedService.
+  // For now, keeping it here to match existing behavior.
+  let submissions = await feedService.getSubmissionsByFeed(feedId);
+
+  if (submissions === null) {
+    // If feed itself not found
     return c.notFound();
   }
-
-  let submissions = await feedRepository.getSubmissionsByFeed(feedId);
 
   if (status) {
     submissions = submissions.filter((sub) => sub.status === status);

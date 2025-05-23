@@ -107,6 +107,15 @@ export class ConflictError extends AppError {
 }
 
 /**
+ * Submission service specific errors
+ */
+export class SubmissionServiceError extends ServiceError {
+  constructor(message: string, statusCode: number = 500, cause?: Error) {
+    super(message, statusCode, cause);
+  }
+}
+
+/**
  * User service specific errors
  */
 export class UserServiceError extends ServiceError {

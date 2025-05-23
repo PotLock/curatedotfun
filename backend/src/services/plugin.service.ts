@@ -9,6 +9,8 @@ import {
   PluginType,
   PluginTypeMap,
   TransformerPlugin,
+  SourcePlugin,
+  SourceItem,
 } from "@curatedotfun/types";
 import { Hono } from "hono";
 import { logger } from "../utils/logger";
@@ -81,12 +83,10 @@ type PluginContainer<
  * initialization, caching, endpoint registration, and cleanup.
  */
 export class PluginService {
-  private static instance: PluginService;
   private remotes: Map<string, RemoteState> = new Map();
   private instances: Map<string, InstanceState<PluginType>> = new Map();
   private endpoints: Map<string, PluginEndpoint[]> = new Map();
   private app: Hono | null = null;
-  private configService: ConfigService;
 
   // Time in milliseconds before cached items are considered stale
   private readonly instanceCacheTimeout: number = 7 * 24 * 60 * 60 * 1000; // 7 days (instance of a plugin with config)
@@ -96,19 +96,7 @@ export class PluginService {
   private readonly maxAuthFailures: number = 2; // one less than 3 to avoid locking
   private readonly retryDelays: number[] = [1000, 5000]; // Delays between retries in ms
 
-  private constructor() {
-    this.configService = ConfigService.getInstance();
-  }
-
-  /**
-   * Gets the singleton instance of PluginService
-   */
-  public static getInstance(): PluginService {
-    if (!PluginService.instance) {
-      PluginService.instance = new PluginService();
-    }
-    return PluginService.instance;
-  }
+  public constructor(private configService: ConfigService) {}
 
   /**
    * Sets the Elysia app instance for endpoint registration
@@ -449,7 +437,13 @@ export class PluginService {
   ): instance is PluginTypeMap<TInput, TOutput, TConfig>[T] {
     if (!instance || typeof instance !== "object") return false;
     if (typeof instance.initialize !== "function") return false;
-    if (instance.type !== type) return false;
+    if (instance.type !== type) {
+      logger.warn(
+        `Plugin instance type mismatch: expected ${type}, got ${instance.type}`,
+        { name: (instance as any)?.constructor?.name },
+      );
+      return false;
+    }
 
     switch (type) {
       case "distributor":
@@ -463,12 +457,16 @@ export class PluginService {
           TOutput,
           TConfig
         >;
-        return (
-          typeof transformer.transform === "function" &&
-          transformer.type === "transformer"
-        );
+        return typeof transformer.transform === "function";
+      }
+      case "source": {
+        const source = instance as SourcePlugin<SourceItem, TConfig>;
+        return typeof source.search === "function";
       }
       default:
+        // This case should ideally not be reached if PluginType is a comprehensive union
+        // and all cases are handled.
+        logger.warn(`Unknown plugin type encountered in validation: ${type}`);
         return false;
     }
   }

@@ -1,20 +1,14 @@
+import { SchedulerClient } from "@crosspost/scheduler-sdk";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import path from "path";
 import { apiRoutes } from "./routes/api";
-import { mockTwitterService } from "./routes/api/test";
 import { configureStaticRoutes, staticRoutes } from "./routes/static";
 import { ConfigService, isProduction } from "./services/config.service";
-import { getDatabase } from "./services/db";
-import { feedRepository } from "./services/db/repositories";
-import { DistributionService } from "./services/distribution.service";
-import { PluginService } from "./services/plugin.service";
-import { ProcessorService } from "./services/processor.service";
-import { SubmissionService } from "./services/submission.service";
-import { TransformationService } from "./services/transformation.service";
-import { TwitterService } from "./services/twitter/client";
-import { AppContext, AppInstance, Env } from "./types/app";
+import { db, feedRepository } from "./services/db";
+import { SchedulerService } from "./services/scheduler.service";
+import { AppInstance, Env } from "./types/app";
 import { web3AuthJwtMiddleware } from "./utils/auth";
 import { getAllowedOrigins } from "./utils/config";
 import { errorHandler } from "./utils/error";
@@ -23,93 +17,51 @@ import { ServiceProvider } from "./utils/service-provider";
 const ALLOWED_ORIGINS = getAllowedOrigins();
 
 export async function createApp(): Promise<AppInstance> {
-  const configService = ConfigService.getInstance();
-  await configService.loadConfig();
+  // --- Start: Initialize Config and ServiceProvider early ---
+  // 1. Load AppConfig first
+  const tempConfigService = new ConfigService(); // Will be updated in Sub-Phase 1.B
+  const appConfig = await tempConfigService.loadConfig();
 
-  const pluginService = PluginService.getInstance();
-  const distributionService = new DistributionService(pluginService);
-  const transformationService = new TransformationService(pluginService);
-  const processorService = new ProcessorService(
-    transformationService,
-    distributionService,
-  );
-
-  let twitterService: TwitterService | null = null;
-  if (isProduction) {
-    twitterService = new TwitterService({
-      username: process.env.TWITTER_USERNAME!,
-      password: process.env.TWITTER_PASSWORD!,
-      email: process.env.TWITTER_EMAIL!,
-      twoFactorSecret: process.env.TWITTER_2FA_SECRET,
-    });
-    await twitterService.initialize();
-  } else {
-    // Use mock service in test and development
-    // You can trigger the mock via the frontend's Test Panel
-    twitterService = mockTwitterService;
-    await twitterService.initialize();
-  }
-
-  const submissionService = twitterService
-    ? new SubmissionService(
-        twitterService,
-        processorService,
-        configService.getConfig(),
-      )
-    : null;
-
-  if (submissionService) {
-    submissionService.initialize();
-  }
-
-  // Initialize scheduler service
-  // const schedulerClient = new SchedulerClient({
-  //   baseUrl: process.env.SCHEDULER_BASE_URL || "http://localhost:3001",
-  //   headers: {
-  //     Authorization: `Bearer ${process.env.SCHEDULER_API_TOKEN || ""}`,
-  //   },
-  // });
-
-  // const backendUrl = process.env.CURATE_BACKEND_URL || "http://localhost:3000";
-  // const schedulerService = new SchedulerService(
-  //   feedRepository,
-  //   processorService,
-  //   schedulerClient,
-  //   backendUrl,
-  // );
-
-  // Initialize scheduler on startup (non-blocking)
-  // schedulerService.initialize().catch((err) => {
-  //   console.error("Failed to initialize scheduler service:", err);
-  // });
-
-  const context: AppContext = {
-    twitterService,
-    submissionService,
-    distributionService,
-    processorService,
-    configService,
-    // schedulerService,
-    feedRepository,
-  };
+  // 2. Initialize ServiceProvider with appConfig
+  // ServiceProvider.initialize now only takes appConfig (or nothing, if we make appConfig a param later)
+  // For now, assuming ServiceProvider's constructor will be updated to take appConfig in Sub-Phase 1.B
+  // And initialize will be updated to ServiceProvider.initialize(appConfig)
+  // Let's prepare for that by calling it with appConfig.
+  // The actual change to ServiceProvider.initialize signature will happen in Sub-Phase 1.B
+  ServiceProvider.initialize(appConfig);
+  const sp = ServiceProvider.getInstance();
+  // --- End: Initialize Config and ServiceProvider early ---
 
   // Create Hono app
   const app = new Hono<Env>();
 
-  // Inject database into context
   app.use("*", async (c, next) => {
-    const dbInstance = getDatabase();
-    c.set("db", dbInstance);
-
-    ServiceProvider.initialize(dbInstance);
-
+    c.set("db", db);
+    c.set("sp", sp);
     await next();
   });
 
-  // Set context (make services accessible to routes)
-  app.use("*", async (c, next) => {
-    c.set("context", context);
-    await next();
+  // Instantiate SchedulerService (moved out of the general middleware)
+  // It now uses the globally available 'sp'
+  const schedulerClient = new SchedulerClient({
+    baseUrl: process.env.SCHEDULER_BASE_URL || "http://localhost:3001",
+    headers: {
+      Authorization: `Bearer ${process.env.SCHEDULER_API_TOKEN || ""}`,
+    },
+  });
+  const backendUrl = process.env.CURATE_BACKEND_URL || "http://localhost:3000";
+  const schedulerService = new SchedulerService(
+    feedRepository,
+    sp.getProcessorService(),
+    sp.getSourceService(),
+    sp.getInboundService(),
+    schedulerClient,
+    backendUrl,
+  );
+
+  // Initialize scheduler on startup (non-blocking)
+  schedulerService.initialize().catch((err) => {
+    console.error("Failed to initialize scheduler service:", err);
   });
 
   // Handle errors
@@ -149,5 +101,5 @@ export async function createApp(): Promise<AppInstance> {
     app.route("", staticRoutes);
   }
 
-  return { app, context };
+  return { app };
 }

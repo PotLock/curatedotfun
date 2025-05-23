@@ -1,15 +1,18 @@
-import { z } from "zod";
 import {
-  InsertActivityData,
+  InsertActivity,
+  SelectActivity,
+  SelectFeedUserStats,
+  SelectUserStats,
+  UpdateFeedUserStats,
+  UpdateUserStats,
+} from "services/db/types";
+import {
   ActivityQueryOptions,
-  LeaderboardQueryOptions,
-  LeaderboardEntry,
   GlobalStats,
-  UpdateUserStatsData,
-  SelectUserStatsData,
-  UpdateFeedUserStatsData,
-  SelectFeedUserStatsData,
+  LeaderboardQueryOptions,
+  UserRankingLeaderboardEntry,
 } from "../../validation/activity.validation";
+import { LeaderboardEntry as CuratorStatsLeaderboardEntry } from "services/db/queries";
 
 export interface IActivityService {
   /**
@@ -17,7 +20,7 @@ export interface IActivityService {
    * @param data Activity data to insert
    * @returns The created activity
    */
-  createActivity(data: InsertActivityData): Promise<any>;
+  createActivity(data: InsertActivity): Promise<SelectActivity>;
 
   /**
    * Get activities for a specific user
@@ -28,16 +31,25 @@ export interface IActivityService {
   getUserActivities(
     userId: number,
     options?: ActivityQueryOptions,
-  ): Promise<any[]>;
+  ): Promise<SelectActivity[]>;
 
   /**
-   * Get the leaderboard based on user activity
+   * Get the user ranking leaderboard based on user activity and points.
    * @param options Query options for filtering and customization
-   * @returns Array of leaderboard entries
+   * @returns Array of user ranking leaderboard entries
    */
-  getLeaderboard(
+  getUserRankingLeaderboard(
     options?: LeaderboardQueryOptions,
-  ): Promise<LeaderboardEntry[]>;
+  ): Promise<UserRankingLeaderboardEntry[]>;
+
+  /**
+   * Get the curator statistics leaderboard.
+   * @param timeRange The time range for the leaderboard (default: "all")
+   * @returns Array of curator statistics leaderboard entries
+   */
+  getCuratorStatsLeaderboard(
+    timeRange?: string,
+  ): Promise<CuratorStatsLeaderboardEntry[]>;
 
   /**
    * Get global statistics about content submissions and approvals
@@ -50,7 +62,7 @@ export interface IActivityService {
    * @param userId The user ID to get stats for
    * @returns User stats or null if not found
    */
-  getUserStats(userId: number): Promise<SelectUserStatsData | null>;
+  getUserStats(userId: number): Promise<SelectUserStats | null>;
 
   /**
    * Update user statistics
@@ -60,8 +72,8 @@ export interface IActivityService {
    */
   updateUserStats(
     userId: number,
-    data: UpdateUserStatsData,
-  ): Promise<SelectUserStatsData>;
+    data: UpdateUserStats,
+  ): Promise<SelectUserStats>;
 
   /**
    * Get feed-specific user statistics
@@ -72,7 +84,7 @@ export interface IActivityService {
   getFeedUserStats(
     userId: number,
     feedId: string,
-  ): Promise<SelectFeedUserStatsData | null>;
+  ): Promise<SelectFeedUserStats | null>;
 
   /**
    * Update feed-specific user statistics
@@ -84,8 +96,8 @@ export interface IActivityService {
   updateFeedUserStats(
     userId: number,
     feedId: string,
-    data: UpdateFeedUserStatsData,
-  ): Promise<SelectFeedUserStatsData>;
+    data: UpdateFeedUserStats,
+  ): Promise<SelectFeedUserStats>;
 
   /**
    * Get feeds that a user has curated for

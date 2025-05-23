@@ -1,5 +1,4 @@
 import nock from "nock";
-import { Tweet } from "agent-twitter-client";
 import { createTestServer } from "./test-server";
 import { createTestClient } from "./test-client";
 
@@ -21,80 +20,6 @@ export async function setupTestServer() {
 export async function cleanupTestServer(server: any) {
   await server.close();
   nock.cleanAll();
-}
-
-/**
- * Mocks the Twitter SearchTimeline API to return the specified tweets
- * @param tweets Array of tweets to include in the response
- * @returns The nock scope
- */
-export function mockTwitterSearchTimeline(tweets: Tweet[]) {
-  // Sort tweets by ID in descending order (newest first) to match Twitter's behavior
-  const sortedTweets = [...tweets].sort((a, b) => {
-    const aId = BigInt(a.id!);
-    const bId = BigInt(b.id!);
-    return bId > aId ? 1 : bId < aId ? -1 : 0;
-  });
-
-  // Create timeline entries for each tweet
-  const entries = sortedTweets.map((tweet, index) => ({
-    entryId: `tweet-${index + 1}`,
-    content: {
-      entryType: "TimelineTimelineItem",
-      itemContent: {
-        itemType: "TimelineTweet",
-        tweet_results: {
-          result: {
-            rest_id: tweet.id,
-            legacy: {
-              created_at: (tweet.timeParsed || new Date()).toISOString(),
-              full_text: tweet.text,
-              in_reply_to_status_id_str: tweet.inReplyToStatusId,
-              entities: {
-                hashtags: (tweet.hashtags || []).map((tag) => {
-                  return { text: String(tag) };
-                }),
-                user_mentions: (tweet.mentions || []).map((mention) => ({
-                  screen_name:
-                    typeof mention === "string" ? mention : mention.username,
-                })),
-              },
-            },
-            core: {
-              user_results: {
-                result: {
-                  legacy: {
-                    screen_name: tweet.username,
-                  },
-                  rest_id: tweet.userId,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  }));
-
-  // Create the mock response
-  return nock("https://api.twitter.com")
-    .get(/\/graphql\/.*\/SearchTimeline\?.*/)
-    .reply(200, {
-      data: {
-        search_by_raw_query: {
-          search_timeline: {
-            timeline: {
-              instructions: [
-                {
-                  type: "TimelineAddEntries",
-                  entries,
-                },
-              ],
-            },
-          },
-        },
-      },
-    });
 }
 
 /**

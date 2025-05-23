@@ -16,9 +16,12 @@ export interface Submission {
   curatorTweetId: string;
   createdAt: Date;
   submittedAt: Date | null;
+  media?: Array<{ type: string; url: string; [key: string]: any }>;
   moderationHistory: Moderation[];
   status?: SubmissionStatus;
   feeds?: SubmissionFeed[];
+  curatorPlatformId?: string; // Added
+  recapId?: string; // Added
 }
 export interface SubmissionWithFeedData extends Omit<Submission, "feeds"> {
   status: SubmissionStatus;

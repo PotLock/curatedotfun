@@ -1,7 +1,6 @@
-import { logger } from "../../utils/logger";
 import retry from "async-retry";
-import { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { PoolConfig } from "pg";
+import { logger } from "../../utils/logger";
+import { DB } from "./types";
 
 /**
  * List of PostgreSQL error codes that are considered transient/retryable
@@ -25,30 +24,6 @@ export const RETRYABLE_ERROR_CODES = [
   "55P03",
   "57014", // Resource/query timeout errors
 ];
-
-/**
- * Default configuration for write database pool
- */
-export const DEFAULT_WRITE_POOL_CONFIG: PoolConfig = {
-  max: 10, // Fewer connections for writes
-  min: 2, // Minimum idle connections
-  idleTimeoutMillis: 30000, // 30 seconds
-  connectionTimeoutMillis: 5000, // 5 seconds
-  allowExitOnIdle: true,
-  statement_timeout: 30000, // 30 seconds
-};
-
-/**
- * Default configuration for read database pool
- */
-export const DEFAULT_READ_POOL_CONFIG: PoolConfig = {
-  max: 20, // More connections for reads
-  min: 5, // Minimum idle connections
-  idleTimeoutMillis: 30000, // 30 seconds
-  connectionTimeoutMillis: 5000, // 5 seconds
-  allowExitOnIdle: true,
-  statement_timeout: 60000, // 60 seconds
-};
 
 /**
  * Determines if an error is retryable (connection-related)
@@ -89,25 +64,24 @@ export const DEFAULT_RETRY_OPTIONS: retry.Options = {
  * Uses async-retry library for simplified retry handling
  *
  * @param operation Function that performs the database operation
- * @param db Drizzle database instance
+ * @param db A Drizzle database instance or a transaction object
  * @param options Retry options (optional)
  * @returns Result of the operation
  */
 export async function executeWithRetry<T>(
-  operation: (db: NodePgDatabase<any>) => Promise<T>,
-  db: NodePgDatabase<any>,
+  operation: (dbInstance: DB) => Promise<T>,
+  dbInstance: DB,
   options: retry.Options = DEFAULT_RETRY_OPTIONS,
 ): Promise<T> {
   return retry(async (bail) => {
     try {
-      return await operation(db);
+      return await operation(dbInstance);
     } catch (error: any) {
-      // Only retry on connection errors, not query errors
       if (!isRetryableError(error)) {
         bail(error);
         return Promise.reject(error);
       }
-      throw error; // Will be caught by retry
+      throw error;
     }
   }, options);
 }
