@@ -8,8 +8,13 @@ interface AuthProviderProps {
 }
 
 function Web3AuthHandler() {
-  const { isLoggedIn, currentUserProfile, nearPublicKey, isInitialized, isLoadingProfile } =
-    useWeb3Auth();
+  const {
+    isLoggedIn,
+    currentUserProfile,
+    nearPublicKey,
+    isInitialized,
+    isLoadingProfile,
+  } = useWeb3Auth();
   const { showCreateAccountModal, closeModal } = useAuthStore();
 
   useEffect(() => {
