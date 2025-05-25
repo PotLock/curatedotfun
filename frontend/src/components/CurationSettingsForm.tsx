@@ -56,13 +56,13 @@ const steps: Step[] = [
     id: 3,
     component: <ContentApprovers />,
   },
-  {
-    title: "Submission Rules",
-    description: "Set requirements for content submissions to your feed",
+  // {
+  //   title: "Submission Rules",
+  //   description: "Set requirements for content submissions to your feed",
 
-    id: 4,
-    component: <SubmissionRules />,
-  },
+  //   id: 4,
+  //   component: <SubmissionRules />,
+  // },
 ];
 
 // Fixed function name (was CurationFormSteps)

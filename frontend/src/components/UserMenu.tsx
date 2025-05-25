@@ -144,10 +144,10 @@ export default function UserMenu() {
               <CircleUserRound />
               <span>Profile</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            {/* <DropdownMenuItem>
               <CreditCard />
               <span>Wallet</span>
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
             <DropdownMenuItem
               onClick={handleLogout}
               className="cursor-pointer hover:bg-gray-100"
