@@ -26,7 +26,7 @@ function SubmissionsLayoutRoute() {
         description="Interact with All submissions under one roof!"
       />
       {/* Mobile Navigation Controls */}
-      <div className="flex justify-between items-center px-4 md:hidden">
+      <div className="flex justify-between items-center px-4 pt-3 md:hidden">
         <button
           onClick={toggleMobileMenu}
           className="p-2 rounded-md flex bg-gray-100 hover:bg-gray-200"
@@ -96,7 +96,7 @@ function SubmissionsLayoutRoute() {
         </div>
       </div>
       {/* Desktop Layout */}
-      <div className="hidden md:grid md:grid-cols-4 md:max-w-screen-xl mx-auto gap-4 lg:gap-8 overflow-hidden px-4 lg:px-8">
+      <div className="hidden md:grid md:grid-cols-4 md:max-w-screen-2xl mx-auto gap-4 lg:gap-8 overflow-hidden px-4 lg:px-8">
         {/* Left Sidebar - Feed List (Desktop) */}
         <div className="col-span-1 overflow-y-auto">
           <FeedList />

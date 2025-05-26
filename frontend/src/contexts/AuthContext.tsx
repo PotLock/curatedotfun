@@ -8,8 +8,13 @@ interface AuthProviderProps {
 }
 
 function Web3AuthHandler() {
-  const { isLoggedIn, currentUserProfile, nearPublicKey, isInitialized } =
-    useWeb3Auth();
+  const {
+    isLoggedIn,
+    currentUserProfile,
+    nearPublicKey,
+    isInitialized,
+    isLoadingProfile,
+  } = useWeb3Auth();
   const { showCreateAccountModal, closeModal } = useAuthStore();
 
   useEffect(() => {
@@ -17,6 +22,7 @@ function Web3AuthHandler() {
     if (isInitialized) {
       const shouldShowModal =
         isLoggedIn && // User must be logged in via Web3Auth
+        !isLoadingProfile && // Profile loading must be complete
         !currentUserProfile && // Backend profile must NOT exist
         !!nearPublicKey; // NEAR public key must have been derived
 
@@ -29,6 +35,7 @@ function Web3AuthHandler() {
   }, [
     isInitialized,
     isLoggedIn,
+    isLoadingProfile,
     currentUserProfile,
     nearPublicKey,
     showCreateAccountModal,

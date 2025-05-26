@@ -17,7 +17,7 @@ export default function FeedReviewForm() {
     hashtags,
     createdAt,
     approvers,
-    submissionRules,
+    // submissionRules,
   } = useFeedCreationStore();
 
   return (
@@ -113,7 +113,7 @@ export default function FeedReviewForm() {
         </div>
 
         {/* Submission Rules */}
-        <div className="flex flex-col gap-[24px]">
+        {/* <div className="flex flex-col gap-[24px]">
           <h3 className="text-2xl text-neutral-500 font-normal">
             Submission Rules
           </h3>
@@ -151,7 +151,7 @@ export default function FeedReviewForm() {
               </div>
             </div>
           )}
-        </div>
+        </div> */}
         <div className="p-4 border rounded-md flex justify-start items-start gap-3 border-neutral-400 bg-neutral-50">
           <div>
             <TooltipProvider>

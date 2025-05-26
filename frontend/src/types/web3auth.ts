@@ -77,5 +77,6 @@ export interface Web3AuthContextType {
   // Add the new properties
   currentUserProfile: UserProfile | null;
   nearPublicKey: string | null;
+  isLoadingProfile: boolean;
   setCurrentUserProfile: Dispatch<SetStateAction<UserProfile | null>>;
 }

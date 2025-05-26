@@ -41,6 +41,7 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
   const [nearPublicKey, setNearPublicKey] = useState<string | null>(null); // State for derived NEAR public key
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
   // Subscribe to authentication events
   const subscribeAuthEvents = (web3authInstance: Web3AuthNoModal) => {
@@ -58,6 +59,7 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
       setProvider(null);
       setCurrentUserProfile(null); // Clear profile on disconnect
       setNearPublicKey(null); // Clear public key on disconnect
+      setIsLoadingProfile(false); // Clear loading state on disconnect
     });
   };
 
@@ -123,6 +125,8 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
         if (web3AuthInstance.connected) {
           setProvider(web3AuthInstance.provider);
           setIsLoggedIn(true);
+          // Fetch profile for already connected users
+          await fetchProfileAndNearKey(web3AuthInstance);
         }
 
         setIsInitialized(true);
@@ -143,6 +147,7 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
 
     // Set provider in state
     setProvider(authInstance.provider);
+    setIsLoadingProfile(true);
 
     try {
       // Get private key directly from the provider
@@ -190,6 +195,8 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
       console.error("Error during profile fetch/key derivation:", error);
       setCurrentUserProfile(null);
       setNearPublicKey(null);
+    } finally {
+      setIsLoadingProfile(false);
     }
   };
 
@@ -289,6 +296,7 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
       setIsLoggedIn(false);
       setCurrentUserProfile(null); // Clear profile on logout
       setNearPublicKey(null); // Clear public key on logout
+      setIsLoadingProfile(false); // Clear loading state on logout
     } catch (error) {
       console.error("Error logging out:", error);
     }
@@ -399,6 +407,7 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
         getNearCredentials,
         currentUserProfile, // Expose profile state
         nearPublicKey, // Expose public key state
+        isLoadingProfile, // Expose loading state
         setCurrentUserProfile, // Expose setter if needed by creation modal/flow
       }}
     >
