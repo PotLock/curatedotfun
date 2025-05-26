@@ -110,10 +110,7 @@ export const NearIntegrationConfigSchema = z.object({
   parentAccountId: z.string().min(1),
   parentKeyPair: z.string().min(1), // Sensitive value
   networkId: z.string().min(1),
-  nodeUrl: z.string().url().optional(), // Optional, can be derived from networkId
-  walletUrl: z.string().url().optional(), // Optional
-  helperUrl: z.string().url().optional(), // Optional
-  explorerUrl: z.string().url().optional(), // Optional
+  rpcUrl: z.string().url().optional(), // Optional, can be derived from networkId
 });
 export type NearIntegrationConfig = z.infer<typeof NearIntegrationConfigSchema>;
 

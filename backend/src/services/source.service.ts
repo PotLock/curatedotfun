@@ -162,10 +162,11 @@ export class SourceService implements IBackgroundTaskService {
         logger.info(
           `Plugin ${sourcePluginName} (searchId: ${searchId}, feed: ${feedId}) resulted in a null final state. Not saving state.`,
         );
-        await this.lastProcessedStateRepository.clearState(
+        await this.lastProcessedStateRepository.deleteState(
           feedId,
           sourcePluginName,
           searchId,
+          this.db
         );
       }
 

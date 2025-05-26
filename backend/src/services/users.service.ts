@@ -56,14 +56,7 @@ export class UserService implements IUserService {
       const connectionConfig = {
         networkId,
         keyStore,
-        nodeUrl: this.nearConfig.nodeUrl || `https://rpc.${networkId}.near.org`,
-        walletUrl:
-          this.nearConfig.walletUrl || `https://wallet.${networkId}.near.org`,
-        helperUrl:
-          this.nearConfig.helperUrl || `https://helper.${networkId}.near.org`,
-        explorerUrl:
-          this.nearConfig.explorerUrl ||
-          `https://explorer.${networkId}.near.org`,
+        nodeUrl: this.nearConfig.rpcUrl || `https://rpc.${networkId}.near.org`
       };
 
       const nearConnection = await connect(connectionConfig);
@@ -205,7 +198,7 @@ export class UserService implements IUserService {
       const connectionConfig = {
         networkId,
         keyStore,
-        nodeUrl: this.nearConfig.nodeUrl || `https://rpc.${networkId}.near.org`,
+        nodeUrl: this.nearConfig.rpcUrl || `https://rpc.${networkId}.near.org`,
       };
 
       const nearConnection = await connect(connectionConfig);

@@ -302,8 +302,8 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0
       '@curatedotfun/types':
-        specifier: ^0.0.5
-        version: 0.0.5
+        specifier: ^0.0.6
+        version: 0.0.6
       '@eslint/js':
         specifier: ^9.15.0
         version: 9.25.1
@@ -502,9 +502,6 @@ packages:
 
   '@crosspost/types@0.2.0':
     resolution: {integrity: sha512-/qTC/y/wP2YKTRxWh2QLQHd/s+izZ0AG1eVlonWiFJzKelDB9kRCO8/kIriOI1pc9NRcdpdFoOdPwDpL+NEi+g==}
-
-  '@curatedotfun/types@0.0.5':
-    resolution: {integrity: sha512-thb89PXZHEA2BkVvRbA6b2imiglNDVzPOrdUZswF7q/tsnxGoOCwg7B1u6Y3YrajF7IdWto+TzfNnXUSadjWrA==}
 
   '@curatedotfun/types@0.0.6':
     resolution: {integrity: sha512-m2/O2s6W0b0h/Oq/cGOnmMJP6rHqtBgfZYuQlFIEtIhvvFWkahMAGPRGD2VW2D6SJeIrdnHgSqJlosW4+TfQaA==}
@@ -6493,8 +6490,6 @@ snapshots:
     dependencies:
       hono: 4.7.8
       zod: 3.24.4
-
-  '@curatedotfun/types@0.0.5': {}
 
   '@curatedotfun/types@0.0.6': {}
 
