@@ -61,8 +61,6 @@ services:
     depends_on:
       postgres_dev:
         condition: service_healthy
-    volumes:
-      - node_modules_cache:/app/node_modules # Add persistent volume for node_modules, otherwise this messes with rspack bindings
     command: sh -c "bun add -g pnpm && if [ ! -d /app/node_modules/.pnpm ]; then echo '📦 Installing dependencies...' && pnpm install; else echo '✅ Dependencies already installed, skipping'; fi && pnpm --filter @curatedotfun/backend run db:migrate && pnpm --filter @curatedotfun/backend run db:seed:dev"
     profiles: ["dev"]
 
@@ -109,4 +107,3 @@ services:
 volumes:
   postgres_data:
   postgres_data_prod:
-  node_modules_cache: # Add persistent volume for node_modules
