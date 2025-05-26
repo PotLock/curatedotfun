@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useWeb3Auth } from "../hooks/use-web3-auth";
+import { useAuth } from "../contexts/AuthContext";
+import { useAuthStore } from "../store/auth-store";
 import { HowItWorks } from "./HowItWorks";
 import { Modal } from "./Modal";
 import { Button } from "./ui/button";
-import { useAuthStore } from "../store/auth-store";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
+import { useWalletSelector } from "@near-wallet-selector/react-hook";
 import { useNavigate } from "@tanstack/react-router";
 import {
   ChevronDown,
@@ -22,12 +23,10 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { AuthUserInfo } from "../types/web3auth";
-import UserMenu from "./UserMenu";
-import { useWalletSelector } from "@near-wallet-selector/react-hook";
-import { AvatarProfile } from "./AvatarProfile";
 import * as nearApi from "near-api-js";
 import { createAccessTokenPayload } from "../hooks/near-method";
+import { AvatarProfile } from "./AvatarProfile";
+import UserMenu from "./UserMenu";
 
 const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
@@ -36,29 +35,12 @@ const Header = () => {
   const [imageError, setImageError] = useState(false);
   const navigate = useNavigate();
 
-  const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
   const { showLoginModal } = useAuthStore();
 
-  const { isInitialized, isLoggedIn, logout, getUserInfo } = useWeb3Auth();
-  const { signedAccountId, signOut, walletSelector } = useWalletSelector();
+  const { isLoading, isLoggedIn, logout, user } = useAuth();
+  const isInitialized = !isLoading;
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const info = await getUserInfo();
-        setUserInfo(info);
-        setImageError(false);
-      } catch (error) {
-        console.error("Error fetching user info:", error);
-      }
-    };
-
-    if (isLoggedIn) {
-      fetchUserInfo();
-    } else {
-      setUserInfo({});
-    }
-  }, [isLoggedIn, getUserInfo]);
+  const { signedAccountId, walletSelector } = useWalletSelector();
 
   useEffect(() => {
     const getToken = async () => {
@@ -90,7 +72,7 @@ const Header = () => {
       setImageError(true);
     };
 
-    if (imageError || !userInfo?.profileImage) {
+    if (imageError || !user?.profileImage) {
       return (
         <CircleUserRound className={size === "small" ? "h-7 w-7" : "h-6 w-6"} />
       );
@@ -105,7 +87,7 @@ const Header = () => {
           objectFit: "cover",
         }}
         alt="Profile Image"
-        src={userInfo.profileImage}
+        src={user.profileImage}
         onError={handleImageError}
         loading="eager"
         referrerPolicy="no-referrer"
@@ -117,18 +99,11 @@ const Header = () => {
     if (signedAccountId) {
       return signedAccountId;
     }
-    return (
-      (userInfo as { name?: string }).name ||
-      (userInfo as { email?: string }).email
-    );
+    return user?.username || user?.email || "User";
   };
 
-  const handleLogout = () => {
-    if (signedAccountId) {
-      signOut();
-    } else {
-      logout();
-    }
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
@@ -259,7 +234,7 @@ const Header = () => {
             </div>
 
             <div className="w-full flex justify-center mt-4">
-              {(isInitialized && isLoggedIn && userInfo) || signedAccountId ? (
+              {isInitialized && (isLoggedIn || signedAccountId) ? (
                 <DropdownMenu onOpenChange={setDropdownOpen}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="flex w-full md:hidden">
@@ -296,12 +271,11 @@ const Header = () => {
                         )}
                         <div>
                           <p className="text-sm font-semibold leading-5">
-                            {signedAccountId ||
-                              (userInfo as { name?: string }).name}
+                            {signedAccountId || user?.username || user?.email}
                           </p>
-                          {!signedAccountId && (
+                          {!signedAccountId && user?.email && (
                             <p className="text-xs leading-5 text-gray-500">
-                              {(userInfo as { email?: string }).email}
+                              {user.email}
                             </p>
                           )}
                         </div>

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useWeb3Auth } from "../hooks/use-web3-auth";
+import { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -10,39 +10,22 @@ import {
 } from "./ui/dropdown-menu";
 
 import { useNavigate } from "@tanstack/react-router";
-import { ChevronDown, CircleUserRound, CreditCard, LogOut } from "lucide-react";
+import { ChevronDown, CircleUserRound, LogOut } from "lucide-react";
 import { useAuthStore } from "../store/auth-store";
-import { AuthUserInfo } from "../types/web3auth";
 import { useWalletSelector } from "@near-wallet-selector/react-hook";
 import { AvatarProfile } from "./AvatarProfile";
 
 export default function UserMenu() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
   const [imageError, setImageError] = useState(false);
   const navigate = useNavigate();
   const { showLoginModal } = useAuthStore();
 
-  const { isInitialized, isLoggedIn, logout, getUserInfo } = useWeb3Auth();
+  const { isLoading, isLoggedIn, logout, user } = useAuth();
+  const isInitialized = !isLoading;
+
   const { signedAccountId, signOut } = useWalletSelector();
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const info = await getUserInfo();
-        setUserInfo(info);
-        setImageError(false);
-      } catch (error) {
-        console.error("Error fetching user info:", error);
-      }
-    };
-
-    if (isLoggedIn) {
-      fetchUserInfo();
-    } else {
-      setUserInfo({});
-    }
-  }, [isLoggedIn, getUserInfo]);
 
   // Profile image component with error handling
   const ProfileImage = ({ size = "small" }) => {
@@ -50,7 +33,7 @@ export default function UserMenu() {
       setImageError(true);
     };
 
-    if (imageError || !userInfo?.profileImage) {
+    if (imageError || !user?.profileImage) {
       return (
         <CircleUserRound className={size === "small" ? "h-7 w-7" : "h-6 w-6"} />
       );
@@ -65,7 +48,7 @@ export default function UserMenu() {
           objectFit: "cover",
         }}
         alt="Profile Image"
-        src={userInfo.profileImage}
+        src={user.profileImage}
         onError={handleImageError}
         loading="eager"
         referrerPolicy="no-referrer"
@@ -77,23 +60,19 @@ export default function UserMenu() {
     if (signedAccountId) {
       return signedAccountId;
     }
-    return (
-      (userInfo as { name?: string }).name ||
-      (userInfo as { email?: string }).email
-    );
+    return user?.username || user?.email || "User";
   };
 
-  const handleLogout = () => {
-    if (signedAccountId) {
-      signOut();
-    } else {
-      logout();
+  const handleLogout = async () => {
+    if (signedAccountId && signOut) {
+      await signOut();
     }
+    await logout();
   };
 
   return (
     <>
-      {(isInitialized && isLoggedIn && userInfo) || signedAccountId ? (
+      {isInitialized && (isLoggedIn || signedAccountId) ? (
         <DropdownMenu onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="hidden md:flex">
@@ -124,11 +103,11 @@ export default function UserMenu() {
                 )}
                 <div>
                   <p className="text-sm font-semibold leading-5">
-                    {signedAccountId || (userInfo as { name?: string }).name}
+                    {signedAccountId || user?.username || user?.email}
                   </p>
-                  {!signedAccountId && (
+                  {!signedAccountId && user?.email && (
                     <p className="text-xs leading-5 text-gray-500">
-                      {(userInfo as { email?: string }).email}
+                      {user.email}
                     </p>
                   )}
                 </div>
@@ -144,10 +123,6 @@ export default function UserMenu() {
               <CircleUserRound />
               <span>Profile</span>
             </DropdownMenuItem>
-            {/* <DropdownMenuItem>
-              <CreditCard />
-              <span>Wallet</span>
-            </DropdownMenuItem> */}
             <DropdownMenuItem
               onClick={handleLogout}
               className="cursor-pointer hover:bg-gray-100"

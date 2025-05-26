@@ -58,3 +58,31 @@ This file lists miscellaneous technical debt items, potential improvements, and 
     -   In `backend/src/services/source.service.ts`, the `fetchFromSearchConfig` method uses hardcoded default values for `DEFAULT_ASYNC_JOB_POLLING_INTERVAL_MS` and `DEFAULT_MAX_ASYNC_JOB_POLLING_ATTEMPTS`.
     -   **Recommendation**: Consider making these polling parameters (interval and max attempts) configurable, potentially per plugin or per search configuration. This could be part of the `SourceSearchConfig` or `SourceConfig` in `config.zod.ts`.
     -   *Files affected: `backend/src/services/source.service.ts`, `backend/src/types/config.zod.ts`*
+
+## Frontend Auth Refactor (Ongoing)
+-   **Complete `useAuth` Migration**:
+    -   The following components still use the old `useWeb3Auth` hook and need to be refactored to use the new `useAuth` hook from `frontend/src/contexts/AuthContext.tsx`. This involves updating how authentication state (isLoggedIn, user profile, idToken) and methods (login, logout) are accessed.
+        -   `frontend/src/components/profile/ProfileHeader.tsx` (Completed)
+        -   `frontend/src/components/CurationFormSteps.tsx` (Completed)
+        -   `frontend/src/components/LoginModal.tsx` (Completed)
+        -   `frontend/src/routes/_layout/profile/index.tsx` (Completed)
+        -   `frontend/src/components/Header.tsx` (Completed)
+        -   `frontend/src/components/CreateNearAccountModal.tsx` (Completed)
+        -   `frontend/src/components/profile/activity/index.tsx` (Completed, but see "Refactor ProfileActivity" below)
+-   **Cleanup Old Auth Files (Pending User Approval)**:
+    -   Once all components are migrated to `useAuth` (done) and confirmed working, the following files will be redundant and can be deleted:
+        -   `frontend/src/hooks/use-web3-auth.ts`
+        -   `frontend/src/contexts/web3auth.tsx`
+-   **Address Type Errors**:
+    -   Numerous TypeScript errors have surfaced during the refactor (e.g., in `lib/trpc/activity.ts`, `components/providers/TRPCManager.tsx`, `App.tsx`, and components that were refactored like `UserMenu.tsx`, `ProfileActivity.tsx`). These need to be addressed once the structural refactoring is complete.
+    -   The `AuthUser` type (currently `UserProfile` from `web3auth.ts`) might need to be augmented (e.g., with `profileImage`) or a more generic user type defined to properly support all fields previously available via `AuthUserInfo` from Web3Auth.
+-   **Refactor `ProfileActivity` Component**:
+    -   The component `frontend/src/components/profile/activity/index.tsx` currently has type errors because `useUserActivity` and `UserActivityStats` (from `lib/api.ts`) are no longer available or have changed.
+    -   **Recommendation**: Refactor this component to use the new TRPC-based activity hooks (e.g., `useMyActivities` or a similar hook from `lib/trpc/activity.ts` via `lib/api.ts`) for fetching and displaying user activities. This will also involve updating how activity data is transformed and displayed.
+    -   *File affected: `frontend/src/components/profile/activity/index.tsx`, `frontend/src/lib/api.ts`, `frontend/src/lib/trpc/activity.ts`*
+-   **NEAR Wallet Token Generation**:
+    -   The `loginWithNearWallet` function in `UnifiedAuthProvider` currently uses a placeholder for JWT generation after NEAR wallet signing. This needs to be implemented with a proper backend flow (nonce request, signature verification, JWT issuance).
+    -   *File affected: `frontend/src/contexts/AuthContext.tsx`*
+-   **NEAR Wallet Logout**:
+    -   The `logout` function in `UnifiedAuthProvider` for the `near_wallet` method needs to correctly use the `selector.wallet().signOut()` method. This requires access to the `selector` instance, which might involve passing it to logout or storing the wallet instance during login.
+    -   *File affected: `frontend/src/contexts/AuthContext.tsx`*

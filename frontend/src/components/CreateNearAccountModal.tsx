@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useWeb3Auth } from "../hooks/use-web3-auth";
-import { Button } from "./ui/button"; // Assuming you have shadcn/ui Button
-import { Input } from "./ui/input"; // Assuming you have shadcn/ui Input
-import { Label } from "./ui/label"; // Assuming you have shadcn/ui Label
+import { useAuth } from "../contexts/AuthContext";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 
 import { Modal } from "./Modal";
 
@@ -16,12 +16,11 @@ export const CreateNearAccountModal = ({
   onClose,
 }: CreateNearAccountModalProps) => {
   const {
-    nearPublicKey,
-    getUserInfo,
-    web3auth, // Needed for authenticateUser to get ID token
-    setCurrentUserProfile, // To update profile state on success
-    logout, // Allow user to cancel/logout
-  } = useWeb3Auth();
+    user,
+    idToken: authIdToken,
+  } = useAuth();
+  const nearPublicKey = user?.near_public_key; 
+
   const [chosenUsername, setChosenUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +44,12 @@ export const CreateNearAccountModal = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chosenUsername || !nearPublicKey || !web3auth) return;
+    // Use authIdToken for the check, and nearPublicKey from user object
+    if (!chosenUsername || !nearPublicKey || !authIdToken) {
+      if(!authIdToken) console.error("CreateNearAccountModal: authIdToken missing.");
+      if(!nearPublicKey) console.error("CreateNearAccountModal: nearPublicKey missing from user.");
+      return;
+    }
 
     // Basic validation
     if (
@@ -63,27 +67,20 @@ export const CreateNearAccountModal = ({
     setError(null);
 
     try {
-      // Get user info again to ensure we have fresh data if needed
-      // Primarily need sub_id which is stable, but good practice
-      const userInfo = await getUserInfo();
-
-      // Get ID token for backend auth
-      const idToken = await web3auth.authenticateUser();
 
       // Call backend POST /api/users
       const response = await fetch("/api/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken.idToken}`,
+          Authorization: `Bearer ${authIdToken}`,
         },
         body: JSON.stringify({
           chosen_username: chosenUsername.toLowerCase(),
           near_public_key: nearPublicKey,
           user_info: {
-            // Send optional info if available
-            name: userInfo.name,
-            email: userInfo.email,
+            name: user?.username || user?.email?.split('@')[0],
+            email: user?.email,
           },
         }),
       });
@@ -97,8 +94,6 @@ export const CreateNearAccountModal = ({
         );
       }
 
-      // Success! Update the profile state in the context
-      setCurrentUserProfile(data.profile);
       console.log("Account and profile created successfully:", data.profile);
       onClose(); // Close the modal on success
     } catch (err: unknown) {

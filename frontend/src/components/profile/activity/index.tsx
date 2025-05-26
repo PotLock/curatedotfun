@@ -8,7 +8,7 @@ import {
   ActivityType,
   UserActivityStats,
 } from "../../../lib/api";
-import { useWeb3Auth } from "../../../hooks/use-web3-auth";
+import { useAuth } from "../../../contexts/AuthContext";
 import { FileText, CheckCircle, ArrowDown, ArrowUp, Coins } from "lucide-react";
 import type { ActivityItem } from "./ActivityTable";
 
@@ -83,7 +83,7 @@ const transformActivityData = (activity: UserActivityStats): ActivityItem => {
 };
 
 export function ProfileActivity() {
-  const { currentUserProfile } = useWeb3Auth();
+  const { user: currentUserProfile } = useAuth();
 
   const { data: userActivity } = useUserActivity(
     currentUserProfile?.near_account_id || "",
