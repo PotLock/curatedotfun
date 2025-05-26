@@ -1,11 +1,17 @@
 import type { SourceItem } from "@curatedotfun/types";
+import { Logger } from "pino";
 import { FeedConfig } from "../types/config.zod";
 import { AdaptedSourceItem } from "../types/inbound.types";
+import { IBaseService } from "./interfaces/base-service.interface";
 
-export class AdapterService {
-  constructor() {
-    // Constructor might be needed later for injecting dependencies like a Zod schema for validation,
-    // but for pure transformation, it might remain empty.
+// TODO: This could probably be removed
+export class AdapterService implements IBaseService {
+  public readonly logger: Logger;
+
+  constructor(
+    logger: Logger
+  ) {
+    this.logger = logger;
   }
 
   /**
@@ -54,11 +60,11 @@ export class AdapterService {
       createdAt: ensuredCreatedAt,
       author: author
         ? {
-            id: author.id,
-            username: author.username,
-            displayName: author.displayName,
-            // Potentially map other common author fields here
-          }
+          id: author.id,
+          username: author.username,
+          displayName: author.displayName,
+          // Potentially map other common author fields here
+        }
         : undefined,
       media: media || undefined, // Pass through media
       metadata: adaptedMetadata,

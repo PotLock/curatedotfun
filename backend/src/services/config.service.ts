@@ -3,8 +3,8 @@ import path from "path";
 import {
   AppConfig,
   FeedConfig,
-  PluginsConfig, // Now correctly imported
-  PluginRegistrationConfig, // Was PluginConfig
+  PluginsConfig,
+  PluginRegistrationConfig,
 } from "../types/config.zod";
 import { hydrateConfigValues } from "../utils/config";
 import { logger } from "../utils/logger";
@@ -12,6 +12,8 @@ import { logger } from "../utils/logger";
 export const isProduction = process.env.NODE_ENV === "production";
 export const isTest = process.env.NODE_ENV === "test";
 export const isStaging = process.env.RAILWAY_ENVIRONMENT_NAME === "staging";
+
+// TODO: this could probably be removed
 
 console.log(
   "Using environment: ",

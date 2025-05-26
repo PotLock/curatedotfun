@@ -1,34 +1,39 @@
+import { Logger } from "pino";
 import { ActivityServiceError } from "../types/errors";
 import {
   ActivityQueryOptions,
-  GlobalStats,
+  GlobalStats, // This is for a custom leaderboard view, keep it here
+  LeaderboardQueryOptions,
   UserRankingLeaderboardEntry, // This is for a custom leaderboard view, keep it here
-  LeaderboardQueryOptions, // Specific to leaderboard queries, keep it here
 } from "../validation/activity.validation";
+import * as queries from "./db/queries";
+import { ActivityRepository } from "./db/repositories/activity.repository";
+import { LeaderboardRepository } from "./db/repositories/leaderboard.repository";
 import {
+  DB,
   InsertActivity,
   SelectActivity,
   selectActivitySchema,
-  SelectUserStats,
-  selectUserStatsSchema,
-  UpdateUserStats,
   SelectFeedUserStats,
   selectFeedUserStatsSchema,
+  SelectUserStats,
+  selectUserStatsSchema,
   UpdateFeedUserStats,
-  DB,
+  UpdateUserStats,
 } from "./db/types";
-import { ActivityRepository } from "./db/repositories/activity.repository";
-import { LeaderboardRepository } from "./db/repositories/leaderboard.repository";
-import * as queries from "./db/queries";
-import { ActivityType } from "./db/schema/activity";
 import { IActivityService } from "./interfaces/activity.interface";
 
 export class ActivityService implements IActivityService {
+  public readonly logger: Logger;
+
   constructor(
     private activityRepository: ActivityRepository,
     private leaderboardRepository: LeaderboardRepository,
     private db: DB,
-  ) {}
+    logger: Logger
+  ) {
+    this.logger = logger;
+  }
 
   /**
    * Create a new activity entry

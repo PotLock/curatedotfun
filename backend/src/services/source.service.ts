@@ -9,7 +9,7 @@ import {
   SourceConfig,
   SourceSearchConfig,
 } from "../types/config.zod";
-import { logger } from "../utils/logger";
+import { Logger } from "pino";
 import { FeedRepository } from "./db/repositories/feed.repository";
 import { LastProcessedStateRepository } from "./db/repositories/lastProcessedState.repository";
 import { DB } from "./db/types";
@@ -21,6 +21,7 @@ export class SourceService implements IBackgroundTaskService {
   private pollingIntervals: NodeJS.Timeout[] = [];
   private static readonly DEFAULT_ASYNC_JOB_POLLING_INTERVAL_MS = 5000;
   private static readonly DEFAULT_MAX_ASYNC_JOB_POLLING_ATTEMPTS = 12; // 12 * 5s = 1 minute
+  public readonly logger: Logger;
 
   constructor(
     private pluginService: PluginService,
@@ -28,7 +29,10 @@ export class SourceService implements IBackgroundTaskService {
     private inboundService: InboundService,
     private db: DB,
     private feedRepository: FeedRepository,
-  ) {}
+    logger: Logger,
+  ) {
+    this.logger = logger;
+  }
 
   /**
    * Fetches items for a single search configuration within a source.
@@ -43,7 +47,7 @@ export class SourceService implements IBackgroundTaskService {
     const { searchId, type, query, pageSize, platformArgs, ...rest } =
       searchConfig;
 
-    logger.info(
+    this.logger.info(
       `Fetching items for feed '${feedId}', plugin '${sourcePluginName}', searchId '${searchId}' (type: ${type})`,
     );
 
@@ -83,14 +87,14 @@ export class SourceService implements IBackgroundTaskService {
 
       while (pollingAttempts < maxPollingAttempts) {
         const results = await plugin.search(
-          currentPluginState as LastProcessedState<PlatformState> | null,
+          currentPluginState as LastProcessedState<PlatformState> | null, // Cast here
           searchOptions,
         );
 
         itemsToReturn = results.items; // Assume items are valid unless job status indicates otherwise
 
         if (!results.nextLastProcessedState) {
-          logger.info(
+          this.logger.info(
             `Plugin ${sourcePluginName} (searchId: ${searchId}, feed: ${feedId}) returned no nextLastProcessedState. Assuming process complete.`,
           );
           currentPluginState = null;
@@ -108,7 +112,7 @@ export class SourceService implements IBackgroundTaskService {
           jobStatus === "pending" ||
           jobStatus === "processing"
         ) {
-          logger.info(
+          this.logger.info(
             `Feed '${feedId}', plugin '${sourcePluginName}', searchId '${searchId}': Job status is ${jobStatus}. Polling again in ${pollingIntervalMs / 1000}s (Attempt ${pollingAttempts + 1}/${maxPollingAttempts}).`,
           );
           await new Promise((resolve) =>
@@ -116,18 +120,18 @@ export class SourceService implements IBackgroundTaskService {
           );
           pollingAttempts++;
         } else if (jobStatus === "done") {
-          logger.info(
+          this.logger.info(
             `Feed '${feedId}', plugin '${sourcePluginName}', searchId '${searchId}': Job status is 'done'.`,
           );
           break;
         } else if (jobStatus === "error" || jobStatus === "timeout") {
-          logger.error(
+          this.logger.error(
             `Feed '${feedId}', plugin '${sourcePluginName}', searchId '${searchId}': Job status is '${jobStatus}'. Aborting poll.`,
           );
           itemsToReturn = []; // Discard items on job error/timeout
           break;
         } else {
-          logger.info(
+          this.logger.info(
             `Feed '${feedId}', plugin '${sourcePluginName}', searchId '${searchId}': No active async job status found or job completed without explicit 'done' status. Proceeding.`,
           );
           break;
@@ -138,7 +142,7 @@ export class SourceService implements IBackgroundTaskService {
         const lastJobStatus =
           currentPluginState?.data?.currentAsyncJob?.status ??
           currentPluginState?.data?.currentMasaJob?.status;
-        logger.warn(
+        this.logger.warn(
           `Feed '${feedId}', plugin '${sourcePluginName}', searchId '${searchId}': Max polling attempts (${maxPollingAttempts}) reached. Last job status: ${lastJobStatus || "unknown"}.`,
         );
         if (
@@ -159,7 +163,7 @@ export class SourceService implements IBackgroundTaskService {
           this.db,
         );
       } else {
-        logger.info(
+        this.logger.info(
           `Plugin ${sourcePluginName} (searchId: ${searchId}, feed: ${feedId}) resulted in a null final state. Not saving state.`,
         );
         await this.lastProcessedStateRepository.deleteState(
@@ -170,7 +174,7 @@ export class SourceService implements IBackgroundTaskService {
         );
       }
 
-      logger.info(
+      this.logger.info(
         `Fetched ${itemsToReturn.length} items from plugin '${sourcePluginName}', searchId '${searchId}' for feed '${feedId}' after polling logic.`,
       );
 
@@ -183,7 +187,7 @@ export class SourceService implements IBackgroundTaskService {
         },
       }));
     } catch (error) {
-      logger.error(
+      this.logger.error(
         `Error during plugin execution or polling for ${sourcePluginName} (searchId: ${searchId}) for feed ${feedId}:`,
         error,
       );
@@ -206,7 +210,7 @@ export class SourceService implements IBackgroundTaskService {
     } = sourceConfig;
     let allItems: SourceItem[] = [];
 
-    logger.info(
+    this.logger.info(
       `Processing source '${pluginName}' for feed '${feedId}' with ${searchConfigs.length} search configuration(s).`,
     );
 
@@ -220,7 +224,7 @@ export class SourceService implements IBackgroundTaskService {
         );
         allItems = allItems.concat(items);
       } catch (error) {
-        logger.error(
+        this.logger.error(
           `Skipping searchId ${searchConfig.searchId} for plugin ${pluginName} due to error.`,
         );
       }
@@ -236,12 +240,12 @@ export class SourceService implements IBackgroundTaskService {
     feedConfig: FeedConfig,
   ): Promise<SourceItem[]> {
     if (!feedConfig.sources || feedConfig.sources.length === 0) {
-      logger.info(`No sources configured for feed '${feedConfig.id}'.`);
+      this.logger.info(`No sources configured for feed '${feedConfig.id}'.`);
       return [];
     }
 
     let allItemsFromFeed: SourceItem[] = [];
-    logger.info(`Fetching all sources for feed '${feedConfig.id}'.`);
+    this.logger.info(`Fetching all sources for feed '${feedConfig.id}'.`);
 
     for (const sourceConfig of feedConfig.sources) {
       try {
@@ -249,20 +253,20 @@ export class SourceService implements IBackgroundTaskService {
         allItemsFromFeed = allItemsFromFeed.concat(items);
       } catch (error) {
         // Logged in fetchFromSource, continue with other sources
-        logger.error(
+        this.logger.error(
           `Skipping source plugin ${sourceConfig.plugin} for feed ${feedConfig.id} due to error.`,
         );
       }
     }
 
-    logger.info(
+    this.logger.info(
       `Total items fetched for feed '${feedConfig.id}': ${allItemsFromFeed.length}`,
     );
     return allItemsFromFeed;
   }
 
   async shutdown(): Promise<void> {
-    logger.info(
+    this.logger.info(
       "SourceService shutdown initiated. Relies on PluginService for plugin cleanup.",
     );
     // This existing shutdown can be part of the stop() logic if needed,
@@ -271,11 +275,11 @@ export class SourceService implements IBackgroundTaskService {
   }
 
   public async start(): Promise<void> {
-    logger.info("SourceService: Starting background polling for all feeds.");
+    this.logger.info("SourceService: Starting background polling for all feeds.");
     const allDbFeeds = await this.feedRepository.getAllFeeds();
 
     if (!allDbFeeds || allDbFeeds.length === 0) {
-      logger.warn("SourceService: No feeds found in database to poll.");
+      this.logger.warn("SourceService: No feeds found in database to poll.");
       return;
     }
 
@@ -284,7 +288,7 @@ export class SourceService implements IBackgroundTaskService {
     );
 
     if (feedsToPoll.length === 0) {
-      logger.warn(
+      this.logger.warn(
         "SourceService: No enabled feeds with valid configurations found to poll.",
       );
       return;
@@ -297,7 +301,7 @@ export class SourceService implements IBackgroundTaskService {
       // TODO: Make polling interval configurable per feed in FeedConfig
       const pollingIntervalMs = feedConfig.pollingIntervalMs || 5 * 60 * 1000; // Default to 5 minutes
 
-      logger.info(
+      this.logger.info(
         `SourceService: Setting up polling for feed '${feedConfig.id}' every ${pollingIntervalMs / 1000} seconds.`,
       );
 
@@ -312,7 +316,7 @@ export class SourceService implements IBackgroundTaskService {
             !currentDbFeed.config ||
             !currentDbFeed.config.enabled
           ) {
-            logger.info(
+            this.logger.info(
               `SourceService: Feed '${feedConfig.id}' is no longer enabled or found. Stopping poll for this feed.`,
             );
             // Find and clear this specific interval if we stored them with IDs
@@ -321,7 +325,7 @@ export class SourceService implements IBackgroundTaskService {
           }
           const currentFeedConfig = currentDbFeed.config as FeedConfig;
 
-          logger.info(
+          this.logger.info(
             `SourceService: Polling feed '${currentFeedConfig.id}'...`,
           );
           const sourceItems =
@@ -332,12 +336,12 @@ export class SourceService implements IBackgroundTaskService {
               currentFeedConfig,
             );
           } else {
-            logger.info(
+            this.logger.info(
               `SourceService: No new items fetched for feed '${currentFeedConfig.id}'.`,
             );
           }
         } catch (error) {
-          logger.error(
+          this.logger.error(
             `SourceService: Error polling feed '${feedConfig.id}':`,
             error,
           );
@@ -353,10 +357,10 @@ export class SourceService implements IBackgroundTaskService {
   }
 
   public async stop(): Promise<void> {
-    logger.info("SourceService: Stopping background polling for all feeds.");
+    this.logger.info("SourceService: Stopping background polling for all feeds.");
     this.pollingIntervals.forEach((intervalId) => clearInterval(intervalId));
     this.pollingIntervals = [];
     await this.shutdown();
-    logger.info("SourceService: All polling stopped.");
+    this.logger.info("SourceService: All polling stopped.");
   }
 }

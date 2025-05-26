@@ -48,18 +48,10 @@ async function startServer() {
     const { app } = await getInstance();
     const sp = ServiceProvider.getInstance();
 
-    // Add health check route
     app.get("/health", (c) => {
-      // Services are now obtained from ServiceProvider
       const health = {
         status: "OK",
-        timestamp: new Date().toISOString(),
-        services: {
-          // twitter: sp.getTwitterService() ? "up" : "down", // Assuming getTwitterService exists if needed
-          submission: sp.getSubmissionService() ? "up" : "down",
-          distribution: sp.getDistributionService() ? "up" : "down",
-          source: sp.getSourceService() ? "up" : "down",
-        },
+        timestamp: new Date().toISOString()
       };
       return c.json(health);
     });

@@ -1,24 +1,28 @@
 import { connect, KeyPair, keyStores, transactions, utils } from "near-api-js";
 import { KeyPairString } from "near-api-js/lib/utils";
 import { Logger } from "pino";
+import { NearIntegrationConfig } from "../types/config.zod";
 import {
   NearAccountError,
   NotFoundError,
   UserServiceError,
 } from "../types/errors";
-import { NearIntegrationConfig } from "../types/config.zod";
 import { selectUserSchema } from "../validation/users.validation";
 import { UserRepository } from "./db/repositories/user.repository";
 import { DB, InsertUser, UpdateUser } from "./db/types";
 import { IUserService } from "./interfaces/user.interface";
 
 export class UserService implements IUserService {
+  public readonly logger: Logger;
+
   constructor(
     private userRepository: UserRepository,
     private db: DB,
-    private logger: Logger,
     private nearConfig: NearIntegrationConfig,
-  ) {}
+    logger: Logger,
+  ) {
+    this.logger = logger;
+  }
 
   async findUserByAuthProviderId(auth_provider_id: string) {
     const user =

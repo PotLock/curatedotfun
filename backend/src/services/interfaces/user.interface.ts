@@ -1,6 +1,7 @@
 import { InsertUser, UpdateUser } from "services/db/types";
+import { IBaseService } from "./base-service.interface";
 
-export interface IUserService {
+export interface IUserService extends IBaseService {
   /**
    * Find a user by their auth provider ID
    * @param auth_provider_id The auth provider ID from Web3Auth

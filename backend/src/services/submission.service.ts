@@ -12,15 +12,20 @@ import { FeedRepository } from "./db/repositories/feed.repository";
 import { SubmissionRepository } from "./db/repositories/submission.repository";
 import { DB } from "./db/types";
 import { ProcessorService } from "./processor.service";
+import { IBaseService } from "./interfaces/base-service.interface";
 
-export class SubmissionService {
+export class SubmissionService implements IBaseService {
+  public readonly logger: Logger;
+  
   constructor(
     private submissionRepository: SubmissionRepository,
     private feedRepository: FeedRepository,
     private processorService: ProcessorService,
     private db: DB,
-    private logger: Logger,
-  ) {}
+    logger: Logger,
+  ) {
+    this.logger = logger;
+  }
 
   public async getAllSubmissions(
     status?: SubmissionStatus,

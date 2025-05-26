@@ -1,19 +1,24 @@
+import { Logger } from "pino";
 import { FeedConfig } from "../types/config.zod";
 import {
   AdaptedSourceItem,
+  ContentItemIntent,
+  DirectSubmissionIntent,
   InterpretedIntent,
   ModerationCommandData,
-  PendingSubmissionCommandIntent,
-  DirectSubmissionIntent,
-  ContentItemIntent,
   ModerationCommandIntent,
+  PendingSubmissionCommandIntent,
   UnknownIntent,
 } from "../types/inbound.types";
 import { Moderation, Submission, SubmissionStatus } from "../types/submission";
 import { logger } from "../utils/logger";
+import { IBaseService } from "./interfaces/base-service.interface";
 
-export class InterpretationService {
-  constructor() {}
+export class InterpretationService implements IBaseService {
+  public readonly logger: Logger
+  constructor(logger: Logger) {
+    this.logger = logger;
+  }
 
   /**
    * Interprets an AdaptedSourceItem to determine its intent (e.g., command, content).

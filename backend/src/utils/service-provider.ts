@@ -31,16 +31,18 @@ import { logger } from "./logger";
 export class ServiceProvider {
   private static instance: ServiceProvider;
   private services: Map<string, any> = new Map();
+  private backgroundTaskServices: IBackgroundTaskService[] = [];
 
   private constructor(private appConfig: AppConfig) {
     // TODO: every service take a logger (or don't)
     const configService = new ConfigService();
-    const pluginService = new PluginService(configService);
-    const transformationService = new TransformationService(pluginService);
-    const distributionService = new DistributionService(pluginService);
+    const pluginService = new PluginService(configService, logger);
+    const transformationService = new TransformationService(pluginService, logger);
+    const distributionService = new DistributionService(pluginService, logger);
     const processorService = new ProcessorService(
       transformationService,
       distributionService,
+      logger
     );
     const submissionService = new SubmissionService(
       submissionRepository,
@@ -49,12 +51,13 @@ export class ServiceProvider {
       db,
       logger,
     );
-    const adapterService = new AdapterService();
-    const interpretationService = new InterpretationService();
+    const adapterService = new AdapterService(logger);
+    const interpretationService = new InterpretationService(logger);
     const inboundService = new InboundService(
       adapterService,
       interpretationService,
       submissionService,
+      logger
     );
     const sourceService = new SourceService(
       pluginService,
@@ -62,6 +65,7 @@ export class ServiceProvider {
       inboundService,
       db,
       feedRepository,
+      logger,
     );
     const feedService = new FeedService(
       feedRepository,
@@ -81,11 +85,11 @@ export class ServiceProvider {
     }
     this.services.set(
       "userService",
-      new UserService(userRepository, db, logger, nearIntegrationConfig),
+      new UserService(userRepository, db, nearIntegrationConfig, logger),
     );
     this.services.set(
       "activityService",
-      new ActivityService(activityRepository, leaderboardRepository, db),
+      new ActivityService(activityRepository, leaderboardRepository, db, logger),
     );
 
     this.services.set("feedService", feedService);
@@ -99,6 +103,11 @@ export class ServiceProvider {
     this.services.set("adapterService", adapterService);
     this.services.set("interpretationService", interpretationService);
     this.services.set("inboundService", inboundService);
+
+    // SourceService is the only background task service
+    if (sourceService) {
+      this.backgroundTaskServices.push(sourceService);
+    }
   }
 
   /**
@@ -207,23 +216,6 @@ export class ServiceProvider {
    * @returns An array of background task services
    */
   public getBackgroundTaskServices(): IBackgroundTaskService[] {
-    const backgroundServices: IBackgroundTaskService[] = [];
-    for (const service of this.services.values()) {
-      if (
-        service &&
-        typeof service.start === "function" &&
-        typeof service.stop === "function"
-      ) {
-        // Further check if it's likely an IBackgroundTaskService.
-        // This is a duck-typing approach. A more robust way would be for services
-        // to register themselves as background tasks or use instanceof with a base class.
-        // For now, this check should suffice for services like SourceService.
-        if (service instanceof SourceService) {
-          // Add other known background services here if any
-          backgroundServices.push(service as IBackgroundTaskService);
-        }
-      }
-    }
-    return backgroundServices;
+    return this.backgroundTaskServices;
   }
 }

@@ -13,8 +13,9 @@ import {
   UserRankingLeaderboardEntry,
 } from "../../validation/activity.validation";
 import { LeaderboardEntry as CuratorStatsLeaderboardEntry } from "services/db/queries";
+import { IBaseService } from "./base-service.interface";
 
-export interface IActivityService {
+export interface IActivityService extends IBaseService {
   /**
    * Create a new activity entry
    * @param data Activity data to insert

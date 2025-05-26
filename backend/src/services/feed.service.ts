@@ -3,15 +3,20 @@ import { DistributorConfig, StreamConfig } from "../types/config.zod";
 import { SubmissionStatus } from "../types/submission";
 import { FeedRepository } from "./db/repositories/feed.repository";
 import { DB, InsertFeed, UpdateFeed } from "./db/types";
+import { IBaseService } from "./interfaces/base-service.interface";
 import { ProcessorService } from "./processor.service";
 
-export class FeedService {
+export class FeedService implements IBaseService {
+  public readonly logger: Logger;
+
   constructor(
     private feedRepository: FeedRepository,
     private processorService: ProcessorService,
     private db: DB,
-    private logger: Logger,
-  ) {}
+    logger: Logger,
+  ) {
+    this.logger = logger;
+  }
 
   async getAllFeeds() {
     this.logger.info("FeedService: getAllFeeds called");

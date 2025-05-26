@@ -1,18 +1,25 @@
 import { SourceItem } from "@curatedotfun/types";
+import { Logger } from "pino";
 import { FeedConfig } from "../types/config.zod";
 import { AdaptedSourceItem, InterpretedIntent } from "../types/inbound.types";
 import { Submission, SubmissionStatus } from "../types/submission";
+import { logger } from "../utils/logger";
 import { AdapterService } from "./adapter.service";
+import { IBaseService } from "./interfaces/base-service.interface";
 import { InterpretationService } from "./interpretation.service";
 import { SubmissionService } from "./submission.service";
-import { logger } from "../utils/logger";
 
-export class InboundService {
+export class InboundService implements IBaseService {
+  public readonly logger: Logger;
+
   constructor(
     private adapterService: AdapterService,
     private interpretationService: InterpretationService,
     private submissionService: SubmissionService,
-  ) {}
+    logger: Logger
+  ) {
+    this.logger = logger;
+  }
 
   public async processInboundItems(
     sourceItems: SourceItem[],
