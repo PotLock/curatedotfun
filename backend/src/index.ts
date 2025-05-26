@@ -3,49 +3,23 @@ import { loadEnvConfig } from "./utils/config";
 loadEnvConfig();
 
 import { serve } from "@hono/node-server";
-import { AppInstance } from "types/app";
 import { createApp } from "./app";
 import { pool } from "./services/db";
-import { ServiceProvider } from "./utils/service-provider";
-import { IBackgroundTaskService } from "./services/interfaces/background-task.interface";
 import {
   cleanup,
   createHighlightBox,
   createSection,
   logger,
 } from "./utils/logger";
+import { ServiceProvider } from "./utils/service-provider";
 
 const PORT = Number(process.env.PORT) || 3000;
-
-let instance: AppInstance | null = null;
-
-async function getInstance(): Promise<AppInstance> {
-  if (!instance) {
-    try {
-      instance = await createApp();
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      const errorStack = error instanceof Error ? error.stack : undefined;
-      logger.error(`Failed to create app instance: ${errorMessage}`, {
-        error: errorMessage,
-        stack: errorStack,
-        dirname: __dirname,
-        cwd: process.cwd(),
-      });
-      // console.error(errorMessage);
-      throw new Error(`Failed to initialize application: ${errorMessage}`);
-    }
-  }
-  return instance;
-}
 
 async function startServer() {
   try {
     createSection("⚡ STARTING SERVER ⚡");
 
-    // getInstance now primarily ensures ServiceProvider is initialized via createApp
-    const { app } = await getInstance();
+    const { app } = await createApp();
     const sp = ServiceProvider.getInstance();
 
     app.get("/health", (c) => {
@@ -83,7 +57,6 @@ async function startServer() {
         `Starting ${backgroundServices.length} background task service(s)...`,
       );
       for (const bgService of backgroundServices) {
-        // Assuming service name can be inferred or logged by the service itself
         bgService
           .start()
           .catch((err) =>
@@ -131,14 +104,6 @@ async function startServer() {
           }
         }
 
-        // Handle other specific service shutdowns if they are not IBackgroundTaskService
-        // For example, if twitterService and distributionService have specific shutdown logic
-        // and are not managed by the IBackgroundTaskService loop.
-        // const twitterService = sp.getTwitterService(); // Hypothetical
-        // if (twitterService && typeof twitterService.stop === 'function') {
-        //   shutdownPromises.push(twitterService.stop().then(() => logger.info("Twitter service stopped")));
-        // }
-
         const distributionService = sp.getDistributionService();
         if (
           distributionService &&
@@ -159,9 +124,6 @@ async function startServer() {
         );
 
         await Promise.all(shutdownPromises);
-
-        // Reset instance for clean restart
-        instance = null;
 
         logger.info("Shutdown complete");
         process.exit(0);

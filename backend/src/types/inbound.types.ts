@@ -1,6 +1,6 @@
 import { SourceItem } from "@curatedotfun/types";
-import { Submission, Moderation, SubmissionStatus } from "./submission";
 import { FeedConfig } from "./config.zod";
+import { Moderation, Submission } from "./submission";
 
 // --- New Types for Architectural Refactor ---
 

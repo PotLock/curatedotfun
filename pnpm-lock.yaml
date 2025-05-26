@@ -97,8 +97,8 @@ importers:
         version: 3.24.5(zod@3.24.4)
     devDependencies:
       '@curatedotfun/types':
-        specifier: ^0.0.6
-        version: 0.0.6
+        specifier: workspace:*
+        version: link:../packages/types
       '@module-federation/node':
         specifier: ^2.6.30
         version: 2.6.33(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.6.3)(webpack@5.99.7(esbuild@0.19.12))
@@ -302,8 +302,8 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0
       '@curatedotfun/types':
-        specifier: ^0.0.6
-        version: 0.0.6
+        specifier: workspace:*
+        version: link:../packages/types
       '@eslint/js':
         specifier: ^9.15.0
         version: 9.25.1
@@ -358,6 +358,21 @@ importers:
       typescript-eslint:
         specifier: ^8.15.0
         version: 8.31.0(eslint@9.25.1(jiti@1.21.7))(typescript@5.6.3)
+
+  packages/shared-utils:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.4
+        version: 5.6.3
+
+  packages/types:
+    devDependencies:
+      '@curatedotfun/shared-utils':
+        specifier: workspace:*
+        version: link:../shared-utils
+      typescript:
+        specifier: ^5.0.0
+        version: 5.6.3
 
 packages:
 
@@ -502,9 +517,6 @@ packages:
 
   '@crosspost/types@0.2.0':
     resolution: {integrity: sha512-/qTC/y/wP2YKTRxWh2QLQHd/s+izZ0AG1eVlonWiFJzKelDB9kRCO8/kIriOI1pc9NRcdpdFoOdPwDpL+NEi+g==}
-
-  '@curatedotfun/types@0.0.6':
-    resolution: {integrity: sha512-m2/O2s6W0b0h/Oq/cGOnmMJP6rHqtBgfZYuQlFIEtIhvvFWkahMAGPRGD2VW2D6SJeIrdnHgSqJlosW4+TfQaA==}
 
   '@discoveryjs/json-ext@0.5.7':
     resolution: {integrity: sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==}
@@ -6490,8 +6502,6 @@ snapshots:
     dependencies:
       hono: 4.7.8
       zod: 3.24.4
-
-  '@curatedotfun/types@0.0.6': {}
 
   '@discoveryjs/json-ext@0.5.7': {}
 

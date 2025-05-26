@@ -24,17 +24,12 @@ import { TransformationService } from "../services/transformation.service";
 import { UserService } from "../services/users.service";
 import { logger } from "./logger";
 
-/**
- * Service provider for dependency injection
- * This class is responsible for creating and providing service instances
- */
 export class ServiceProvider {
   private static instance: ServiceProvider;
   private services: Map<string, any> = new Map();
   private backgroundTaskServices: IBackgroundTaskService[] = [];
 
   private constructor(private appConfig: AppConfig) {
-    // TODO: every service take a logger (or don't)
     const configService = new ConfigService();
     const pluginService = new PluginService(configService, logger);
     const transformationService = new TransformationService(pluginService, logger);
@@ -115,7 +110,6 @@ export class ServiceProvider {
    * @param appConfig The application configuration
    * @returns The service provider instance
    */
-  // Initialize now accepts AppConfig
   public static initialize(appConfig: AppConfig): ServiceProvider {
     if (!ServiceProvider.instance) {
       ServiceProvider.instance = new ServiceProvider(appConfig);

@@ -2,9 +2,9 @@ import { Logger } from "pino";
 import { ActivityServiceError } from "../types/errors";
 import {
   ActivityQueryOptions,
-  GlobalStats, // This is for a custom leaderboard view, keep it here
+  GlobalStats,
   LeaderboardQueryOptions,
-  UserRankingLeaderboardEntry, // This is for a custom leaderboard view, keep it here
+  UserRankingLeaderboardEntry,
 } from "../validation/activity.validation";
 import * as queries from "./db/queries";
 import { ActivityRepository } from "./db/repositories/activity.repository";

@@ -11,8 +11,8 @@ import {
 import { FeedRepository } from "./db/repositories/feed.repository";
 import { SubmissionRepository } from "./db/repositories/submission.repository";
 import { DB } from "./db/types";
-import { ProcessorService } from "./processor.service";
 import { IBaseService } from "./interfaces/base-service.interface";
+import { ProcessorService } from "./processor.service";
 
 export class SubmissionService implements IBaseService {
   public readonly logger: Logger;

@@ -1,4 +1,4 @@
-import { DistributorConfig, TransformConfig } from "./config";
+import { DistributorConfig, TransformConfig } from "./config.zod";
 
 /**
  * Configuration for a recap job

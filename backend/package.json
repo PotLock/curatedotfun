@@ -28,7 +28,7 @@
     ]
   },
   "devDependencies": {
-    "@curatedotfun/types": "^0.0.6",
+    "@curatedotfun/types": "workspace:*",
     "@module-federation/node": "^2.6.30",
     "@rspack/binding": "1.2.8",
     "@rspack/cli": "1.2.8",
