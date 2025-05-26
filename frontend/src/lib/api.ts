@@ -1,8 +1,11 @@
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
-import type { AppConfig, FeedConfig } from "../types/config";
-import type { SubmissionWithFeedData } from "../types/twitter";
+import type {
+  AppConfig,
+  FeedConfig,
+  SubmissionWithFeedData,
+} from "@curatedotfun/types";
 import { usernameSchema, UserProfile } from "./validation/user";
 
 // TODO: Implement a shared types package
@@ -202,9 +205,21 @@ export function useLeaderboard(
       const url = `/api/activity/leaderboard${queryString ? `?${queryString}` : ""}`;
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error("Failed to fetch leaderboard");
+        const errorData = await response
+          .json()
+          .catch(() => ({
+            message: "Failed to fetch leaderboard and parse error response",
+          }));
+        throw new Error(errorData.message || "Failed to fetch leaderboard");
       }
-      return response.json();
+      const data = await response.json();
+      if (data && Array.isArray(data.leaderboard)) {
+        return data.leaderboard;
+      }
+      if (data && data.error) {
+        throw new Error(data.error);
+      }
+      return [];
     },
   });
 }

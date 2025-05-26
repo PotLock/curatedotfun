@@ -15,7 +15,7 @@ import { logger } from "../utils/logger";
 import { IBaseService } from "./interfaces/base-service.interface";
 
 export class InterpretationService implements IBaseService {
-  public readonly logger: Logger
+  public readonly logger: Logger;
   constructor(logger: Logger) {
     this.logger = logger;
   }

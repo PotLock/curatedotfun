@@ -25,7 +25,7 @@ async function startServer() {
     app.get("/health", (c) => {
       const health = {
         status: "OK",
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
       return c.json(health);
     });

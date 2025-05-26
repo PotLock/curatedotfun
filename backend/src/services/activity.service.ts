@@ -30,7 +30,7 @@ export class ActivityService implements IActivityService {
     private activityRepository: ActivityRepository,
     private leaderboardRepository: LeaderboardRepository,
     private db: DB,
-    logger: Logger
+    logger: Logger,
   ) {
     this.logger = logger;
   }
@@ -91,7 +91,8 @@ export class ActivityService implements IActivityService {
       return result; // Assuming result is already UserRankingLeaderboardEntry[]
     } catch (error) {
       throw new ActivityServiceError(
-        `Failed to get user ranking leaderboard: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to get user ranking leaderboard
+        : ${error instanceof Error ? error.message : String(error)}`,
         { cause: error instanceof Error ? error : undefined },
       );
     }

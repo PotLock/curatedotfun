@@ -170,7 +170,7 @@ export class SourceService implements IBackgroundTaskService {
           feedId,
           sourcePluginName,
           searchId,
-          this.db
+          this.db,
         );
       }
 
@@ -275,7 +275,9 @@ export class SourceService implements IBackgroundTaskService {
   }
 
   public async start(): Promise<void> {
-    this.logger.info("SourceService: Starting background polling for all feeds.");
+    this.logger.info(
+      "SourceService: Starting background polling for all feeds.",
+    );
     const allDbFeeds = await this.feedRepository.getAllFeeds();
 
     if (!allDbFeeds || allDbFeeds.length === 0) {
@@ -357,7 +359,9 @@ export class SourceService implements IBackgroundTaskService {
   }
 
   public async stop(): Promise<void> {
-    this.logger.info("SourceService: Stopping background polling for all feeds.");
+    this.logger.info(
+      "SourceService: Stopping background polling for all feeds.",
+    );
     this.pollingIntervals.forEach((intervalId) => clearInterval(intervalId));
     this.pollingIntervals = [];
     await this.shutdown();

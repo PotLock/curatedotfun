@@ -14,15 +14,14 @@ interface ProcessConfig {
 }
 
 export class ProcessorService implements IBaseService {
-  public readonly logger: Logger
+  public readonly logger: Logger;
 
   constructor(
     private transformationService: TransformationService,
     private distributionService: DistributionService,
-    logger: Logger
+    logger: Logger,
   ) {
     this.logger = logger;
-
   }
 
   /**

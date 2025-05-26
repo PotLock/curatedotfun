@@ -11,11 +11,10 @@ import { PluginService } from "./plugin.service";
 export type TransformStage = "global" | "distributor" | "batch";
 
 export class TransformationService implements IBaseService {
-
-  public readonly logger: Logger
+  public readonly logger: Logger;
   constructor(
     private pluginService: PluginService,
-    logger: Logger
+    logger: Logger,
   ) {
     this.logger = logger;
   }

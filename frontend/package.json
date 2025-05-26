@@ -62,6 +62,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.55.0",
     "react-icons": "^5.4.0",
+    "rspack": "link:@tanstack/router-plugin/rspack",
     "tailwind-merge": "^3.0.2",
     "tailwindcss": "^3.4.16",
     "tailwindcss-animate": "^1.0.7",

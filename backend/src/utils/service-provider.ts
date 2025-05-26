@@ -32,12 +32,15 @@ export class ServiceProvider {
   private constructor(private appConfig: AppConfig) {
     const configService = new ConfigService();
     const pluginService = new PluginService(configService, logger);
-    const transformationService = new TransformationService(pluginService, logger);
+    const transformationService = new TransformationService(
+      pluginService,
+      logger,
+    );
     const distributionService = new DistributionService(pluginService, logger);
     const processorService = new ProcessorService(
       transformationService,
       distributionService,
-      logger
+      logger,
     );
     const submissionService = new SubmissionService(
       submissionRepository,
@@ -52,7 +55,7 @@ export class ServiceProvider {
       adapterService,
       interpretationService,
       submissionService,
-      logger
+      logger,
     );
     const sourceService = new SourceService(
       pluginService,
@@ -84,7 +87,12 @@ export class ServiceProvider {
     );
     this.services.set(
       "activityService",
-      new ActivityService(activityRepository, leaderboardRepository, db, logger),
+      new ActivityService(
+        activityRepository,
+        leaderboardRepository,
+        db,
+        logger,
+      ),
     );
 
     this.services.set("feedService", feedService);

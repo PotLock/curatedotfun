@@ -12,7 +12,10 @@ import { PluginService } from "./plugin.service";
 export class DistributionService implements IBaseService {
   public readonly logger: Logger;
 
-  constructor(private pluginService: PluginService, logger: Logger) {
+  constructor(
+    private pluginService: PluginService,
+    logger: Logger,
+  ) {
     this.logger = logger;
   }
 

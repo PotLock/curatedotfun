@@ -8,9 +8,7 @@ import { IBaseService } from "./interfaces/base-service.interface";
 export class AdapterService implements IBaseService {
   public readonly logger: Logger;
 
-  constructor(
-    logger: Logger
-  ) {
+  constructor(logger: Logger) {
     this.logger = logger;
   }
 
@@ -60,11 +58,11 @@ export class AdapterService implements IBaseService {
       createdAt: ensuredCreatedAt,
       author: author
         ? {
-          id: author.id,
-          username: author.username,
-          displayName: author.displayName,
-          // Potentially map other common author fields here
-        }
+            id: author.id,
+            username: author.username,
+            displayName: author.displayName,
+            // Potentially map other common author fields here
+          }
         : undefined,
       media: media || undefined, // Pass through media
       metadata: adaptedMetadata,

@@ -63,8 +63,8 @@ type PluginContainer<
   TConfig extends Record<string, unknown> = Record<string, unknown>,
 > =
   | {
-    default?: new () => PluginTypeMap<TInput, TOutput, TConfig>[T];
-  }
+      default?: new () => PluginTypeMap<TInput, TOutput, TConfig>[T];
+    }
   | (new () => PluginTypeMap<TInput, TOutput, TConfig>[T]);
 
 /**
@@ -83,9 +83,11 @@ export class PluginService implements IBaseService {
   private readonly maxAuthFailures: number = 2; // one less than 3 to avoid locking
   private readonly retryDelays: number[] = [1000, 5000]; // Delays between retries in ms
 
-  public readonly logger: Logger
-  constructor(private configService: ConfigService,
-    logger: Logger) {
+  public readonly logger: Logger;
+  constructor(
+    private configService: ConfigService,
+    logger: Logger,
+  ) {
     this.logger = logger;
   }
 
@@ -236,9 +238,9 @@ export class PluginService implements IBaseService {
       throw error instanceof PluginError
         ? error
         : new PluginError(
-          `Unexpected error with plugin ${name}`,
-          error as Error,
-        );
+            `Unexpected error with plugin ${name}`,
+            error as Error,
+          );
     }
   }
 

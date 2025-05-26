@@ -16,7 +16,7 @@ import { ProcessorService } from "./processor.service";
 
 export class SubmissionService implements IBaseService {
   public readonly logger: Logger;
-  
+
   constructor(
     private submissionRepository: SubmissionRepository,
     private feedRepository: FeedRepository,

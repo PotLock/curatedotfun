@@ -60,7 +60,7 @@ export class UserService implements IUserService {
       const connectionConfig = {
         networkId,
         keyStore,
-        nodeUrl: this.nearConfig.rpcUrl || `https://rpc.${networkId}.near.org`
+        nodeUrl: this.nearConfig.rpcUrl || `https://rpc.${networkId}.near.org`,
       };
 
       const nearConnection = await connect(connectionConfig);

@@ -16,7 +16,7 @@ export class InboundService implements IBaseService {
     private adapterService: AdapterService,
     private interpretationService: InterpretationService,
     private submissionService: SubmissionService,
-    logger: Logger
+    logger: Logger,
   ) {
     this.logger = logger;
   }
