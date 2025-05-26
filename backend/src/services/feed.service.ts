@@ -1,8 +1,6 @@
+import { FeedRepository, submissionStatusZodEnum } from "@curatedotfun/shared-db";
+import { DB, DistributorConfig, InsertFeed, StreamConfig, UpdateFeed } from "@curatedotfun/types";
 import { Logger } from "pino";
-import { DistributorConfig, StreamConfig } from "../types/config.zod";
-import { SubmissionStatus } from "../types/submission";
-import { FeedRepository } from "./db/repositories/feed.repository";
-import { DB, InsertFeed, UpdateFeed } from "./db/types";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { ProcessorService } from "./processor.service";
 
@@ -82,7 +80,7 @@ export class FeedService implements IBaseService {
 
     const submissions = await this.feedRepository.getSubmissionsByFeed(feedId);
     const approvedSubmissions = submissions.filter(
-      (sub) => sub.status === SubmissionStatus.APPROVED,
+      (sub) => sub.status === submissionStatusZodEnum.Enum.approved,
     );
 
     if (approvedSubmissions.length === 0) {

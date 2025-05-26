@@ -18,8 +18,8 @@ import {
   selectUserStatsSchema,
   UpdateFeedUserStats,
   UpdateUserStats,
+  ActivityServiceError
 } from "@curatedotfun/types";
-import { ActivityServiceError } from "../types/errors";
 import { queries, ActivityRepository, LeaderboardRepository } from "@curatedotfun/shared-db";
 import { IActivityService } from "./interfaces/activity.interface";
 

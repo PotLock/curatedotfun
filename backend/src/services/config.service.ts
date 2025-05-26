@@ -1,11 +1,6 @@
+import { AppConfig, FeedConfig, PluginRegistrationConfig, PluginsConfig } from "@curatedotfun/types";
 import fs from "fs/promises";
 import path from "path";
-import {
-  AppConfig,
-  FeedConfig,
-  PluginsConfig,
-  PluginRegistrationConfig,
-} from "../types/config.zod";
 import { hydrateConfigValues } from "../utils/config";
 import { logger } from "../utils/logger";
 

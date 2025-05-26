@@ -1,18 +1,9 @@
 import { Logger } from "pino";
-import { FeedConfig } from "../types/config.zod"; // AppConfig removed
-import { SubmissionServiceError } from "../types/errors";
 import { ModerationCommandData } from "../types/inbound.types";
-import {
-  Moderation,
-  Submission,
-  SubmissionFeed,
-  SubmissionStatus,
-} from "../types/submission";
-import { FeedRepository } from "./db/repositories/feed.repository";
-import { SubmissionRepository } from "./db/repositories/submission.repository";
-import { DB } from "./db/types";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { ProcessorService } from "./processor.service";
+import { SubmissionRepository, FeedRepository, type DB, SubmissionWithFeedData } from "@curatedotfun/shared-db";
+import { SubmissionStatus, Submission, SelectSubmission, SubmissionServiceError, FeedConfig } from "@curatedotfun/types";
 
 export class SubmissionService implements IBaseService {
   public readonly logger: Logger;
@@ -29,14 +20,14 @@ export class SubmissionService implements IBaseService {
 
   public async getAllSubmissions(
     status?: SubmissionStatus,
-  ): Promise<Submission[]> {
+  ): Promise<SubmissionWithFeedData[]> {
     this.logger.info({ status }, "SubmissionService: getAllSubmissions called");
     return this.submissionRepository.getAllSubmissions(status);
   }
 
   public async getSubmissionById(
     submissionId: string,
-  ): Promise<Submission | null> {
+  ): Promise<SelectSubmission | null> {
     this.logger.info(
       { submissionId },
       "SubmissionService: getSubmissionById called",

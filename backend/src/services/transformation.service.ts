@@ -1,8 +1,6 @@
-import { ActionArgs } from "@curatedotfun/types";
+import { ActionArgs, TransformConfig, TransformError } from "@curatedotfun/types";
 import { merge } from "lodash";
 import { Logger } from "pino";
-import { TransformConfig } from "../types/config.zod";
-import { TransformError } from "../types/errors";
 import { logger } from "../utils/logger";
 import { sanitizeJson } from "../utils/sanitize";
 import { IBaseService } from "./interfaces/base-service.interface";

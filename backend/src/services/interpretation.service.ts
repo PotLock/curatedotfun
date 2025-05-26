@@ -1,5 +1,4 @@
 import { Logger } from "pino";
-import { FeedConfig } from "../types/config.zod";
 import {
   AdaptedSourceItem,
   ContentItemIntent,
@@ -10,9 +9,9 @@ import {
   PendingSubmissionCommandIntent,
   UnknownIntent,
 } from "../types/inbound.types";
-import { Moderation, Submission, SubmissionStatus } from "../types/submission";
 import { logger } from "../utils/logger";
 import { IBaseService } from "./interfaces/base-service.interface";
+import { FeedConfig, SelectModerationHistory, Submission, submissionStatusZodEnum } from "@curatedotfun/types";
 
 export class InterpretationService implements IBaseService {
   public readonly logger: Logger;
@@ -55,7 +54,7 @@ export class InterpretationService implements IBaseService {
       return this.buildModerationIntent(
         adaptedSourceItem,
         feedConfig,
-        action as Moderation["action"],
+        action as SelectModerationHistory["action"],
         contentLower.includes(APPROVE_COMMAND)
           ? APPROVE_COMMAND
           : REJECT_COMMAND,
@@ -180,7 +179,7 @@ export class InterpretationService implements IBaseService {
         curatorTweetId: externalId || originalSourceItem.id,
         curatorNotes: curatorNotes || undefined,
         media: adaptedSourceItem.media,
-        status: SubmissionStatus.PENDING, // Default status
+        status: submissionStatusZodEnum.Enum.pending,
         moderationHistory: [],
         feeds: [],
       };
@@ -209,7 +208,7 @@ export class InterpretationService implements IBaseService {
   private buildModerationIntent(
     adaptedSourceItem: AdaptedSourceItem,
     feedConfig: FeedConfig,
-    action: Moderation["action"],
+    action: SelectModerationHistory["action"],
     command: string, // e.g. "!approve"
   ): InterpretedIntent {
     const {
@@ -290,7 +289,7 @@ export class InterpretationService implements IBaseService {
       curatorTweetId: originalSourceItem.id, // Using internal source item ID as a reference
       curatorNotes: undefined,
       media: media,
-      status: SubmissionStatus.PENDING,
+      status: submissionStatusZodEnum.Enum.pending,
       moderationHistory: [],
       feeds: [],
     };

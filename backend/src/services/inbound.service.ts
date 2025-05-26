@@ -1,8 +1,6 @@
-import { SourceItem } from "@curatedotfun/types";
+import { FeedConfig, SourceItem, Submission, submissionStatusZodEnum } from "@curatedotfun/types";
 import { Logger } from "pino";
-import { FeedConfig } from "../types/config.zod";
 import { AdaptedSourceItem, InterpretedIntent } from "../types/inbound.types";
-import { Submission, SubmissionStatus } from "../types/submission";
 import { logger } from "../utils/logger";
 import { AdapterService } from "./adapter.service";
 import { IBaseService } from "./interfaces/base-service.interface";
@@ -97,7 +95,7 @@ export class InboundService implements IBaseService {
                 curatorNotes: intent.curatorNotes || null, // Ensure null if undefined
                 submittedAt: intent.submittedAt,
 
-                status: SubmissionStatus.PENDING,
+                status: submissionStatusZodEnum.Enum.pending,
                 moderationHistory: [],
                 feeds: [],
                 // TODO: Future - SubmissionService and Submission type need to be updated to handle potentialTargetFeedNames for routing.

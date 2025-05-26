@@ -1,6 +1,5 @@
-import type { SourceItem } from "@curatedotfun/types";
+import type { FeedConfig, SourceItem } from "@curatedotfun/types";
 import { Logger } from "pino";
-import { FeedConfig } from "../types/config.zod";
 import { AdaptedSourceItem } from "../types/inbound.types";
 import { IBaseService } from "./interfaces/base-service.interface";
 

@@ -1,15 +1,16 @@
+import { UserRepository, type DB } from "@curatedotfun/shared-db";
+import {
+  InsertUser,
+  NearAccountError,
+  NearIntegrationConfig,
+  NotFoundError,
+  selectUserSchema,
+  UpdateUser,
+  UserServiceError
+} from "@curatedotfun/types";
 import { connect, KeyPair, keyStores, transactions, utils } from "near-api-js";
 import { KeyPairString } from "near-api-js/lib/utils";
 import { Logger } from "pino";
-import { NearIntegrationConfig } from "../types/config.zod";
-import {
-  NearAccountError,
-  NotFoundError,
-  UserServiceError,
-} from "../types/errors";
-import { selectUserSchema } from "../validation/users.validation";
-import { UserRepository } from "./db/repositories/user.repository";
-import { DB, InsertUser, UpdateUser } from "./db/types";
 import { IUserService } from "./interfaces/user.interface";
 
 export class UserService implements IUserService {
