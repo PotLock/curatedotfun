@@ -6,9 +6,10 @@ import path from "path";
 import { db } from "./db";
 import { apiRoutes } from "./routes/api";
 import { configureStaticRoutes, staticRoutes } from "./routes/static";
-import { appRouter } from "./routes/trpc";
+import { appRouter } from "./routers";
 import { ConfigService, isProduction } from "./services/config.service";
 import { AppInstance, Env } from "./types/app";
+import { JWTPayload } from "jose";
 import { web3AuthJwtMiddleware } from "./utils/auth";
 import { getAllowedOrigins } from "./utils/config";
 import { errorHandler } from "./utils/error";
@@ -68,7 +69,8 @@ export async function createApp(): Promise<AppInstance> {
         if (!sp) {
           throw new Error("ServiceProvider not found in Hono context");
         }
-        return { sp };
+        const jwtPayload = c.get("jwtPayload") as JWTPayload | undefined;
+        return { sp, jwtPayload };
       },
     }),
   );

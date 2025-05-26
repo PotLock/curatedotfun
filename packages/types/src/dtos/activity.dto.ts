@@ -47,3 +47,50 @@ export const LeaderboardQueryOptionsSchema = z.object({
   // Potentially add other options like time period, specific activity types for leaderboard
 });
 export type LeaderboardQueryOptions = z.infer<typeof LeaderboardQueryOptionsSchema>;
+
+// --- tRPC Input Schemas ---
+
+// Input schema for getting the leaderboard
+// Extends LeaderboardQueryOptionsSchema and adds Hono-specific query params
+export const GetLeaderboardInputSchema = LeaderboardQueryOptionsSchema.extend({
+  time_range: z.enum(['day', 'week', 'month', 'year', 'all']).optional(),
+  feed_id: z.string().optional(),
+  // limit is already in LeaderboardQueryOptionsSchema as z.number().int().min(1).optional().default(10)
+});
+export type GetLeaderboardInput = z.infer<typeof GetLeaderboardInputSchema>;
+
+// Input schema for getting a specific user's activities
+// Combines userId (from path) with extended ActivityQueryOptions
+export const GetUserActivitiesInputSchema = z.object({
+  userId: z.string(), // Consistent with UserRankingLeaderboardEntrySchema.userId
+  options: ActivityQueryOptionsSchema.extend({
+    types: z.array(activityTypeEnumSchema).optional(), // Hono route had comma-separated string
+    from_date: z.string().datetime({ message: "Invalid datetime string. Must be UTC and in ISO8601 format." }).optional(),
+    to_date: z.string().datetime({ message: "Invalid datetime string. Must be UTC and in ISO8601 format." }).optional(),
+  }).omit({ userId: true }) // Remove optional userId from base as it's mandatory here
+  .optional(),
+});
+export type GetUserActivitiesInput = z.infer<typeof GetUserActivitiesInputSchema>;
+
+// Input schema for getting the authenticated user's ("my") activities
+// Similar to GetUserActivitiesInput.options
+export const GetMyActivitiesInputSchema = ActivityQueryOptionsSchema.extend({
+  types: z.array(activityTypeEnumSchema).optional(),
+  from_date: z.string().datetime({ message: "Invalid datetime string. Must be UTC and in ISO8601 format." }).optional(),
+  to_date: z.string().datetime({ message: "Invalid datetime string. Must be UTC and in ISO8601 format." }).optional(),
+}).omit({ userId: true }) // userId comes from context
+.optional();
+export type GetMyActivitiesInput = z.infer<typeof GetMyActivitiesInputSchema>;
+
+// Input schema for getting the authenticated user's rank for a specific feed
+export const GetMyFeedRankInputSchema = z.object({
+  feedId: z.string(),
+});
+export type GetMyFeedRankInput = z.infer<typeof GetMyFeedRankInputSchema>;
+
+// Schema for the output of getUserFeedRanks
+export const UserFeedRanksSchema = z.object({
+  curatorRank: z.number().nullable(),
+  approverRank: z.number().nullable(),
+});
+export type UserFeedRanks = z.infer<typeof UserFeedRanksSchema>;

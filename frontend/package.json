@@ -45,9 +45,7 @@
     "@web3auth/ethereum-provider": "^9.7.0",
     "@web3auth/modal": "^9.7.0",
     "@web3auth/no-modal": "^9.7.0",
-    "add": "^2.0.6",
     "autoprefixer": "^10.4.20",
-    "axios": "^1.7.9",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -57,7 +55,6 @@
     "near-api-js": "4.0.4",
     "near-sign-verify": "^0.1.3",
     "postcss": "^8.4.49",
-    "process": "^0.11.10",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.55.0",
@@ -72,7 +69,6 @@
     "@crosspost/types": "^0.2.0",
     "@curatedotfun/types": "workspace:*",
     "@eslint/js": "^9.15.0",
-    "@mswjs/data": "^0.16.2",
     "@rsbuild/core": "1.1.13",
     "@rsbuild/plugin-node-polyfill": "^1.3.0",
     "@rsbuild/plugin-react": "1.1.0",
@@ -86,8 +82,7 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
     "globals": "^15.12.0",
-    "msw": "^2.7.0",
-    "typescript": "~5.6.2",
+    "typescript": "^5.8.3",
     "typescript-eslint": "^8.15.0"
   }
 }

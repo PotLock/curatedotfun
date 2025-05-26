@@ -8,10 +8,6 @@
     "dev": "NODE_ENV=development concurrently --kill-others-on-fail \"rspack build --watch\" \"wait-on -d 500 dist/main.js && node scripts/dev-server.js\"",
     "test": "bun test",
     "clean": "rm -rf dist coverage .turbo",
-    "db:generate": "drizzle-kit generate --config drizzle.config.ts",
-    "db:migrate": "drizzle-kit migrate --config drizzle.config.ts",
-    "db:check": "drizzle-kit check",
-    "db:studio": "drizzle-kit studio",
     "db:seed:dev": "bun ./scripts/seed-dev.ts",
     "db:seed:test": "bun ./test/setup/seed-test.ts"
   },
@@ -36,13 +32,14 @@
     "concurrently": "^9.1.2",
     "drizzle-seed": "^0.3.1",
     "nock": "^13.5.4",
-    "typescript": "^5.3.3",
+    "typescript": "^5.8.3",
     "wait-on": "^8.0.2",
     "zod": "^3.24.4",
     "zod-to-json-schema": "^3.24.5"
   },
   "dependencies": {
     "@crosspost/scheduler-sdk": "^0.1.1",
+    "@curatedotfun/api-contract": "workspace:*",
     "@curatedotfun/shared-db": "workspace:*",
     "@hono/node-server": "^1.8.2",
     "@hono/trpc-server": "^0.3.4",
@@ -66,6 +63,7 @@
     "pino": "^9.6.0",
     "pino-pretty": "^13.0.0",
     "string-width": "^7.2.0",
-    "trpc-openapi": "^1.2.0"
+    "trpc-openapi": "^1.2.0",
+    "trpc-to-openapi": "^2.3.1"
   }
 }

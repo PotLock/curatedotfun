@@ -1,0 +1,28 @@
+{
+  "name": "@curatedotfun/api-contract",
+  "version": "0.1.0",
+  "private": true,
+  "description": "tRPC API contract for curatedotfun",
+  "types": "./dist/index.d.ts",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@curatedotfun/shared-db": "workspace:*",
+    "@curatedotfun/types": "workspace:*",
+    "@trpc/server": "^11.1.2",
+    "jose": "^6.0.11",
+    "trpc-to-openapi": "^2.3.1",
+    "zod": "^3.25.28"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}
