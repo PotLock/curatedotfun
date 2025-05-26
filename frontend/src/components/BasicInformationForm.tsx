@@ -118,6 +118,7 @@ export default function BasicInformationForm() {
           title: "Upload failed",
           description: "Failed to upload image. Please try again.",
           variant: "destructive",
+          className: "bg-white",
         });
 
         // Clear the image preview on error

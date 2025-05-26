@@ -103,7 +103,7 @@ function SubmissionsIndexPage() {
     <div className="flex flex-col gap-6 w-full">
       <div className="flex md:flex-row flex-col justify-between items-center gap-6">
         <h1 className="text-[32px] leading-[63px] font-normal">Submissions</h1>
-        <div className="flex gap-3 items-center">
+        <div className="flex gap-3 w-full items-center">
           <div className="relative flex-grow">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none max-h-[40px]">
               <Search className="h-4 w-4 text-gray-400" />
