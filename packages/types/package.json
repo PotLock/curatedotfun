@@ -27,7 +27,7 @@
     "lint": "tsc --noEmit"
   },
   "devDependencies": {
-    "@curatedotfun/shared-utils": "workspace:*",
+    "@curatedotfun/utils": "workspace:*",
     "typescript": "^5.0.0"
   }
 }

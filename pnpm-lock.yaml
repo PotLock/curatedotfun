@@ -362,7 +362,7 @@ importers:
         specifier: ^8.15.0
         version: 8.32.1(eslint@9.27.0(jiti@1.21.7))(typescript@5.6.3)
 
-  packages/shared-utils:
+  packages/utils:
     devDependencies:
       typescript:
         specifier: ^5.0.4
@@ -370,9 +370,9 @@ importers:
 
   packages/types:
     devDependencies:
-      '@curatedotfun/shared-utils':
+      '@curatedotfun/utils':
         specifier: workspace:*
-        version: link:../shared-utils
+        version: link:../utils
       typescript:
         specifier: ^5.0.0
         version: 5.6.3
