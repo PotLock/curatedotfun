@@ -1,33 +1,31 @@
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
   jsonb,
-  pgTable as table,
   serial,
+  pgTable as table,
   text,
   timestamp,
+  pgEnum,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
-import { users, feeds, submissions } from "../schema";
-import { Metadata } from "../schema";
+import { z } from "zod";
+import { Metadata, timestamps } from "./common";
+import { users } from "./users";
+import { feeds } from "./feeds";
+import { submissions } from "./submissions";
 
-// Activity Types
-export const ActivityType = {
-  CONTENT_SUBMISSION: "CONTENT_SUBMISSION",
-  CONTENT_APPROVAL: "CONTENT_APPROVAL",
-  TOKEN_BUY: "TOKEN_BUY",
-  TOKEN_SELL: "TOKEN_SELL",
-  POINTS_REDEMPTION: "POINTS_REDEMPTION",
-  POINTS_AWARDED: "POINTS_AWARDED",
-} as const;
-
-export type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];
-
-// Reusable timestamp columns
-const timestamps = {
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-};
+export const activityTypeValues = [
+  "CONTENT_SUBMISSION",
+  "CONTENT_APPROVAL",
+  "TOKEN_BUY",
+  "TOKEN_SELL",
+  "POINTS_REDEMPTION",
+  "POINTS_AWARDED",
+] as const; // source of truth
+export const activityTypeEnum = pgEnum("activity_type", activityTypeValues); // for db type safety
+export const activityTypeZodEnum = z.enum(activityTypeValues); // for runtime validation and type inference
+export type ActivityType = (typeof activityTypeValues)[number]; // for type validation
 
 // Activities Table
 export const activities = table(
@@ -37,7 +35,7 @@ export const activities = table(
     user_id: integer("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    type: text("type").notNull().$type<ActivityType>(),
+    type: activityTypeEnum("type").notNull(),
     timestamp: timestamp("timestamp").notNull().defaultNow(),
     feed_id: text("feed_id").references(() => feeds.id, {
       onDelete: "set null",
@@ -50,22 +48,20 @@ export const activities = table(
     data: jsonb("data"), // Holds the actual activity data
     metadata: jsonb("metadata").$type<Metadata>(), // Holds type (schema URL) and other meta info
 
-    ...timestamps, // createdAt, updatedAt
+    ...timestamps,
   },
-  (activities) => ({
-    // Indexes for common queries
-    userIdIdx: index("activities_user_id_idx").on(activities.user_id),
-    typeIdx: index("activities_type_idx").on(activities.type),
-    timestampIdx: index("activities_timestamp_idx").on(activities.timestamp),
-    feedIdIdx: index("activities_feed_id_idx").on(activities.feed_id),
-    submissionIdIdx: index("activities_submission_id_idx").on(
+  (activities) => [
+    index("activities_user_id_idx").on(activities.user_id),
+    index("activities_type_idx").on(activities.type),
+    index("activities_timestamp_idx").on(activities.timestamp),
+    index("activities_feed_id_idx").on(activities.feed_id),
+    index("activities_submission_id_idx").on(
       activities.submission_id,
     ),
-    // Index on metadata type for efficient queries
-    metadataTypeIdx: index("activities_metadata_type_idx").on(
+    index("activities_metadata_type_idx").on(
       sql`(${activities.metadata} ->> 'type')`,
     ),
-  }),
+  ]
 );
 
 // User Stats Table - For aggregated user statistics
@@ -81,7 +77,7 @@ export const userStats = table("user_stats", {
   data: jsonb("data"), // Holds additional stats data
   metadata: jsonb("metadata").$type<Metadata>(), // Holds type (schema URL) and other meta info
 
-  ...timestamps, // createdAt, updatedAt
+  ...timestamps, 
 });
 
 // Feed User Stats Table - For feed-specific user statistics
@@ -105,22 +101,21 @@ export const feedUserStats = table(
     data: jsonb("data"), // Holds additional stats data
     metadata: jsonb("metadata").$type<Metadata>(), // Holds type (schema URL) and other meta info
 
-    ...timestamps, // createdAt, updatedAt
+    ...timestamps,
   },
-  (feedUserStats) => ({
+  (feedUserStats) => [
     // Ensure one stats record per user/feed combination
-    userFeedIdx: index("feed_user_stats_user_feed_idx").on(
+    index("feed_user_stats_user_feed_idx").on(
       feedUserStats.user_id,
       feedUserStats.feed_id,
     ),
-    // Indexes for ranking queries
-    curatorRankIdx: index("feed_user_stats_curator_rank_idx").on(
+    index("feed_user_stats_curator_rank_idx").on(
       feedUserStats.feed_id,
       feedUserStats.curator_rank,
     ),
-    approverRankIdx: index("feed_user_stats_approver_rank_idx").on(
+    index("feed_user_stats_approver_rank_idx").on(
       feedUserStats.feed_id,
       feedUserStats.approver_rank,
     ),
-  }),
+  ],
 );

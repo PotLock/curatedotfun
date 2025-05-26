@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm";
-import { DatabaseError, NotFoundError } from "../../../types/errors";
 import * as schema from "../schema";
-import { DB, InsertUser, UpdateUser } from "../types";
+import { DB, InsertUser, UpdateUser } from "../validators";
 import { executeWithRetry, withErrorHandling } from "../utils";
 
 export class UserRepository {
@@ -112,7 +111,7 @@ export class UserRepository {
 
           const newUser = insertResult[0];
           if (!newUser) {
-            throw new DatabaseError("Failed to insert user into database");
+            throw new Error("Failed to insert user into database");
           }
 
           return newUser;
@@ -123,10 +122,9 @@ export class UserRepository {
             const constraintMatch = error.detail?.match(/Key \((.*?)\)=/);
             const field = constraintMatch ? constraintMatch[1] : "unknown";
 
-            throw new DatabaseError(
+            throw new Error(
               `A user with this ${field} already exists`,
               error.code,
-              error,
             );
           }
           throw error;
@@ -160,7 +158,7 @@ export class UserRepository {
 
         const updatedUser = updateResult[0];
         if (!updatedUser) {
-          throw new NotFoundError("User", auth_provider_id);
+          throw new Error(`User not found: ${auth_provider_id}`);
         }
 
         return updatedUser;

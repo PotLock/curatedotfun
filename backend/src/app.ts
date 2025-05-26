@@ -1,11 +1,13 @@
+import { trpcServer } from "@hono/trpc-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import path from "path";
+import { db } from "./db";
 import { apiRoutes } from "./routes/api";
 import { configureStaticRoutes, staticRoutes } from "./routes/static";
+import { appRouter } from "./routes/trpc";
 import { ConfigService, isProduction } from "./services/config.service";
-import { db } from "./services/db";
 import { AppInstance, Env } from "./types/app";
 import { web3AuthJwtMiddleware } from "./utils/auth";
 import { getAllowedOrigins } from "./utils/config";
@@ -55,6 +57,21 @@ export async function createApp(): Promise<AppInstance> {
 
   // Mount API routes
   app.route("/api", apiRoutes);
+
+  // tRPC server
+  app.use(
+    "/trpc/*",
+    trpcServer({
+      router: appRouter,
+      createContext: (_opts, c) => {
+        const sp = c.var.sp;
+        if (!sp) {
+          throw new Error("ServiceProvider not found in Hono context");
+        }
+        return { sp };
+      },
+    }),
+  );
 
   // Configure static routes for production
   if (isProduction) {

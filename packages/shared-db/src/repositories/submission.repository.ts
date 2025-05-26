@@ -1,10 +1,4 @@
 import { and, eq, sql } from "drizzle-orm";
-import {
-  FeedStatus,
-  Moderation,
-  Submission,
-  SubmissionWithFeedData,
-} from "../../../types/submission";
 import * as queries from "../queries";
 import {
   feeds,
@@ -13,9 +7,30 @@ import {
   submissionFeeds,
   submissions,
   SubmissionStatus,
+  submissionStatusZodEnum
 } from "../schema";
-import { DB } from "../types";
+import {
+  DB,
+  InsertModerationHistory,
+  InsertSubmission,
+  SelectSubmission,
+  SelectModerationHistory,
+} from "../validators";
 import { executeWithRetry, withErrorHandling } from "../utils";
+
+interface FeedStatus {
+  feedId: string;
+  feedName: string;
+  status: SubmissionStatus;
+  moderationResponseTweetId?: string;
+}
+
+export interface SubmissionWithFeedData extends SelectSubmission {
+  moderationHistory: SelectModerationHistory[];
+  status: SubmissionStatus;
+  feedStatuses: FeedStatus[];
+  moderationResponseTweetId?: string;
+}
 
 /**
  * Repository for submission-related database operations.
@@ -34,7 +49,7 @@ export class SubmissionRepository {
    * @param submission The submission to save
    * @param txDb The transactional DB instance
    */
-  async saveSubmission(submission: Submission, txDb: DB): Promise<void> {
+  async saveSubmission(submission: InsertSubmission, txDb: DB): Promise<void> {
     return withErrorHandling(
       async () => {
         await txDb
@@ -48,11 +63,9 @@ export class SubmissionRepository {
             curatorId: submission.curatorId,
             curatorUsername: submission.curatorUsername,
             curatorTweetId: submission.curatorTweetId,
-            createdAt: new Date(submission.createdAt),
-            submittedAt: submission.submittedAt
-              ? new Date(submission.submittedAt)
-              : null,
-          } as any)
+            createdAt: submission.createdAt,
+            submittedAt: submission.submittedAt,
+          })
           .execute();
       },
       {
@@ -68,7 +81,7 @@ export class SubmissionRepository {
    * @param moderation The moderation action to save
    * @param txDb The transactional DB instance
    */
-  async saveModerationAction(moderation: Moderation, txDb: DB): Promise<void> {
+  async saveModerationAction(moderation: InsertModerationHistory, txDb: DB): Promise<void> {
     return withErrorHandling(
       async () => {
         await txDb
@@ -79,8 +92,8 @@ export class SubmissionRepository {
             adminId: moderation.adminId,
             action: moderation.action,
             note: moderation.note,
-            createdAt: moderation.timestamp,
-          } as any)
+            createdAt: moderation.createdAt,
+          })
           .execute();
       },
       {
@@ -100,7 +113,7 @@ export class SubmissionRepository {
    * @param tweetId The tweet ID
    * @returns The submission with feeds or null if not found
    */
-  async getSubmission(tweetId: string): Promise<Submission | null> {
+  async getSubmission(tweetId: string): Promise<SelectSubmission | null> {
     return withErrorHandling(
       async () => {
         return executeWithRetry(
@@ -124,7 +137,7 @@ export class SubmissionRepository {
    */
   async getSubmissionByCuratorTweetId(
     curatorTweetId: string,
-  ): Promise<Submission | null> {
+  ): Promise<SelectSubmission | null> {
     return withErrorHandling(
       async () => {
         return executeWithRetry(
@@ -165,16 +178,19 @@ export class SubmissionRepository {
                     curatorUsername: submissions.curatorUsername,
                     curatorTweetId: submissions.curatorTweetId,
                     createdAt: sql<string>`${submissions.createdAt}::text`,
+                    updatedAt: sql<string>`${submissions.updatedAt}::text`,
                     submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
                   },
                   m: {
+                    id: moderationHistory.id,
                     tweetId: moderationHistory.tweetId,
                     adminId: moderationHistory.adminId,
                     action: moderationHistory.action,
                     note: moderationHistory.note,
                     createdAt: moderationHistory.createdAt,
+                    updatedAt: moderationHistory.updatedAt,
                     feedId: moderationHistory.feedId,
-                    moderationResponseTweetId:
+                    moderationResponseTweetId: // This is selected but will NOT be part of SelectModerationHistory object
                       submissionFeeds.moderationResponseTweetId,
                   },
                   sf: {
@@ -212,16 +228,19 @@ export class SubmissionRepository {
                     curatorUsername: submissions.curatorUsername,
                     curatorTweetId: submissions.curatorTweetId,
                     createdAt: sql<string>`${submissions.createdAt}::text`,
+                    updatedAt: sql<string>`${submissions.updatedAt}::text`,
                     submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
                   },
                   m: {
+                    id: moderationHistory.id,
                     tweetId: moderationHistory.tweetId,
                     adminId: moderationHistory.adminId,
                     action: moderationHistory.action,
                     note: moderationHistory.note,
-                    createdAt: moderationHistory.createdAt,
+                    createdAt: moderationHistory.createdAt, 
+                    updatedAt: moderationHistory.updatedAt,
                     feedId: moderationHistory.feedId,
-                    moderationResponseTweetId:
+                    moderationResponseTweetId: // This is selected but will NOT be part of SelectModerationHistory object
                       submissionFeeds.moderationResponseTweetId,
                   },
                   sf: {
@@ -268,13 +287,12 @@ export class SubmissionRepository {
                 curatorUsername: result.s.curatorUsername,
                 curatorTweetId: result.s.curatorTweetId,
                 createdAt: new Date(result.s.createdAt),
-                submittedAt: result.s.submittedAt
-                  ? new Date(result.s.submittedAt)
-                  : null,
+                updatedAt: new Date(result.s.updatedAt!),
+                submittedAt: result.s.submittedAt,
                 moderationHistory: [],
                 status: status
                   ? (status as SubmissionStatus)
-                  : SubmissionStatus.PENDING, // Use provided status or default
+                  : submissionStatusZodEnum.Enum.pending, // Use provided status or default
                 feedStatuses: [],
               });
 
@@ -286,18 +304,20 @@ export class SubmissionRepository {
             }
 
             // Add moderation history
-            if (result.m && result.m.adminId !== null) {
+            if (result.m && result.m.adminId !== null && result.m.tweetId && result.m.id !== null) {
               const submission = submissionMap.get(result.s.tweetId)!;
-              submission.moderationHistory.push({
-                tweetId: result.s.tweetId,
+              const moderationEntry: SelectModerationHistory = {
+                id: result.m.id!,
+                tweetId: result.m.tweetId!,
                 feedId: result.m.feedId!,
-                adminId: result.m.adminId,
+                adminId: result.m.adminId!,
                 action: result.m.action as "approve" | "reject",
                 note: result.m.note,
-                timestamp: result.m.createdAt!,
-                moderationResponseTweetId:
-                  result.m.moderationResponseTweetId ?? undefined,
-              });
+                createdAt: new Date(result.m.createdAt!),
+                updatedAt: new Date(result.m.updatedAt!),
+                // moderationResponseTweetId is NOT part of SelectModerationHistory
+              };
+              submission.moderationHistory.push(moderationEntry);
             }
 
             // Add feed status if available
@@ -335,35 +355,35 @@ export class SubmissionRepository {
               let hasApproved = false;
 
               for (const feedStatus of submission.feedStatuses) {
-                if (feedStatus.status === SubmissionStatus.PENDING) {
+                if (feedStatus.status === submissionStatusZodEnum.Enum.pending) {
                   hasPending = true;
-                  submission.status = SubmissionStatus.PENDING;
+                  submission.status = submissionStatusZodEnum.Enum.pending;
                   submission.moderationResponseTweetId =
                     feedStatus.moderationResponseTweetId;
                   break; // Pending has highest priority
-                } else if (feedStatus.status === SubmissionStatus.REJECTED) {
+                } else if (feedStatus.status === submissionStatusZodEnum.Enum.rejected) {
                   hasRejected = true;
-                } else if (feedStatus.status === SubmissionStatus.APPROVED) {
+                } else if (feedStatus.status === submissionStatusZodEnum.Enum.approved) {
                   hasApproved = true;
                 }
               }
 
               if (!hasPending) {
                 if (hasRejected) {
-                  submission.status = SubmissionStatus.REJECTED;
+                  submission.status = submissionStatusZodEnum.Enum.rejected;
                   // Find first rejected status for moderationResponseTweetId
                   const rejectedStatus = submission.feedStatuses.find(
-                    (fs) => fs.status === SubmissionStatus.REJECTED,
+                    (fs) => fs.status === submissionStatusZodEnum.Enum.rejected,
                   );
                   if (rejectedStatus) {
                     submission.moderationResponseTweetId =
                       rejectedStatus.moderationResponseTweetId;
                   }
                 } else if (hasApproved) {
-                  submission.status = SubmissionStatus.APPROVED;
+                  submission.status = submissionStatusZodEnum.Enum.approved;
                   // Find first approved status for moderationResponseTweetId
                   const approvedStatus = submission.feedStatuses.find(
-                    (fs) => fs.status === SubmissionStatus.APPROVED,
+                    (fs) => fs.status === submissionStatusZodEnum.Enum.approved,
                   );
                   if (approvedStatus) {
                     submission.moderationResponseTweetId =

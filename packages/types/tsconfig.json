@@ -1,15 +1,16 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
+    "rootDir": "src",
+    "outDir": "dist",
+    "noEmit": false, // Needs to emit .d.ts files at least
+    "declaration": true, // Crucial for sharing types
+    "declarationMap": true, // Useful for debugging types
+    "composite": true, // Required for project references
+    "module": "ESNext", // Module format for the .d.ts files and any JS (if emitted)
     "moduleResolution": "bundler",
-    "declaration": true,
     "emitDeclarationOnly": true,
-    "outDir": "./dist",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "types": []
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

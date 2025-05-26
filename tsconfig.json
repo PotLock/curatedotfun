@@ -1,0 +1,22 @@
+{
+  "files": [],
+  "references": [
+    {"path": "./backend"},
+    {"path": "./frontend"},
+    // SHARED PACKAGES
+    {"path": "./packages/types"},
+    {"path": "./packages/shared-db"},
+  ],
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "es2022",
+    "moduleResolution": "bundler",
+    "lib": ["es2022", "dom"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true
+  }
+}
+

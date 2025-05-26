@@ -1,6 +1,4 @@
-import { SourceItem } from "@curatedotfun/types";
-import { FeedConfig } from "./config.zod";
-import { Moderation, Submission } from "./submission";
+import { FeedConfig, SelectModerationHistory, SourceItem, Submission } from "@curatedotfun/types";
 
 // --- New Types for Architectural Refactor ---
 
@@ -119,7 +117,7 @@ export interface ModerationCommandData {
   targetSourcePluginName?: string; // Optional: if moderation can target content from specific sources
 
   // Moderation details
-  action: Moderation["action"]; // "approve" | "reject"
+  action: SelectModerationHistory["action"]; // "approve" | "reject"
   moderatorUsername: string; // Username of the moderator
   moderatorPlatformId?: string; // Platform-specific ID of the moderator (e.g., Twitter user ID)
   notes?: string; // Notes from the moderator

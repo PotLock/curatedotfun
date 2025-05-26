@@ -1,33 +1,18 @@
 import { and, eq, sql } from "drizzle-orm";
-import { FeedConfig } from "types/config.zod";
-import { RecapState } from "../../../types/recap";
-import {
-  Submission,
-  SubmissionFeed,
-  SubmissionStatus,
-  SubmissionWithFeedData,
-} from "../../../types/submission";
 import * as queries from "../queries";
 import {
+  FeedConfig,
   feedRecapsState,
   feeds,
   moderationHistory,
   submissionFeeds,
   submissions,
+  SubmissionStatus,
+  submissionStatusZodEnum,
 } from "../schema";
-import { DB, InsertFeed, SelectFeed, UpdateFeed } from "../types";
 import { executeWithRetry, withErrorHandling } from "../utils";
-
-/**
- * Represents an approved submission for recap processing
- */
-export interface ApprovedSubmission {
-  submissionId: string;
-  content: string;
-  username: string;
-  submittedAt: string;
-  // Add other fields as needed
-}
+import { DB, InsertFeed, InsertFeedRecapState, InsertSubmissionFeed, SelectFeed, SelectFeedRecapState, SelectModerationHistory, SelectSubmissionFeed, UpdateFeed } from "../validators";
+import { SubmissionWithFeedData } from "./submission.repository";
 
 /**
  * Repository for feed-related database operations
@@ -96,6 +81,7 @@ export class FeedRepository {
   ): Promise<SelectFeed | null> {
     return withErrorHandling(
       async () => {
+        // Reverted to idiomatic Drizzle: set({ ...data, ... })
         const result = await txDb
           .update(feeds)
           .set({ ...data, updatedAt: new Date() })
@@ -150,7 +136,7 @@ export class FeedRepository {
   async getRecapState(
     feedId: string,
     recapId: string,
-  ): Promise<RecapState | null> {
+  ): Promise<SelectFeedRecapState | null> {
     return withErrorHandling(
       async () =>
         executeWithRetry(async (dbInstance) => {
@@ -177,7 +163,7 @@ export class FeedRepository {
   /**
    * Get all recap states for a feed
    */
-  async getAllRecapStatesForFeed(feedId: string): Promise<RecapState[]> {
+  async getAllRecapStatesForFeed(feedId: string): Promise<SelectFeedRecapState[]> {
     return withErrorHandling(
       async () =>
         executeWithRetry(async (dbInstance) => {
@@ -198,15 +184,9 @@ export class FeedRepository {
    * Create or update a recap state.
    */
   async upsertRecapState(
-    stateData: {
-      feedId: string;
-      recapId: string;
-      externalJobId: string;
-      lastSuccessfulCompletion: Date | null;
-      lastRunError: string | null;
-    },
+    data: InsertFeedRecapState,
     txDb: DB,
-  ): Promise<RecapState> {
+  ): Promise<SelectFeedRecapState> {
     return withErrorHandling(
       async () => {
         const existing = await txDb
@@ -214,8 +194,8 @@ export class FeedRepository {
           .from(feedRecapsState)
           .where(
             and(
-              eq(feedRecapsState.feedId, stateData.feedId),
-              eq(feedRecapsState.recapId, stateData.recapId),
+              eq(feedRecapsState.feedId, data.feedId),
+              eq(feedRecapsState.recapId, data.recapId),
             ),
           )
           .limit(1);
@@ -226,9 +206,9 @@ export class FeedRepository {
           const updated = await txDb
             .update(feedRecapsState)
             .set({
-              externalJobId: stateData.externalJobId,
-              lastSuccessfulCompletion: stateData.lastSuccessfulCompletion,
-              lastRunError: stateData.lastRunError,
+              externalJobId: data.externalJobId,
+              lastSuccessfulCompletion: data.lastSuccessfulCompletion,
+              lastRunError: data.lastRunError,
               updatedAt: now,
             })
             .where(eq(feedRecapsState.id, existing[0].id))
@@ -238,11 +218,11 @@ export class FeedRepository {
           const inserted = await txDb
             .insert(feedRecapsState)
             .values({
-              feedId: stateData.feedId,
-              recapId: stateData.recapId,
-              externalJobId: stateData.externalJobId,
-              lastSuccessfulCompletion: stateData.lastSuccessfulCompletion,
-              lastRunError: stateData.lastRunError,
+              feedId: data.feedId,
+              recapId: data.recapId,
+              externalJobId: data.externalJobId,
+              lastSuccessfulCompletion: data.lastSuccessfulCompletion,
+              lastRunError: data.lastRunError,
               createdAt: now,
               updatedAt: now,
             })
@@ -250,7 +230,7 @@ export class FeedRepository {
           return inserted[0];
         }
       },
-      { operationName: "upsertRecapState", additionalContext: { stateData } },
+      { operationName: "upsertRecapState", additionalContext: { data } },
     );
   }
 
@@ -380,18 +360,16 @@ export class FeedRepository {
    * Saves a submission to a feed.
    */
   async saveSubmissionToFeed(
-    submissionId: string,
-    feedId: string,
-    status: SubmissionStatus = SubmissionStatus.PENDING,
+    data: InsertSubmissionFeed,
     txDb: DB,
   ): Promise<void> {
     return withErrorHandling(
       async () => {
-        await queries.saveSubmissionToFeed(txDb, submissionId, feedId, status);
+        await queries.saveSubmissionToFeed(txDb, data.submissionId, data.feedId, data.status ?? submissionStatusZodEnum.Enum.pending);
       },
       {
         operationName: "saveSubmissionToFeed",
-        additionalContext: { submissionId, feedId, status },
+        additionalContext: { data },
       },
     );
   }
@@ -399,7 +377,7 @@ export class FeedRepository {
   /**
    * Gets feeds by submission ID.
    */
-  async getFeedsBySubmission(submissionId: string): Promise<SubmissionFeed[]> {
+  async getFeedsBySubmission(submissionId: string): Promise<SelectSubmissionFeed[]> {
     return withErrorHandling(
       async () =>
         executeWithRetry(
@@ -436,7 +414,7 @@ export class FeedRepository {
   /**
    * Gets submissions by feed ID.
    */
-  async getSubmissionsByFeed(feedId: string): Promise<Submission[]> {
+  async getSubmissionsByFeed(feedId: string): Promise<SubmissionWithFeedData[]> {
     return withErrorHandling(
       async () =>
         executeWithRetry(async (dbInstance) => {
@@ -452,17 +430,20 @@ export class FeedRepository {
                 curatorUsername: submissions.curatorUsername,
                 curatorTweetId: submissions.curatorTweetId,
                 createdAt: sql<string>`${submissions.createdAt}::text`,
+                updatedAt: sql<string>`${submissions.updatedAt}::text`,
                 submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
               },
               sf: {
                 status: submissionFeeds.status,
               },
               m: {
+                id: moderationHistory.id,
                 tweetId: moderationHistory.tweetId,
                 adminId: moderationHistory.adminId,
                 action: moderationHistory.action,
                 note: moderationHistory.note,
                 createdAt: moderationHistory.createdAt,
+                updatedAt: moderationHistory.updatedAt,
                 feedId: moderationHistory.feedId,
                 moderationResponseTweetId:
                   submissionFeeds.moderationResponseTweetId,
@@ -495,32 +476,32 @@ export class FeedRepository {
                 curatorUsername: result.s.curatorUsername,
                 curatorTweetId: result.s.curatorTweetId,
                 createdAt: new Date(result.s.createdAt),
-                submittedAt: result.s.submittedAt
-                  ? new Date(result.s.submittedAt)
-                  : null,
+                updatedAt: new Date(result.s.updatedAt!),
+                submittedAt: result.s.submittedAt,
                 moderationHistory: [],
                 status: result.sf.status,
+                feedStatuses: [],
                 moderationResponseTweetId:
                   result.m?.moderationResponseTweetId ?? undefined,
               });
             }
 
-            if (result.m && result.m.adminId !== null) {
+            if (result.m && result.m.adminId !== null && result.m.id !== null && result.m.tweetId !== null) {
               const submission = submissionMap.get(result.s.tweetId)!;
-              submission.moderationHistory.push({
-                tweetId: result.s.tweetId,
+              const moderationEntry: SelectModerationHistory = {
+                id: result.m.id!,
+                tweetId: result.m.tweetId!,
                 feedId: result.m.feedId!,
                 adminId: result.m.adminId!,
                 action: result.m.action as "approve" | "reject",
                 note: result.m.note,
-                timestamp: result.m.createdAt!,
-                moderationResponseTweetId:
-                  result.m.moderationResponseTweetId ?? undefined,
-              });
+                createdAt: new Date(result.m.createdAt!),
+                updatedAt: new Date(result.m.updatedAt!),
+              };
+              submission.moderationHistory.push(moderationEntry);
             }
           }
-
-          return Array.from(submissionMap.values());
+          return Array.from(submissionMap.values()) as SubmissionWithFeedData[];
         }, this.db),
       {
         operationName: "getSubmissionsByFeed",

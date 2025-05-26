@@ -1,11 +1,12 @@
-import type { LastProcessedState, PlatformState } from "@curatedotfun/types";
 import { and, eq } from "drizzle-orm";
 import {
+  LastProcessedState,
   lastProcessedStateTable,
+  PlatformState,
   type NewLastProcessedStateSchema,
 } from "../schema/lastProcessedState";
 import { executeWithRetry, withErrorHandling } from "../utils";
-import { DB } from "../types";
+import { DB } from "../validators";
 
 export class LastProcessedStateRepository {
   private readonly db: DB;

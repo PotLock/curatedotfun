@@ -26,6 +26,10 @@
     "dev": "tsc --watch",
     "lint": "tsc --noEmit"
   },
+  "dependencies": {
+    "@curatedotfun/shared-db": "workspace:*",
+    "zod": "^3.25.28"
+  },
   "devDependencies": {
     "@curatedotfun/utils": "workspace:*",
     "typescript": "^5.0.0"

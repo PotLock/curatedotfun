@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import * as queries from "../queries";
-import { DB } from "../types";
+import { DB } from "../validators";
 import { executeWithRetry, withErrorHandling } from "../utils";
 
 /**

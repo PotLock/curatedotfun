@@ -1,15 +1,15 @@
+import {
+  index,
+  jsonb,
+  primaryKey,
+  serial,
+  pgTable as table,
+  text,
+  timestamp,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
+import { timestamps } from "./common";
 import { z } from "zod";
-import { SubmissionStatus } from "./submission";
-
-// Schema for basic plugin registration (used in top-level plugins config)
-export const PluginRegistrationConfigSchema = z.object({
-  type: z.enum(["transformer", "distributor", "source"]),
-  url: z.string().url(),
-  config: z.record(z.unknown()).optional(), // Static config for the plugin instance
-});
-export type PluginRegistrationConfig = z.infer<
-  typeof PluginRegistrationConfigSchema
->;
 
 // Schema for ModerationConfig
 export const ModerationConfigSchema = z.object({
@@ -20,14 +20,12 @@ export const ModerationConfigSchema = z.object({
 
   // TODO: usernames can change, and so we should root in userIds per platform (on feed creation)
 });
-export type ModerationConfig = z.infer<typeof ModerationConfigSchema>;
 
 // Schema for TransformConfig (used in StreamConfig, DistributorConfig, RecapConfig)
 export const TransformConfigSchema = z.object({
   plugin: z.string(), // Name/key of the transformer plugin registered in AppConfig.plugins
-  config: z.record(z.unknown()), // Config specific to this transformation step
+  config: z.record(z.string(), z.any()),
 });
-export type TransformConfig = z.infer<typeof TransformConfigSchema>;
 
 // Schema for DistributorConfig (used in StreamConfig, RecapConfig)
 export const DistributorConfigSchema = z.object({
@@ -35,7 +33,6 @@ export const DistributorConfigSchema = z.object({
   config: z.record(z.string()), // Config specific to this distributor instance
   transform: z.array(TransformConfigSchema).optional(), // Per-distributor transforms
 });
-export type DistributorConfig = z.infer<typeof DistributorConfigSchema>;
 
 // Schema for StreamConfig (part of FeedConfig.outputs)
 export const StreamConfigSchema = z.object({
@@ -55,7 +52,6 @@ export const RecapConfigSchema = z.object({
   batchTransform: z.array(TransformConfigSchema).optional(),
   distribute: z.array(DistributorConfigSchema).optional(),
 });
-export type RecapConfig = z.infer<typeof RecapConfigSchema>;
 
 // Schema for individual search configuration within a source
 export const SourceSearchConfigSchema = z
@@ -65,23 +61,21 @@ export const SourceSearchConfigSchema = z
     query: z.string().optional(), // General query string
     pageSize: z.number().int().positive().optional(),
     language: z.string().optional(), // e.g., "en", "es"
-    platformArgs: z.record(z.unknown()).optional(), // Platform-specific arguments
+    platformArgs: z.record(z.string(), z.any()).optional(), 
     // Allow other dynamic properties
   })
-  .catchall(z.unknown());
-export type SourceSearchConfig = z.infer<typeof SourceSearchConfigSchema>;
+  .catchall(z.any());
 
 // Schema for SourceConfig (part of FeedConfig)
 export const SourceConfigSchema = z.object({
   plugin: z.string(), // Name/key of the source plugin registered in AppConfig.plugins
   // Config for the source plugin instance itself (e.g., API keys, base URLs)
   // This 'config' is passed to the plugin's initialize method.
-  config: z.record(z.unknown()).optional(),
+  config: z.record(z.string(), z.any()).optional(), 
   // Array of search configurations for this source instance in this feed.
   // Each object defines a specific query/task for the source plugin.
   search: z.array(SourceSearchConfigSchema),
 });
-export type SourceConfig = z.infer<typeof SourceConfigSchema>;
 
 // Schema for feed ingestion scheduling
 export const IngestionConfigSchema = z.object({
@@ -89,7 +83,6 @@ export const IngestionConfigSchema = z.object({
   schedule: z.string().min(1),
 });
 
-// Schema for FeedConfig
 export const FeedConfigSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -105,51 +98,69 @@ export const FeedConfigSchema = z.object({
   }),
 });
 
-// Schema for NEAR Integration Config
-export const NearIntegrationConfigSchema = z.object({
-  parentAccountId: z.string().min(1),
-  parentKeyPair: z.string().min(1), // Sensitive value
-  networkId: z.string().min(1),
-  rpcUrl: z.string().url().optional(), // Optional, can be derived from networkId
-});
-export type NearIntegrationConfig = z.infer<typeof NearIntegrationConfigSchema>;
-
-// Schema for all Integrations
-export const IntegrationsConfigSchema = z.object({
-  near: NearIntegrationConfigSchema.optional(),
-});
-export type IntegrationsConfig = z.infer<typeof IntegrationsConfigSchema>;
-
-// Schema for the entire AppConfig
-export const AppConfigSchema = z.object({
-  plugins: z.record(PluginRegistrationConfigSchema), // Maps plugin name to its registration config
-  feeds: z.array(FeedConfigSchema),
-  integrations: IntegrationsConfigSchema.optional(),
-});
-
-// TODO: CONSOLIDATE ALL CONFIGS TO HERE
-
-// Infer TypeScript types from Zod schemas
-// PluginRegistrationConfig already exported
-// ModerationConfig already exported via FeedConfig or directly if needed
-// TransformConfig already exported
-// DistributorConfig already exported
 export type StreamConfig = z.infer<typeof StreamConfigSchema>;
-// RecapConfig already exported
-// SourceSearchConfig already exported
-// SourceConfig already exported
-export type IngestionConfig = z.infer<typeof IngestionConfigSchema>; // Ensure IngestionConfig type is exported
+export type IngestionConfig = z.infer<typeof IngestionConfigSchema>;
+export type ModerationConfig = z.infer<typeof ModerationConfigSchema>;
+export type TransformConfig = z.infer<typeof TransformConfigSchema>;
+export type DistributorConfig = z.infer<typeof DistributorConfigSchema>;
+export type RecapConfig = z.infer<typeof RecapConfigSchema>;
+export type SourceSearchConfig = z.infer<typeof SourceSearchConfigSchema>;
+export type SourceConfig = z.infer<typeof SourceConfigSchema>;
 export type FeedConfig = z.infer<typeof FeedConfigSchema>;
-export type AppConfig = z.infer<typeof AppConfigSchema>;
-export type PluginsConfig = Record<string, PluginRegistrationConfig>; // Added export
 
-// Example of how to get a specific plugin config type if needed, though usually generic is fine
-export type TransformerPluginRegistrationConfig = z.infer<
-  typeof PluginRegistrationConfigSchema
-> & { type: "transformer" };
-export type DistributorPluginRegistrationConfig = z.infer<
-  typeof PluginRegistrationConfigSchema
-> & { type: "distributor" };
-export type SourcePluginRegistrationConfig = z.infer<
-  typeof PluginRegistrationConfigSchema
-> & { type: "source" };
+// Feeds Table
+// Stores the entire feed configuration as JSONB
+export const feeds = table("feeds", {
+  id: text("id").primaryKey(), // (hashtag)
+  // Store the entire configuration as JSONB
+  config: jsonb("config").$type<FeedConfig>().notNull(),
+  // Keep these fields for backward compatibility and quick lookups
+  name: text("name").notNull(),
+  description: text("description"),
+  ...timestamps,
+});
+
+// Feed Recaps State Table
+// Tracks the state of each recap job
+export const feedRecapsState = table(
+  "feed_recaps_state",
+  {
+    id: serial("id").primaryKey(),
+    feedId: text("feed_id")
+      .notNull()
+      .references(() => feeds.id, { onDelete: "cascade" }),
+    // Unique ID of the recap configuration
+    recapId: text("recap_id").notNull(),
+    // Unique ID provided by the external scheduler service for this specific job
+    externalJobId: text("external_job_id").unique(),
+    // Last time the curate backend successfully processed this recap
+    lastSuccessfulCompletion: timestamp("last_successful_completion"),
+    // Error message if the last run failed in the curate backend
+    lastRunError: text("last_run_error"),
+    ...timestamps,
+  },
+  (table) => [
+    // Ensure only one state record per feed/recap ID combination
+    uniqueIndex("feed_recap_id_idx").on(
+      table.feedId,
+      table.recapId,
+    ),
+  ],
+);
+
+export const feedPlugins = table(
+  "feed_plugins",
+  {
+    feedId: text("feed_id")
+      .notNull()
+      .references(() => feeds.id, { onDelete: "cascade" }),
+    pluginId: text("plugin_id").notNull(),
+    config: text("config").notNull(), // JSON string of plugin-specific config
+    ...timestamps,
+  },
+  (table) => [
+    index("feed_plugins_feed_idx").on(table.feedId),
+    index("feed_plugins_plugin_idx").on(table.pluginId),
+    primaryKey({ columns: [table.feedId, table.pluginId] }), // Ensure one config per plugin per feed
+  ],
+);

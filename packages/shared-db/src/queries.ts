@@ -1,25 +1,17 @@
 import { and, eq, sql } from "drizzle-orm";
-import { FeedConfig } from "../../types/config.zod";
-import {
-  FeedStatus,
-  Moderation,
-  Submission,
-  SubmissionFeed,
-  SubmissionStatus,
-  SubmissionWithFeedData,
-} from "../../types/submission";
 import {
   feeds,
   moderationHistory,
   submissionCounts,
   submissionFeeds,
   submissions,
+  submissionStatusZodEnum,
 } from "./schema";
-import { DB } from "./types";
+import { DB, SelectModerationHistory, SelectSubmission, SelectSubmissionFeed, SelectFeed } from "./validators";
 
 export async function upsertFeeds(
   db: DB,
-  feedsToUpsert: FeedConfig[],
+  feedsToUpsert: SelectFeed['config'][],
 ): Promise<void> {
   await db.transaction(async (tx) => {
     for (const feedConfig of feedsToUpsert) {
@@ -51,7 +43,7 @@ export async function saveSubmissionToFeed(
   db: DB,
   submissionId: string,
   feedId: string,
-  status: SubmissionStatus = SubmissionStatus.PENDING,
+  status: SelectSubmissionFeed['status'] = submissionStatusZodEnum.Enum.pending,
 ): Promise<void> {
   // Check if submission exists
   const submissions_result = await db
@@ -90,35 +82,36 @@ export async function saveSubmissionToFeed(
 export async function getFeedsBySubmission(
   db: DB,
   submissionId: string,
-): Promise<SubmissionFeed[]> {
+): Promise<SelectSubmissionFeed[]> {
   const results = await db
     .select({
       submissionId: submissionFeeds.submissionId,
       feedId: submissionFeeds.feedId,
       status: submissionFeeds.status,
       moderationResponseTweetId: submissionFeeds.moderationResponseTweetId,
+      createdAt: submissionFeeds.createdAt,
+      updatedAt: submissionFeeds.updatedAt,
     })
     .from(submissionFeeds)
     .where(eq(submissionFeeds.submissionId, submissionId));
 
-  return results.map((result) => ({
-    ...result,
-    moderationResponseTweetId: result.moderationResponseTweetId ?? undefined,
-  }));
+  return results;
 }
 
 export async function getModerationHistory(
   db: DB,
   tweetId: string,
-): Promise<Moderation[]> {
+): Promise<SelectModerationHistory[]> {
   const results = await db
     .select({
+      id: moderationHistory.id,
       tweetId: moderationHistory.tweetId,
       feedId: moderationHistory.feedId,
       adminId: moderationHistory.adminId,
       action: moderationHistory.action,
       note: moderationHistory.note,
       createdAt: moderationHistory.createdAt,
+      updatedAt: moderationHistory.updatedAt,
       moderationResponseTweetId: submissionFeeds.moderationResponseTweetId,
     })
     .from(moderationHistory)
@@ -132,22 +125,14 @@ export async function getModerationHistory(
     .where(eq(moderationHistory.tweetId, tweetId))
     .orderBy(moderationHistory.createdAt);
 
-  return results.map((result) => ({
-    tweetId: result.tweetId,
-    feedId: result.feedId,
-    adminId: result.adminId,
-    action: result.action as "approve" | "reject",
-    note: result.note,
-    timestamp: result.createdAt,
-    moderationResponseTweetId: result.moderationResponseTweetId ?? undefined,
-  }));
+  return results;
 }
 
 export async function updateSubmissionFeedStatus(
   db: DB,
   submissionId: string,
   feedId: string,
-  status: SubmissionStatus,
+  status: SelectSubmissionFeed['status'],
   moderationResponseTweetId: string,
 ): Promise<void> {
   await db
@@ -169,7 +154,7 @@ export async function updateSubmissionFeedStatus(
 export async function getSubmissionByCuratorTweetId(
   db: DB,
   curatorTweetId: string,
-): Promise<Submission | null> {
+): Promise<SelectSubmission | null> {
   const results = await db
     .select({
       s: {
@@ -183,6 +168,7 @@ export async function getSubmissionByCuratorTweetId(
         curatorTweetId: submissions.curatorTweetId,
         createdAt: sql<string>`${submissions.createdAt}::text`,
         submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
+        updatedAt: sql<string>`${submissions.updatedAt}::text`,
       },
       m: {
         tweetId: moderationHistory.tweetId,
@@ -211,22 +197,6 @@ export async function getSubmissionByCuratorTweetId(
 
   if (!results.length) return null;
 
-  // Group moderation history
-  const modHistory: Moderation[] = results
-    .filter((r: any) => r.m && r.m.adminId !== null)
-    .map((r: any) => ({
-      tweetId: results[0].s.tweetId,
-      feedId: r.m.feedId!,
-      adminId: r.m.adminId!,
-      action: r.m.action as "approve" | "reject",
-      note: r.m.note,
-      timestamp: r.m.createdAt!,
-      moderationResponseTweetId: r.m.moderationResponseTweetId ?? undefined,
-    }));
-
-  // Get feeds for this submission
-  const feeds = await getFeedsBySubmission(db, results[0].s.tweetId);
-
   return {
     tweetId: results[0].s.tweetId,
     userId: results[0].s.userId,
@@ -237,18 +207,15 @@ export async function getSubmissionByCuratorTweetId(
     curatorUsername: results[0].s.curatorUsername,
     curatorTweetId: results[0].s.curatorTweetId,
     createdAt: new Date(results[0].s.createdAt),
-    submittedAt: results[0].s.submittedAt
-      ? new Date(results[0].s.submittedAt)
-      : null,
-    moderationHistory: modHistory,
-    feeds,
+    submittedAt: results[0].s.submittedAt,
+    updatedAt: results[0].s.updatedAt ? new Date(results[0].s.updatedAt) : null,
   };
 }
 
 export async function getSubmission(
   db: DB,
   tweetId: string,
-): Promise<Submission | null> {
+): Promise<SelectSubmission | null> { // Changed Submission to SelectSubmission
   const results = await db
     .select({
       s: {
@@ -262,6 +229,7 @@ export async function getSubmission(
         curatorTweetId: submissions.curatorTweetId,
         createdAt: sql<string>`${submissions.createdAt}::text`,
         submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
+        updatedAt: sql<string>`${submissions.updatedAt}::text`,
       },
       m: {
         tweetId: moderationHistory.tweetId,
@@ -290,22 +258,6 @@ export async function getSubmission(
 
   if (!results.length) return null;
 
-  // Group moderation history
-  const modHistory: Moderation[] = results
-    .filter((r: any) => r.m && r.m.adminId !== null)
-    .map((r: any) => ({
-      tweetId,
-      feedId: r.m.feedId!,
-      adminId: r.m.adminId!,
-      action: r.m.action as "approve" | "reject",
-      note: r.m.note,
-      timestamp: r.m.createdAt!,
-      moderationResponseTweetId: r.m.moderationResponseTweetId ?? undefined,
-    }));
-
-  // Get feeds for this submission
-  const feeds = await getFeedsBySubmission(db, tweetId);
-
   return {
     tweetId: results[0].s.tweetId,
     userId: results[0].s.userId,
@@ -316,11 +268,8 @@ export async function getSubmission(
     curatorUsername: results[0].s.curatorUsername,
     curatorTweetId: results[0].s.curatorTweetId,
     createdAt: new Date(results[0].s.createdAt),
-    submittedAt: results[0].s.submittedAt
-      ? new Date(results[0].s.submittedAt)
-      : null,
-    moderationHistory: modHistory,
-    feeds,
+    submittedAt: results[0].s.submittedAt,
+    updatedAt: results[0].s.updatedAt ? new Date(results[0].s.updatedAt) : null,
   };
 }
 

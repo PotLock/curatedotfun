@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { JwtVariables } from "hono/jwt";
-import { DB } from "../services/db/types";
 import { ServiceProvider } from "../utils/service-provider";
+import { DB } from "@curatedotfun/shared-db";
 
 export type Env = {
   Variables: {

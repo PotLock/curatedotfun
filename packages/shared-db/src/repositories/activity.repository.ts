@@ -1,18 +1,13 @@
 import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
-import { DatabaseError } from "../../../types/errors";
-import {
-  GlobalStats,
-  UserRankingLeaderboardEntry,
-} from "../../../validation/activity.validation";
 import * as schema from "../schema";
-import { ActivityType } from "../schema/activity";
+import { activityTypeZodEnum, type ActivityType } from "../schema/activity";
+import { executeWithRetry, withErrorHandling } from "../utils";
 import {
   DB,
   InsertActivity,
   UpdateFeedUserStats,
   UpdateUserStats,
-} from "../types";
-import { executeWithRetry, withErrorHandling } from "../utils";
+} from "../validators";
 
 export class ActivityRepository {
   private readonly db: DB;
@@ -32,7 +27,7 @@ export class ActivityRepository {
           .insert(schema.activities)
           .values({
             user_id: data.user_id,
-            type: data.type as ActivityType,
+            type: data.type,
             feed_id: data.feed_id || null,
             submission_id: data.submission_id || null,
             data: (data.data ?? null) as unknown,
@@ -42,7 +37,7 @@ export class ActivityRepository {
           .returning();
 
         if (!activityResult) {
-          throw new DatabaseError(
+          throw new Error( // TODO: could be shared-error
             "Failed to insert activity record after insert operation",
           );
         }
@@ -84,8 +79,8 @@ export class ActivityRepository {
       await txDb.insert(schema.userStats).values({
         user_id: userId,
         total_submissions:
-          activityType === ActivityType.CONTENT_SUBMISSION ? 1 : 0,
-        total_approvals: activityType === ActivityType.CONTENT_APPROVAL ? 1 : 0,
+          activityType === activityTypeZodEnum.Enum.CONTENT_SUBMISSION ? 1 : 0,
+        total_approvals: activityType === activityTypeZodEnum.Enum.CONTENT_APPROVAL ? 1 : 0,
         total_points: 0, // Points would be calculated based on business logic
         data: null,
         metadata: null,
@@ -95,8 +90,8 @@ export class ActivityRepository {
       await txDb.execute(sql`
         UPDATE ${schema.userStats}
         SET
-          total_submissions = CASE WHEN ${activityType} = ${ActivityType.CONTENT_SUBMISSION} THEN total_submissions + 1 ELSE total_submissions END,
-          total_approvals = CASE WHEN ${activityType} = ${ActivityType.CONTENT_APPROVAL} THEN total_approvals + 1 ELSE total_approvals END,
+          total_submissions = CASE WHEN ${activityType} = ${activityTypeZodEnum.Enum.CONTENT_SUBMISSION} THEN total_submissions + 1 ELSE total_submissions END,
+          total_approvals = CASE WHEN ${activityType} = ${activityTypeZodEnum.Enum.CONTENT_APPROVAL} THEN total_approvals + 1 ELSE total_approvals END,
           "updatedAt" = ${new Date()}
         WHERE user_id = ${userId}
       `);
@@ -120,9 +115,9 @@ export class ActivityRepository {
           user_id: userId,
           feed_id: feedId,
           submissions_count:
-            activityType === ActivityType.CONTENT_SUBMISSION ? 1 : 0,
+            activityType === activityTypeZodEnum.Enum.CONTENT_SUBMISSION ? 1 : 0,
           approvals_count:
-            activityType === ActivityType.CONTENT_APPROVAL ? 1 : 0,
+            activityType === activityTypeZodEnum.Enum.CONTENT_APPROVAL ? 1 : 0,
           points: 0, // Points would be calculated based on business logic
           data: null,
           metadata: null,
@@ -132,8 +127,8 @@ export class ActivityRepository {
         await txDb.execute(sql`
         UPDATE ${schema.feedUserStats}
         SET
-          submissions_count = CASE WHEN ${activityType} = ${ActivityType.CONTENT_SUBMISSION} THEN submissions_count + 1 ELSE submissions_count END,
-          approvals_count = CASE WHEN ${activityType} = ${ActivityType.CONTENT_APPROVAL} THEN approvals_count + 1 ELSE approvals_count END,
+          submissions_count = CASE WHEN ${activityType} = ${activityTypeZodEnum.Enum.CONTENT_SUBMISSION} THEN submissions_count + 1 ELSE submissions_count END,
+          approvals_count = CASE WHEN ${activityType} = ${activityTypeZodEnum.Enum.CONTENT_APPROVAL} THEN approvals_count + 1 ELSE approvals_count END,
           "updatedAt" = ${new Date()}
         WHERE user_id = ${userId} AND feed_id = ${feedId}
       `);
@@ -271,7 +266,7 @@ export class ActivityRepository {
       feed_id?: string;
       limit?: number;
     } = {},
-  ): Promise<UserRankingLeaderboardEntry[]> {
+  ): Promise<any[]> {
     return withErrorHandling(
       async () => {
         return executeWithRetry(async (retryDb) => {
@@ -327,8 +322,8 @@ export class ActivityRepository {
                 a.user_id,
                 u.username,
                 u.name,
-                COUNT(CASE WHEN a.type = ${ActivityType.CONTENT_SUBMISSION} THEN 1 END) AS total_submissions,
-                COUNT(CASE WHEN a.type = ${ActivityType.CONTENT_APPROVAL} THEN 1 END) AS total_approvals,
+                COUNT(CASE WHEN a.type = ${activityTypeZodEnum.Enum.CONTENT_SUBMISSION} THEN 1 END) AS total_submissions,
+                COUNT(CASE WHEN a.type = ${activityTypeZodEnum.Enum.CONTENT_APPROVAL} THEN 1 END) AS total_approvals,
                 COALESCE(us.total_points, 0) AS total_points
               FROM 
                 ${schema.activities} a
@@ -380,7 +375,7 @@ export class ActivityRepository {
   /**
    * Get global statistics
    */
-  async getGlobalStats(): Promise<GlobalStats> {
+  async getGlobalStats(): Promise<any> {
     return withErrorHandling(
       async () => {
         return executeWithRetry(async (retryDb) => {
@@ -388,13 +383,13 @@ export class ActivityRepository {
           const submissionsResult = await retryDb
             .select({ count: count() })
             .from(schema.activities)
-            .where(eq(schema.activities.type, ActivityType.CONTENT_SUBMISSION));
+            .where(eq(schema.activities.type, activityTypeZodEnum.Enum.CONTENT_SUBMISSION));
 
           // Get total approvals
           const approvalsResult = await retryDb
             .select({ count: count() })
             .from(schema.activities)
-            .where(eq(schema.activities.type, ActivityType.CONTENT_APPROVAL));
+            .where(eq(schema.activities.type, activityTypeZodEnum.Enum.CONTENT_APPROVAL));
 
           const totalSubmissions = submissionsResult[0]?.count || 0;
           const totalApprovals = approvalsResult[0]?.count || 0;
@@ -742,13 +737,13 @@ export class ActivityRepository {
 
           return result.length > 0
             ? {
-                curatorRank: result[0].curator_rank,
-                approverRank: result[0].approver_rank,
-              }
+              curatorRank: result[0].curator_rank,
+              approverRank: result[0].approver_rank,
+            }
             : {
-                curatorRank: null,
-                approverRank: null,
-              };
+              curatorRank: null,
+              approverRank: null,
+            };
         }, this.db);
       },
       {

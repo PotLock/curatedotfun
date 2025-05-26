@@ -1,15 +1,13 @@
 import { Logger } from "pino";
-import { ActivityServiceError } from "../types/errors";
 import {
-  ActivityQueryOptions,
-  GlobalStats,
-  LeaderboardQueryOptions,
-  UserRankingLeaderboardEntry,
-} from "../validation/activity.validation";
-import * as queries from "./db/queries";
-import { ActivityRepository } from "./db/repositories/activity.repository";
-import { LeaderboardRepository } from "./db/repositories/leaderboard.repository";
-import {
+  ActivityQueryOptionsSchema,
+  GlobalStatsSchema,
+  LeaderboardQueryOptionsSchema,
+  UserRankingLeaderboardEntrySchema,
+  type ActivityQueryOptions,
+  type GlobalStats,
+  type LeaderboardQueryOptions,
+  type UserRankingLeaderboardEntry,
   DB,
   InsertActivity,
   SelectActivity,
@@ -20,7 +18,9 @@ import {
   selectUserStatsSchema,
   UpdateFeedUserStats,
   UpdateUserStats,
-} from "./db/types";
+} from "@curatedotfun/types";
+import { ActivityServiceError } from "../types/errors";
+import { queries, ActivityRepository, LeaderboardRepository } from "@curatedotfun/shared-db";
 import { IActivityService } from "./interfaces/activity.interface";
 
 export class ActivityService implements IActivityService {
@@ -55,20 +55,15 @@ export class ActivityService implements IActivityService {
   /**
    * Get activities for a specific user
    */
-  async getUserActivities(userId: number, options?: ActivityQueryOptions) {
+  async getUserActivities(userId: number, options?: ActivityQueryOptions): Promise<SelectActivity[]> {
     try {
+      const validatedOptions = options ? ActivityQueryOptionsSchema.parse(options) : {};
       const activities = await this.activityRepository.getUserActivities(
         userId,
-        options || {},
+        validatedOptions,
       );
 
-      // Parse each activity through the schema
-      // Ensure 'activities' items match what selectActivitySchema expects
-      return activities.map(
-        (
-          activity: any, // Consider typing 'activity' if possible
-        ) => selectActivitySchema.parse(activity), // Use selectActivitySchema from db/types
-      );
+      return activities.map((activity: any) => selectActivitySchema.parse(activity));
     } catch (error) {
       throw new ActivityServiceError(
         `Failed to get user activities: ${error instanceof Error ? error.message : String(error)}`,
@@ -84,15 +79,15 @@ export class ActivityService implements IActivityService {
     options?: LeaderboardQueryOptions,
   ): Promise<UserRankingLeaderboardEntry[]> {
     try {
-      // Ensure the correct type is imported and used from activity.validation.ts
-      const result = await this.activityRepository.getUserRankingLeaderboard(
-        options || {},
+      const validatedOptions = options ? LeaderboardQueryOptionsSchema.parse(options) : {};
+      const rawLeaderboardData = await this.activityRepository.getUserRankingLeaderboard(
+        validatedOptions,
       );
-      return result; // Assuming result is already UserRankingLeaderboardEntry[]
+      // Assuming rawLeaderboardData is an array of objects that need to be parsed
+      return rawLeaderboardData.map(entry => UserRankingLeaderboardEntrySchema.parse(entry));
     } catch (error) {
       throw new ActivityServiceError(
-        `Failed to get user ranking leaderboard
-        : ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to get user ranking leaderboard: ${error instanceof Error ? error.message : String(error)}`,
         { cause: error instanceof Error ? error : undefined },
       );
     }
@@ -103,7 +98,8 @@ export class ActivityService implements IActivityService {
    */
   async getGlobalStats(): Promise<GlobalStats> {
     try {
-      return await this.activityRepository.getGlobalStats();
+      const rawStats = await this.activityRepository.getGlobalStats();
+      return GlobalStatsSchema.parse(rawStats);
     } catch (error) {
       throw new ActivityServiceError(
         `Failed to get global stats: ${error instanceof Error ? error.message : String(error)}`,

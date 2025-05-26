@@ -1,6 +1,5 @@
 import retry from "async-retry";
-import { logger } from "../../utils/logger";
-import { DB } from "./types";
+import { DB } from "./validators";
 
 /**
  * List of PostgreSQL error codes that are considered transient/retryable
@@ -48,7 +47,7 @@ export const DEFAULT_RETRY_OPTIONS: retry.Options = {
     const maxRetries = 3; // Same as retries above
     const isLastAttempt = attempt === maxRetries;
 
-    logger.warn(
+    console.warn( // TODO: Logger
       `Database operation failed (attempt ${attempt}/${maxRetries})`,
       {
         error: error.message,
@@ -101,14 +100,14 @@ export async function withErrorHandling<T>(
     errorMessage?: string;
     additionalContext?: Record<string, any>;
   },
-  defaultValue?: T,
+  defaultValue?: T
 ): Promise<T> {
   try {
     return await operation();
   } catch (error: any) {
     const { operationName, errorMessage, additionalContext } = context;
 
-    logger.error(`Failed to ${operationName}:`, {
+    console.error(`Failed to ${operationName}:`, { // TODO: Logger
       error: error.message,
       code: error.code,
       ...additionalContext,

@@ -5,6 +5,10 @@ import type {
   AppConfig,
   FeedConfig,
   SubmissionWithFeedData,
+  GlobalStats, 
+  UserRankingLeaderboardEntry, 
+  LeaderboardQueryOptions, 
+  ActivityQueryOptions, 
 } from "@curatedotfun/types";
 import { usernameSchema, UserProfile } from "./validation/user";
 
@@ -372,14 +376,9 @@ export function useAllSubmissions(limit: number = 20, status?: string) {
   });
 }
 
-export interface GlobalActivityStats {
-  approval_rate: number;
-  total_approvals: number;
-  total_submissions: number;
-}
 
 export function useGlobalActivityStats() {
-  return useQuery<GlobalActivityStats>({
+  return useQuery<GlobalStats>({ 
     queryKey: ["global-activity-stats"],
     queryFn: async () => {
       const response = await fetch("/api/activity/stats");
