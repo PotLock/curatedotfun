@@ -2,8 +2,19 @@ import { Logger } from "pino";
 import { ModerationCommandData } from "../types/inbound.types";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { ProcessorService } from "./processor.service";
-import { SubmissionRepository, FeedRepository, type DB, SubmissionWithFeedData } from "@curatedotfun/shared-db";
-import { SubmissionStatus, Submission, SelectSubmission, SubmissionServiceError, FeedConfig } from "@curatedotfun/types";
+import {
+  SubmissionRepository,
+  FeedRepository,
+  type DB,
+  SubmissionWithFeedData,
+} from "@curatedotfun/shared-db";
+import {
+  SubmissionStatus,
+  Submission,
+  SelectSubmission,
+  SubmissionServiceError,
+  FeedConfig,
+} from "@curatedotfun/types";
 
 export class SubmissionService implements IBaseService {
   public readonly logger: Logger;

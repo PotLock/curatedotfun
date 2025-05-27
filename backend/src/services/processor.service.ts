@@ -1,4 +1,9 @@
-import { DistributorConfig, ProcessorError, TransformConfig, TransformError } from "@curatedotfun/types";
+import {
+  DistributorConfig,
+  ProcessorError,
+  TransformConfig,
+  TransformError,
+} from "@curatedotfun/types";
 import { Logger } from "pino";
 import { logger } from "./../utils/logger";
 import { sanitizeJson } from "./../utils/sanitize";

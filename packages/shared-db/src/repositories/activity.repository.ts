@@ -80,7 +80,8 @@ export class ActivityRepository {
         user_id: userId,
         total_submissions:
           activityType === activityTypeZodEnum.Enum.CONTENT_SUBMISSION ? 1 : 0,
-        total_approvals: activityType === activityTypeZodEnum.Enum.CONTENT_APPROVAL ? 1 : 0,
+        total_approvals:
+          activityType === activityTypeZodEnum.Enum.CONTENT_APPROVAL ? 1 : 0,
         total_points: 0, // Points would be calculated based on business logic
         data: null,
         metadata: null,
@@ -115,7 +116,9 @@ export class ActivityRepository {
           user_id: userId,
           feed_id: feedId,
           submissions_count:
-            activityType === activityTypeZodEnum.Enum.CONTENT_SUBMISSION ? 1 : 0,
+            activityType === activityTypeZodEnum.Enum.CONTENT_SUBMISSION
+              ? 1
+              : 0,
           approvals_count:
             activityType === activityTypeZodEnum.Enum.CONTENT_APPROVAL ? 1 : 0,
           points: 0, // Points would be calculated based on business logic
@@ -383,13 +386,23 @@ export class ActivityRepository {
           const submissionsResult = await retryDb
             .select({ count: count() })
             .from(schema.activities)
-            .where(eq(schema.activities.type, activityTypeZodEnum.Enum.CONTENT_SUBMISSION));
+            .where(
+              eq(
+                schema.activities.type,
+                activityTypeZodEnum.Enum.CONTENT_SUBMISSION,
+              ),
+            );
 
           // Get total approvals
           const approvalsResult = await retryDb
             .select({ count: count() })
             .from(schema.activities)
-            .where(eq(schema.activities.type, activityTypeZodEnum.Enum.CONTENT_APPROVAL));
+            .where(
+              eq(
+                schema.activities.type,
+                activityTypeZodEnum.Enum.CONTENT_APPROVAL,
+              ),
+            );
 
           const totalSubmissions = submissionsResult[0]?.count || 0;
           const totalApprovals = approvalsResult[0]?.count || 0;
@@ -737,13 +750,13 @@ export class ActivityRepository {
 
           return result.length > 0
             ? {
-              curatorRank: result[0].curator_rank,
-              approverRank: result[0].approver_rank,
-            }
+                curatorRank: result[0].curator_rank,
+                approverRank: result[0].approver_rank,
+              }
             : {
-              curatorRank: null,
-              approverRank: null,
-            };
+                curatorRank: null,
+                approverRank: null,
+              };
         }, this.db);
       },
       {

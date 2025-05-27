@@ -1,4 +1,10 @@
-import { ActionArgs, DistributorConfig, PluginError, PluginExecutionError, Submission } from "@curatedotfun/types";
+import {
+  ActionArgs,
+  DistributorConfig,
+  PluginError,
+  PluginExecutionError,
+  Submission,
+} from "@curatedotfun/types";
 import { Logger } from "pino";
 import { isStaging } from "../services/config.service";
 import { logger } from "../utils/logger";

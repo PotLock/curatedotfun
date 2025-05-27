@@ -1,6 +1,4 @@
-import {
-  timestamp
-} from "drizzle-orm/pg-core";
+import { timestamp } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 export const metadataSchema = z

@@ -6,14 +6,14 @@ import {
   NotFoundError,
   selectUserSchema,
   UpdateUser,
-  UserServiceError
+  UserServiceError,
 } from "@curatedotfun/types";
 import { connect, KeyPair, keyStores, transactions, utils } from "near-api-js";
 import { KeyPairString } from "near-api-js/lib/utils";
 import { Logger } from "pino";
-import { IUserService } from "./interfaces/user.interface";
+import { IBaseService } from "./interfaces/base-service.interface";
 
-export class UserService implements IUserService {
+export class UserService implements IBaseService {
   public readonly logger: Logger;
 
   constructor(

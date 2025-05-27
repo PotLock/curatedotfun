@@ -14,8 +14,8 @@ import {
   useUserActivities,
   useMyCuratedFeeds,
   useMyApprovedFeeds,
-  useMyFeedRank
-} from './trpc/activity';
+  useMyFeedRank,
+} from "./trpc/activity";
 
 export interface FeedDetails {
   id: string;
@@ -187,7 +187,6 @@ export interface FeedSubmissionCount {
   totalInFeed: number;
 }
 
-
 export interface PaginationMetadata {
   page: number;
   limit: number;
@@ -336,7 +335,6 @@ export function useAllSubmissions(limit: number = 20, status?: string) {
   });
 }
 
-
 export const ActivityType = {
   CONTENT_SUBMISSION: "CONTENT_SUBMISSION",
   CONTENT_APPROVAL: "CONTENT_APPROVAL",
@@ -355,5 +353,5 @@ export {
   useUserActivities,
   useMyCuratedFeeds,
   useMyApprovedFeeds,
-  useMyFeedRank
+  useMyFeedRank,
 };

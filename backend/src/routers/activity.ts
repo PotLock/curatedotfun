@@ -7,14 +7,24 @@ import {
   getMyCuratedFeedsDefinition,
   getMyFeedRankDefinition,
   getUserActivitiesDefinition,
-} from '@curatedotfun/api-contract';
-import { handleServiceError, protectedProcedure, publicProcedure, router } from '../trpc';
+} from "@curatedotfun/api-contract";
+import {
+  handleServiceError,
+  protectedProcedure,
+  publicProcedure,
+  router,
+} from "../trpc";
 
 // --- Procedures ---
 
 // GET /activity/global-stats
 const getGlobalStatsProcedure = publicProcedure
-  .meta({ openapi: { ...getGlobalStatsDefinition.meta.openapi, tags: [...getGlobalStatsDefinition.meta.openapi.tags] } })
+  .meta({
+    openapi: {
+      ...getGlobalStatsDefinition.meta.openapi,
+      tags: [...getGlobalStatsDefinition.meta.openapi.tags],
+    },
+  })
   .output(getGlobalStatsDefinition.output)
   .query(async ({ ctx }) => {
     try {
@@ -28,13 +38,19 @@ const getGlobalStatsProcedure = publicProcedure
 
 // GET /activity/leaderboard
 const getLeaderboardProcedure = publicProcedure
-  .meta({ openapi: { ...getLeaderboardDefinition.meta.openapi, tags: [...getLeaderboardDefinition.meta.openapi.tags] } })
+  .meta({
+    openapi: {
+      ...getLeaderboardDefinition.meta.openapi,
+      tags: [...getLeaderboardDefinition.meta.openapi.tags],
+    },
+  })
   .input(getLeaderboardDefinition.input)
   .output(getLeaderboardDefinition.output)
   .query(async ({ ctx, input }) => {
     try {
       const activityService = ctx.sp.getActivityService();
-      const leaderboard = await activityService.getUserRankingLeaderboard(input);
+      const leaderboard =
+        await activityService.getUserRankingLeaderboard(input);
       return { leaderboard };
     } catch (error) {
       return handleServiceError(error);
@@ -43,21 +59,31 @@ const getLeaderboardProcedure = publicProcedure
 
 // GET /activity/user/me
 const getMyActivitiesProcedure = protectedProcedure
-  .meta({ openapi: { ...getMyActivitiesDefinition.meta.openapi, tags: [...getMyActivitiesDefinition.meta.openapi.tags] } })
+  .meta({
+    openapi: {
+      ...getMyActivitiesDefinition.meta.openapi,
+      tags: [...getMyActivitiesDefinition.meta.openapi.tags],
+    },
+  })
   .input(getMyActivitiesDefinition.input)
   .output(getMyActivitiesDefinition.output)
   .query(async ({ ctx, input }) => {
     try {
       const userService = ctx.sp.getUserService();
-      const user = await userService.findUserByAuthProviderId(ctx.authProviderId as string);
+      const user = await userService.findUserByAuthProviderId(
+        ctx.authProviderId as string,
+      );
 
       if (!user) {
         // This case should ideally be handled by handleServiceError or a specific TRPCError
-        throw new Error('User profile not found'); // Or TRPCError NOT_FOUND
+        throw new Error("User profile not found"); // Or TRPCError NOT_FOUND
       }
 
       const activityService = ctx.sp.getActivityService();
-      const activities = await activityService.getUserActivities(user.id, input);
+      const activities = await activityService.getUserActivities(
+        user.id,
+        input,
+      );
       return { activities };
     } catch (error) {
       return handleServiceError(error);
@@ -66,7 +92,12 @@ const getMyActivitiesProcedure = protectedProcedure
 
 // GET //activity/user/{userId}
 const getUserActivitiesProcedure = publicProcedure
-  .meta({ openapi: { ...getUserActivitiesDefinition.meta.openapi, tags: [...getUserActivitiesDefinition.meta.openapi.tags] } })
+  .meta({
+    openapi: {
+      ...getUserActivitiesDefinition.meta.openapi,
+      tags: [...getUserActivitiesDefinition.meta.openapi.tags],
+    },
+  })
   .input(getUserActivitiesDefinition.input)
   .output(getUserActivitiesDefinition.output)
   .query(async ({ ctx, input }) => {
@@ -79,9 +110,12 @@ const getUserActivitiesProcedure = publicProcedure
       if (isNaN(numericUserId)) {
         // This should ideally be caught by a more specific Zod transform if we want strict number input
         // or handled by handleServiceError if it throws a TRPCError.BAD_REQUEST
-        throw new Error('Invalid userId format');
+        throw new Error("Invalid userId format");
       }
-      const activities = await activityService.getUserActivities(numericUserId, input.options);
+      const activities = await activityService.getUserActivities(
+        numericUserId,
+        input.options,
+      );
       return { activities };
     } catch (error) {
       return handleServiceError(error);
@@ -90,15 +124,22 @@ const getUserActivitiesProcedure = publicProcedure
 
 // GET /activity/feeds/curated-by-me
 const getMyCuratedFeedsProcedure = protectedProcedure
-  .meta({ openapi: { ...getMyCuratedFeedsDefinition.meta.openapi, tags: [...getMyCuratedFeedsDefinition.meta.openapi.tags] } })
+  .meta({
+    openapi: {
+      ...getMyCuratedFeedsDefinition.meta.openapi,
+      tags: [...getMyCuratedFeedsDefinition.meta.openapi.tags],
+    },
+  })
   .output(getMyCuratedFeedsDefinition.output)
   .query(async ({ ctx }) => {
     try {
       const userService = ctx.sp.getUserService();
-      const user = await userService.findUserByAuthProviderId(ctx.authProviderId as string);
+      const user = await userService.findUserByAuthProviderId(
+        ctx.authProviderId as string,
+      );
 
       if (!user) {
-        throw new Error('User profile not found');
+        throw new Error("User profile not found");
       }
 
       const activityService = ctx.sp.getActivityService();
@@ -111,15 +152,22 @@ const getMyCuratedFeedsProcedure = protectedProcedure
 
 // GET /activity/feeds/approved-by-me
 const getMyApprovedFeedsProcedure = protectedProcedure
-  .meta({ openapi: { ...getMyApprovedFeedsDefinition.meta.openapi, tags: [...getMyApprovedFeedsDefinition.meta.openapi.tags] } })
+  .meta({
+    openapi: {
+      ...getMyApprovedFeedsDefinition.meta.openapi,
+      tags: [...getMyApprovedFeedsDefinition.meta.openapi.tags],
+    },
+  })
   .output(getMyApprovedFeedsDefinition.output)
   .query(async ({ ctx }) => {
     try {
       const userService = ctx.sp.getUserService();
-      const user = await userService.findUserByAuthProviderId(ctx.authProviderId as string);
+      const user = await userService.findUserByAuthProviderId(
+        ctx.authProviderId as string,
+      );
 
       if (!user) {
-        throw new Error('User profile not found');
+        throw new Error("User profile not found");
       }
 
       const activityService = ctx.sp.getActivityService();
@@ -132,20 +180,30 @@ const getMyApprovedFeedsProcedure = protectedProcedure
 
 // GET /activity/feeds/{feedId}/my-rank
 const getMyFeedRankProcedure = protectedProcedure
-  .meta({ openapi: { ...getMyFeedRankDefinition.meta.openapi, tags: [...getMyFeedRankDefinition.meta.openapi.tags] } })
+  .meta({
+    openapi: {
+      ...getMyFeedRankDefinition.meta.openapi,
+      tags: [...getMyFeedRankDefinition.meta.openapi.tags],
+    },
+  })
   .input(getMyFeedRankDefinition.input)
   .output(getMyFeedRankDefinition.output)
   .query(async ({ ctx, input }) => {
     try {
       const userService = ctx.sp.getUserService();
-      const user = await userService.findUserByAuthProviderId(ctx.authProviderId as string);
+      const user = await userService.findUserByAuthProviderId(
+        ctx.authProviderId as string,
+      );
 
       if (!user) {
-        throw new Error('User profile not found');
+        throw new Error("User profile not found");
       }
 
       const activityService = ctx.sp.getActivityService();
-      const ranks = await activityService.getUserFeedRanks(user.id, input.feedId);
+      const ranks = await activityService.getUserFeedRanks(
+        user.id,
+        input.feedId,
+      );
       return { ranks };
     } catch (error) {
       return handleServiceError(error);

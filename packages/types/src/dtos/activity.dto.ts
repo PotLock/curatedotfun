@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { activityTypeEnum } from '../db';
+import { z } from "zod";
+import { activityTypeEnum } from "../db";
 
 // Enum for activity types, using the one from shared-db via db.ts
 export const activityTypeEnumSchema = z.enum(activityTypeEnum.enumValues);
@@ -25,7 +25,9 @@ export const UserRankingLeaderboardEntrySchema = z.object({
   score: z.number().int().min(0),
   // Add other relevant fields for a leaderboard entry
 });
-export type UserRankingLeaderboardEntry = z.infer<typeof UserRankingLeaderboardEntrySchema>;
+export type UserRankingLeaderboardEntry = z.infer<
+  typeof UserRankingLeaderboardEntrySchema
+>;
 
 // Schema for Activity Query Options
 export const ActivityQueryOptionsSchema = z.object({
@@ -35,8 +37,8 @@ export const ActivityQueryOptionsSchema = z.object({
   // status: z.enum(['pending', 'approved', 'rejected']).optional(), // Example
   limit: z.number().int().min(1).optional().default(10),
   offset: z.number().int().min(0).optional().default(0),
-  sortBy: z.string().optional().default('createdAt'),
-  sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
+  sortBy: z.string().optional().default("createdAt"),
+  sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
 });
 export type ActivityQueryOptions = z.infer<typeof ActivityQueryOptionsSchema>;
 
@@ -46,14 +48,16 @@ export const LeaderboardQueryOptionsSchema = z.object({
   offset: z.number().int().min(0).optional().default(0),
   // Potentially add other options like time period, specific activity types for leaderboard
 });
-export type LeaderboardQueryOptions = z.infer<typeof LeaderboardQueryOptionsSchema>;
+export type LeaderboardQueryOptions = z.infer<
+  typeof LeaderboardQueryOptionsSchema
+>;
 
 // --- tRPC Input Schemas ---
 
 // Input schema for getting the leaderboard
 // Extends LeaderboardQueryOptionsSchema and adds Hono-specific query params
 export const GetLeaderboardInputSchema = LeaderboardQueryOptionsSchema.extend({
-  time_range: z.enum(['day', 'week', 'month', 'year', 'all']).optional(),
+  time_range: z.enum(["day", "week", "month", "year", "all"]).optional(),
   feed_id: z.string().optional(),
   // limit is already in LeaderboardQueryOptionsSchema as z.number().int().min(1).optional().default(10)
 });
@@ -65,21 +69,45 @@ export const GetUserActivitiesInputSchema = z.object({
   userId: z.string(), // Consistent with UserRankingLeaderboardEntrySchema.userId
   options: ActivityQueryOptionsSchema.extend({
     types: z.array(activityTypeEnumSchema).optional(), // Hono route had comma-separated string
-    from_date: z.string().datetime({ message: "Invalid datetime string. Must be UTC and in ISO8601 format." }).optional(),
-    to_date: z.string().datetime({ message: "Invalid datetime string. Must be UTC and in ISO8601 format." }).optional(),
-  }).omit({ userId: true }) // Remove optional userId from base as it's mandatory here
-  .optional(),
+    from_date: z
+      .string()
+      .datetime({
+        message: "Invalid datetime string. Must be UTC and in ISO8601 format.",
+      })
+      .optional(),
+    to_date: z
+      .string()
+      .datetime({
+        message: "Invalid datetime string. Must be UTC and in ISO8601 format.",
+      })
+      .optional(),
+  })
+    .omit({ userId: true }) // Remove optional userId from base as it's mandatory here
+    .optional(),
 });
-export type GetUserActivitiesInput = z.infer<typeof GetUserActivitiesInputSchema>;
+export type GetUserActivitiesInput = z.infer<
+  typeof GetUserActivitiesInputSchema
+>;
 
 // Input schema for getting the authenticated user's ("my") activities
 // Similar to GetUserActivitiesInput.options
 export const GetMyActivitiesInputSchema = ActivityQueryOptionsSchema.extend({
   types: z.array(activityTypeEnumSchema).optional(),
-  from_date: z.string().datetime({ message: "Invalid datetime string. Must be UTC and in ISO8601 format." }).optional(),
-  to_date: z.string().datetime({ message: "Invalid datetime string. Must be UTC and in ISO8601 format." }).optional(),
-}).omit({ userId: true }) // userId comes from context
-.optional();
+  from_date: z
+    .string()
+    .datetime({
+      message: "Invalid datetime string. Must be UTC and in ISO8601 format.",
+    })
+    .optional(),
+  to_date: z
+    .string()
+    .datetime({
+      message: "Invalid datetime string. Must be UTC and in ISO8601 format.",
+    })
+    .optional(),
+})
+  .omit({ userId: true }) // userId comes from context
+  .optional();
 export type GetMyActivitiesInput = z.infer<typeof GetMyActivitiesInputSchema>;
 
 // Input schema for getting the authenticated user's rank for a specific feed

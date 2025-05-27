@@ -1,6 +1,6 @@
-import type { UserProfile as Web3AuthUserProfile } from './web3auth';
+import type { UserProfile as Web3AuthUserProfile } from "./web3auth";
 
-export type AuthMethod = 'web3auth' | 'near_wallet' | null;
+export type AuthMethod = "web3auth" | "near_wallet" | null;
 
 export type AuthUser = Web3AuthUserProfile;
 
@@ -11,7 +11,7 @@ export interface AuthContextType {
   idToken: string | null; // JWT for API authentication
   authMethod: AuthMethod;
   login: (
-    method: 'web3auth' | 'near_wallet',
+    method: "web3auth" | "near_wallet",
     options?: { loginProvider?: string; [key: string]: unknown },
   ) => Promise<void>;
   logout: () => Promise<void>;

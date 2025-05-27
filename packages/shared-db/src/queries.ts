@@ -7,11 +7,17 @@ import {
   submissions,
   submissionStatusZodEnum,
 } from "./schema";
-import { DB, SelectModerationHistory, SelectSubmission, SelectSubmissionFeed, SelectFeed } from "./validators";
+import {
+  DB,
+  SelectModerationHistory,
+  SelectSubmission,
+  SelectSubmissionFeed,
+  SelectFeed,
+} from "./validators";
 
 export async function upsertFeeds(
   db: DB,
-  feedsToUpsert: SelectFeed['config'][],
+  feedsToUpsert: SelectFeed["config"][],
 ): Promise<void> {
   await db.transaction(async (tx) => {
     for (const feedConfig of feedsToUpsert) {
@@ -43,7 +49,7 @@ export async function saveSubmissionToFeed(
   db: DB,
   submissionId: string,
   feedId: string,
-  status: SelectSubmissionFeed['status'] = submissionStatusZodEnum.Enum.pending,
+  status: SelectSubmissionFeed["status"] = submissionStatusZodEnum.Enum.pending,
 ): Promise<void> {
   // Check if submission exists
   const submissions_result = await db
@@ -132,7 +138,7 @@ export async function updateSubmissionFeedStatus(
   db: DB,
   submissionId: string,
   feedId: string,
-  status: SelectSubmissionFeed['status'],
+  status: SelectSubmissionFeed["status"],
   moderationResponseTweetId: string,
 ): Promise<void> {
   await db
@@ -215,7 +221,8 @@ export async function getSubmissionByCuratorTweetId(
 export async function getSubmission(
   db: DB,
   tweetId: string,
-): Promise<SelectSubmission | null> { // Changed Submission to SelectSubmission
+): Promise<SelectSubmission | null> {
+  // Changed Submission to SelectSubmission
   const results = await db
     .select({
       s: {

@@ -47,18 +47,10 @@ export const users = table(
     ...timestamps, // createdAt, updatedAt
   },
   (users) => [
-    uniqueIndex("users_auth_provider_id_idx").on(
-      users.auth_provider_id,
-    ),
-    uniqueIndex("users_near_account_id_idx").on(
-      users.near_account_id,
-    ),
-    uniqueIndex("users_near_public_key_idx").on(
-      users.near_public_key,
-    ),
+    uniqueIndex("users_auth_provider_id_idx").on(users.auth_provider_id),
+    uniqueIndex("users_near_account_id_idx").on(users.near_account_id),
+    uniqueIndex("users_near_public_key_idx").on(users.near_public_key),
     // Index on metadata type for efficient queries
-    index("metadata_type_idx").on(
-      sql`(${users.metadata} ->> 'type')`,
-    ),
+    index("metadata_type_idx").on(sql`(${users.metadata} ->> 'type')`),
   ],
 );

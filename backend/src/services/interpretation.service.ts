@@ -11,7 +11,12 @@ import {
 } from "../types/inbound.types";
 import { logger } from "../utils/logger";
 import { IBaseService } from "./interfaces/base-service.interface";
-import { FeedConfig, SelectModerationHistory, Submission, submissionStatusZodEnum } from "@curatedotfun/types";
+import {
+  FeedConfig,
+  SelectModerationHistory,
+  Submission,
+  submissionStatusZodEnum,
+} from "@curatedotfun/types";
 
 export class InterpretationService implements IBaseService {
   public readonly logger: Logger;

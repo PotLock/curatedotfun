@@ -16,9 +16,7 @@ import {
   WALLET_ADAPTERS,
   WEB3AUTH_NETWORK,
 } from "@web3auth/base";
-import {
-  CommonPrivateKeyProvider
-} from "@web3auth/base-provider";
+import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
 import { Web3AuthNoModal } from "@web3auth/no-modal";
 
 import { setupBitteWallet } from "@near-wallet-selector/bitte-wallet";

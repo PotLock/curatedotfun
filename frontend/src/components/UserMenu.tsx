@@ -26,7 +26,6 @@ export default function UserMenu() {
 
   const { signedAccountId, signOut } = useWalletSelector();
 
-
   // Profile image component with error handling
   const ProfileImage = ({ size = "small" }) => {
     const handleImageError = () => {

@@ -61,7 +61,7 @@ export const SourceSearchConfigSchema = z
     query: z.string().optional(), // General query string
     pageSize: z.number().int().positive().optional(),
     language: z.string().optional(), // e.g., "en", "es"
-    platformArgs: z.record(z.string(), z.any()).optional(), 
+    platformArgs: z.record(z.string(), z.any()).optional(),
     // Allow other dynamic properties
   })
   .catchall(z.any());
@@ -71,7 +71,7 @@ export const SourceConfigSchema = z.object({
   plugin: z.string(), // Name/key of the source plugin registered in AppConfig.plugins
   // Config for the source plugin instance itself (e.g., API keys, base URLs)
   // This 'config' is passed to the plugin's initialize method.
-  config: z.record(z.string(), z.any()).optional(), 
+  config: z.record(z.string(), z.any()).optional(),
   // Array of search configurations for this source instance in this feed.
   // Each object defines a specific query/task for the source plugin.
   search: z.array(SourceSearchConfigSchema),
@@ -141,10 +141,7 @@ export const feedRecapsState = table(
   },
   (table) => [
     // Ensure only one state record per feed/recap ID combination
-    uniqueIndex("feed_recap_id_idx").on(
-      table.feedId,
-      table.recapId,
-    ),
+    uniqueIndex("feed_recap_id_idx").on(table.feedId, table.recapId),
   ],
 );
 

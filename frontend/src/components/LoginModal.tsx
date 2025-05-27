@@ -22,7 +22,10 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
 
     setIsLoading(true);
     try {
-      await login('web3auth', { loginProvider: 'email_passwordless', login_hint: email });
+      await login("web3auth", {
+        loginProvider: "email_passwordless",
+        login_hint: email,
+      });
       onClose();
     } catch (error) {
       console.error("Email login failed:", error);
@@ -47,7 +50,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             <Button
               className="w-full flex items-center justify-center gap-2"
               onClick={() => {
-                login('web3auth', { loginProvider: 'google' });
+                login("web3auth", { loginProvider: "google" });
                 onClose();
               }}
               variant="default"
@@ -91,7 +94,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                 variant="outline"
                 className="w-full flex items-center justify-center gap-2"
                 onClick={() => {
-                  login('web3auth', { loginProvider: 'github' });
+                  login("web3auth", { loginProvider: "github" });
                   onClose();
                 }}
               >
@@ -112,7 +115,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                 variant="outline"
                 className="w-full flex items-center justify-center gap-2"
                 onClick={() => {
-                  login('web3auth', { loginProvider: 'apple' });
+                  login("web3auth", { loginProvider: "apple" });
                   onClose();
                 }}
               >

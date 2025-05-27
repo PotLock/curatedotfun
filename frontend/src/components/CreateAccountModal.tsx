@@ -16,11 +16,7 @@ export const CreateAccountModal = ({
   isOpen,
   onClose,
 }: CreateAccountModalProps) => {
-  const {
-    user,
-    idToken,
-    logout,
-  } = useAuth();
+  const { user, idToken, logout } = useAuth();
   const nearPublicKey = user?.near_public_key;
 
   const [chosenUsername, setChosenUsername] = useState("");
@@ -45,8 +41,11 @@ export const CreateAccountModal = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chosenUsername || !idToken) { 
-      if (!idToken) console.error("CreateAccountModal: idToken is missing, cannot create profile.");
+    if (!chosenUsername || !idToken) {
+      if (!idToken)
+        console.error(
+          "CreateAccountModal: idToken is missing, cannot create profile.",
+        );
       return;
     }
 
@@ -73,7 +72,7 @@ export const CreateAccountModal = ({
       const createdProfile = await createUserMutation.mutateAsync({
         username: chosenUsername.toLowerCase(),
         near_public_key: nearPublicKey,
-        name: user?.username || user?.email?.split('@')[0],
+        name: user?.username || user?.email?.split("@")[0],
         email: user?.email,
       });
 

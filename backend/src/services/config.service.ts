@@ -1,4 +1,9 @@
-import { AppConfig, FeedConfig, PluginRegistrationConfig, PluginsConfig } from "@curatedotfun/types";
+import {
+  AppConfig,
+  FeedConfig,
+  PluginRegistrationConfig,
+  PluginsConfig,
+} from "@curatedotfun/types";
 import fs from "fs/promises";
 import path from "path";
 import { hydrateConfigValues } from "../utils/config";

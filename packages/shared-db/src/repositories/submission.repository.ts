@@ -7,7 +7,7 @@ import {
   submissionFeeds,
   submissions,
   SubmissionStatus,
-  submissionStatusZodEnum
+  submissionStatusZodEnum,
 } from "../schema";
 import {
   DB,
@@ -81,7 +81,10 @@ export class SubmissionRepository {
    * @param moderation The moderation action to save
    * @param txDb The transactional DB instance
    */
-  async saveModerationAction(moderation: InsertModerationHistory, txDb: DB): Promise<void> {
+  async saveModerationAction(
+    moderation: InsertModerationHistory,
+    txDb: DB,
+  ): Promise<void> {
     return withErrorHandling(
       async () => {
         await txDb
@@ -190,7 +193,8 @@ export class SubmissionRepository {
                     createdAt: moderationHistory.createdAt,
                     updatedAt: moderationHistory.updatedAt,
                     feedId: moderationHistory.feedId,
-                    moderationResponseTweetId: // This is selected but will NOT be part of SelectModerationHistory object
+                    // This is selected but will NOT be part of SelectModerationHistory object
+                    moderationResponseTweetId:
                       submissionFeeds.moderationResponseTweetId,
                   },
                   sf: {
@@ -237,10 +241,11 @@ export class SubmissionRepository {
                     adminId: moderationHistory.adminId,
                     action: moderationHistory.action,
                     note: moderationHistory.note,
-                    createdAt: moderationHistory.createdAt, 
+                    createdAt: moderationHistory.createdAt,
                     updatedAt: moderationHistory.updatedAt,
                     feedId: moderationHistory.feedId,
-                    moderationResponseTweetId: // This is selected but will NOT be part of SelectModerationHistory object
+                    // This is selected but will NOT be part of SelectModerationHistory object
+                    moderationResponseTweetId:
                       submissionFeeds.moderationResponseTweetId,
                   },
                   sf: {
@@ -304,7 +309,12 @@ export class SubmissionRepository {
             }
 
             // Add moderation history
-            if (result.m && result.m.adminId !== null && result.m.tweetId && result.m.id !== null) {
+            if (
+              result.m &&
+              result.m.adminId !== null &&
+              result.m.tweetId &&
+              result.m.id !== null
+            ) {
               const submission = submissionMap.get(result.s.tweetId)!;
               const moderationEntry: SelectModerationHistory = {
                 id: result.m.id!,
@@ -355,15 +365,21 @@ export class SubmissionRepository {
               let hasApproved = false;
 
               for (const feedStatus of submission.feedStatuses) {
-                if (feedStatus.status === submissionStatusZodEnum.Enum.pending) {
+                if (
+                  feedStatus.status === submissionStatusZodEnum.Enum.pending
+                ) {
                   hasPending = true;
                   submission.status = submissionStatusZodEnum.Enum.pending;
                   submission.moderationResponseTweetId =
                     feedStatus.moderationResponseTweetId;
                   break; // Pending has highest priority
-                } else if (feedStatus.status === submissionStatusZodEnum.Enum.rejected) {
+                } else if (
+                  feedStatus.status === submissionStatusZodEnum.Enum.rejected
+                ) {
                   hasRejected = true;
-                } else if (feedStatus.status === submissionStatusZodEnum.Enum.approved) {
+                } else if (
+                  feedStatus.status === submissionStatusZodEnum.Enum.approved
+                ) {
                   hasApproved = true;
                 }
               }

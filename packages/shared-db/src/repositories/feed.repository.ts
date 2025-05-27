@@ -11,7 +11,17 @@ import {
   submissionStatusZodEnum,
 } from "../schema";
 import { executeWithRetry, withErrorHandling } from "../utils";
-import { DB, InsertFeed, InsertFeedRecapState, InsertSubmissionFeed, SelectFeed, SelectFeedRecapState, SelectModerationHistory, SelectSubmissionFeed, UpdateFeed } from "../validators";
+import {
+  DB,
+  InsertFeed,
+  InsertFeedRecapState,
+  InsertSubmissionFeed,
+  SelectFeed,
+  SelectFeedRecapState,
+  SelectModerationHistory,
+  SelectSubmissionFeed,
+  UpdateFeed,
+} from "../validators";
 import { SubmissionWithFeedData } from "./submission.repository";
 
 /**
@@ -163,7 +173,9 @@ export class FeedRepository {
   /**
    * Get all recap states for a feed
    */
-  async getAllRecapStatesForFeed(feedId: string): Promise<SelectFeedRecapState[]> {
+  async getAllRecapStatesForFeed(
+    feedId: string,
+  ): Promise<SelectFeedRecapState[]> {
     return withErrorHandling(
       async () =>
         executeWithRetry(async (dbInstance) => {
@@ -365,7 +377,12 @@ export class FeedRepository {
   ): Promise<void> {
     return withErrorHandling(
       async () => {
-        await queries.saveSubmissionToFeed(txDb, data.submissionId, data.feedId, data.status ?? submissionStatusZodEnum.Enum.pending);
+        await queries.saveSubmissionToFeed(
+          txDb,
+          data.submissionId,
+          data.feedId,
+          data.status ?? submissionStatusZodEnum.Enum.pending,
+        );
       },
       {
         operationName: "saveSubmissionToFeed",
@@ -377,7 +394,9 @@ export class FeedRepository {
   /**
    * Gets feeds by submission ID.
    */
-  async getFeedsBySubmission(submissionId: string): Promise<SelectSubmissionFeed[]> {
+  async getFeedsBySubmission(
+    submissionId: string,
+  ): Promise<SelectSubmissionFeed[]> {
     return withErrorHandling(
       async () =>
         executeWithRetry(
@@ -414,7 +433,9 @@ export class FeedRepository {
   /**
    * Gets submissions by feed ID.
    */
-  async getSubmissionsByFeed(feedId: string): Promise<SubmissionWithFeedData[]> {
+  async getSubmissionsByFeed(
+    feedId: string,
+  ): Promise<SubmissionWithFeedData[]> {
     return withErrorHandling(
       async () =>
         executeWithRetry(async (dbInstance) => {
@@ -486,7 +507,12 @@ export class FeedRepository {
               });
             }
 
-            if (result.m && result.m.adminId !== null && result.m.id !== null && result.m.tweetId !== null) {
+            if (
+              result.m &&
+              result.m.adminId !== null &&
+              result.m.id !== null &&
+              result.m.tweetId !== null
+            ) {
               const submission = submissionMap.get(result.s.tweetId)!;
               const moderationEntry: SelectModerationHistory = {
                 id: result.m.id!,

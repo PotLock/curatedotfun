@@ -1,4 +1,9 @@
-import { FeedConfig, SelectModerationHistory, SourceItem, Submission } from "@curatedotfun/types";
+import {
+  FeedConfig,
+  SelectModerationHistory,
+  SourceItem,
+  Submission,
+} from "@curatedotfun/types";
 
 // --- New Types for Architectural Refactor ---
 

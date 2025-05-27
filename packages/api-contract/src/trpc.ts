@@ -1,6 +1,6 @@
-import { initTRPC, TRPCError } from '@trpc/server';
-import { OpenApiMeta } from 'trpc-to-openapi';
-import { JWTPayload } from 'jose';
+import { initTRPC, TRPCError } from "@trpc/server";
+import { OpenApiMeta } from "trpc-to-openapi";
+import { JWTPayload } from "jose";
 
 export interface Context {
   authProviderId?: string;
@@ -22,7 +22,10 @@ export const publicProcedure = t.procedure;
  */
 export const protectedProcedure = publicProcedure.use(async ({ ctx, next }) => {
   if (!ctx.jwtPayload?.authProviderId) {
-    throw new TRPCError({ code: 'UNAUTHORIZED', message: 'User not authenticated' });
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "User not authenticated",
+    });
   }
   return next({
     ctx: {

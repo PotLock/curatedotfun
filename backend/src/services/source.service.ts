@@ -7,7 +7,11 @@ import {
   SourcePluginSearchOptions,
   SourceSearchConfig,
 } from "@curatedotfun/types";
-import { FeedRepository, LastProcessedStateRepository, type DB } from "@curatedotfun/shared-db";
+import {
+  FeedRepository,
+  LastProcessedStateRepository,
+  type DB,
+} from "@curatedotfun/shared-db";
 import { Logger } from "pino";
 import { InboundService } from "./inbound.service";
 import { IBackgroundTaskService } from "./interfaces/background-task.interface";

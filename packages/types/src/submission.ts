@@ -2,7 +2,7 @@ import type {
   SelectModerationHistory,
   SelectSubmission,
   SelectSubmissionFeed,
-  SubmissionStatus
+  SubmissionStatus,
 } from "./db";
 
 export interface FeedStatus {
@@ -15,13 +15,14 @@ export interface FeedStatus {
 // Base Submission type using SelectSubmission from shared-db
 // You might need to adjust fields based on what SelectSubmission exactly contains
 // and what additional properties are added at the application level.
-export interface Submission extends Omit<SelectSubmission, "createdAt" | "submittedAt"> {
+export interface Submission
+  extends Omit<SelectSubmission, "createdAt" | "submittedAt"> {
   // Overriding with Date type if SelectSubmission has string dates, or ensure SelectSubmission has Date
   createdAt: Date;
   submittedAt: Date | null;
   username: string; // Ensure these are part of SelectSubmission or added if not
   curatorUsername: string;
-  media?: Array<{ type: string; url: string;[key: string]: any }>; // This seems custom
+  media?: Array<{ type: string; url: string; [key: string]: any }>; // This seems custom
   moderationHistory: SelectModerationHistory[]; // Array of moderation history records
   status?: SubmissionStatus; // Explicitly use the shared SubmissionStatus
   feeds?: SelectSubmissionFeed[]; // Array of submission feed records
@@ -30,7 +31,8 @@ export interface Submission extends Omit<SelectSubmission, "createdAt" | "submit
 }
 
 // Moderation type using SelectModerationHistory from shared-db
-export interface Moderation extends Omit<SelectModerationHistory, "createdAt" | "timestamp" | "action"> {
+export interface Moderation
+  extends Omit<SelectModerationHistory, "createdAt" | "timestamp" | "action"> {
   // Assuming SelectModerationHistory has createdAt and not timestamp, adjust as needed
   // Or if it has timestamp, ensure it's Date
   timestamp: Date; // Ensure this is a Date

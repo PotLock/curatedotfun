@@ -47,7 +47,8 @@ export const DEFAULT_RETRY_OPTIONS: retry.Options = {
     const maxRetries = 3; // Same as retries above
     const isLastAttempt = attempt === maxRetries;
 
-    console.warn( // TODO: Logger
+    console.warn(
+      // TODO: Logger
       `Database operation failed (attempt ${attempt}/${maxRetries})`,
       {
         error: error.message,
@@ -100,14 +101,15 @@ export async function withErrorHandling<T>(
     errorMessage?: string;
     additionalContext?: Record<string, any>;
   },
-  defaultValue?: T
+  defaultValue?: T,
 ): Promise<T> {
   try {
     return await operation();
   } catch (error: any) {
     const { operationName, errorMessage, additionalContext } = context;
 
-    console.error(`Failed to ${operationName}:`, { // TODO: Logger
+    console.error(`Failed to ${operationName}:`, {
+      // TODO: Logger
       error: error.message,
       code: error.code,
       ...additionalContext,

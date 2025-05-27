@@ -55,13 +55,11 @@ export const activities = table(
     index("activities_type_idx").on(activities.type),
     index("activities_timestamp_idx").on(activities.timestamp),
     index("activities_feed_id_idx").on(activities.feed_id),
-    index("activities_submission_id_idx").on(
-      activities.submission_id,
-    ),
+    index("activities_submission_id_idx").on(activities.submission_id),
     index("activities_metadata_type_idx").on(
       sql`(${activities.metadata} ->> 'type')`,
     ),
-  ]
+  ],
 );
 
 // User Stats Table - For aggregated user statistics
@@ -77,7 +75,7 @@ export const userStats = table("user_stats", {
   data: jsonb("data"), // Holds additional stats data
   metadata: jsonb("metadata").$type<Metadata>(), // Holds type (schema URL) and other meta info
 
-  ...timestamps, 
+  ...timestamps,
 });
 
 // Feed User Stats Table - For feed-specific user statistics

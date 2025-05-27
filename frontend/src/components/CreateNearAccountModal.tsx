@@ -15,11 +15,8 @@ export const CreateNearAccountModal = ({
   isOpen,
   onClose,
 }: CreateNearAccountModalProps) => {
-  const {
-    user,
-    idToken: authIdToken,
-  } = useAuth();
-  const nearPublicKey = user?.near_public_key; 
+  const { user, idToken: authIdToken } = useAuth();
+  const nearPublicKey = user?.near_public_key;
 
   const [chosenUsername, setChosenUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -46,8 +43,12 @@ export const CreateNearAccountModal = ({
     e.preventDefault();
     // Use authIdToken for the check, and nearPublicKey from user object
     if (!chosenUsername || !nearPublicKey || !authIdToken) {
-      if(!authIdToken) console.error("CreateNearAccountModal: authIdToken missing.");
-      if(!nearPublicKey) console.error("CreateNearAccountModal: nearPublicKey missing from user.");
+      if (!authIdToken)
+        console.error("CreateNearAccountModal: authIdToken missing.");
+      if (!nearPublicKey)
+        console.error(
+          "CreateNearAccountModal: nearPublicKey missing from user.",
+        );
       return;
     }
 
@@ -67,7 +68,6 @@ export const CreateNearAccountModal = ({
     setError(null);
 
     try {
-
       // Call backend POST /api/users
       const response = await fetch("/api/users", {
         method: "POST",
@@ -79,7 +79,7 @@ export const CreateNearAccountModal = ({
           chosen_username: chosenUsername.toLowerCase(),
           near_public_key: nearPublicKey,
           user_info: {
-            name: user?.username || user?.email?.split('@')[0],
+            name: user?.username || user?.email?.split("@")[0],
             email: user?.email,
           },
         }),

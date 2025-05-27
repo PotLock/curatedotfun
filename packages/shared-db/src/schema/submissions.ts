@@ -6,7 +6,7 @@ import {
   primaryKey,
   serial,
   pgTable as table,
-  text
+  text,
 } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
@@ -54,9 +54,7 @@ export const submissionFeeds = table(
     feedId: text("feed_id")
       .notNull()
       .references(() => feeds.id, { onDelete: "cascade" }),
-    status: submissionStatusEnum("status")
-      .notNull()
-      .default("pending"),
+    status: submissionStatusEnum("status").notNull().default("pending"),
     moderationResponseTweetId: text("moderation_response_tweet_id"),
     ...timestamps,
   },
