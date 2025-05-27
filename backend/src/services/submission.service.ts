@@ -1,3 +1,4 @@
+import { submissionStatusZodEnum } from './../../../packages/shared-db/src/schema/submissions';
 import { Logger } from "pino";
 import { ModerationCommandData } from "../types/inbound.types";
 import { IBaseService } from "./interfaces/base-service.interface";
@@ -5,7 +6,6 @@ import { ProcessorService } from "./processor.service";
 import {
   SubmissionRepository,
   FeedRepository,
-  type DB,
   SubmissionWithFeedData,
 } from "@curatedotfun/shared-db";
 import {
@@ -179,7 +179,7 @@ export class SubmissionService implements IBaseService {
               `Submission ${externalId} already exists in feed ${currentFeedId} with status ${existingFeedEntry.status}.`,
             );
             if (
-              existingFeedEntry.status === SubmissionStatus.PENDING &&
+              existingFeedEntry.status === submissionStatusZodEnum.Enum.pending &&
               curatorUsername &&
               this.isModeratorForFeed(curatorUsername, feedConfig, platformKey)
             ) {
@@ -203,16 +203,16 @@ export class SubmissionService implements IBaseService {
           await this.feedRepository.saveSubmissionToFeed(
             externalId,
             feedConfig.id,
-            SubmissionStatus.PENDING, // Hardcoded default status
+            submissionStatusZodEnum.Enum.pending, // Hardcoded default status
             tx,
           );
           this.logger.info(
             {
               externalId,
               feedId: feedConfig.id,
-              status: SubmissionStatus.PENDING,
+              status: submissionStatusZodEnum.Enum.pending,
             },
-            `Submission ${externalId} added to feed ${feedConfig.id} with status ${SubmissionStatus.PENDING}.`,
+            `Submission ${externalId} added to feed ${feedConfig.id} with status ${submissionStatusZodEnum.Enum.pending}.`,
           );
 
           if (
@@ -279,7 +279,7 @@ export class SubmissionService implements IBaseService {
     await this.feedRepository.updateSubmissionFeedStatus(
       submission.tweetId,
       feedConfig.id,
-      SubmissionStatus.APPROVED,
+      submissionStatusZodEnum.Enum.approved,
       moderatorActionExternalId ?? null,
       tx,
     );
@@ -380,7 +380,7 @@ export class SubmissionService implements IBaseService {
           );
           if (
             submissionFeedEntry &&
-            submissionFeedEntry.status === SubmissionStatus.PENDING
+            submissionFeedEntry.status === submissionStatusZodEnum.Enum.pending
           ) {
             feedsToModerate.push(feedConfig);
           } else {
@@ -428,8 +428,8 @@ export class SubmissionService implements IBaseService {
 
           const newStatus =
             action === "approve"
-              ? SubmissionStatus.APPROVED
-              : SubmissionStatus.REJECTED;
+              ? submissionStatusZodEnum.Enum.approved
+              : submissionStatusZodEnum.Enum.rejected;
           await this.feedRepository.updateSubmissionFeedStatus(
             targetExternalId,
             feed.id,
@@ -443,7 +443,7 @@ export class SubmissionService implements IBaseService {
           );
 
           if (
-            newStatus === SubmissionStatus.APPROVED &&
+            newStatus === submissionStatusZodEnum.Enum.approved &&
             feed.outputs.stream?.enabled
           ) {
             const fullSubmission =

@@ -1,24 +1,13 @@
-import { FeedConfigSchema } from "@curatedotfun/types";
+import { AppConfigSchema, FeedConfigSchema } from "@curatedotfun/types";
 import { protectedProcedure, router } from "../trpc";
 
 // --- Procedure Definitions ---
-
-export const reloadConfigDefinition = {
-  meta: {
-    openapi: {
-      method: "POST",
-      path: "/config/reload",
-      tags: ["config"],
-    } as const,
-  },
-  output: ReloadConfigOutputSchema,
-};
 
 export const getFullConfigDefinition = {
   meta: {
     openapi: { method: "GET", path: "/config", tags: ["config"] } as const,
   },
-  output: FullConfigSchema,
+  output: AppConfigSchema,
 };
 
 export const getAllFeedConfigsDefinition = {
@@ -45,18 +34,6 @@ export const getFeedConfigDefinition = {
 };
 
 // --- Contract Router ---
-
-const reloadConfigContract = protectedProcedure
-  .meta({
-    openapi: {
-      ...reloadConfigDefinition.meta.openapi,
-      tags: [...reloadConfigDefinition.meta.openapi.tags],
-    },
-  })
-  .output(reloadConfigDefinition.output)
-  .mutation(() => {
-    throw new Error("Contract method not implemented.");
-  });
 
 const getFullConfigContract = protectedProcedure
   .meta({
@@ -96,7 +73,6 @@ const getFeedConfigContract = protectedProcedure
   });
 
 export const configContractRouter = router({
-  reloadConfig: reloadConfigContract,
   getFullConfig: getFullConfigContract,
   getAllFeedConfigs: getAllFeedConfigsContract,
   getFeedConfig: getFeedConfigContract,

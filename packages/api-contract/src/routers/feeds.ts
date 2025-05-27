@@ -22,10 +22,10 @@ const ProcessFeedInputSchema = z.object({
 
 const ProcessFeedOutputSchema = z.object({
   processed: z.number(),
-  distributed: z.number(),
-  errors: z.array(
-    z.object({ submissionId: z.string().optional(), error: z.string() }),
-  ),
+  distributors: z.any()
+  // errors: z.array(
+  //   z.object({ submissionId: z.string().optional(), error: z.string() }),
+  // ),
 });
 
 // --- Procedure Definitions ---

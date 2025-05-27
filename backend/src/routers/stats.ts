@@ -4,7 +4,6 @@ import {
   getPlatformStatsDefinition,
 } from "@curatedotfun/api-contract";
 import { publicProcedure, router, handleServiceError } from "../trpc";
-// The original Hono route used:
 // import { submissionRepository } from "services/db";
 // import { ServiceProvider } from "../../utils/service-provider";
 // We'll assume these functionalities are available via ctx.sp or specific services.
@@ -35,7 +34,7 @@ const getPlatformStatsProcedure = publicProcedure
       // This part needs to align with how submissionRepository and FeedService are actually exposed.
       // Assuming a StatsService or direct repository access through sp.
 
-      const submissionService = ctx.sp.getSubmissionService(); // Or a more direct repo access if that's the pattern
+      const submissionService = ctx.sp.getSubmissionService();
       const postsCount = await submissionService.getPostsCount();
       const curatorsCount = await submissionService.getCuratorsCount();
 

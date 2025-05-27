@@ -75,7 +75,7 @@ export async function createApp(): Promise<AppInstance> {
     }),
   );
 
-  // Configure static routes for production
+  // TODO: Move static out
   if (isProduction) {
     const publicDir = path.join(__dirname, "public");
     configureStaticRoutes(publicDir);

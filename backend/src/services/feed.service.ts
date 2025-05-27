@@ -1,9 +1,9 @@
 import {
   FeedRepository,
   submissionStatusZodEnum,
+  type DB
 } from "@curatedotfun/shared-db";
 import {
-  DB,
   DistributorConfig,
   InsertFeed,
   StreamConfig,

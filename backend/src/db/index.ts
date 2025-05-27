@@ -1,10 +1,10 @@
-import { schema } from "@curatedotfun/shared-db";
-import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
+import { schema, type DB } from "@curatedotfun/shared-db";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL!,
 });
-const db: NodePgDatabase<typeof schema> = drizzle(pool, { schema });
+const db: DB = drizzle(pool, { schema });
 
 export { db };

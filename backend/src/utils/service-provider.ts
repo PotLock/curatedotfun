@@ -1,16 +1,15 @@
-import { AppConfig } from "types/config.zod";
 import { ActivityService } from "../services/activity.service";
 import { AdapterService } from "../services/adapter.service";
 import { ConfigService } from "../services/config.service";
 import {
-  activityRepository,
-  db,
-  feedRepository,
-  lastProcessedStateRepository,
-  leaderboardRepository,
-  submissionRepository,
-  userRepository,
-} from "../services/db";
+  ActivityRepository,
+  FeedRepository,
+  LastProcessedStateRepository,
+  LeaderboardRepository,
+  SubmissionRepository,
+  UserRepository,
+} from "@curatedotfun/shared-db";
+import { db } from "db";
 import { DistributionService } from "../services/distribution.service";
 import { FeedService } from "../services/feed.service";
 import { InboundService } from "../services/inbound.service";
@@ -23,6 +22,7 @@ import { SubmissionService } from "../services/submission.service";
 import { TransformationService } from "../services/transformation.service";
 import { UserService } from "../services/users.service";
 import { logger } from "./logger";
+import { AppConfig } from "@curatedotfun/types";
 
 export class ServiceProvider {
   private static instance: ServiceProvider;
@@ -30,6 +30,13 @@ export class ServiceProvider {
   private backgroundTaskServices: IBackgroundTaskService[] = [];
 
   private constructor(private appConfig: AppConfig) {
+    const activityRepository = new ActivityRepository(db);
+    const feedRepository = new FeedRepository(db);
+    const lastProcessedStateRepository = new LastProcessedStateRepository(db);
+    const leaderboardRepository = new LeaderboardRepository(db);
+    const submissionRepository = new SubmissionRepository(db);
+    const userRepository = new UserRepository(db);
+
     const configService = new ConfigService();
     const pluginService = new PluginService(configService, logger);
     const transformationService = new TransformationService(
