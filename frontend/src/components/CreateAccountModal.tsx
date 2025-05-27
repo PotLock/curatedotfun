@@ -1,11 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useCreateUserProfile } from "../lib/api";
-import { usernameSchema } from "../lib/validation/user";
 import { Modal } from "./Modal";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { z } from "zod";
+
+const usernameSchema = z
+  .string()
+  .min(2, "Username must be at least 2 characters")
+  .max(32, "Username must be at most 32 characters")
+  .regex(/^[a-z0-9]+$/, "Username must be lowercase letters and numbers only");
 
 interface CreateAccountModalProps {
   isOpen: boolean;
