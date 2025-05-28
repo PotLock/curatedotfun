@@ -1,10 +1,9 @@
 import {
   type ConfigContractRouter,
-  getAllFeedConfigsDefinition,
-  getFeedConfigDefinition,
   getFullConfigDefinition
 } from "@curatedotfun/api-contract";
-import { AppConfigSchema, FeedConfigSchema } from "@curatedotfun/types";
+import { AppConfigSchema } from "@curatedotfun/types";
+import { FeedConfigSchema } from "@curatedotfun/shared-db";
 import { z } from "zod";
 import {
   handleServiceError,
@@ -38,48 +37,9 @@ const getFullConfigProcedure = protectedProcedure
     }
   });
 
-// GET /config/feeds
-const getAllFeedConfigsProcedure = protectedProcedure
-  .meta({
-    openapi: {
-      ...getAllFeedConfigsDefinition.meta.openapi,
-      tags: [...getAllFeedConfigsDefinition.meta.openapi.tags],
-    },
-  })
-  .output(FeedArraySchema)
-  .query(async ({ ctx }) => {
-    try {
-      const rawConfig = await ctx.sp.getConfigService().getRawConfig();
-      return rawConfig.feeds;
-    } catch (error) {
-      return handleServiceError(error);
-    }
-  });
-
-// GET /config/:feedId
-const getFeedConfigProcedure = protectedProcedure
-  .meta({
-    openapi: {
-      ...getFeedConfigDefinition.meta.openapi,
-      tags: [...getFeedConfigDefinition.meta.openapi.tags],
-    },
-  })
-  .input(GetFeedConfigInputSchema)
-  .output(FeedConfigSchema.nullable())
-  .query(async ({ ctx, input }) => {
-    try {
-      const feed = ctx.sp.getConfigService().getFeedConfig(input.feedId);
-      return feed || null;
-    } catch (error) {
-      return handleServiceError(error);
-    }
-  });
-
 // --- Router ---
 export const configRouter: ConfigContractRouter = router({
-  getFullConfig: getFullConfigProcedure,
-  getAllFeedConfigs: getAllFeedConfigsProcedure,
-  getFeedConfig: getFeedConfigProcedure,
+  getFullConfig: getFullConfigProcedure
 });
 
 // for catching type errors

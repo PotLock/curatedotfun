@@ -83,7 +83,10 @@ export type SelectFeedPlugin = z.infer<typeof selectFeedPluginSchema>;
 // Submission Schemas and Types
 export const insertSubmissionSchema = createInsertSchema(submissions);
 export const updateSubmissionSchema = createUpdateSchema(submissions);
-export const selectSubmissionSchema = createSelectSchema(submissions);
+export const selectSubmissionSchema = createSelectSchema(submissions, {
+  createdAt: z.date(),
+  updatedAt: z.date().nullable(),
+});
 export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
 export type UpdateSubmission = z.infer<typeof updateSubmissionSchema>;
 export type SelectSubmission = z.infer<typeof selectSubmissionSchema>;
@@ -102,7 +105,10 @@ export const insertModerationHistorySchema =
 export const updateModerationHistorySchema =
   createUpdateSchema(moderationHistory); // Likely append-only
 export const selectModerationHistorySchema =
-  createSelectSchema(moderationHistory);
+  createSelectSchema(moderationHistory, {
+    createdAt: z.date(),
+    updatedAt: z.date().nullable(),
+  });
 export type InsertModerationHistory = z.infer<
   typeof insertModerationHistorySchema
 >;

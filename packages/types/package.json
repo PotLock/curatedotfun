@@ -2,6 +2,7 @@
   "name": "@curatedotfun/types",
   "version": "0.0.6",
   "description": "Type definitions for curatedotfun plugins",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "license": "MIT",
   "publishConfig": {
@@ -22,7 +23,7 @@
     "typescript"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --outDir ./dist",
     "dev": "tsc --watch",
     "lint": "tsc --noEmit"
   },

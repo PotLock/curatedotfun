@@ -1,11 +1,13 @@
-import { UserRepository, type DB } from "@curatedotfun/shared-db";
 import {
   InsertUser,
+  selectUserSchema,
+  UpdateUser,
+  UserRepository, type DB,
+} from "@curatedotfun/shared-db";
+import {
   NearAccountError,
   NearIntegrationConfig,
   NotFoundError,
-  selectUserSchema,
-  UpdateUser,
   UserServiceError,
 } from "@curatedotfun/types";
 import { connect, KeyPair, keyStores, transactions, utils } from "near-api-js";

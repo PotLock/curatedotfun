@@ -9,13 +9,9 @@
     "composite": true, // Required for project references and building this package
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "types": [],
+    "types": ["bun-types"],
     "baseUrl": ".",
-    "paths": {
-      "@curatedotfun/types/*": ["../types/src/*"]
-    }
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "tests", "**/*.test.ts", "**/*.spec.ts"],
-  "references": [{ "path": "../types" }]
+  "exclude": ["node_modules", "dist", "tests", "**/*.test.ts", "**/*.spec.ts"]
 }

@@ -50,7 +50,7 @@ function startServer() {
 function launchNewServer() {
   try {
     // Start the server
-    serverProcess = spawn("node", [mainJsPath], {
+    serverProcess = spawn("bun", [mainJsPath], {
       stdio: "inherit",
       env: {
         ...process.env,

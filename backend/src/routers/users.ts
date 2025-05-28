@@ -11,7 +11,7 @@ import {
   updateUserSchema,
   selectUserSchema,
   InsertUser,
-} from "@curatedotfun/types";
+} from "@curatedotfun/shared-db";
 import { protectedProcedure, router, handleServiceError } from "../trpc";
 import { TRPCError } from "@trpc/server";
 

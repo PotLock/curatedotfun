@@ -13,10 +13,7 @@ export {
 export {
   configContractRouter,
   type ConfigContractRouter,
-  reloadConfigDefinition,
   getFullConfigDefinition,
-  getAllFeedConfigsDefinition,
-  getFeedConfigDefinition,
 } from "./routers/config";
 export {
   feedsContractRouter,
@@ -43,7 +40,6 @@ export {
   type SubmissionContractRouter,
   getAllSubmissionsDefinition,
   getSubmissionByIdDefinition,
-  getSubmissionsByFeedDefinition,
 } from "./routers/submission";
 export {
   triggerContractRouter,

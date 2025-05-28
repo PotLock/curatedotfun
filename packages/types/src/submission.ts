@@ -3,7 +3,7 @@ import type {
   SelectSubmission,
   SelectSubmissionFeed,
   SubmissionStatus,
-} from "./db";
+} from "@curatedotfun/shared-db";
 
 export interface FeedStatus {
   feedId: string;

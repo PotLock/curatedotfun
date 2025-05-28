@@ -2,7 +2,7 @@ import {
   insertUserSchema,
   selectUserSchema,
   updateUserSchema,
-} from "@curatedotfun/types";
+} from "@curatedotfun/shared-db";
 import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
 

@@ -15,8 +15,13 @@
     "emitDeclarationOnly": true, // Only emit .d.ts files
     "composite": true, // Important for project references in monorepo
 
-    "types": []
+    "types": [],
+    "paths": {
+      "@curatedotfun/types/*": ["../types/src/*"],
+      "@curatedotfun/shared-db/*": ["../shared-db/src/*"]
+    }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts"],
+  "references": [{ "path": "../types" }, { "path": "../shared-db" }]
 }

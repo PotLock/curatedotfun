@@ -1,8 +1,10 @@
 import {
   FeedConfig,
+  submissionStatusZodEnum
+} from "@curatedotfun/shared-db";
+import {
   SourceItem,
   Submission,
-  submissionStatusZodEnum,
 } from "@curatedotfun/types";
 import { Logger } from "pino";
 import { AdaptedSourceItem, InterpretedIntent } from "../types/inbound.types";

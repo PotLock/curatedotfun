@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import * as schema from "../src/services/db/schema";
+import * as schema from "../src/db";
 
 // Customize this seed file for your development purposes
 async function main() {

@@ -2,26 +2,31 @@
   "name": "curatedotfun",
   "version": "1.0.0",
   "devDependencies": {
-    "@types/node": "^22.13.13",
+    "@types/node": "^22.15.21",
     "concurrently": "^9.1.2",
-    "prettier": "^3.3.3",
+    "prettier": "^3.5.3",
     "turbo": "latest"
   },
-  "packageManager": "pnpm@10.10.0",
+  "packageManager": "bun@1.2.14",
   "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "./scripts/dev.sh",
     "dev:fresh": "./scripts/dev.sh --fresh",
-    "build": "turbo run build",
+    "build": "bunx turbo run build",
+    "build:shared": "bunx turbo run build --filter='@curatedotfun/shared-db' --filter='@curatedotfun/types' --filter='@curatedotfun/utils'",
     "start": "docker-compose --profile prod up -d --build postgres_prod && docker-compose --profile prod run --rm db-init-prod && docker-compose --profile prod up -d --build app",
-    "test": "docker-compose --profile test up -d postgres_test && docker-compose --profile test run --rm db-init-test && turbo run test --filter=@curatedotfun/backend || true && docker-compose --profile test down -v",
-    "test:ci": "turbo run test --filter=@curatedotfun/backend",
-    "lint": "turbo run lint",
-    "clean": "turbo run clean",
-    "fmt": "prettier --write '**/*.{js,jsx,ts,tsx,json}'",
-    "fmt:check": "prettier --check '**/*.{js,jsx,ts,tsx,json}'",
-    "db:migrate": "cd packages/shared-db && pnpm db:migrate",
-    "prepare": "corepack enable"
+    "test": "docker-compose --profile test up -d postgres_test && docker-compose --profile test run --rm db-init-test && bunx turbo run test --filter=@curatedotfun/backend || true && docker-compose --profile test down -v",
+    "test:ci": "bunx turbo run test --filter=@curatedotfun/backend",
+    "lint": "bunx turbo run lint",
+    "clean": "bunx turbo run clean",
+    "fmt": "bunx prettier --write '**/*.{js,jsx,ts,tsx,json}'",
+    "fmt:check": "bunx prettier --check '**/*.{js,jsx,ts,tsx,json}'",
+    "db:migrate": "bun --cwd ./packages/shared-db run db:migrate"
   },
   "type": "module"
 }

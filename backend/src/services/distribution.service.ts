@@ -1,6 +1,5 @@
 import {
   ActionArgs,
-  DistributorConfig,
   PluginError,
   PluginExecutionError,
   Submission,
@@ -11,6 +10,7 @@ import { logger } from "../utils/logger";
 import { sanitizeJson } from "../utils/sanitize";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { PluginService } from "./plugin.service";
+import { DistributorConfig } from "@curatedotfun/shared-db";
 
 export class DistributionService implements IBaseService {
   public readonly logger: Logger;

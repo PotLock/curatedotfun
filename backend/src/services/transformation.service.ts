@@ -1,6 +1,6 @@
+import { TransformConfig } from "@curatedotfun/shared-db";
 import {
   ActionArgs,
-  TransformConfig,
   TransformError,
 } from "@curatedotfun/types";
 import { merge } from "lodash";

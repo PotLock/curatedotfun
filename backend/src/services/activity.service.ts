@@ -1,15 +1,9 @@
 import {
   ActivityRepository,
+  DB,
+  InsertActivity,
   LeaderboardRepository,
   queries,
-} from "@curatedotfun/shared-db";
-import {
-  ActivityQueryOptionsSchema,
-  ActivityServiceError,
-  DB,
-  GlobalStatsSchema,
-  InsertActivity,
-  LeaderboardQueryOptionsSchema,
   SelectActivity,
   selectActivitySchema,
   SelectFeedUserStats,
@@ -18,6 +12,12 @@ import {
   selectUserStatsSchema,
   UpdateFeedUserStats,
   UpdateUserStats,
+} from "@curatedotfun/shared-db";
+import {
+  ActivityQueryOptionsSchema,
+  ActivityServiceError,
+  GlobalStatsSchema,
+  LeaderboardQueryOptionsSchema,
   UserRankingLeaderboardEntrySchema,
   type ActivityQueryOptions,
   type GlobalStats,

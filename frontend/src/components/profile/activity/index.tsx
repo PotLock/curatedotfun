@@ -4,15 +4,14 @@ import { Card, CardContent } from "../../ui/card";
 import { PaginationControls } from "./PaginationControls";
 import { ActivityTable } from "./ActivityTable";
 import {
-  useUserActivity,
-  ActivityType,
-  UserActivityStats,
+  useUserActivities,
 } from "../../../lib/api";
 import { useAuth } from "../../../contexts/AuthContext";
 import { FileText, CheckCircle, ArrowDown, ArrowUp, Coins } from "lucide-react";
 import type { ActivityItem } from "./ActivityTable";
+import type { activityTypeZodEnum } from "@curatedotfun/types";
 
-const transformActivityData = (activity: UserActivityStats): ActivityItem => {
+const transformActivityData = (activity: any): ActivityItem => { // TODO: Fix type
   const baseItem: ActivityItem = {
     type: activity.type,
     time: new Date(activity.timestamp).toLocaleTimeString([], {
@@ -28,7 +27,7 @@ const transformActivityData = (activity: UserActivityStats): ActivityItem => {
 
   // Map activity types to appropriate icons and content
   switch (activity.type) {
-    case ActivityType.CONTENT_SUBMISSION:
+    case activityTypeZodEnum.Enum.CONTENT_SUBMISSION:
       return {
         ...baseItem,
         icon: FileText,
@@ -37,7 +36,7 @@ const transformActivityData = (activity: UserActivityStats): ActivityItem => {
           to: activity.data?.to || "",
         },
       };
-    case ActivityType.CONTENT_APPROVAL:
+    case activityTypeZodEnum.Enum.CONTENT_APPROVAL:
       return {
         ...baseItem,
         icon: CheckCircle,
@@ -46,7 +45,7 @@ const transformActivityData = (activity: UserActivityStats): ActivityItem => {
           to: activity.data?.to || "",
         },
       };
-    case ActivityType.TOKEN_BUY:
+    case activityTypeZodEnum.Enum.TOKEN_BUY:
       return {
         ...baseItem,
         icon: ArrowDown,
@@ -56,7 +55,7 @@ const transformActivityData = (activity: UserActivityStats): ActivityItem => {
         },
         points: `+ ${activity.data?.amount || ""} ${activity.data?.token || ""}`,
       };
-    case ActivityType.TOKEN_SELL:
+    case activityTypeZodEnum.Enum.TOKEN_SELL:
       return {
         ...baseItem,
         icon: ArrowUp,
@@ -66,8 +65,8 @@ const transformActivityData = (activity: UserActivityStats): ActivityItem => {
         },
         points: `- ${activity.data?.amount || ""} ${activity.data?.token || ""}`,
       };
-    case ActivityType.POINTS_REDEMPTION:
-    case ActivityType.POINTS_AWARDED:
+    case activityTypeZodEnum.Enum.POINTS_REDEMPTION:
+    case activityTypeZodEnum.Enum.POINTS_AWARDED:
       return {
         ...baseItem,
         icon: Coins,
@@ -75,7 +74,7 @@ const transformActivityData = (activity: UserActivityStats): ActivityItem => {
           currency: activity.data?.currency || "",
           amount: activity.data?.amount || "",
         },
-        points: `${activity.type === ActivityType.POINTS_AWARDED ? "+" : "-"} ${activity.data?.amount || ""} ${activity.data?.currency || ""}`,
+        points: `${activity.type === activityTypeZodEnum.Enum.POINTS_AWARDED ? "+" : "-"} ${activity.data?.amount || ""} ${activity.data?.currency || ""}`,
       };
     default:
       return baseItem;
@@ -85,7 +84,7 @@ const transformActivityData = (activity: UserActivityStats): ActivityItem => {
 export function ProfileActivity() {
   const { user: currentUserProfile } = useAuth();
 
-  const { data: userActivity } = useUserActivity(
+  const { data: userActivity } = useUserActivities(
     currentUserProfile?.near_account_id || "",
   );
 

@@ -1,4 +1,4 @@
-import { FeedConfigSchema } from "./db";
+import { FeedConfigSchema } from "@curatedotfun/shared-db";
 import { z } from "zod";
 
 // Schema for basic plugin registration (used in top-level plugins config)

@@ -1,17 +1,17 @@
 import {
   FeedConfig,
+  FeedRepository,
   LastProcessedState,
+  LastProcessedStateRepository,
   PlatformState,
   SourceConfig,
-  SourceItem,
-  SourcePluginSearchOptions,
   SourceSearchConfig,
-} from "@curatedotfun/types";
-import {
-  FeedRepository,
-  LastProcessedStateRepository,
   type DB,
 } from "@curatedotfun/shared-db";
+import {
+  SourceItem,
+  SourcePluginSearchOptions,
+} from "@curatedotfun/types";
 import { Logger } from "pino";
 import { InboundService } from "./inbound.service";
 import { IBackgroundTaskService } from "./interfaces/background-task.interface";

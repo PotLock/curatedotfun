@@ -1,4 +1,4 @@
-import { LastProcessedState, PlatformState } from "./db";
+import { LastProcessedState, PlatformState } from "@curatedotfun/shared-db";
 
 export type PluginType = "transformer" | "distributor" | "source";
 

@@ -9,7 +9,7 @@ import {
   SubmissionRepository,
   UserRepository,
 } from "@curatedotfun/shared-db";
-import { db } from "db";
+import { db } from "../db";
 import { DistributionService } from "../services/distribution.service";
 import { FeedService } from "../services/feed.service";
 import { InboundService } from "../services/inbound.service";

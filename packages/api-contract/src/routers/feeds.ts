@@ -3,7 +3,7 @@ import {
   selectFeedSchema,
   selectSubmissionSchema,
   updateFeedSchema,
-} from "@curatedotfun/types";
+} from "@curatedotfun/shared-db";
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
 

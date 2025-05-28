@@ -1,7 +1,8 @@
-import type { FeedConfig, SourceItem } from "@curatedotfun/types";
+import type { SourceItem } from "@curatedotfun/types";
 import { Logger } from "pino";
 import { AdaptedSourceItem } from "../types/inbound.types";
 import { IBaseService } from "./interfaces/base-service.interface";
+import { FeedConfig } from "@curatedotfun/shared-db";
 
 // TODO: This could probably be removed
 export class AdapterService implements IBaseService {

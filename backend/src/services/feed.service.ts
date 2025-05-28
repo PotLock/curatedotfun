@@ -1,14 +1,12 @@
 import {
-  FeedRepository,
-  submissionStatusZodEnum,
-  type DB
-} from "@curatedotfun/shared-db";
-import {
   DistributorConfig,
+  FeedRepository,
   InsertFeed,
   StreamConfig,
+  submissionStatusZodEnum,
   UpdateFeed,
-} from "@curatedotfun/types";
+  type DB,
+} from "@curatedotfun/shared-db";
 import { Logger } from "pino";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { ProcessorService } from "./processor.service";

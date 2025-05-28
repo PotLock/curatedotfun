@@ -118,4 +118,4 @@ echo "🌐 Frontend will be available at: http://localhost:5173"
 echo "🔌 Backend will be available at: http://localhost:3000"
 echo ""
 
-turbo run dev
+bunx turbo run dev

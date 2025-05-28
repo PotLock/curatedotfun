@@ -1,7 +1,7 @@
 import {
   selectSubmissionSchema,
   submissionStatusZodEnum,
-} from "@curatedotfun/types";
+} from "@curatedotfun/shared-db";
 import { z } from "zod";
 import { publicProcedure, router } from "../trpc";
 

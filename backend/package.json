@@ -4,8 +4,8 @@
   "scripts": {
     "schemas:generate": "bun ./scripts/generate-json-schemas.ts",
     "build": "rspack build",
-    "start": "node dist/main.js",
-    "dev": "NODE_ENV=development concurrently --kill-others-on-fail \"rspack build --watch\" \"wait-on -d 500 dist/main.js && node scripts/dev-server.js\"",
+    "start": "bun dist/main.js",
+    "dev": "NODE_ENV=development concurrently --kill-others-on-fail \"rspack build --watch\" \"wait-on -d 500 dist/main.js && bun scripts/dev-server.js\"",
     "test": "bun test",
     "clean": "rm -rf dist coverage .turbo",
     "db:seed:dev": "bun ./scripts/seed-dev.ts",
@@ -24,7 +24,6 @@
     ]
   },
   "devDependencies": {
-    "@curatedotfun/types": "workspace:*",
     "@rspack/binding": "1.2.8",
     "@rspack/cli": "1.2.8",
     "@rspack/core": "1.2.8",
@@ -41,6 +40,7 @@
     "@crosspost/scheduler-sdk": "^0.1.1",
     "@curatedotfun/api-contract": "workspace:*",
     "@curatedotfun/shared-db": "workspace:*",
+    "@curatedotfun/types": "workspace:*",
     "@hono/node-server": "^1.8.2",
     "@hono/trpc-server": "^0.3.4",
     "@hono/zod-openapi": "^0.9.5",

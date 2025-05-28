@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { activityTypeEnum } from "../db";
+import { activityTypeEnum } from "@curatedotfun/shared-db";
 
 // Enum for activity types, using the one from shared-db via db.ts
 export const activityTypeEnumSchema = z.enum(activityTypeEnum.enumValues);

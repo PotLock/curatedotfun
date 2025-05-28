@@ -1,7 +1,6 @@
+import { DistributorConfig, TransformConfig } from "@curatedotfun/shared-db";
 import {
-  DistributorConfig,
   ProcessorError,
-  TransformConfig,
   TransformError,
 } from "@curatedotfun/types";
 import { Logger } from "pino";

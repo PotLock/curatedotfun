@@ -7,12 +7,12 @@ import {
   processFeedDefinition,
   updateFeedDefinition,
 } from "@curatedotfun/api-contract";
-import { selectSubmissionSchema } from "@curatedotfun/shared-db";
 import {
   insertFeedSchema,
   selectFeedSchema,
+  selectSubmissionSchema,
   updateFeedSchema,
-} from "@curatedotfun/types";
+} from "@curatedotfun/shared-db";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {

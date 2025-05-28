@@ -1,6 +1,5 @@
 import {
   AppConfig,
-  FeedConfig,
   PluginRegistrationConfig,
   PluginsConfig,
 } from "@curatedotfun/types";
@@ -86,15 +85,5 @@ export class ConfigService {
     }
     const plugins = this.getPluginRegistry();
     return plugins[pluginName];
-  }
-
-  public getFeedConfig(feedId: string): FeedConfig | undefined {
-    if (!this.config) {
-      throw new Error("Config not loaded. Call loadConfig() first.");
-    }
-    const config = this.getConfig();
-    return config.feeds.find(
-      (feed) => feed.id.toLowerCase() === feedId.toLowerCase(),
-    );
   }
 }
