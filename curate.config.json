@@ -1699,6 +1699,7 @@
         "approvers": {
           "twitter": [
             "potlock_",
+            "NearNft",
             "genadrop",
             "potlock_intern",
             "elliot_braem",
@@ -1761,7 +1762,7 @@
               "plugin": "@curatedotfun/telegram",
               "config": {
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
-                "channelId": "@genadrop/1266"
+                "channelId": "@nftclubgroup"
               }
             }
           ]
