@@ -5,7 +5,7 @@ import { logger } from "../../utils/logger";
 import {
   insertFeedSchema,
   updateFeedSchema,
-} from "../../validation/feed.validation";
+} from "@curatedotfun/shared-db";
 
 const feedsRoutes = new Hono<Env>();
 

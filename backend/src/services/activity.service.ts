@@ -15,7 +15,6 @@ import {
 } from "@curatedotfun/shared-db";
 import {
   ActivityQueryOptionsSchema,
-  ActivityServiceError,
   GlobalStatsSchema,
   LeaderboardQueryOptionsSchema,
   UserRankingLeaderboardEntrySchema,
@@ -24,6 +23,7 @@ import {
   type LeaderboardQueryOptions,
   type UserRankingLeaderboardEntry,
 } from "@curatedotfun/types";
+import { ActivityServiceError } from "@curatedotfun/utils";
 import { Logger } from "pino";
 import { IBaseService } from "./interfaces/base-service.interface";
 

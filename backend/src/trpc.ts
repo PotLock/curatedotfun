@@ -4,7 +4,7 @@ import { OpenApiMeta } from "trpc-to-openapi";
 import { z } from "zod";
 import { ServiceProvider } from "./utils/service-provider";
 import { JWTPayload } from "jose";
-import { ActivityServiceError } from "@curatedotfun/types";
+import { ActivityServiceError } from "@curatedotfun/utils";
 
 export interface Context {
   sp: ServiceProvider;

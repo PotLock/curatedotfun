@@ -5,11 +5,13 @@ import {
   UserRepository, type DB,
 } from "@curatedotfun/shared-db";
 import {
-  NearAccountError,
   NearIntegrationConfig,
+} from "@curatedotfun/types";
+import {
+  NearAccountError,
   NotFoundError,
   UserServiceError,
-} from "@curatedotfun/types";
+} from "@curatedotfun/utils";
 import { connect, KeyPair, keyStores, transactions, utils } from "near-api-js";
 import { KeyPairString } from "near-api-js/lib/utils";
 import { Logger } from "pino";

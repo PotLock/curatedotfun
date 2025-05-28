@@ -1,8 +1,8 @@
 import { TransformConfig } from "@curatedotfun/shared-db";
 import {
   ActionArgs,
-  TransformError,
 } from "@curatedotfun/types";
+import { TransformError } from "@curatedotfun/utils";
 import { merge } from "lodash";
 import { Logger } from "pino";
 import { logger } from "../utils/logger";

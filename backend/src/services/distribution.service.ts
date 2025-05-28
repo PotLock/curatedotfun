@@ -1,16 +1,15 @@
+import { DistributorConfig } from "@curatedotfun/shared-db";
 import {
   ActionArgs,
-  PluginError,
-  PluginExecutionError,
   Submission,
 } from "@curatedotfun/types";
+import { PluginError, PluginExecutionError } from "@curatedotfun/utils";
 import { Logger } from "pino";
 import { isStaging } from "../services/config.service";
 import { logger } from "../utils/logger";
 import { sanitizeJson } from "../utils/sanitize";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { PluginService } from "./plugin.service";
-import { DistributorConfig } from "@curatedotfun/shared-db";
 
 export class DistributionService implements IBaseService {
   public readonly logger: Logger;

@@ -8,8 +8,8 @@ import {
 } from "@curatedotfun/shared-db";
 import {
   Submission,
-  SubmissionServiceError,
 } from "@curatedotfun/types";
+import { SubmissionServiceError } from "@curatedotfun/utils"
 import { Logger } from "pino";
 import { ModerationCommandData } from "../types/inbound.types";
 import { submissionStatusZodEnum } from './../../../packages/shared-db/src/schema/submissions';

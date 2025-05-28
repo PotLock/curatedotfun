@@ -1,16 +1,18 @@
-import { performReload } from "@module-federation/node/utils";
-import { init, loadRemote } from "@module-federation/runtime";
 import {
   BotPlugin,
   DistributorPlugin,
-  PluginError,
-  PluginLoadError,
   PluginType,
   PluginTypeMap,
   SourceItem,
   SourcePlugin,
   TransformerPlugin,
 } from "@curatedotfun/types";
+import {
+  PluginError,
+  PluginLoadError
+} from "@curatedotfun/utils";
+import { performReload } from "@module-federation/node/utils";
+import { init, loadRemote } from "@module-federation/runtime";
 import { Logger } from "pino";
 import { logger } from "../utils/logger";
 import { createPluginInstanceKey } from "../utils/plugin";
@@ -62,8 +64,8 @@ type PluginContainer<
   TConfig extends Record<string, unknown> = Record<string, unknown>,
 > =
   | {
-      default?: new () => PluginTypeMap<TInput, TOutput, TConfig>[T];
-    }
+    default?: new () => PluginTypeMap<TInput, TOutput, TConfig>[T];
+  }
   | (new () => PluginTypeMap<TInput, TOutput, TConfig>[T]);
 
 /**
@@ -237,9 +239,9 @@ export class PluginService implements IBaseService {
       throw error instanceof PluginError
         ? error
         : new PluginError(
-            `Unexpected error with plugin ${name}`,
-            error as Error,
-          );
+          `Unexpected error with plugin ${name}`,
+          error as Error,
+        );
     }
   }
 

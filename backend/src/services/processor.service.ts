@@ -2,7 +2,7 @@ import { DistributorConfig, TransformConfig } from "@curatedotfun/shared-db";
 import {
   ProcessorError,
   TransformError,
-} from "@curatedotfun/types";
+} from "@curatedotfun/utils";
 import { Logger } from "pino";
 import { logger } from "./../utils/logger";
 import { sanitizeJson } from "./../utils/sanitize";

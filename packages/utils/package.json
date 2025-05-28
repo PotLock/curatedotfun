@@ -12,8 +12,8 @@
     "package.json"
   ],
   "scripts": {
-    "build": "tsc --build tsconfig.json",
-    "dev": "tsc --build tsconfig.json --watch",
+    "build": "tsc",
+    "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
   },
