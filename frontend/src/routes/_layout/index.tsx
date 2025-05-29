@@ -51,7 +51,7 @@ function HomePage() {
 
   // Local UI state for filters before applying via URL
   const [statusFilter, setStatusFilter] = useState<StatusFilterType>(
-    searchParams.status as StatusFilterType || "all",
+    (searchParams.status as StatusFilterType) || "all",
   );
   const [sortOrder, setSortOrder] = useState<SortOrderType>(
     (searchParams.sortOrder as SortOrderType) || "newest",
@@ -64,7 +64,9 @@ function HomePage() {
   const [showFilters, setShowFilters] = useState(false);
 
   // Debounced search query from URL for fetching/filtering
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchParams.q || "");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(
+    searchParams.q || "",
+  );
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchParams.q || "");
@@ -72,21 +74,29 @@ function HomePage() {
     return () => clearTimeout(timer);
   }, [searchParams.q]);
 
-
   const ITEMS_PER_PAGE = 20;
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status: fetchStatus } =
-    useAllSubmissions(
-      ITEMS_PER_PAGE,
-      searchParams.status === "all" ? undefined : (searchParams.status as StatusFilterType),
-      // Pass other params like sortOrder to API if supported, otherwise sort client-side
-    );
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status: fetchStatus,
+  } = useAllSubmissions(
+    ITEMS_PER_PAGE,
+    searchParams.status === "all"
+      ? undefined
+      : (searchParams.status as StatusFilterType),
+    // Pass other params like sortOrder to API if supported, otherwise sort client-side
+  );
 
   const items = data?.items || [];
 
   const sortedItems = [...items].sort((a, b) => {
     const dateA = new Date(a.submittedAt || 0).getTime();
     const dateB = new Date(b.submittedAt || 0).getTime();
-    return (searchParams.sortOrder || "newest") === "newest" ? dateB - dateA : dateA - dateB;
+    return (searchParams.sortOrder || "newest") === "newest"
+      ? dateB - dateA
+      : dateA - dateB;
   });
 
   const filteredItems =
@@ -106,23 +116,24 @@ function HomePage() {
     setUiSearchQuery(e.target.value);
   };
 
-  const handleSearchSubmit = () => { // Or on blur, or debounced from UI
+  const handleSearchSubmit = () => {
+    // Or on blur, or debounced from UI
     navigate({
       search: (prev) => ({ ...prev, q: uiSearchQuery || undefined }),
       replace: true,
     });
   };
-  
+
   // Effect to trigger search submit on UI query change after debounce
   useEffect(() => {
     const identifier = setTimeout(() => {
-      if (uiSearchQuery !== (searchParams.q || "")) { // Only navigate if different
+      if (uiSearchQuery !== (searchParams.q || "")) {
+        // Only navigate if different
         handleSearchSubmit();
       }
     }, 500); // Adjust debounce time as needed
     return () => clearTimeout(identifier);
   }, [uiSearchQuery, searchParams.q]);
-
 
   const toggleFiltersDropdown = () => {
     setShowFilters(!showFilters);
@@ -232,9 +243,11 @@ function HomePage() {
           <div className="flex-1 overflow-y-auto h-full">
             <div>
               {/* Submission Feed */}
-              <div className="flex flex-col gap-6 w-full py-4"> 
+              <div className="flex flex-col gap-6 w-full py-4">
                 <div className="flex md:flex-row flex-col justify-between items-center gap-6">
-                  <h1 className="text-[32px] leading-[63px] font-normal">Submissions</h1>
+                  <h1 className="text-[32px] leading-[63px] font-normal">
+                    Submissions
+                  </h1>
                   <div className="flex gap-3 w-full items-center">
                     <div className="relative flex-grow">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none max-h-[40px]">
@@ -262,7 +275,8 @@ function HomePage() {
 
                 {debouncedSearchQuery.trim() !== "" && (
                   <p className="text-sm text-gray-600">
-                    Showing results for "{debouncedSearchQuery}" ({filteredItems.length}{" "}
+                    Showing results for "{debouncedSearchQuery}" (
+                    {filteredItems.length}{" "}
                     {filteredItems.length === 1 ? "item" : "items"})
                   </p>
                 )}
@@ -274,7 +288,9 @@ function HomePage() {
                         <p className="text-sm font-medium">Sort By</p>
                         <Select
                           value={sortOrder}
-                          onValueChange={(val) => setSortOrder(val as SortOrderType)}
+                          onValueChange={(val) =>
+                            setSortOrder(val as SortOrderType)
+                          }
                         >
                           <SelectTrigger className="bg-white">
                             <SelectValue placeholder="Most Recent" />
@@ -288,7 +304,10 @@ function HomePage() {
 
                       <div className="w-full">
                         <p className=" text-sm font-medium">Platform</p>
-                        <Select value={platformFilter} onValueChange={setPlatformFilter}>
+                        <Select
+                          value={platformFilter}
+                          onValueChange={setPlatformFilter}
+                        >
                           <SelectTrigger className="bg-white">
                             <SelectValue placeholder="Twitter" />
                           </SelectTrigger>
@@ -335,7 +354,9 @@ function HomePage() {
                 <InfiniteFeed
                   items={filteredItems as SubmissionWithFeedData[]}
                   fetchNextPage={fetchNextPage}
-                  hasNextPage={hasNextPage && debouncedSearchQuery.trim() === ""}
+                  hasNextPage={
+                    hasNextPage && debouncedSearchQuery.trim() === ""
+                  }
                   isFetchingNextPage={isFetchingNextPage}
                   status={fetchStatus}
                   loadingMessage="Loading more submissions..."
@@ -344,7 +365,9 @@ function HomePage() {
                   renderItems={(renderableItems) => (
                     <SubmissionList
                       items={renderableItems}
-                      statusFilter={(searchParams.status as StatusFilterType) || "all"}
+                      statusFilter={
+                        (searchParams.status as StatusFilterType) || "all"
+                      }
                       botId={botId}
                     />
                   )}
@@ -373,7 +396,9 @@ function HomePage() {
           {/* Submission List */}
           <div className="flex flex-col gap-6 w-full py-4">
             <div className="flex md:flex-row flex-col justify-between items-center gap-6">
-              <h1 className="text-[32px] leading-[63px] font-normal">Submissions</h1>
+              <h1 className="text-[32px] leading-[63px] font-normal">
+                Submissions
+              </h1>
               <div className="flex gap-3 w-full items-center">
                 <div className="relative flex-grow">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none max-h-[40px]">
@@ -401,7 +426,8 @@ function HomePage() {
 
             {debouncedSearchQuery.trim() !== "" && (
               <p className="text-sm text-gray-600">
-                Showing results for "{debouncedSearchQuery}" ({filteredItems.length}{" "}
+                Showing results for "{debouncedSearchQuery}" (
+                {filteredItems.length}{" "}
                 {filteredItems.length === 1 ? "item" : "items"})
               </p>
             )}
@@ -413,7 +439,9 @@ function HomePage() {
                     <p className="text-sm font-medium">Sort By</p>
                     <Select
                       value={sortOrder}
-                      onValueChange={(val) => setSortOrder(val as SortOrderType)}
+                      onValueChange={(val) =>
+                        setSortOrder(val as SortOrderType)
+                      }
                     >
                       <SelectTrigger className="bg-white">
                         <SelectValue placeholder="Most Recent" />
@@ -427,7 +455,10 @@ function HomePage() {
 
                   <div className="w-full">
                     <p className=" text-sm font-medium">Platform</p>
-                    <Select value={platformFilter} onValueChange={setPlatformFilter}>
+                    <Select
+                      value={platformFilter}
+                      onValueChange={setPlatformFilter}
+                    >
                       <SelectTrigger className="bg-white">
                         <SelectValue placeholder="Twitter" />
                       </SelectTrigger>
@@ -483,7 +514,9 @@ function HomePage() {
               renderItems={(renderableItems) => (
                 <SubmissionList
                   items={renderableItems}
-                  statusFilter={(searchParams.status as StatusFilterType) || "all"}
+                  statusFilter={
+                    (searchParams.status as StatusFilterType) || "all"
+                  }
                   botId={botId}
                 />
               )}

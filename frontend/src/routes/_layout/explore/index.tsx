@@ -8,8 +8,14 @@ import { Button } from "../../../components/ui/button";
 import { useAllSubmissions } from "../../../lib/api";
 import { useBotId } from "../../../lib/config";
 
-import { StatusFilterType, useFilterStore } from "../../../store/useFilterStore";
-import { SubmissionStatus, SubmissionWithFeedData } from "../../../types/twitter";
+import {
+  StatusFilterType,
+  useFilterStore,
+} from "../../../store/useFilterStore";
+import {
+  SubmissionStatus,
+  SubmissionWithFeedData,
+} from "../../../types/twitter";
 
 import { Container } from "../../../components/Container";
 import { Hero } from "../../../components/Hero";
