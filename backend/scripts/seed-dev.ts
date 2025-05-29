@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import * as schema from "../src/services/db/schema";
+import * as schema from "../src/db";
 
 // Customize this seed file for your development purposes
 async function main() {
@@ -16,7 +16,7 @@ async function main() {
   });
 
   // Initialize Drizzle with the pool
-  const db = drizzle(pool, { schema });
+  drizzle(pool, { schema });
 
   try {
     // Only clear existing data if FRESH is set to true
@@ -29,8 +29,6 @@ async function main() {
         TRUNCATE TABLE moderation_history CASCADE;
         TRUNCATE TABLE feed_plugins CASCADE;
         TRUNCATE TABLE submission_counts CASCADE;
-        TRUNCATE TABLE twitter_cookies CASCADE;
-        TRUNCATE TABLE twitter_cache CASCADE;
       `);
       console.log("Existing data cleared. Inserting dev data...");
     } else {

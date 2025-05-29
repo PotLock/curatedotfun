@@ -48,10 +48,12 @@ services:
 
   # DB initialization (shared configuration)
   db-init:
-    image: oven/bun:latest # we need bun to run the .ts scripts
+    image: oven/bun:latest
     working_dir: /app
     volumes:
-      - ./backend:/app
+      - .:/app
+      # Cache the node_modules for faster subsequent installs
+      - node_modules_cache:/app/node_modules
 
     # Development-specific initialization
   db-init-dev:
@@ -61,10 +63,9 @@ services:
     depends_on:
       postgres_dev:
         condition: service_healthy
-    volumes:
-      - ./backend:/app
-      - node_modules_cache:/app/node_modules # Add persistent volume for node_modules, otherwise this messes with rspack bindings
-    command: sh -c "bun add -g pnpm && if [ ! -d /app/node_modules/.pnpm ]; then echo '📦 Installing dependencies...' && pnpm install; else echo '✅ Dependencies already installed, skipping'; fi && pnpm run db:migrate && pnpm run db:seed:dev"
+    command: sh -c "echo '📦 Installing dependencies (if needed)...' && bun install --no-scripts && \
+               echo '⚙️ Running database migrations...' && bun run db:migrate && \
+               echo '🌱 Seeding development database...' && bun --cwd ./backend run db:seed:dev"
     profiles: ["dev"]
 
   # Test-specific initialization
@@ -75,7 +76,9 @@ services:
     depends_on:
       postgres_test:
         condition: service_healthy
-    command: sh -c "bun add -g pnpm && pnpm install && pnpm run db:migrate && pnpm run db:seed:test"
+    command: sh -c "echo '📦 Installing dependencies (if needed)...' && bun install --no-scripts && \
+               echo '⚙️ Running database migrations...' && bun run db:migrate && \
+               echo '🧪 Seeding test database...' && bun --cwd ./backend run db:seed:test"
     profiles: ["test"]
 
   # Production-specific initialization
@@ -87,7 +90,8 @@ services:
     depends_on:
       postgres_prod:
         condition: service_healthy
-    command: sh -c "bun add -g pnpm && pnpm install && pnpm run db:migrate"
+    command: sh -c "echo '📦 Installing dependencies (if needed)...' && bun install --no-scripts && \
+               echo '⚙️ Running database migrations...' && bun run db:migrate"
     profiles: ["prod"]
 
   # Application service

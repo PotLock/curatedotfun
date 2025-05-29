@@ -27,6 +27,18 @@
     "@curatedotfun/ai-transform": {
       "type": "transformer",
       "url": "https://unpkg.com/@curatedotfun/ai-transform@latest/dist/remoteEntry.js"
+    },
+    "@curatedotfun/masa-source": {
+      "type": "source",
+      "url": "https://unpkg.com/@curatedotfun/masa-source@latest/dist/remoteEntry.js"
+    }
+  },
+  "integrations": {
+    "near": {
+      "parentAccountId": "{NEAR_PARENT_ACCOUNT_ID}",
+      "parentKeyPair": "{NEAR_PARENT_KEYPAIR}",
+      "networkId": "{NEAR_NETWORK_ID}",
+      "rpcUrl": "{NEAR_NODE_URL}"
     }
   },
   "feeds": [
@@ -39,6 +51,30 @@
           "twitter": ["test_curator", "test_admin"]
         }
       },
+      "sources": [
+        {
+          "plugin": "@curatedotfun/masa-source",
+          "config": {
+            "apiKey": "{MASA_API_KEY}"
+          },
+          "search": [
+            {
+              "type": "twitter-scraper",
+              "platformArgs": {
+                "mentioningAccounts": "curatedotfun",
+                "hashtags": ["#test"]
+              }
+            },
+            {
+              "type": "twitter-scraper",
+              "platformArgs": {
+                "fromAccounts": ["elonmusk"],
+                "allWords": "innovation"
+              }
+            }
+          ]
+        }
+      ],
       "outputs": {
         "stream": {
           "enabled": true,

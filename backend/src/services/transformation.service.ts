@@ -1,15 +1,25 @@
-import { TransformConfig } from "../types/config";
-import { TransformError } from "../types/errors";
-import { PluginService } from "./plugin.service";
+import { TransformConfig } from "@curatedotfun/shared-db";
+import {
+  ActionArgs,
+} from "@curatedotfun/types";
+import { TransformError } from "@curatedotfun/utils";
+import { merge } from "lodash";
+import { Logger } from "pino";
 import { logger } from "../utils/logger";
 import { sanitizeJson } from "../utils/sanitize";
-import { ActionArgs } from "@curatedotfun/types";
-import { merge } from "lodash";
+import { IBaseService } from "./interfaces/base-service.interface";
+import { PluginService } from "./plugin.service";
 
 export type TransformStage = "global" | "distributor" | "batch";
 
-export class TransformationService {
-  constructor(private pluginService: PluginService) {}
+export class TransformationService implements IBaseService {
+  public readonly logger: Logger;
+  constructor(
+    private pluginService: PluginService,
+    logger: Logger,
+  ) {
+    this.logger = logger;
+  }
 
   /**
    * Combines transform results, merging objects or returning the new result

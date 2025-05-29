@@ -1,22 +1,30 @@
 {
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "target": "ESNext",
+    "rootDir": "src",
+    "outDir": "dist",
+    "noEmit": false,
     "module": "ESNext",
+    "moduleResolution": "bundler",
+    "composite": true,
+    "baseUrl": ".",
     "lib": ["ESNext"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
     "declaration": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node",
-    "baseUrl": ".",
     "paths": {
+      "@curatedotfun/shared-db/*": ["../packages/shared-db/src/*"],
+      "@curatedotfun/types/*": ["../packages/types/src/*"],
       "*": ["src/*"]
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "exclude": ["node_modules", "dist", "tests"],
+  "references": [
+    { "path": "../packages/shared-db" },
+    { "path": "../packages/types" }
+  ]
 }

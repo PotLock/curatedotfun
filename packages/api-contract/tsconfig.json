@@ -1,0 +1,27 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "noEmit": false,
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true, // Only emit .d.ts files
+    "composite": true, // Important for project references in monorepo
+
+    "types": [],
+    "paths": {
+      "@curatedotfun/types/*": ["../types/src/*"],
+      "@curatedotfun/shared-db/*": ["../shared-db/src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"],
+  "references": [{ "path": "../types" }, { "path": "../shared-db" }]
+}

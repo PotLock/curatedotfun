@@ -1,9 +1,14 @@
-import { DistributorConfig, TransformConfig } from "../types/config";
-import { ProcessorError, TransformError } from "../types/errors";
-import { DistributionService } from "./distribution.service";
-import { TransformationService } from "./transformation.service";
+import { DistributorConfig, TransformConfig } from "@curatedotfun/shared-db";
+import {
+  ProcessorError,
+  TransformError,
+} from "@curatedotfun/utils";
+import { Logger } from "pino";
 import { logger } from "./../utils/logger";
 import { sanitizeJson } from "./../utils/sanitize";
+import { DistributionService } from "./distribution.service";
+import { IBaseService } from "./interfaces/base-service.interface";
+import { TransformationService } from "./transformation.service";
 
 interface ProcessConfig {
   enabled?: boolean;
@@ -11,11 +16,16 @@ interface ProcessConfig {
   distribute?: DistributorConfig[];
 }
 
-export class ProcessorService {
+export class ProcessorService implements IBaseService {
+  public readonly logger: Logger;
+
   constructor(
     private transformationService: TransformationService,
     private distributionService: DistributionService,
-  ) {}
+    logger: Logger,
+  ) {
+    this.logger = logger;
+  }
 
   /**
    * Process content through transformation pipeline and distribute

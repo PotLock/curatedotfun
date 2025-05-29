@@ -1,4 +1,4 @@
-import { Submission, SubmissionWithFeedData } from "../types/twitter";
+import { Submission, SubmissionWithFeedData } from "../types/submission";
 import FeedItem from "./FeedItem";
 
 interface SubmissionListProps {

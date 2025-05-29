@@ -5,7 +5,7 @@ import { Dispatch, SetStateAction } from "react"; // Import Dispatch and SetStat
 
 // Re-define or import UserProfile type (ensure consistency with web3auth.tsx)
 // If defined elsewhere, import it instead.
-interface UserProfile {
+export interface UserProfile {
   id: number;
   sub_id: string;
   near_account_id: string | null;

@@ -1,11 +1,10 @@
-import fs from "fs/promises";
-import path from "path";
 import {
   AppConfig,
-  FeedConfig,
-  PluginConfig,
+  PluginRegistrationConfig,
   PluginsConfig,
-} from "../types/config";
+} from "@curatedotfun/types";
+import fs from "fs/promises";
+import path from "path";
 import { hydrateConfigValues } from "../utils/config";
 import { logger } from "../utils/logger";
 
@@ -13,16 +12,17 @@ export const isProduction = process.env.NODE_ENV === "production";
 export const isTest = process.env.NODE_ENV === "test";
 export const isStaging = process.env.RAILWAY_ENVIRONMENT_NAME === "staging";
 
+// TODO: this could probably be removed
+
 console.log(
   "Using environment: ",
   process.env.RAILWAY_ENVIRONMENT_NAME ?? process.env.NODE_ENV,
 );
 export class ConfigService {
-  private static instance: ConfigService;
   private config: AppConfig | null = null;
   private configPath: string;
 
-  private constructor() {
+  public constructor() {
     if (!isProduction) {
       this.configPath = path.resolve(
         process.cwd(),
@@ -34,13 +34,6 @@ export class ConfigService {
     }
 
     logger.info(`Using configuration from: ${this.configPath}`);
-  }
-
-  public static getInstance(): ConfigService {
-    if (!ConfigService.instance) {
-      ConfigService.instance = new ConfigService();
-    }
-    return ConfigService.instance;
   }
 
   public async loadConfig(): Promise<AppConfig> {
@@ -84,21 +77,13 @@ export class ConfigService {
     return config.plugins;
   }
 
-  public getPluginByName(pluginName: string): PluginConfig | undefined {
+  public getPluginByName(
+    pluginName: string,
+  ): PluginRegistrationConfig | undefined {
     if (!this.config) {
       throw new Error("Config not loaded. Call loadConfig() first.");
     }
     const plugins = this.getPluginRegistry();
     return plugins[pluginName];
-  }
-
-  public getFeedConfig(feedId: string): FeedConfig | undefined {
-    if (!this.config) {
-      throw new Error("Config not loaded. Call loadConfig() first.");
-    }
-    const config = this.getConfig();
-    return config.feeds.find(
-      (feed) => feed.id.toLowerCase() === feedId.toLowerCase(),
-    );
   }
 }

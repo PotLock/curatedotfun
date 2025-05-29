@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useWeb3Auth } from "../hooks/use-web3-auth";
+import { useAuth } from "../contexts/AuthContext";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Modal } from "./Modal";
@@ -11,7 +11,7 @@ interface LoginModalProps {
 }
 
 export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
-  const { login } = useWeb3Auth();
+  const { login } = useAuth();
   const { showWalletLoginModal } = useAuthStore();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +22,10 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
 
     setIsLoading(true);
     try {
-      await login("email_passwordless", { login_hint: email });
+      await login("web3auth", {
+        loginProvider: "email_passwordless",
+        login_hint: email,
+      });
       onClose();
     } catch (error) {
       console.error("Email login failed:", error);
@@ -47,7 +50,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             <Button
               className="w-full flex items-center justify-center gap-2"
               onClick={() => {
-                login("google");
+                login("web3auth", { loginProvider: "google" });
                 onClose();
               }}
               variant="default"
@@ -91,7 +94,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                 variant="outline"
                 className="w-full flex items-center justify-center gap-2"
                 onClick={() => {
-                  login("github");
+                  login("web3auth", { loginProvider: "github" });
                   onClose();
                 }}
               >
@@ -112,7 +115,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                 variant="outline"
                 className="w-full flex items-center justify-center gap-2"
                 onClick={() => {
-                  login("apple");
+                  login("web3auth", { loginProvider: "apple" });
                   onClose();
                 }}
               >

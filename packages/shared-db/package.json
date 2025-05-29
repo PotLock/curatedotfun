@@ -1,0 +1,33 @@
+{
+  "name": "@curatedotfun/shared-db",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist --target bun && tsc --emitDeclarationOnly --outDir ./dist",
+    "lint": "eslint . --ext .ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "async-retry": "^1.3.3",
+    "drizzle-zod": "^0.7.1",
+    "drizzle-orm": "^0.43.1",
+    "postgres": "^3.4.5",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/async-retry": "^1.4.9",
+    "@types/bun": "latest",
+    "dotenv": "^16.5.0",
+    "drizzle-kit": "^0.31.1",
+    "eslint": "^9.26.0",
+    "typescript": "^5.8.3"
+  },
+  "peerDependencies": {
+    "drizzle-orm": "^0.43.1",
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,19 +1,23 @@
-import { performReload } from "@module-federation/node/utils";
-import { init, loadRemote } from "@module-federation/runtime";
-import { PluginError, PluginLoadError } from "../types/errors";
-
 import {
   BotPlugin,
   DistributorPlugin,
-  PluginConfig,
   PluginType,
   PluginTypeMap,
+  SourceItem,
+  SourcePlugin,
   TransformerPlugin,
 } from "@curatedotfun/types";
-import { Hono } from "hono";
+import {
+  PluginError,
+  PluginLoadError
+} from "@curatedotfun/utils";
+import { performReload } from "@module-federation/node/utils";
+import { init, loadRemote } from "@module-federation/runtime";
+import { Logger } from "pino";
 import { logger } from "../utils/logger";
 import { createPluginInstanceKey } from "../utils/plugin";
 import { ConfigService, isProduction } from "./config.service";
+import { IBaseService } from "./interfaces/base-service.interface";
 
 /**
  * Cache entry for a loaded plugin
@@ -26,18 +30,6 @@ export interface PluginCache<T extends PluginType, P extends BotPlugin> {
     >;
   };
   lastLoaded: Date;
-}
-
-export interface PluginEndpoint {
-  // move to types
-  path: string;
-  method: "GET" | "POST" | "PUT" | "DELETE";
-  handler: (ctx: import("hono").Context) => Promise<Response>;
-}
-
-interface PluginWithEndpoints extends BotPlugin<Record<string, unknown>> {
-  // move to types
-  getEndpoints?: () => PluginEndpoint[];
 }
 
 interface RemoteConfig {
@@ -72,21 +64,17 @@ type PluginContainer<
   TConfig extends Record<string, unknown> = Record<string, unknown>,
 > =
   | {
-      default?: new () => PluginTypeMap<TInput, TOutput, TConfig>[T];
-    }
+    default?: new () => PluginTypeMap<TInput, TOutput, TConfig>[T];
+  }
   | (new () => PluginTypeMap<TInput, TOutput, TConfig>[T]);
 
 /**
  * PluginService manages the complete lifecycle of plugins including loading,
  * initialization, caching, endpoint registration, and cleanup.
  */
-export class PluginService {
-  private static instance: PluginService;
+export class PluginService implements IBaseService {
   private remotes: Map<string, RemoteState> = new Map();
   private instances: Map<string, InstanceState<PluginType>> = new Map();
-  private endpoints: Map<string, PluginEndpoint[]> = new Map();
-  private app: Hono | null = null;
-  private configService: ConfigService;
 
   // Time in milliseconds before cached items are considered stale
   private readonly instanceCacheTimeout: number = 7 * 24 * 60 * 60 * 1000; // 7 days (instance of a plugin with config)
@@ -96,29 +84,12 @@ export class PluginService {
   private readonly maxAuthFailures: number = 2; // one less than 3 to avoid locking
   private readonly retryDelays: number[] = [1000, 5000]; // Delays between retries in ms
 
-  private constructor() {
-    this.configService = ConfigService.getInstance();
-  }
-
-  /**
-   * Gets the singleton instance of PluginService
-   */
-  public static getInstance(): PluginService {
-    if (!PluginService.instance) {
-      PluginService.instance = new PluginService();
-    }
-    return PluginService.instance;
-  }
-
-  /**
-   * Sets the Elysia app instance for endpoint registration
-   */
-  public setApp(app: Hono) {
-    this.app = app;
-    // Register any pending endpoints
-    for (const [name, endpoints] of this.endpoints) {
-      this.registerEndpoints(name, endpoints);
-    }
+  public readonly logger: Logger;
+  constructor(
+    private configService: ConfigService,
+    logger: Logger,
+  ) {
+    this.logger = logger;
   }
 
   /**
@@ -217,13 +188,6 @@ export class PluginService {
           //   );
           // }
 
-          // Register endpoints if available
-          if (this.app && (newInstance as PluginWithEndpoints).getEndpoints) {
-            const endpoints = (newInstance as PluginWithEndpoints)
-              .getEndpoints!();
-            this.registerEndpoints(normalizedName, endpoints);
-          }
-
           // Cache successful instance
           const instanceState: InstanceState<T> = {
             instance: newInstance as PluginTypeMap<
@@ -248,8 +212,6 @@ export class PluginService {
 
             if (instance.authFailures >= this.maxAuthFailures) {
               logger.error(`Plugin ${name} disabled due to auth failures`);
-              // Clean up endpoints before disabling
-              this.unregisterEndpoints(normalizedName);
               throw new PluginError(
                 `Plugin ${name} disabled after ${instance.authFailures} auth failures`,
               );
@@ -271,16 +233,15 @@ export class PluginService {
 
       // If we get here, all retries failed
       // Clean up failed remote
-      this.unregisterEndpoints(normalizedName);
       throw lastError || new PluginError(`Failed to initialize plugin ${name}`);
     } catch (error) {
       logger.error(`Plugin error: ${name}`, { error });
       throw error instanceof PluginError
         ? error
         : new PluginError(
-            `Unexpected error with plugin ${name}`,
-            error as Error,
-          );
+          `Unexpected error with plugin ${name}`,
+          error as Error,
+        );
     }
   }
 
@@ -332,8 +293,6 @@ export class PluginService {
     } catch (error) {
       remote.status = "failed";
       remote.lastError = error as Error;
-      // Clean up failed remote
-      this.unregisterEndpoints(remote.config.name);
       throw error;
     }
   }
@@ -361,12 +320,9 @@ export class PluginService {
           });
         }
       }
-      // Clean up endpoints for each instance
-      this.unregisterEndpoints(state.remoteName);
     }
 
     this.instances.clear();
-    this.endpoints.clear();
     this.remotes.clear();
 
     if (errors.length > 0) {
@@ -375,64 +331,6 @@ export class PluginService {
         `Some plugins failed to shutdown properly`,
       );
     }
-  }
-
-  /**
-   * Registers plugin endpoints with the Elysia app
-   */
-  private registerEndpoints(name: string, endpoints: PluginEndpoint[]): void {
-    if (!this.app) {
-      this.endpoints.set(name, endpoints);
-      return;
-    }
-
-    // Remove any existing endpoints first
-    this.unregisterEndpoints(name);
-
-    for (const endpoint of endpoints) {
-      const path = `/plugin/${name}${endpoint.path}`;
-      logger.info(`Registering endpoint: ${endpoint.method} ${path}`);
-
-      switch (endpoint.method) {
-        case "GET":
-          this.app.get(path, endpoint.handler);
-          break;
-        case "POST":
-          this.app.post(path, endpoint.handler);
-          break;
-        case "PUT":
-          this.app.put(path, endpoint.handler);
-          break;
-        case "DELETE":
-          this.app.delete(path, endpoint.handler);
-          break;
-      }
-    }
-
-    // Store new endpoints
-    this.endpoints.set(name, endpoints);
-  }
-
-  /**
-   * Unregisters all endpoints for a plugin
-   */
-  private unregisterEndpoints(name: string): void {
-    if (!this.app) {
-      this.endpoints.delete(name);
-      return;
-    }
-
-    const endpoints = this.endpoints.get(name);
-    if (endpoints) {
-      for (const endpoint of endpoints) {
-        const path = `/plugin/${name}${endpoint.path}`;
-        logger.info(`Unregistering endpoint: ${endpoint.method} ${path}`);
-        // Note: Elysia doesn't provide a direct way to unregister routes
-        // The routes will be overwritten if registered again
-        // or cleared when the app is cleaned up
-      }
-    }
-    this.endpoints.delete(name);
   }
 
   /**
@@ -449,7 +347,13 @@ export class PluginService {
   ): instance is PluginTypeMap<TInput, TOutput, TConfig>[T] {
     if (!instance || typeof instance !== "object") return false;
     if (typeof instance.initialize !== "function") return false;
-    if (instance.type !== type) return false;
+    if (instance.type !== type) {
+      logger.warn(
+        `Plugin instance type mismatch: expected ${type}, got ${instance.type}`,
+        { name: (instance as any)?.constructor?.name },
+      );
+      return false;
+    }
 
     switch (type) {
       case "distributor":
@@ -463,12 +367,16 @@ export class PluginService {
           TOutput,
           TConfig
         >;
-        return (
-          typeof transformer.transform === "function" &&
-          transformer.type === "transformer"
-        );
+        return typeof transformer.transform === "function";
+      }
+      case "source": {
+        const source = instance as SourcePlugin<SourceItem, TConfig>;
+        return typeof source.search === "function";
       }
       default:
+        // This case should ideally not be reached if PluginType is a comprehensive union
+        // and all cases are handled.
+        logger.warn(`Unknown plugin type encountered in validation: ${type}`);
         return false;
     }
   }

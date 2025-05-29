@@ -1,11 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { useWeb3Auth } from "../hooks/use-web3-auth";
+import { useAuth } from "../contexts/AuthContext";
 import { useCreateUserProfile } from "../lib/api";
-import { usernameSchema } from "../lib/validation/user";
 import { Modal } from "./Modal";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { z } from "zod";
+
+const usernameSchema = z
+  .string()
+  .min(2, "Username must be at least 2 characters")
+  .max(32, "Username must be at most 32 characters")
+  .regex(/^[a-z0-9]+$/, "Username must be lowercase letters and numbers only");
 
 interface CreateAccountModalProps {
   isOpen: boolean;
@@ -16,15 +22,9 @@ export const CreateAccountModal = ({
   isOpen,
   onClose,
 }: CreateAccountModalProps) => {
-  const {
-    nearPublicKey,
-    getUserInfo,
-    web3auth, // Needed for authenticateUser to get ID token
-    setCurrentUserProfile, // To update profile state on success
-    logout,
-    provider,
-    getNearCredentials,
-  } = useWeb3Auth();
+  const { user, idToken, logout } = useAuth();
+  const nearPublicKey = user?.near_public_key;
+
   const [chosenUsername, setChosenUsername] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -47,7 +47,13 @@ export const CreateAccountModal = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chosenUsername || !web3auth) return;
+    if (!chosenUsername || !idToken) {
+      if (!idToken)
+        console.error(
+          "CreateAccountModal: idToken is missing, cannot create profile.",
+        );
+      return;
+    }
 
     const validationResult = usernameSchema.safeParse(chosenUsername);
     if (!validationResult.success) {
@@ -61,43 +67,22 @@ export const CreateAccountModal = ({
     setValidationError(null);
 
     try {
-      // Get user info again to ensure we have fresh data if needed
-      const userInfo = await getUserInfo();
-      // If nearPublicKey is not available (not a login with wallet), try to get it directly
-      let publicKey = nearPublicKey;
-      if (!publicKey && provider) {
-        try {
-          // Get credentials directly from the provider
-          const credentials = await getNearCredentials(provider);
-          publicKey = credentials.publicKey;
-          console.log("Generated public key:", publicKey);
-        } catch (keyError) {
-          console.error("Failed to generate NEAR public key:", keyError);
-          setValidationError(
-            "Failed to generate NEAR public key. Please try again.",
-          );
-          return;
-        }
-      }
-
-      if (!publicKey) {
+      if (!nearPublicKey) {
         setValidationError(
-          "NEAR public key is required but not available. Please try logging in again.",
+          "NEAR public key is required but not available. Ensure it was derived during login.",
         );
         return;
       }
 
-      console.log("Creating user profile with public key:", publicKey);
-      const profile = await createUserMutation.mutateAsync({
+      console.log("Creating user profile with public key:", nearPublicKey);
+      const createdProfile = await createUserMutation.mutateAsync({
         username: chosenUsername.toLowerCase(),
-        near_public_key: publicKey,
-        name: userInfo.name,
-        email: userInfo.email,
+        near_public_key: nearPublicKey,
+        name: user?.username || user?.email?.split("@")[0],
+        email: user?.email,
       });
 
-      // Update the profile state in the context
-      setCurrentUserProfile(profile);
-      console.log("Account and profile created successfully:", profile);
+      console.log("Account and profile created successfully:", createdProfile);
       onClose();
     } catch (err) {
       console.error("Error creating account:", err);

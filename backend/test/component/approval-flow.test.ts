@@ -13,11 +13,7 @@ import {
   createMockModeratorTweet,
   createMockTweet,
 } from "../utils/test-data";
-import {
-  cleanupTestServer,
-  mockTwitterSearchTimeline,
-  setupTestServer,
-} from "../utils/test-helpers";
+import { cleanupTestServer, setupTestServer } from "../utils/test-helpers";
 
 describe("Approval Flow", () => {
   let apiClient;

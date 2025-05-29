@@ -1,46 +1,28 @@
-import { useEffect, useState } from "react";
-import { AuthUserInfo } from "../../types/web3auth";
-import { useWeb3Auth } from "../../hooks/use-web3-auth";
+import { useAuth } from "../../contexts/AuthContext";
+
 export function ProfileHeader() {
-  const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
-
-  const { isLoggedIn, getUserInfo, currentUserProfile } = useWeb3Auth();
-
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const info = await getUserInfo();
-        setUserInfo(info);
-      } catch (error) {
-        console.error("Error fetching user info:", error);
-      }
-    };
-
-    if (isLoggedIn) {
-      fetchUserInfo();
-    } else {
-      setUserInfo({});
-    }
-  }, [isLoggedIn, getUserInfo]);
+  const { user } = useAuth();
 
   return (
     <div className="flex flex-col md:flex-row w-full items-center gap-6 md:gap-10 p-4 md:p-6 border border-neutral-300 rounded-md light">
       <img
         className="size-24 md:size-28 rounded-full shrink-0 mx-auto md:mx-0"
-        src={userInfo?.profileImage}
+        // src={userInfo?.profileImage} // Use user.profileImage (hypothetical) or a default
+        // For now, if user.profileImage doesn't exist, this might break or show nothing.
+        // A placeholder or default image logic would be better here.
+        // Example: src={user?.profileImage || '/default-avatar.png'}
+        alt={user?.username || "User Avatar"} // Add alt text
       />
       <div className="flex flex-col gap-2.5 items-center md:items-start text-center md:text-left">
         <div className="flex flex-col space-y-4">
-          <h2 className="text-lg md:text-2xl capitalize">
-            {currentUserProfile?.username}
-          </h2>
+          <h2 className="text-lg md:text-2xl capitalize">{user?.username}</h2>
           <div className="flex items-center gap-2 justify-center md:justify-start">
             <img
               className="size-5 md:size-6 rounded-lg"
               src="/images/near.png"
             />
             <p className="text-sm md:text-base font-normal text-[#64748B]">
-              {currentUserProfile?.near_account_id}
+              {user?.near_account_id}
             </p>
           </div>
         </div>

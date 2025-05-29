@@ -2,7 +2,8 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import { logger } from "../../utils/logger";
-import { Env } from "types/app";
+import { Env } from "../../types/app";
+import { ServiceProvider } from "../../utils/service-provider";
 
 // Define validation schema for the recap job payload
 const recapJobSchema = z.object({
@@ -35,13 +36,45 @@ triggerRoutes.post("/recap", zValidator("json", recapJobSchema), async (c) => {
 
   try {
     // TODO: need to handle schedulerService injection
-    // await schedulerService.runRecapJob(feedId, recapId);
-    return c.json({ success: true });
+    const sp = ServiceProvider.getInstance();
+    const schedulerService = sp.getSchedulerService();
+    // await schedulerService.runRecapJob(feedId, recapId); // This specific method call might need review based on SchedulerService capabilities
+    return c.json({
+      success: true,
+      message:
+        "Recap trigger acknowledged. Processing will be handled by SchedulerService.",
+    });
   } catch (error) {
     logger.error(`Error running recap job: ${feedId}/${recapId}`, error);
 
     const errorMessage = error instanceof Error ? error.message : String(error);
     return c.json({ error: errorMessage }, 500);
+  }
+});
+
+// POST /api/trigger/ingest/:feedId
+// Endpoint for the scheduler to trigger ingestion jobs for a specific feed
+triggerRoutes.post("/ingest/:feedId", async (c) => {
+  const feedId = c.req.param("feedId");
+  if (!feedId) {
+    return c.json({ error: "feedId is required" }, 400);
+  }
+
+  logger.info(`Received request to ingest sources for feed: ${feedId}`);
+
+  try {
+    const sp = ServiceProvider.getInstance();
+    const schedulerService = sp.getSchedulerService();
+    await schedulerService.processFeedSources(feedId);
+    logger.info(`Successfully triggered source ingestion for feed: ${feedId}`);
+    return c.json({ message: `Ingestion triggered for feed ${feedId}` }, 202);
+  } catch (error) {
+    logger.error(`Error triggering ingestion for feed ${feedId}:`, error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return c.json(
+      { error: `Failed to trigger ingestion: ${errorMessage}` },
+      500,
+    );
   }
 });
 

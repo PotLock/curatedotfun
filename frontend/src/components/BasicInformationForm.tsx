@@ -1,7 +1,12 @@
-import { useEffect, useState } from "react";
-import { AuthUserInfo } from "../types/web3auth";
-import { useWeb3Auth } from "../hooks/use-web3-auth";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { useAuth } from "../contexts/AuthContext";
+import { toast } from "../hooks/use-toast";
+import { useAuthStore } from "../store/auth-store";
 import { useFeedCreationStore } from "../store/feed-creation-store";
+import { Button } from "./ui/button";
 import {
   Form,
   FormControl,
@@ -11,14 +16,8 @@ import {
   FormMessage,
 } from "./ui/form";
 import { Input } from "./ui/input";
-import { Textarea } from "./ui/textarea";
-import { Button } from "./ui/button";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { useAuthStore } from "../store/auth-store";
-import { toast } from "../hooks/use-toast";
 import { Loading } from "./ui/loading";
+import { Textarea } from "./ui/textarea";
 
 const BasicInformationFormSchema = z.object({
   profileImage: z.string().optional(),
@@ -30,9 +29,8 @@ const BasicInformationFormSchema = z.object({
 type FormValues = z.infer<typeof BasicInformationFormSchema>;
 
 export default function BasicInformationForm() {
-  const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const { isLoggedIn, getUserInfo } = useWeb3Auth();
+  const { isLoggedIn, user } = useAuth();
   const { showLoginModal } = useAuthStore();
   const [isLoading, setLoading] = useState(false);
   const {
@@ -52,23 +50,6 @@ export default function BasicInformationForm() {
       hashtags: hashtags || "",
     },
   });
-
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const info = await getUserInfo();
-        setUserInfo(info);
-      } catch (error) {
-        console.error("Error fetching user info:", error);
-      }
-    };
-
-    if (isLoggedIn) {
-      fetchUserInfo();
-    } else {
-      setUserInfo({});
-    }
-  }, [isLoggedIn, getUserInfo]);
 
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -135,12 +116,11 @@ export default function BasicInformationForm() {
       ...data,
       createdAt: new Date(),
     });
-    // Here you would handle the form submission, like sending the data to an API
   };
 
   return (
     <div>
-      {isLoggedIn && userInfo ? (
+      {isLoggedIn && user ? (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             {/* Image Upload */}
@@ -160,18 +140,17 @@ export default function BasicInformationForm() {
                               alt="Profile Preview"
                               className="h-full w-full object-cover"
                             />
-                          ) : userInfo.profileImage ? (
-                            <img
-                              src={userInfo.profileImage}
-                              alt="Profile"
-                              className="h-full w-full object-cover"
-                            />
                           ) : (
+                            // ) : user?.profileImage ? ( // user.profileImage is hypothetical, AuthUser doesn't have it yet.
+                            //   <img
+                            //     src={user.profileImage}
+                            //     alt="Profile"
+                            //     className="h-full w-full object-cover"
+                            //   />
                             <div className="text-2xl font-medium text-[#64748B]">
-                              {userInfo.name
-                                ?.split(" ")
-                                .map((n) => n[0])
-                                .join("")}
+                              {(user?.username || user?.email || "U")
+                                ?.charAt(0)
+                                .toUpperCase()}
                             </div>
                           )}
                           {isLoading && (
@@ -194,8 +173,6 @@ export default function BasicInformationForm() {
                             accept="image/*"
                             className="hidden"
                             onChange={(e) => {
-                              // Only handle the image upload here
-                              // The form value will be set inside handleImageUpload
                               handleImageUpload(e);
                             }}
                           />
