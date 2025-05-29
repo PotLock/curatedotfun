@@ -109,7 +109,7 @@ export default function RecapManager({ feedId }: RecapManagerProps) {
         } else {
           setFormError(null);
         }
-      } catch (err) {
+      } catch {
         setFormError("Invalid schedule format");
       }
     }

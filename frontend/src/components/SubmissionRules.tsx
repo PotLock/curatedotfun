@@ -1,10 +1,9 @@
-import React, { useState } from "react";
-import { Checkbox } from "./ui/checkbox";
-import { Input } from "./ui/input";
-import { Switch } from "./ui/switch";
-import { Label } from "./ui/label";
 import { Info } from "lucide-react";
 import { useFeedCreationStore } from "../store/feed-creation-store";
+import { Checkbox } from "./ui/checkbox";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Switch } from "./ui/switch";
 import {
   Tooltip,
   TooltipContent,

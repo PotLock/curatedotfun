@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
-import { Button } from "./ui/button"; // Assuming you have shadcn/ui Button
-import { Input } from "./ui/input"; // Assuming you have shadcn/ui Input
-import { Label } from "./ui/label"; // Assuming you have shadcn/ui Label
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 
 import { Modal } from "./Modal";
 
 interface CreateNearAccountModalProps {
   isOpen: boolean;
-  onClose: () => void; // Function to call when the modal should close (e.g., set isOpen to false)
+  onClose: () => void;
 }
 
 export const CreateNearAccountModal = ({
@@ -18,17 +18,16 @@ export const CreateNearAccountModal = ({
   const {
     nearPublicKey,
     getUserInfo,
-    web3auth, // Needed for authenticateUser to get ID token
-    setCurrentUserProfile, // To update profile state on success
-    logout, // Allow user to cancel/logout
+    web3auth,
+    setCurrentUserProfile,
+    logout,
   } = useWeb3Auth();
   const [chosenUsername, setChosenUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const nearAccountSuffix = ".users.curatedotfun.near"; // Make this configurable if needed
+  const nearAccountSuffix = ".users.curatedotfun.near"; // TODO: network dependent
 
-  // Reset state when modal opens/closes or relevant context changes
   useEffect(() => {
     if (isOpen) {
       setChosenUsername("");
@@ -38,8 +37,7 @@ export const CreateNearAccountModal = ({
   }, [isOpen]);
 
   const handleClose = () => {
-    // Optionally, you could force logout if they close without creating
-    // logout(); // Uncomment if you want to force logout on close
+    logout();
     onClose();
   };
 
@@ -63,8 +61,6 @@ export const CreateNearAccountModal = ({
     setError(null);
 
     try {
-      // Get user info again to ensure we have fresh data if needed
-      // Primarily need sub_id which is stable, but good practice
       const userInfo = await getUserInfo();
 
       // Get ID token for backend auth
@@ -97,10 +93,9 @@ export const CreateNearAccountModal = ({
         );
       }
 
-      // Success! Update the profile state in the context
       setCurrentUserProfile(data.profile);
       console.log("Account and profile created successfully:", data.profile);
-      onClose(); // Close the modal on success
+      onClose();
     } catch (err: unknown) {
       console.error("Error creating account:", err);
       if (err instanceof Error) {

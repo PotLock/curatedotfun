@@ -15,10 +15,10 @@ export function NearWalletProvider({
     <WalletSelectorProvider
       config={{
         modules: [
-          setupMyNearWallet() as any,
+          setupMyNearWallet(),
           setupHereWallet(),
           setupMeteorWallet(),
-          setupBitteWallet() as any,
+          setupBitteWallet(),
           setupIntearWallet(),
         ],
         network: (process.env.PUBLIC_NETWORK || "testnet") as NetworkId,

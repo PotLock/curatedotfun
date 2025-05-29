@@ -3,10 +3,11 @@ import { Link } from "@tanstack/react-router";
 import type { FeedConfig } from "../types/config";
 
 const FeedList = () => {
+  // TODO: useQuery
   const { data: feeds = [] } = useQuery<FeedConfig[]>({
     queryKey: ["feeds"],
     queryFn: async () => {
-      const response = await fetch("/api/feeds"); // TODO: standardize to /feed, remove the /feeds route in routes
+      const response = await fetch("/api/feeds");
       if (!response.ok) {
         throw new Error("Failed to fetch feeds");
       }

@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  TwitterSubmissionWithFeedData,
-  SubmissionStatus,
-} from "../types/twitter";
+import { SubmissionWithFeedData, SubmissionStatus } from "../types/twitter";
 import { Badge } from "./ui/badge";
 import { HiExternalLink } from "react-icons/hi";
 import { getTweetUrl } from "../lib/twitter";
@@ -30,7 +27,7 @@ const formatDate = (dateString: string) => {
 };
 
 interface TopFeedsProps {
-  items: TwitterSubmissionWithFeedData[];
+  items: SubmissionWithFeedData[];
   statusFilter: "all" | SubmissionStatus;
   title?: string;
 }
@@ -40,9 +37,9 @@ const TopFeeds: React.FC<TopFeedsProps> = ({
   statusFilter,
   title = "Top Feeds",
 }) => {
-  const [filteredItems, setFilteredItems] = useState<
-    TwitterSubmissionWithFeedData[]
-  >([]);
+  const [filteredItems, setFilteredItems] = useState<SubmissionWithFeedData[]>(
+    [],
+  );
 
   useEffect(() => {
     // Filter items based on status
@@ -84,14 +81,13 @@ const TopFeeds: React.FC<TopFeedsProps> = ({
                 </div>
                 <div className="flex items-center space-x-1 text-gray-500 text-xs">
                   <span>•</span>
-                  <span>{formatDate(item.createdAt)}</span>
+                  <span>{formatDate(item.createdAt.toISOString())}</span>
                 </div>
               </div>
               <Badge>{item.status}</Badge>
             </div>
 
             <h3 className="font-medium text-base mb-2 line-clamp-1">
-              {item.title || "Untitled"}
               <a
                 href={getTweetUrl(item.tweetId, item.username)}
                 target="_blank"

@@ -1,20 +1,18 @@
-import { useState, useMemo } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { stepDefinitions } from "./content-progress/data";
+import { useMemo, useState } from "react";
+import { stepDefinitions, templateElements } from "./content-progress/data";
 import { EmptyState } from "./content-progress/EmptyState";
+import { JsonEditor } from "./content-progress/JsonEditor";
 import { StepItem } from "./content-progress/StepItem";
 import { VisualEditor } from "./content-progress/VisualEditor";
-import { JsonEditor } from "./content-progress/JsonEditor";
-import { templateElements } from "./content-progress/data";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 export default function ContentProgress() {
   const [showSteps, setShowSteps] = useState(false);
-  const [openSteps, setOpenSteps] = useState<number[]>([0]); // Step 1 open by default
+  const [openSteps, setOpenSteps] = useState<number[]>([0]);
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<string>("visual");
   const [jsonContent, setJsonContent] = useState<string>("");
 
-  // Handle checkbox changes
   const handleElementToggle = (elementId: string) => {
     setSelectedElements((prev) => {
       if (prev.includes(elementId)) {
@@ -25,7 +23,6 @@ export default function ContentProgress() {
     });
   };
 
-  // Generate preview based on selected elements
   const generatePreview = () => {
     if (selectedElements.length === 0) {
       return "Select elements above to build your template";
@@ -152,8 +149,6 @@ export default function ContentProgress() {
 
   return (
     <div
-      // className={`${!showSteps ? "py-14 px-64 bg-gray-50" : "p-0 bg-white"}`}
-
       className={` ${!showSteps ? "py-14 px-8 md:px-16 lg:px-32 xl:px-64 bg-gray-50" : "p-0 bg-white"}`}
     >
       {!showSteps ? (

@@ -40,7 +40,7 @@ interface StatusProps {
   setStatusFilter: (status: StatusFilterType) => void;
 }
 
-export function Status({ statusFilter, setStatusFilter }: StatusProps) {
+export function StatusFilter({ statusFilter, setStatusFilter }: StatusProps) {
   const [open, setOpen] = React.useState(false);
 
   return (

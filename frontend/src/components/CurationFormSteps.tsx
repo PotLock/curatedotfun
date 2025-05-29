@@ -69,10 +69,9 @@ export default function CurationFormSteps() {
     }
   };
 
-  const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
+  const [, setUserInfo] = useState<Partial<AuthUserInfo>>();
 
-  const { isInitialized, isLoggedIn, login, logout, getUserInfo } =
-    useWeb3Auth();
+  const { isLoggedIn, getUserInfo } = useWeb3Auth();
 
   useEffect(() => {
     const fetchUserInfo = async () => {

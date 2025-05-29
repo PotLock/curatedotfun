@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import InfiniteFeed from "../../components/InfiniteFeed";
 import { Sort } from "../../components/Sort";
-import { Status } from "../../components/StatusFilter";
+import { StatusFilter } from "../../components/StatusFilter";
 import SubmissionList from "../../components/SubmissionList";
 import { Button } from "../../components/ui/button";
 import { useAllSubmissions } from "../../lib/api";
@@ -11,9 +11,9 @@ import { useBotId } from "../../lib/config";
 import { StatusFilterType, useFilterStore } from "../../store/useFilterStore";
 import { SubmissionStatus, SubmissionWithFeedData } from "../../types/twitter";
 
-import { useFeedFilterStore } from "../../store/useFeedFilterStore";
-import { Hero } from "../../components/Hero";
 import { Container } from "../../components/Container";
+import { Hero } from "../../components/Hero";
+import { useFeedFilterStore } from "../../store/useFeedFilterStore";
 
 export const Route = createFileRoute("/_layout/")({
   component: ExplorePage,
@@ -60,7 +60,10 @@ export const FeedSection = ({
     <div className="flex items-center justify-between">
       <h2 className="md:text-2xl text-lg leading-5 md:leading-10">{title}</h2>
       <div className="flex gap-3">
-        <Status statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
+        <StatusFilter
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+        />
 
         {showSort && <Sort />}
         {actionButton && (

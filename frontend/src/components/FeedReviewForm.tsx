@@ -17,7 +17,7 @@ export default function FeedReviewForm() {
     hashtags,
     createdAt,
     approvers,
-    submissionRules,
+    // submissionRules,
   } = useFeedCreationStore();
 
   return (

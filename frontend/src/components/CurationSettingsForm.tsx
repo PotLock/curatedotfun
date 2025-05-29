@@ -1,9 +1,7 @@
 import ContentApprovers from "./ContentApprovers";
 import ContentProgress from "./ContentProgress";
 import PublishingIntegrations from "./PublishIntegrations";
-import SubmissionRules from "./SubmissionRules";
 
-// Extracted component for step headers
 const StepHeader = ({
   number,
   title,
