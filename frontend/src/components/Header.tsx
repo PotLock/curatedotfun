@@ -1,43 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { HowItWorks } from "./HowItWorks";
-import { Modal } from "./Modal";
+import { useState } from "react";
 import { Button } from "./ui/button";
 
-import { useWalletSelector } from "@near-wallet-selector/react-hook";
 import { Menu, X } from "lucide-react";
-import * as nearApi from "near-api-js";
-import { createAccessTokenPayload } from "../hooks/near-method";
 import UserMenu from "./UserMenu";
 
 const Header = () => {
-  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { signedAccountId, walletSelector } = useWalletSelector();
-
-  useEffect(() => {
-    const getToken = async () => {
-      if (signedAccountId && walletSelector) {
-        try {
-          const keyStore = new nearApi.keyStores.BrowserLocalStorageKeyStore();
-          const { publicKeyBytes, token, signatureBytes, tokenHash } =
-            await createAccessTokenPayload(keyStore, signedAccountId);
-          const publicKey = publicKeyBytes.toString();
-          console.log("data", {
-            publicKey,
-            signedAccountId,
-            token,
-            signatureBytes,
-            tokenHash,
-          });
-        } catch (error) {
-          console.error("Failed to create access token or profile:", error);
-        }
-      }
-    };
-
-    getToken();
-  }, [signedAccountId, walletSelector]);
 
   return (
     <>
@@ -59,10 +28,6 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex gap-3 flex-shrink-0">
-            {/* <Link to="/explore">
-              <Button variant={"ghost"}>Feeds</Button>
-            </Link> */}
-
             <Link
               to="/leaderboard"
               search={{ feed: "all feeds", timeframe: "all" }}
@@ -127,18 +92,6 @@ const Header = () => {
 
           <div className="flex flex-col items-center justify-between h-full gap-4 p-4 mb-6">
             <div className="flex flex-col gap-4 p-4 mt-4">
-              {/* <Link
-                to="/explore"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full"
-              >
-                <Button
-                  variant="ghost"
-                  className="w-full justify-center text-lg py-4"
-                >
-                  Feeds
-                </Button>
-              </Link> */}
               <Link
                 to="/leaderboard"
                 search={{ feed: "all feeds", timeframe: "all" }}
@@ -172,9 +125,6 @@ const Header = () => {
           </div>
         </div>
       )}
-      <Modal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)}>
-        <HowItWorks />
-      </Modal>
     </>
   );
 };
