@@ -1,64 +1,19 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useWeb3Auth } from "../hooks/use-web3-auth";
 import { HowItWorks } from "./HowItWorks";
 import { Modal } from "./Modal";
 import { Button } from "./ui/button";
-import { useAuthStore } from "../store/auth-store";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
 
-import { useNavigate } from "@tanstack/react-router";
-import {
-  ChevronDown,
-  CircleUserRound,
-  CreditCard,
-  LogOut,
-  Menu,
-  X,
-} from "lucide-react";
-import { AuthUserInfo } from "../types/web3auth";
-import UserMenu from "./UserMenu";
 import { useWalletSelector } from "@near-wallet-selector/react-hook";
-import { AvatarProfile } from "./AvatarProfile";
+import { Menu, X } from "lucide-react";
 import * as nearApi from "near-api-js";
 import { createAccessTokenPayload } from "../hooks/near-method";
+import UserMenu from "./UserMenu";
 
 const Header = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const navigate = useNavigate();
-
-  const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
-  const { showLoginModal } = useAuthStore();
-
-  const { isInitialized, isLoggedIn, logout, getUserInfo } = useWeb3Auth();
-  const { signedAccountId, signOut, walletSelector } = useWalletSelector();
-
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const info = await getUserInfo();
-        setUserInfo(info);
-        setImageError(false);
-      } catch (error) {
-        console.error("Error fetching user info:", error);
-      }
-    };
-
-    if (isLoggedIn) {
-      fetchUserInfo();
-    } else {
-      setUserInfo({});
-    }
-  }, [isLoggedIn, getUserInfo]);
+  const { signedAccountId, walletSelector } = useWalletSelector();
 
   useEffect(() => {
     const getToken = async () => {
@@ -83,53 +38,6 @@ const Header = () => {
 
     getToken();
   }, [signedAccountId, walletSelector]);
-
-  // Profile image component with error handling
-  const ProfileImage = ({ size = "small" }) => {
-    const handleImageError = () => {
-      setImageError(true);
-    };
-
-    if (imageError || !userInfo?.profileImage) {
-      return (
-        <CircleUserRound className={size === "small" ? "h-7 w-7" : "h-6 w-6"} />
-      );
-    }
-
-    return (
-      <img
-        className="rounded-full"
-        style={{
-          height: size === "small" ? "28px" : "24px",
-          width: size === "small" ? "28px" : "24px",
-          objectFit: "cover",
-        }}
-        alt="Profile Image"
-        src={userInfo.profileImage}
-        onError={handleImageError}
-        loading="eager"
-        referrerPolicy="no-referrer"
-      />
-    );
-  };
-
-  const getUserDisplayName = () => {
-    if (signedAccountId) {
-      return signedAccountId;
-    }
-    return (
-      (userInfo as { name?: string }).name ||
-      (userInfo as { email?: string }).email
-    );
-  };
-
-  const handleLogout = () => {
-    if (signedAccountId) {
-      signOut();
-    } else {
-      logout();
-    }
-  };
 
   return (
     <>
@@ -259,80 +167,7 @@ const Header = () => {
             </div>
 
             <div className="w-full flex justify-center mt-4">
-              {(isInitialized && isLoggedIn && userInfo) || signedAccountId ? (
-                <DropdownMenu onOpenChange={setDropdownOpen}>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="flex w-full md:hidden">
-                      <div className="flex gap-1 items-center justify-center">
-                        {signedAccountId ? (
-                          <AvatarProfile
-                            accountId={signedAccountId}
-                            size="small"
-                          />
-                        ) : (
-                          <ProfileImage size="small" />
-                        )}
-                        <p className="text-sm font-medium leading-6 sm:block">
-                          {getUserDisplayName()}
-                        </p>
-                        <ChevronDown
-                          className={`h-4 w-4 transition-transform duration-200 ${
-                            dropdownOpen ? "rotate-180" : ""
-                          }`}
-                        />
-                      </div>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 mt-4">
-                    <DropdownMenuItem>
-                      <div className="flex gap-2 w-full items-start">
-                        {signedAccountId ? (
-                          <AvatarProfile
-                            accountId={signedAccountId}
-                            size="medium"
-                          />
-                        ) : (
-                          <ProfileImage />
-                        )}
-                        <div>
-                          <p className="text-sm font-semibold leading-5">
-                            {signedAccountId ||
-                              (userInfo as { name?: string }).name}
-                          </p>
-                          {!signedAccountId && (
-                            <p className="text-xs leading-5 text-gray-500">
-                              {(userInfo as { email?: string }).email}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="cursor-pointer hover:bg-gray-100"
-                      onClick={() => {
-                        navigate({ to: "/profile" });
-                      }}
-                    >
-                      <CircleUserRound />
-                      <span>Profile</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <CreditCard />
-                      <span>Wallet</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={handleLogout}
-                      className="cursor-pointer hover:bg-gray-100"
-                    >
-                      <LogOut />
-                      <span>Disconnect</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button onClick={showLoginModal}>Login</Button>
-              )}
+              <UserMenu className="flex w-full" />
             </div>
           </div>
         </div>

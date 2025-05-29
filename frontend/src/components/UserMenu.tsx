@@ -9,14 +9,18 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
+import { useWalletSelector } from "@near-wallet-selector/react-hook";
 import { useNavigate } from "@tanstack/react-router";
-import { ChevronDown, CircleUserRound, CreditCard, LogOut } from "lucide-react";
+import { ChevronDown, CircleUserRound, LogOut } from "lucide-react";
 import { useAuthStore } from "../store/auth-store";
 import { AuthUserInfo } from "../types/web3auth";
-import { useWalletSelector } from "@near-wallet-selector/react-hook";
 import { AvatarProfile } from "./AvatarProfile";
 
-export default function UserMenu() {
+interface UserMenuProps {
+  className?: string;
+}
+
+export default function UserMenu({ className }: UserMenuProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
   const [imageError, setImageError] = useState(false);
@@ -96,7 +100,7 @@ export default function UserMenu() {
       {(isInitialized && isLoggedIn && userInfo) || signedAccountId ? (
         <DropdownMenu onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="hidden md:flex">
+            <Button variant="outline" className={className || "hidden md:flex"}>
               <div className="flex gap-1 items-center justify-center">
                 {signedAccountId ? (
                   <AvatarProfile accountId={signedAccountId} size="small" />
@@ -144,10 +148,6 @@ export default function UserMenu() {
               <CircleUserRound />
               <span>Profile</span>
             </DropdownMenuItem>
-            {/* <DropdownMenuItem>
-              <CreditCard />
-              <span>Wallet</span>
-            </DropdownMenuItem> */}
             <DropdownMenuItem
               onClick={handleLogout}
               className="cursor-pointer hover:bg-gray-100"
@@ -158,7 +158,10 @@ export default function UserMenu() {
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (
-        <Button className="hidden md:flex" onClick={showLoginModal}>
+        <Button
+          className={className || "hidden md:flex"}
+          onClick={showLoginModal}
+        >
           Login
         </Button>
       )}
