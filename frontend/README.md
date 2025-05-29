@@ -59,32 +59,6 @@ The frontend leverages modern web technologies for optimal performance and devel
   - Efficient navigation
   - Data-driven route handling
 
-### Application Structure
-
-```bash
-src/
-├── components/     # React components
-│   ├── FeedItem.tsx
-│   ├── FeedList.tsx
-│   ├── Header.tsx
-│   ├── HowItWorks.tsx
-│   ├── Layout.tsx
-│   ├── Modal.tsx
-│   └── Settings.tsx
-├── lib/           # Utility functions and API clients
-│   ├── api.ts
-│   ├── config.ts
-│   └── twitter.ts
-├── routes/        # Application routes
-│   ├── __root.tsx
-│   ├── feed.$feedId.tsx
-│   ├── index.tsx
-│   └── settings.tsx
-├── types/         # TypeScript definitions
-├── App.tsx        # Root component
-└── index.tsx      # Application entry point
-```
-
 ## Key Features
 
 ### Content Display

@@ -12,7 +12,6 @@ function RouteComponent() {
       <div className="flex flex-1 overflow-hidden">
         {/* Main Content Area */}
         <div className="flex-1 flex relative">
-          {/* Center Panel - Feed Items */}
           <div className="flex-1 custom-scrollbar overflow-y-auto h-full">
             <div className=" pb-12 md:p-0 lg:p-0 md:pb-16 lg:pb-20">
               <Outlet />
