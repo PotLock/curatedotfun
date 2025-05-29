@@ -7,6 +7,7 @@
 .yarn/install-state.gz
 /.unlighthouse
 **/.pnpm-store
+node-compile-cache
 
 # testing
 /coverage
