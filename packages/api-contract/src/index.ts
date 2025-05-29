@@ -11,11 +11,6 @@ export {
   getMyFeedRankDefinition,
 } from "./routers/activity";
 export {
-  configContractRouter,
-  type ConfigContractRouter,
-  getFullConfigDefinition,
-} from "./routers/config";
-export {
   feedsContractRouter,
   type FeedsContractRouter,
   getAllFeedsDefinition,

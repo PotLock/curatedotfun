@@ -5,6 +5,9 @@ import {
 } from "@curatedotfun/api-contract";
 import { protectedProcedure, router, handleServiceError } from "../trpc";
 
+// add remove plugin from registry
+// update plugin in registry
+
 // --- Schemas ---
 const ReloadPluginsOutputSchema = z.object({
   success: z.boolean(),

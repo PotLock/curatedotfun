@@ -1,7 +1,6 @@
 import type { AppRouter } from "@curatedotfun/api-contract";
 import { router } from "@curatedotfun/api-contract";
 import { activityRouter } from "./activity";
-import { configRouter } from "./config";
 import { feedsRouter } from "./feeds";
 import { pluginRouter } from "./plugin";
 import { statsRouter } from "./stats";
@@ -11,7 +10,6 @@ import { usersRouter } from "./users";
 
 export const appRouter: AppRouter = router({
   activity: activityRouter,
-  config: configRouter,
   feeds: feedsRouter,
   plugin: pluginRouter,
   stats: statsRouter,

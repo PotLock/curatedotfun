@@ -26,7 +26,7 @@
     "clean": "bunx turbo run clean",
     "fmt": "bunx prettier --write '**/*.{js,jsx,ts,tsx,json}'",
     "fmt:check": "bunx prettier --check '**/*.{js,jsx,ts,tsx,json}'",
-    "db:migrate": "bun --cwd ./packages/shared-db run db:migrate"
+    "db:migrate": "bun run --cwd ./packages/shared-db db:migrate"
   },
   "type": "module"
 }

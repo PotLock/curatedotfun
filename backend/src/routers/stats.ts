@@ -4,9 +4,8 @@ import {
   getPlatformStatsDefinition,
 } from "@curatedotfun/api-contract";
 import { publicProcedure, router, handleServiceError } from "../trpc";
-// import { submissionRepository } from "services/db";
-// import { ServiceProvider } from "../../utils/service-provider";
-// We'll assume these functionalities are available via ctx.sp or specific services.
+
+// TODO: just combine this with activity
 
 // --- Schemas ---
 // Output schema is defined in the contract
