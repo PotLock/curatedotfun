@@ -113,7 +113,7 @@ export default function Leaderboard({
     <div className=" flex flex-col mx-auto ">
       <Hero
         title="Leaderboard"
-        description="Top Performing Curators ranked by submissions, engagement and activities."
+        description="Top performing curators ranked by submissions, engagement, and activities."
       />
 
       <Container>

@@ -11,6 +11,9 @@ const isDev = () => process.env.NODE_ENV === "development";
 const generateTweetId = () =>
   `${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
+// TODO: have it happen direct
+// Need to check permissions... does the authed user have access to any of the connected accounts?
+// Or do we just add the curate platform's user Id to it?
 export const handleApprove = async (
   submission: SubmissionWithFeedData,
   botId: string,
@@ -38,6 +41,8 @@ export const handleApprove = async (
     console.log("Development mode: Submitted approval tweet", { newTweetId });
     return;
   }
+
+  console.log("hello")
 
   // In production, open Twitter intent
   window.open(

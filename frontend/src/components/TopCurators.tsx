@@ -1,4 +1,5 @@
 import { useLeaderboard } from "../lib/api";
+import { UserLink } from "./FeedItem";
 import { Badge } from "./ui/badge";
 
 interface TopCuratorsProps {
@@ -67,23 +68,21 @@ const TopCurators = ({ feedId, limit = 10 }: TopCuratorsProps) => {
         return (
           <div key={curator.curatorId} className="flex flex-col gap-3">
             <div className="px-3 py-2 flex w-full gap-2 items-center rounded-md border-1 border border-neutral-100">
-              <div>
+              {/* <div>
                 <img
                   src="/images/web3-plug.png"
                   alt="Web3Plug"
                   className="h-8 w-8 rounded-md"
                 />
-              </div>
+              </div> */}
               <div className="flex justify-between w-full items-center">
-                <div className="flex flex-col">
-                  <p className="text-xs font-black">
+                <div className="flex align-items">
+                  {/* <p className="text-xs font-black">
                     {curator?.name ? curator.name : "Web3Plug (murica/acc)"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    @{curator.curatorUsername}
-                  </p>
+                  </p> */}
+                  <UserLink username={curator.curatorUsername} />
                   <div className="flex gap-2">
-                    <a href={`https://twitter.com/${curator.curatorUsername}`}>
+                    {/* <a href={`https://twitter.com/${curator.curatorUsername}`}>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="11"
@@ -98,8 +97,8 @@ const TopCurators = ({ feedId, limit = 10 }: TopCuratorsProps) => {
                           stroke-width="0.23767"
                         />
                       </svg>
-                    </a>
-                    <a
+                    </a> */}
+                    {/* <a
                       href={`https://linkedin.com/in/${curator.curatorUsername}`}
                     >
                       <svg
@@ -143,7 +142,7 @@ const TopCurators = ({ feedId, limit = 10 }: TopCuratorsProps) => {
                           </clipPath>
                         </defs>
                       </svg>
-                    </a>
+                    </a> */}
                   </div>
                 </div>
                 <div>
