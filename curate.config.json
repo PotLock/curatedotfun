@@ -1915,6 +1915,40 @@
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "@tintuccoinhangngay"
               }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "title": "{{title}}",
+                      "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
+                      "description": "{{summary}}",
+                      "link": "{{source}}",
+                      "publishedAt": "{{createdAt}}",
+                      "author": {
+                        "name": "{{username}}",
+                        "link": "https://x.com/{{author}}"
+                      },
+                      "categories": ["vietnam", "{{tags}}"],
+                      "source": {
+                        "url": "{{source}}",
+                        "title": "twitter"
+                      }
+                    }
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/rss",
+              "config": {
+                "serviceUrl": "https://vietnam-rss.up.railway.app",
+                "apiSecret": "{VIETNAM_RSS_API_SECRET}",
+                "feedConfig": {
+                  "title": "Vietnam Crypto News",
+                  "description": "Vietnam crypto ecosystem."
+                }
+              }
             }
           ]
         }
@@ -3578,7 +3612,14 @@
       "description": "News about Bitcoin, Bitcoin devs, scaling, integrations, adoptions.",
       "moderation": {
         "approvers": {
-          "twitter": ["Blaze0x1", "chiefseif4327", "0xAmerican", "plugrel", "potlock_intern", "aescobarindo"]
+          "twitter": [
+            "Blaze0x1",
+            "chiefseif4327",
+            "0xAmerican",
+            "plugrel",
+            "potlock_intern",
+            "aescobarindo"
+          ]
         }
       },
       "outputs": {
