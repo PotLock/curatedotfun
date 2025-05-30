@@ -4,6 +4,17 @@ import { TanStackRouterRspack } from "@tanstack/router-plugin/rspack";
 import { pluginNodePolyfill } from "@rsbuild/plugin-node-polyfill";
 import path from "path";
 
+const getProxyTarget = () => {
+  switch (process.env.NODE_ENV) {
+    case "production":
+      return "https://app.curate.fun";
+    case "staging":
+      return "https://curatedotfun-staging-31fe.up.railway.app";
+    default: // development
+      return "http://localhost:3000";
+  }
+};
+
 export default defineConfig({
   plugins: [
     pluginReact(),
@@ -58,9 +69,8 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "https://curatedotfun-staging-31fe.up.railway.app",
-        secure: false,
-        // target: "https://app.curate.fun",
+        target: getProxyTarget(),
+        secure: process.env.NODE_ENV !== "development", // secure should be true for https (prod/staging)
         changeOrigin: true,
         ws: true,
       },

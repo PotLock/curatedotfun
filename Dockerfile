@@ -12,8 +12,8 @@ COPY . .
 
 # Disable telemetry and prune the monorepo to include only what's needed
 RUN turbo telemetry disable
-# Prune the monorepo to include only backend and frontend
-RUN turbo prune --scope=@curatedotfun/backend --scope=@curatedotfun/frontend --docker
+# Prune the monoreispo to include only backend
+RUN turbo prune --scope=@curatedotfun/backend --docker
 
 # Builder stage for installing dependencies and building
 FROM base AS builder
