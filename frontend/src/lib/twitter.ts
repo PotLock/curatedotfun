@@ -42,7 +42,7 @@ export const handleApprove = async (
     return;
   }
 
-  console.log("hello")
+  console.log("hello");
 
   // In production, open Twitter intent
   window.open(
