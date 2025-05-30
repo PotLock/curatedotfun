@@ -4,6 +4,7 @@ import { LeaderboardEntry, useAppConfig } from "../lib/api";
 import { Link } from "@tanstack/react-router";
 import { Hero } from "./Hero";
 import { Container } from "./Container";
+import { UserLink } from "./FeedItem";
 
 interface LeaderboardSearch {
   feed: string;
@@ -317,18 +318,7 @@ export default function Leaderboard({
                   </td> */}
                       <td className="py-4 px-2 align-top">
                         <div className="flex items-start gap-2">
-                          <div>
-                            <a
-                              href={`https://x.com/${item.curatorUsername}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-start gap-2 hover:underline"
-                            >
-                              <span className="font-medium text-[#111111]">
-                                @{item.curatorUsername}
-                              </span>
-                            </a>
-                          </div>
+                          <UserLink username={item.curatorUsername} />
                         </div>
                       </td>
                       <td className="py-4 px-2 align-top">

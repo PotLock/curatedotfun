@@ -28,7 +28,7 @@ const FeedList = () => {
             <p className="text-gray-500">No feeds found</p>
           </div>
         ) : (
-          feeds.map((feed) => (
+          feeds.filter((feed) => feed.id !== "all").map((feed) => (
             <Link
               key={feed.id}
               to="/feed/$feedId"
