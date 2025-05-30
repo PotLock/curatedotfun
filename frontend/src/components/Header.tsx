@@ -1,6 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "./ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 import { Menu, X } from "lucide-react";
 import UserMenu from "./UserMenu";
@@ -34,12 +40,20 @@ const Header = () => {
             >
               <Button variant={"ghost"}>Leaderboard</Button>
             </Link>
-            <Link
-              to="/create/feed"
-              search={{ feed: "all feeds", timeframe: "all" }}
-            >
-              <Button variant={"ghost"}>Create</Button>
-            </Link>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Button variant={"ghost"} disabled>
+                      Create
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Coming soon!</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>{" "}
         <div className="flex items-center gap-2">
@@ -105,18 +119,25 @@ const Header = () => {
                   Leaderboard
                 </Button>
               </Link>
-              <Link
-                to="/create/feed"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full"
-              >
-                <Button
-                  variant="ghost"
-                  className="w-full justify-center text-lg py-4"
-                >
-                  Create
-                </Button>
-              </Link>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    {/* The div is to allow the Tooltip to work correctly with a disabled button */}
+                    <div className="w-full">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-center text-lg py-4"
+                        disabled
+                      >
+                        Create
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Coming soon!</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
 
             <div className="w-full flex justify-center mt-4">
