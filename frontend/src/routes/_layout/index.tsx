@@ -222,9 +222,6 @@ function HomePage() {
         <div className="p-4">
           <div className="max-w-full overflow-x-hidden">
             <div>
-              <h3 className="text-[32px] font-normal leading-[63px]">
-                {layoutTitleText}
-              </h3>
               <TopCurators />
             </div>
           </div>
