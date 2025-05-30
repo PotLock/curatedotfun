@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:match*",
+      "destination": "https://curatedotfun-staging-31fe.up.railway.app/api/:match*"
+    }
+  ]
+}
