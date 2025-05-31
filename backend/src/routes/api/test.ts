@@ -1,8 +1,9 @@
 import { MockTwitterService } from "../../__test__/mocks/twitter-service.mock";
 import { zValidator } from "@hono/zod-validator";
 import { Tweet } from "agent-twitter-client";
+import { Hono } from "hono";
+import { Env } from "types/app";
 import { z } from "zod";
-import { HonoApp } from "../../types/app";
 
 // Create a single mock instance to maintain state
 const mockTwitterService = new MockTwitterService();
@@ -31,8 +32,7 @@ const createTweet = (
   };
 };
 
-// Create test routes
-const testRoutes = HonoApp();
+const testRoutes = new Hono<Env>();
 
 // Guard middleware for development only
 testRoutes.use("*", async (c, next) => {

@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
-import { PluginConfig, PluginType } from "../types/plugins";
+import { PluginType } from "@curatedotfun/types";
+import { PluginConfig } from "types/config";
 
 /**
  * Creates a deterministic cache key for a plugin instance by combining and hashing

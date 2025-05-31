@@ -3,90 +3,29 @@ import { loadEnvConfig } from "./utils/config";
 loadEnvConfig();
 
 import { serve } from "@hono/node-server";
-import { AppInstance } from "types/app";
 import { createApp } from "./app";
-import { dbConnection } from "./services/db";
+import { pool } from "./db";
 import {
   cleanup,
   createHighlightBox,
   createSection,
   logger,
 } from "./utils/logger";
+import { ServiceProvider } from "./utils/service-provider";
 
 const PORT = Number(process.env.PORT) || 3000;
-
-let instance: AppInstance | null = null;
-
-async function getInstance(): Promise<AppInstance> {
-  if (!instance) {
-    try {
-      instance = await createApp();
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      const errorStack = error instanceof Error ? error.stack : undefined;
-      logger.error(`Failed to create app instance: ${errorMessage}`, {
-        error: errorMessage,
-        stack: errorStack,
-        dirname: __dirname,
-        cwd: process.cwd(),
-      });
-      // console.error(errorMessage);
-      throw new Error(`Failed to initialize application: ${errorMessage}`);
-    }
-  }
-  return instance;
-}
-
-/**
- * Initialize the database connection
- * @returns Promise<boolean> - true if connection was successful
- */
-async function initializeDatabaseConnection(): Promise<boolean> {
-  logger.info("Initializing database connection...");
-
-  try {
-    await dbConnection.connect();
-    return true;
-  } catch (error) {
-    // Check if it's a DATABASE_URL error
-    if (error instanceof Error && error.message.includes("DATABASE_URL")) {
-      logger.error("DATABASE_URL environment variable is not set or invalid");
-      logger.error(
-        "Please check your .env file and ensure DATABASE_URL is correctly configured",
-      );
-      logger.error(`Current working directory: ${process.cwd()}`);
-    } else {
-      logger.error(
-        "Database connection failed. Application cannot continue without database.",
-      );
-    }
-    return false;
-  }
-}
 
 async function startServer() {
   try {
     createSection("⚡ STARTING SERVER ⚡");
 
-    const dbConnected = await initializeDatabaseConnection();
-    if (!dbConnected) {
-      logger.error("Exiting application due to database connection failure");
-      process.exit(1);
-    }
+    const { app } = await createApp();
+    const sp = ServiceProvider.getInstance();
 
-    const { app, context } = await getInstance();
-
-    // Add health check route
     app.get("/health", (c) => {
       const health = {
         status: "OK",
         timestamp: new Date().toISOString(),
-        services: {
-          twitter: context.twitterService ? "up" : "down",
-          submission: context.submissionService ? "up" : "down",
-          distribution: context.distributionService ? "up" : "down",
-        },
       };
       return c.json(health);
     });
@@ -111,9 +50,24 @@ async function startServer() {
 
     createSection("SERVICES");
 
-    // Start checking for mentions only if Twitter service is available
-    if (context.submissionService) {
-      await context.submissionService.startMentionsCheck();
+    // Start all background task services
+    const backgroundServices = sp.getBackgroundTaskServices();
+    if (backgroundServices.length > 0) {
+      logger.info(
+        `Starting ${backgroundServices.length} background task service(s)...`,
+      );
+      for (const bgService of backgroundServices) {
+        bgService
+          .start()
+          .catch((err) =>
+            logger.error(
+              `Error starting background service: ${err.message}`,
+              err,
+            ),
+          );
+      }
+    } else {
+      logger.info("No background task services configured to start.");
     }
 
     // Graceful shutdown handler
@@ -129,28 +83,47 @@ async function startServer() {
         logger.info("HTTP server closed");
 
         const shutdownPromises = [];
-        if (context.twitterService) {
-          shutdownPromises.push(context.twitterService.stop());
-          logger.info("Twitter service stopped");
+
+        // Stop all background task services
+        const bgServicesToStop = sp.getBackgroundTaskServices(); // Get fresh list in case it changed
+        if (bgServicesToStop.length > 0) {
+          logger.info(
+            `Stopping ${bgServicesToStop.length} background task service(s)...`,
+          );
+          for (const bgService of bgServicesToStop) {
+            shutdownPromises.push(
+              bgService
+                .stop()
+                .catch((err) =>
+                  logger.error(
+                    `Error stopping background service: ${err.message}`,
+                    err,
+                  ),
+                ),
+            );
+          }
         }
 
-        if (context.submissionService) {
-          shutdownPromises.push(context.submissionService.stop());
-          logger.info("Submission service stopped");
+        const distributionService = sp.getDistributionService();
+        if (
+          distributionService &&
+          typeof distributionService.shutdown === "function"
+        ) {
+          shutdownPromises.push(
+            distributionService
+              .shutdown()
+              .then(() => logger.info("Distribution service stopped")),
+          );
         }
 
-        if (context.distributionService) {
-          shutdownPromises.push(context.distributionService.shutdown());
-          logger.info("Distribution service stopped");
-        }
-
-        shutdownPromises.push(dbConnection.disconnect());
+        // Database pool
+        shutdownPromises.push(
+          pool
+            .end()
+            .then(() => logger.info("Database connection pool closed.")),
+        );
 
         await Promise.all(shutdownPromises);
-        logger.info("Database connections closed");
-
-        // Reset instance for clean restart
-        instance = null;
 
         logger.info("Shutdown complete");
         process.exit(0);
@@ -160,8 +133,9 @@ async function startServer() {
       }
     };
 
-    // Handle manual shutdown (Ctrl+C)
+    // Handle manual shutdown (Ctrl+C) and SIGTERM
     process.once("SIGINT", () => gracefulShutdown("SIGINT"));
+    process.once("SIGTERM", () => gracefulShutdown("SIGTERM"));
   } catch (error) {
     logger.error("Error during startup:", error);
     cleanup();

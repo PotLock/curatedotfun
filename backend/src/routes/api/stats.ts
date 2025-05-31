@@ -1,16 +1,16 @@
-import { HonoApp } from "../../types/app";
-import { submissionRepository } from "../../services/db/repositories";
+import { SubmissionRepository } from "@curatedotfun/shared-db";
+import { Hono } from "hono";
+import { Env } from "types/app";
+import { ServiceProvider } from "../../utils/service-provider";
 
-// Create stats routes
-export const statsRoutes = HonoApp();
+export const statsRoutes = new Hono<Env>();
 
 /**
- * Get platform statistics
+ * Get platform statistics (used by landing page)
  */
 statsRoutes.get("/", async (c) => {
-  const context = c.get("context");
-  const config = context.configService.getConfig();
-
+  const db = c.get("db");
+  const submissionRepository = new SubmissionRepository(db);
   // Get posts count from database
   const postsCount = await submissionRepository.getPostsCount();
 
@@ -18,20 +18,18 @@ statsRoutes.get("/", async (c) => {
   const curatorsCount = await submissionRepository.getCuratorsCount();
 
   // Get other stats from config
-  const feedsCount = config.feeds.length;
+  const feedService = ServiceProvider.getInstance().getFeedService();
+  const allFeeds = await feedService.getAllFeeds(); // TODO: Optimize query (get count)
+  const feedsCount = allFeeds.length;
 
   // Count total distributions from all feeds' distribute arrays
   let distributionsCount = 0;
-  config.feeds.forEach((feed) => {
+  allFeeds.forEach((feed) => {
+    const { config } = feed;
     // Count stream distributions if enabled
-    if (feed.outputs.stream?.enabled && feed.outputs.stream.distribute) {
-      distributionsCount += feed.outputs.stream.distribute.length;
+    if (config.outputs.stream?.enabled && config.outputs.stream.distribute) {
+      distributionsCount += config.outputs.stream.distribute.length;
     }
-
-    // // Count recap distributions if enabled
-    // if (feed.outputs.recap?.enabled && feed.outputs.recap.distribute) {
-    //   distributionsCount += feed.outputs.recap.distribute.length;
-    // }
   });
 
   return c.json({

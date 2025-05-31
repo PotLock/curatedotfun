@@ -5,6 +5,7 @@
 ### Core Components
 
 1. **Server Layer (Hono)**
+
    - REST API endpoints
    - Static file serving
    - CORS and security middleware
@@ -12,6 +13,7 @@
    - Process endpoint for content processing
 
 2. **Service Layer**
+
    - ConfigService: Configuration management
    - SubmissionService: Platform-agnostic submission handling
    - ProcessorService: Orchestrates transformation pipeline
@@ -23,28 +25,29 @@
 
 3. **Plugin System**
    - Source plugins
-     * Twitter (primary content source)
-     * Telegram (message monitoring - planned)
-     * LinkedIn (planned integration)
+     - Twitter (primary content source)
+     - Telegram (message monitoring - planned)
+     - LinkedIn (planned integration)
    - Distributor plugins
-     * Telegram (@curatedotfun/telegram)
-     * RSS (@curatedotfun/rss)
-     * Notion (@curatedotfun/notion)
-     * NEAR Social (@curatedotfun/near-social)
+     - Telegram (@curatedotfun/telegram)
+     - RSS (@curatedotfun/rss)
+     - Notion (@curatedotfun/notion)
+     - NEAR Social (@curatedotfun/near-social)
    - Transformer plugins
-     * AI Transform (AI-powered content enhancement)
-     * Simple Transform (Basic formatting)
-     * Object Transform (Data mapping and transformation)
+     - AI Transform (AI-powered content enhancement)
+     - Simple Transform (Basic formatting)
+     - Object Transform (Data mapping and transformation)
    - Plugin Features
-     * Runtime loading via module federation
-     * Type-safe configuration
-     * Custom endpoint registration
-     * Scheduled task integration
-     * Development toolkit with mocks
+     - Runtime loading via module federation
+     - Type-safe configuration
+     - Custom endpoint registration
+     - Scheduled task integration
+     - Development toolkit with mocks
 
 ### Database Architecture
 
 1. **PostgreSQL with Drizzle ORM**
+
    - Read/write separation with connection pools
    - Transaction support with retry logic
    - Comprehensive error handling with context-rich logging
@@ -54,24 +57,25 @@
    - Modular organization with clear separation of concerns
 
 2. **Database Service Structure**
+
    - Connection management (connection.ts)
    - Transaction utilities (transaction.ts)
-     * executeOperation - For single database operations
-     * executeTransaction - For multi-step operations requiring atomicity
-     * withDatabaseErrorHandling - For consistent error handling
+     - executeOperation - For single database operations
+     - executeTransaction - For multi-step operations requiring atomicity
+     - withDatabaseErrorHandling - For consistent error handling
    - Domain-specific repositories (repositories/)
-     * Twitter repository
-     * Submission repository
-     * Feed repository
-     * Leaderboard repository
+     - Twitter repository
+     - Submission repository
+     - Feed repository
+     - Leaderboard repository
    - Consolidated status update logic
    - Backward compatibility layer for gradual migration
 
 3. **Development Environment**
+
    - Docker Compose for local development
    - PostgreSQL container with persistent volume
    - Automatic migrations on startup
-   - Seed data scripts from SQLite
 
 4. **Testing Environment**
    - Isolated test databases
@@ -81,30 +85,53 @@
 
 ### Design Patterns
 
-1. **Singleton Pattern**
+1. **Controller -> Service -> Repository Pattern**
+
+   - Layered architecture for clear separation of concerns
+   - **Controller Layer**:
+     - Hono-based API routes
+     - Request validation with Zod schemas
+     - Error handling and response formatting
+     - Dependency injection from Hono context
+   - **Service Layer**:
+     - Business logic implementation
+     - Service interfaces for consistent API
+     - Error handling with custom error types
+     - Data validation with Zod schemas
+   - **Repository Layer**:
+     - Database operations with Drizzle ORM
+     - Transaction management
+     - Error handling with context-rich logging
+     - Domain-specific database operations
+
+2. **Singleton Pattern**
+
    - Used in ConfigService and PluginService for global configuration
    - Ensures consistent state across the application
 
-2. **Plugin Pattern**
+3. **Plugin Pattern**
+
    - Module federation for runtime plugin loading
    - Standardized plugin interfaces
    - Type-safe plugin configuration
    - Hot-reloading support
    - Plugin caching and invalidation
 
-3. **Service Pattern**
+4. **Service Pattern**
+
    - Clear service boundaries and responsibilities
    - Platform-agnostic design
    - Encapsulated business logic
    - Dependency injection
    - Extensible action handling
 
-4. **Observer Pattern**
+5. **Observer Pattern**
+
    - Generic content source monitoring
    - Event-driven content processing
    - Configurable action handlers
 
-5. **Pipeline Pattern**
+6. **Pipeline Pattern**
    - Transformation pipeline with global and per-distributor transforms
    - Graceful error handling and recovery
    - Configurable transform chains
@@ -113,6 +140,7 @@
 ## Component Relationships
 
 ### Configuration Flow
+
 ```mermaid
 graph TD
     Config[ConfigService] --> Twitter[TwitterService]
@@ -122,6 +150,7 @@ graph TD
 ```
 
 ### Content Flow
+
 ```mermaid
 graph LR
     Twitter[TwitterService] --> Submission[SubmissionService]
@@ -134,6 +163,7 @@ graph LR
 ```
 
 ### Plugin System
+
 ```mermaid
 graph TD
     PluginService[PluginService] --> Load[Load Plugins]
@@ -152,6 +182,7 @@ graph TD
 ```
 
 ### Error Handling Flow
+
 ```mermaid
 graph TD
     Error[Error Occurs] --> Type{Error Type}
@@ -168,6 +199,7 @@ graph TD
 ## Key Technical Decisions
 
 1. **PostgreSQL Database**
+
    - Scalable relational database
    - Read/write separation capability
    - Connection pooling for performance
@@ -175,6 +207,7 @@ graph TD
    - Docker-based development environment
 
 2. **Hono Framework**
+
    - High performance
    - Built-in TypeScript support
    - Middleware ecosystem
@@ -182,6 +215,7 @@ graph TD
    - Dynamic endpoint registration
 
 3. **Module Federation Plugin System**
+
    - Runtime plugin loading without rebuilds
    - Type-safe plugin interfaces
    - Easy plugin development
@@ -189,6 +223,7 @@ graph TD
    - Hot-reloading capability
 
 4. **Configuration-Driven**
+
    - JSON-based configuration
    - Runtime configuration updates
    - Environment variable support
@@ -196,6 +231,7 @@ graph TD
    - Easy forking and customization
 
 5. **Service Architecture**
+
    - Platform-agnostic services
    - Clear service boundaries
    - Optimized transformer-distributor flow
@@ -203,6 +239,7 @@ graph TD
    - Mock system for plugin validation
 
 6. **Error Handling**
+
    - Granular error types
    - Graceful degradation
    - Error recovery strategies
@@ -210,12 +247,14 @@ graph TD
    - Error aggregation for multiple failures
 
 7. **Task Scheduling**
+
    - Configuration-driven cron jobs
    - Recap generation scheduling
    - Plugin-specific scheduled tasks
    - Reliable execution tracking
 
 8. **Build System**
+
    - RSPack for optimized builds
    - Module federation support
    - Fast development experience

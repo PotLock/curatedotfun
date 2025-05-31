@@ -1,36 +1,146 @@
-import { useMutation, useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { z } from "zod";
+import { useWeb3Auth } from "../hooks/use-web3-auth";
 import type { AppConfig, FeedConfig } from "../types/config";
-import type { SubmissionWithFeedData } from "../types/twitter";
+import type {
+  SubmissionStatus,
+  SubmissionWithFeedData,
+} from "../types/twitter";
+import { usernameSchema, UserProfile } from "./validation/user";
 
-export function useFeedConfig(feedId: string) {
-  return useQuery<FeedConfig>({
-    queryKey: ["feed", feedId],
+export type SortOrderType = "newest" | "oldest";
+export type StatusFilterType = "all" | SubmissionStatus;
+
+// TODO: Implement a shared types package
+export interface FeedDetails {
+  id: string;
+  name: string;
+  description: string | null;
+  config: FeedConfig;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export function useFeed(feedId: string) {
+  return useQuery<FeedDetails>({
+    queryKey: ["feed-details", feedId],
     queryFn: async () => {
-      const response = await fetch(`/api/config/${feedId}`);
+      const response = await fetch(`/api/feeds/${feedId}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch feed config");
+        throw new Error("Failed to fetch feed details");
       }
       return response.json();
     },
   });
 }
 
-export function useFeedItems(feedId: string) {
-  return useQuery<SubmissionWithFeedData[]>({
-    queryKey: ["feed-items", feedId],
-    queryFn: async () => {
-      const response = await fetch(`/api/feed/${feedId}`);
+export async function createFeed(
+  feed: Omit<FeedConfig, "id"> & { id: string },
+  idToken: string,
+) {
+  // Create the proper structure expected by the backend
+  if (!feed.id || !feed.name) {
+    throw new Error("Feed must have id and name properties");
+  }
+  const feedData = {
+    id: feed.id,
+    name: feed.name,
+    description: feed.description,
+    config: feed, // Include the entire feed object as the config
+  };
+
+  return fetch("/api/feeds", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`,
+    },
+
+    body: JSON.stringify(feedData),
+  }).then(async (response) => {
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || `Failed to create feed (HTTP ${response.status})`,
+      );
+    }
+
+    return data;
+  });
+}
+
+export function useCreateFeed() {
+  const { web3auth } = useWeb3Auth();
+
+  return useMutation({
+    mutationFn: async (feed: Omit<FeedConfig, "id"> & { id: string }) => {
+      if (!web3auth) throw new Error("Web3Auth not initialized");
+      const authResult = await web3auth.authenticateUser();
+      return createFeed(feed, authResult.idToken);
+    },
+  });
+}
+export interface SubmissionFilters {
+  limit?: number;
+  status?: StatusFilterType;
+  sortOrder?: SortOrderType;
+  q?: string;
+}
+
+export const submissionSearchSchema = z.object({
+  status: z.enum(["pending", "approved", "rejected", "all"]).optional(),
+  sortOrder: z.enum(["newest", "oldest"]).optional(),
+  q: z.string().optional(),
+});
+
+export function useFeedItems(feedId: string, filters: SubmissionFilters = {}) {
+  const { limit = 20, status, sortOrder, q } = filters;
+  return useInfiniteQuery<
+    PaginatedResponse<SubmissionWithFeedData>,
+    Error,
+    TransformedInfiniteData<SubmissionWithFeedData>,
+    [
+      string,
+      string,
+      StatusFilterType | undefined,
+      SortOrderType | undefined,
+      string | undefined,
+    ], // queryName, feedId, status, sortOrder, q
+    number
+  >({
+    queryKey: ["feed-submissions-paginated", feedId, status, sortOrder, q],
+    queryFn: async ({ pageParam = 0 }) => {
+      const params = new URLSearchParams();
+      params.append("page", pageParam.toString());
+      params.append("limit", limit.toString());
+      if (status) params.append("status", status);
+      if (sortOrder) params.append("sortOrder", sortOrder);
+      if (q) params.append("q", q);
+
+      const url = `/api/submissions/feed/${feedId}?${params.toString()}`;
+      const response = await fetch(url);
       if (!response.ok) {
-        throw new Error("Failed to fetch feed items");
+        throw new Error("Failed to fetch feed submissions");
       }
       return response.json();
     },
-    // Poll every 10 seconds
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage || !lastPage.pagination) return undefined;
+      return lastPage.pagination.hasNextPage
+        ? lastPage.pagination.page + 1
+        : undefined;
+    },
+    select: (data) => ({
+      pages: data.pages,
+      pageParams: data.pageParams,
+      items: data.pages.flatMap((page) => (Array.isArray(page) ? page : [])),
+    }),
     refetchInterval: 10000,
-    // Refetch on window focus
     refetchOnWindowFocus: true,
-    // Refetch when regaining network connection
     refetchOnReconnect: true,
+    enabled: feedId !== undefined,
   });
 }
 
@@ -96,13 +206,21 @@ export interface LeaderboardEntry {
   feedSubmissions: FeedSubmissionCount[];
 }
 
-export function useLeaderboard(timeRange?: string) {
+export function useLeaderboard(
+  timeRange?: string,
+  feedId?: string,
+  limit?: number,
+) {
   return useQuery<LeaderboardEntry[]>({
-    queryKey: ["leaderboard", timeRange],
+    queryKey: ["leaderboard", timeRange, feedId, limit],
     queryFn: async () => {
-      const url = timeRange
-        ? `/api/leaderboard?timeRange=${timeRange}`
-        : "/api/leaderboard";
+      const params = new URLSearchParams();
+      if (timeRange) params.append("timeRange", timeRange);
+      if (feedId) params.append("feedId", feedId);
+      if (limit !== undefined) params.append("limit", limit.toString());
+
+      const queryString = params.toString();
+      const url = `/api/leaderboard${queryString ? `?${queryString}` : ""}`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch leaderboard");
@@ -132,27 +250,106 @@ export interface TransformedInfiniteData<T> {
   items: T[];
 }
 
-export function useAllSubmissions(limit: number = 20, status?: string) {
+// User profile types and functions
+export type CreateUserProfilePayload = {
+  username: z.infer<typeof usernameSchema>;
+  near_public_key: string;
+  name?: string | null;
+  email?: string | null;
+  idToken: string;
+};
+
+export function createUserProfile(payload: CreateUserProfilePayload) {
+  const { idToken, ...body } = payload;
+
+  return fetch("/api/users", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`,
+    },
+    body: JSON.stringify(body),
+  }).then(async (response) => {
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || `Failed to create account (HTTP ${response.status})`,
+      );
+    }
+
+    return data.profile as UserProfile;
+  });
+}
+
+export function useCreateUserProfile() {
+  const { web3auth } = useWeb3Auth();
+  return useMutation({
+    mutationFn: async (payload: Omit<CreateUserProfilePayload, "idToken">) => {
+      if (!web3auth) throw new Error("Web3Auth not initialized");
+      const authResult = await web3auth.authenticateUser();
+      return createUserProfile({ ...payload, idToken: authResult.idToken });
+    },
+  });
+}
+
+export function getCurrentUserProfile(idToken: string) {
+  return fetch("/api/users/me", {
+    headers: {
+      Authorization: `Bearer ${idToken}`,
+    },
+  }).then(async (response) => {
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || `Failed to fetch user profile (HTTP ${response.status})`,
+      );
+    }
+
+    return data.profile as UserProfile;
+  });
+}
+
+export function useCurrentUserProfile(enabled = true) {
+  const { web3auth } = useWeb3Auth();
+
+  return useQuery<UserProfile>({
+    queryKey: ["currentUserProfile"],
+    queryFn: async () => {
+      if (!web3auth) throw new Error("Web3Auth not initialized");
+      const authResult = await web3auth.authenticateUser();
+      return getCurrentUserProfile(authResult.idToken);
+    },
+    enabled: enabled,
+  });
+}
+
+export function useAllSubmissions(filters: SubmissionFilters = {}) {
+  const { limit = 20, status, sortOrder, q } = filters;
   // Use infinite query for direct pagination from the backend
   return useInfiniteQuery<
     PaginatedResponse<SubmissionWithFeedData>,
     Error,
     TransformedInfiniteData<SubmissionWithFeedData>,
-    [string, string | undefined],
+    [
+      string,
+      StatusFilterType | undefined,
+      SortOrderType | undefined,
+      string | undefined,
+    ], // queryName, status, sortOrder, q
     number
   >({
-    queryKey: ["all-submissions-paginated", status],
+    queryKey: ["all-submissions-paginated", status, sortOrder, q],
     queryFn: async ({ pageParam = 0 }) => {
-      const statusParam = status ? `status=${status}` : "";
-      const pageParamStr = `page=${pageParam}`;
-      const limitParam = `limit=${limit}`;
+      const params = new URLSearchParams();
+      params.append("page", pageParam.toString());
+      params.append("limit", limit.toString());
+      if (status) params.append("status", status);
+      if (sortOrder) params.append("sortOrder", sortOrder);
+      if (q) params.append("q", q);
 
-      // Build query string with available parameters
-      const queryParams = [statusParam, pageParamStr, limitParam]
-        .filter((param) => param !== "")
-        .join("&");
-
-      const url = `/api/submissions${queryParams ? `?${queryParams}` : ""}`;
+      const url = `/api/submissions?${params.toString()}`;
 
       const response = await fetch(url);
       if (!response.ok) {
@@ -163,7 +360,7 @@ export function useAllSubmissions(limit: number = 20, status?: string) {
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
-      // Use the pagination metadata to determine if there's a next page
+      if (!lastPage || !lastPage.pagination) return undefined;
       return lastPage.pagination.hasNextPage
         ? lastPage.pagination.page + 1
         : undefined;
@@ -172,8 +369,9 @@ export function useAllSubmissions(limit: number = 20, status?: string) {
     select: (data) => ({
       pages: data.pages,
       pageParams: data.pageParams,
-      // Add a flattened items array for easier access
-      items: data.pages.flatMap((page) => page.items),
+      items: data.pages.flatMap((page) =>
+        Array.isArray(page.items) ? page.items : [],
+      ),
     }),
     // Poll every 10 seconds
     refetchInterval: 10000,
@@ -181,5 +379,245 @@ export function useAllSubmissions(limit: number = 20, status?: string) {
     refetchOnWindowFocus: true,
     // Refetch when regaining network connection
     refetchOnReconnect: true,
+  });
+}
+
+export interface GlobalActivityStats {
+  approval_rate: number;
+  total_approvals: number;
+  total_submissions: number;
+}
+
+export function useGlobalActivityStats() {
+  return useQuery<GlobalActivityStats>({
+    queryKey: ["global-activity-stats"],
+    queryFn: async () => {
+      const response = await fetch("/api/activity/stats");
+      if (!response.ok) {
+        throw new Error("Failed to fetch global activity stats");
+      }
+      return response.json();
+    },
+    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
+}
+
+// Activity Types
+
+export const ActivityType = {
+  CONTENT_SUBMISSION: "CONTENT_SUBMISSION",
+  CONTENT_APPROVAL: "CONTENT_APPROVAL",
+  TOKEN_BUY: "TOKEN_BUY",
+  TOKEN_SELL: "TOKEN_SELL",
+  POINTS_REDEMPTION: "POINTS_REDEMPTION",
+  POINTS_AWARDED: "POINTS_AWARDED",
+} as const;
+
+export type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];
+
+export interface UserActivityStats {
+  type: ActivityType;
+  feed_id: string | null;
+  user_id: number;
+  id: number;
+  data: unknown;
+  metadata: unknown | null;
+  createdAt: Date;
+  updatedAt: Date | null;
+  timestamp: Date;
+  submission_id: string | null;
+}
+
+export interface ListOfUserActivityStats {
+  activities: UserActivityStats[];
+}
+
+export interface ActivityQueryOptions {
+  timeRange?: string;
+  feedId?: string;
+}
+
+export interface CuratedFeed {
+  feed_id: string;
+  feed_name: string | null;
+  submissions_count: number;
+  curator_rank: number | null;
+  points: number;
+  data: unknown;
+  metadata: unknown | null;
+}
+
+export interface FeedRank {
+  curatorRank: number | null;
+  approverRank: number | null;
+}
+
+// Activity Hooks
+export interface AggregatedActivityStats {
+  totalSubmissions: number;
+  totalApprovals: number;
+  totalRejections: number;
+  approvalRate: number;
+}
+
+export function useMyActivity() {
+  const { web3auth } = useWeb3Auth();
+
+  return useQuery<AggregatedActivityStats>({
+    queryKey: ["my-activity"],
+    queryFn: async () => {
+      if (!web3auth) throw new Error("Web3Auth not initialized");
+      const authResult = await web3auth.authenticateUser();
+
+      const response = await fetch("/api/activity/user/me", {
+        headers: {
+          Authorization: `Bearer ${authResult.idToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch user activity");
+      }
+
+      const data: ListOfUserActivityStats = await response.json();
+
+      // Calculate statistics from activities
+      const stats = data.activities.reduce(
+        (acc, activity) => {
+          if (activity.type === ActivityType.CONTENT_SUBMISSION) {
+            acc.totalSubmissions++;
+          } else if (activity.type === ActivityType.CONTENT_APPROVAL) {
+            acc.totalApprovals++;
+          }
+          return acc;
+        },
+        { totalSubmissions: 0, totalApprovals: 0 },
+      );
+
+      // Calculate rejections (submissions - approvals)
+      const totalRejections = stats.totalSubmissions - stats.totalApprovals;
+
+      // Calculate approval rate
+      const approvalRate =
+        stats.totalApprovals + totalRejections > 0
+          ? stats.totalApprovals / (stats.totalApprovals + totalRejections)
+          : 0;
+
+      return {
+        totalSubmissions: stats.totalSubmissions,
+        totalApprovals: stats.totalApprovals,
+        totalRejections,
+        approvalRate,
+      };
+    },
+    enabled: !!web3auth,
+  });
+}
+
+export function useUserActivity(
+  userId: string | number,
+  options?: ActivityQueryOptions,
+) {
+  const params = new URLSearchParams();
+  if (options?.timeRange) params.append("timeRange", options.timeRange);
+  if (options?.feedId) params.append("feedId", options.feedId);
+
+  const queryString = params.toString();
+
+  return useQuery<UserActivityStats[]>({
+    queryKey: ["user-activity", userId, options],
+    queryFn: async () => {
+      const url = `/api/activity/user/${userId}${queryString ? `?${queryString}` : ""}`;
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch user activity");
+      }
+
+      const data = await response.json();
+
+      return data.activities;
+    },
+  });
+}
+
+export function useMyCuratedFeeds() {
+  const { web3auth } = useWeb3Auth();
+
+  return useQuery<CuratedFeed[]>({
+    queryKey: ["my-curated-feeds"],
+    queryFn: async () => {
+      if (!web3auth) throw new Error("Web3Auth not initialized");
+      const authResult = await web3auth.authenticateUser();
+
+      const response = await fetch("/api/activity/feeds/curated-by/me", {
+        headers: {
+          Authorization: `Bearer ${authResult.idToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch curated feeds");
+      }
+
+      const data = await response.json();
+
+      return data.feeds;
+    },
+    enabled: !!web3auth,
+  });
+}
+
+export function useMyApprovedFeeds() {
+  const { web3auth } = useWeb3Auth();
+
+  return useQuery<CuratedFeed[]>({
+    queryKey: ["my-approved-feeds"],
+    queryFn: async () => {
+      if (!web3auth) throw new Error("Web3Auth not initialized");
+      const authResult = await web3auth.authenticateUser();
+
+      const response = await fetch("/api/activity/feeds/approved-by/me", {
+        headers: {
+          Authorization: `Bearer ${authResult.idToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch approved feeds");
+      }
+
+      const data = await response.json();
+
+      return data.feeds;
+    },
+    enabled: !!web3auth,
+  });
+}
+
+export function useMyFeedRank(feedId: string) {
+  const { web3auth } = useWeb3Auth();
+
+  return useQuery<FeedRank>({
+    queryKey: ["my-feed-rank", feedId],
+    queryFn: async () => {
+      if (!web3auth) throw new Error("Web3Auth not initialized");
+      const authResult = await web3auth.authenticateUser();
+
+      const response = await fetch(`/api/activity/feeds/${feedId}/my-rank`, {
+        headers: {
+          Authorization: `Bearer ${authResult.idToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch feed rank");
+      }
+
+      return response.json();
+    },
+    enabled: !!web3auth,
   });
 }

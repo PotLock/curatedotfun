@@ -1,16 +1,16 @@
-import { HonoApp } from "../../types/app";
-import { PluginService } from "../../services/plugins/plugin.service";
+import { Hono } from "hono";
+import { Env } from "types/app";
+import { PluginService } from "../../services/plugin.service";
 
-// Create plugin routes
-const router = HonoApp();
+const pluginRoutes = new Hono<Env>();
 
 /**
  * Reload all plugins
  */
-router.post("/reload", async (c) => {
+pluginRoutes.post("/reload", async (c) => {
   const pluginService = PluginService.getInstance();
   await pluginService.reloadAllPlugins();
   return c.json({ success: true });
 });
 
-export default router;
+export { pluginRoutes };

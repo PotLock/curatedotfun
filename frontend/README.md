@@ -37,16 +37,19 @@
 The frontend leverages modern web technologies for optimal performance and developer experience:
 
 - **Framework**: [React](https://reactjs.org) + TypeScript
+
   - Component-based architecture
   - Strong type safety
   - Excellent ecosystem support
 
 - **Build Tool**: [RSBuild](https://rsbuild.dev/)
+
   - High-performance build system
   - Optimized production builds
   - Modern development experience
 
 - **Styling**: [Tailwind CSS](https://tailwindcss.com)
+
   - Utility-first CSS framework
   - Highly customizable
   - Zero runtime overhead
@@ -55,32 +58,6 @@ The frontend leverages modern web technologies for optimal performance and devel
   - Type-safe routing
   - Efficient navigation
   - Data-driven route handling
-
-### Application Structure
-
-```bash
-src/
-├── components/     # React components
-│   ├── FeedItem.tsx
-│   ├── FeedList.tsx
-│   ├── Header.tsx
-│   ├── HowItWorks.tsx
-│   ├── Layout.tsx
-│   ├── Modal.tsx
-│   └── Settings.tsx
-├── lib/           # Utility functions and API clients
-│   ├── api.ts
-│   ├── config.ts
-│   └── twitter.ts
-├── routes/        # Application routes
-│   ├── __root.tsx
-│   ├── feed.$feedId.tsx
-│   ├── index.tsx
-│   └── settings.tsx
-├── types/         # TypeScript definitions
-├── App.tsx        # Root component
-└── index.tsx      # Application entry point
-```
 
 ## Key Features
 
