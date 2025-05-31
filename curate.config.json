@@ -2474,6 +2474,40 @@
                 "botToken": "{TELEGRAM_BOT_TOKEN}",
                 "channelId": "@webfsn"
               }
+            },
+            {
+              "transform": [
+                {
+                  "plugin": "@curatedotfun/object-transform",
+                  "config": {
+                    "mappings": {
+                      "title": "{{title}}",
+                      "content": "<h2>{{title}}</h2><p>{{summary}}</p>",
+                      "description": "{{summary}}",
+                      "link": "{{source}}",
+                      "publishedAt": "{{createdAt}}",
+                      "author": {
+                        "name": "{{username}}",
+                        "link": "https://x.com/{{author}}"
+                      },
+                      "categories": ["africa", "{{tags}}"],
+                      "source": {
+                        "url": "{{source}}",
+                        "title": "twitter"
+                      }
+                    }
+                  }
+                }
+              ],
+              "plugin": "@curatedotfun/rss",
+              "config": {
+                "serviceUrl": "https://africa-rss.up.railway.app",
+                "apiSecret": "{AFRICA_RSS_API_SECRET}",
+                "feedConfig": {
+                  "title": "Web3Fusion",
+                  "description": "The main news source for everything crypto in Africa"
+                }
+              }
             }
           ]
         }
