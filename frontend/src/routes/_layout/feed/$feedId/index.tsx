@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import SubmissionFeed from "../../../../components/SubmissionFeed";
 
 export const Route = createFileRoute("/_layout/feed/$feedId/")({
   component: FeedContentPage,
@@ -7,7 +8,14 @@ export const Route = createFileRoute("/_layout/feed/$feedId/")({
 function FeedContentPage() {
   const { feedId } = Route.useParams();
 
-  return <div>Content for {feedId}</div>;
+  // TODO: replace with content from rss
+  return (
+    <SubmissionFeed
+      title="Recent Curation"
+      feedId={feedId}
+      parentRouteId={Route.id}
+    />
+  );
 }
 
 export default FeedContentPage;

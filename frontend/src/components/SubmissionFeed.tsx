@@ -1,7 +1,5 @@
 import { FileRouteTypes, useSearch } from "@tanstack/react-router";
 import { SubmissionFilters, useAllSubmissions, useFeedItems } from "../lib/api";
-import { useBotId } from "../lib/config";
-import { SubmissionStatus } from "../types/twitter";
 import FilterControls from "./FilterControls";
 import InfiniteFeed from "./InfiniteFeed";
 import SubmissionList from "./SubmissionList";
@@ -17,7 +15,6 @@ export default function SubmissionFeed({
   feedId,
   title,
 }: SubmissionFeedProps) {
-  const botId = useBotId();
   const searchParams = useSearch({ from: parentRouteId }) as SubmissionFilters;
 
   const apiFilters: SubmissionFilters = {
@@ -72,12 +69,7 @@ export default function SubmissionFeed({
         noMoreItemsMessage="No more submissions to load"
         initialLoadingMessage="Loading submissions..."
         renderItems={(renderableItems) => (
-          <SubmissionList
-            items={renderableItems}
-            statusFilter={(searchParams.status as SubmissionStatus) || "all"}
-            botId={botId}
-            feedId={feedId}
-          />
+          <SubmissionList items={renderableItems} feedId={feedId} />
         )}
       />
     </div>

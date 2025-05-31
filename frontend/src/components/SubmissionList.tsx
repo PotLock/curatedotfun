@@ -1,10 +1,9 @@
-import { SubmissionStatus, SubmissionWithFeedData } from "../types/twitter";
+import { useBotId } from "../lib/config";
+import { SubmissionWithFeedData } from "../types/twitter";
 import FeedItem from "./FeedItem";
 
 interface SubmissionListProps {
   items: SubmissionWithFeedData[];
-  statusFilter: "all" | SubmissionStatus;
-  botId: string | undefined;
   feedId?: string | undefined;
   /**
    * Layout style for the list of items
@@ -15,28 +14,12 @@ interface SubmissionListProps {
 
 const SubmissionList = ({
   items,
-  statusFilter,
-  botId,
   feedId,
   layout = "flex",
 }: SubmissionListProps) => {
-  // Filter items based on feed statuses if available
-  const filteredItems = items.filter((item) => {
-    // If no feed statuses, use the main status
-    if (!item.feedStatuses || item.feedStatuses.length === 0) {
-      return statusFilter === "all" || item.status === statusFilter;
-    }
+  const botId = useBotId();
 
-    // If feed statuses are available, check if any feed has the requested status
-    if (statusFilter === "all") {
-      return true; // Show all items when filter is "all"
-    }
-
-    // Check if any feed has the requested status
-    return item.feedStatuses.some((fs) => fs.status === statusFilter);
-  });
-
-  if (filteredItems.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="flex flex-col justify-center items-center p-8 space-y-2">
         <p className="text-gray-500">No items found</p>
@@ -57,12 +40,8 @@ const SubmissionList = ({
           : "flex flex-col space-y-4"
       }
     >
-      {filteredItems.map((item) => (
-        <FeedItem
-          key={item.tweetId}
-          submission={item}
-          statusFilter={statusFilter || "all"}
-        />
+      {items.map((item) => (
+        <FeedItem key={item.tweetId} submission={item} />
       ))}
     </div>
   );
