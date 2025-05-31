@@ -1,18 +1,21 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or, sql, SQL } from "drizzle-orm";
 import { FeedConfig } from "../../../types/config";
 import { RecapState } from "../../../types/recap";
+import {
+  Moderation,
+  SubmissionFeed,
+  FeedStatus as SubmissionFeedStatus,
+  SubmissionStatus,
+  SubmissionWithFeedData,
+} from "../../../types/twitter";
+import { logger } from "../../../utils/logger";
 import {
   InsertFeedData,
   SelectFeedData,
   UpdateFeedData,
 } from "../../../validation/feed.validation";
-import {
-  Submission,
-  SubmissionFeed,
-  SubmissionStatus,
-} from "../../../types/twitter";
-import { logger } from "../../../utils/logger";
 import * as queries from "../queries";
+import * as schema from "../schema";
 import { feedRecapsState, feeds } from "../schema";
 import {
   executeOperation,
@@ -20,6 +23,19 @@ import {
   withDatabaseErrorHandling,
 } from "../transaction";
 
+// TODO: move to common (copied from submission.repository.ts)
+export interface PaginationMetadata {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+  hasNextPage: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  pagination: PaginationMetadata;
+}
 /**
  * Represents an approved submission for recap processing
  */
@@ -425,18 +441,217 @@ export class FeedRepository {
    * @param feedId The feed ID
    * @returns Array of submissions with status
    */
-  async getSubmissionsByFeed(feedId: string): Promise<Submission[]> {
+  async getSubmissionsByFeed(
+    feedId: string,
+    page: number,
+    limit: number,
+    status?: SubmissionStatus,
+    sortOrder: "newest" | "oldest" = "newest",
+    q?: string,
+  ): Promise<PaginatedResponse<SubmissionWithFeedData>> {
     return withDatabaseErrorHandling(
       async () => {
         return await executeOperation(async (db) => {
-          return await queries.getSubmissionsByFeed(db, feedId);
-        }); // Read operation
+          const conditions: SQL[] = [eq(schema.submissionFeeds.feedId, feedId)];
+
+          if (status) {
+            conditions.push(eq(schema.submissionFeeds.status, status));
+          }
+
+          if (q) {
+            const searchQuery = `%${q}%`;
+            conditions.push(
+              or(
+                ilike(schema.submissions.content, searchQuery),
+                ilike(schema.submissions.username, searchQuery),
+                ilike(schema.submissions.curatorUsername, searchQuery),
+              )!,
+            );
+          }
+
+          const whereClause = and(...conditions);
+
+          // Query for items
+          const itemsQuery = db
+            .select({
+              // Select fields from submissions table
+              tweetId: schema.submissions.tweetId,
+              userId: schema.submissions.userId,
+              username: schema.submissions.username,
+              curatorId: schema.submissions.curatorId,
+              curatorUsername: schema.submissions.curatorUsername,
+              curatorTweetId: schema.submissions.curatorTweetId,
+              content: schema.submissions.content,
+              curatorNotes: schema.submissions.curatorNotes,
+              submittedAt: schema.submissions.submittedAt,
+              createdAt: schema.submissions.createdAt,
+              updatedAt: schema.submissions.updatedAt,
+              // Select status from submissionFeeds for this specific feed
+              status: schema.submissionFeeds.status,
+              // Aggregate feedStatuses for all feeds the submission belongs to
+              feedStatuses: sql<SubmissionFeedStatus[]>`(
+                SELECT json_agg(json_build_object('feedId', sf_agg.feed_id, 'feedName', f_agg.name, 'status', sf_agg.status))
+                FROM ${schema.submissionFeeds} sf_agg
+                JOIN ${schema.feeds} f_agg ON sf_agg.feed_id = f_agg.id
+                WHERE sf_agg.submission_id = ${schema.submissions.tweetId}
+              )`.as("feed_statuses"),
+              // Aggregate moderationHistory
+              moderationHistory: sql<Moderation[]>`(
+                SELECT json_agg(mh.*)
+                FROM ${schema.moderationHistory} mh
+                WHERE mh.tweet_id = ${schema.submissions.tweetId}
+              )`.as("moderation_history"),
+            })
+            .from(schema.submissions)
+            .innerJoin(
+              schema.submissionFeeds,
+              eq(
+                schema.submissions.tweetId,
+                schema.submissionFeeds.submissionId,
+              ),
+            )
+            .where(whereClause)
+            .orderBy(
+              sortOrder === "newest"
+                ? desc(schema.submissions.submittedAt)
+                : asc(schema.submissions.submittedAt),
+            )
+            .groupBy(schema.submissions.tweetId, schema.submissionFeeds.status) // Group by necessary fields
+            .limit(limit)
+            .offset(page * limit);
+
+          const submissionsResult = await itemsQuery;
+
+          // Query for total count
+          // For total count, we need to count distinct submissions matching the criteria
+          const totalCountSubQuery = db
+            .selectDistinct({ submissionId: schema.submissions.tweetId })
+            .from(schema.submissions)
+            .innerJoin(
+              schema.submissionFeeds,
+              eq(
+                schema.submissions.tweetId,
+                schema.submissionFeeds.submissionId,
+              ),
+            )
+            .where(whereClause);
+
+          const totalCountQuery = db
+            .select({ value: count() })
+            .from(totalCountSubQuery.as("distinct_submissions"));
+
+          const totalCountResult = await totalCountQuery;
+          const totalCount = totalCountResult[0]?.value || 0;
+          const totalPages = Math.ceil(totalCount / limit);
+
+          return {
+            items: submissionsResult.map((item) => ({
+              ...item,
+              submittedAt:
+                item.submittedAt instanceof Date
+                  ? item.submittedAt.toISOString()
+                  : item.submittedAt,
+              feedStatuses: item.feedStatuses || [],
+              moderationHistory: item.moderationHistory || [],
+            })) as SubmissionWithFeedData[],
+            pagination: {
+              page,
+              limit,
+              totalCount,
+              totalPages,
+              hasNextPage: page < totalPages - 1,
+            },
+          };
+        });
       },
       {
-        operationName: "get submissions by feed",
-        additionalContext: { feedId },
+        operationName: "getSubmissionsByFeed (paginated)",
+        additionalContext: { feedId, page, limit, status, sortOrder, q },
       },
-      [], // Default empty array if operation fails
+      {
+        items: [],
+        pagination: {
+          page,
+          limit,
+          totalCount: 0,
+          totalPages: 0,
+          hasNextPage: false,
+        },
+      }, // Default on error
+    );
+  }
+
+  /**
+   * Gets all submissions for a specific feed, filtered by status, without pagination.
+   * Used internally for processes like recaps or distributions.
+   */
+  async getAllSubmissionsForFeedByStatus(
+    feedId: string,
+    status: SubmissionStatus,
+  ): Promise<SubmissionWithFeedData[]> {
+    // Returns full SubmissionWithFeedData for consistency, though only core fields might be needed
+    return withDatabaseErrorHandling(
+      async () => {
+        return await executeOperation(async (db) => {
+          const itemsQuery = db
+            .select({
+              tweetId: schema.submissions.tweetId,
+              userId: schema.submissions.userId,
+              username: schema.submissions.username,
+              curatorId: schema.submissions.curatorId,
+              curatorUsername: schema.submissions.curatorUsername,
+              curatorTweetId: schema.submissions.curatorTweetId,
+              content: schema.submissions.content,
+              curatorNotes: schema.submissions.curatorNotes,
+              submittedAt: schema.submissions.submittedAt,
+              createdAt: schema.submissions.createdAt,
+              updatedAt: schema.submissions.updatedAt,
+              status: schema.submissionFeeds.status, // Status for this specific feed
+              feedStatuses: sql<SubmissionFeedStatus[]>`(
+                SELECT json_agg(json_build_object('feedId', sf_agg.feed_id, 'feedName', f_agg.name, 'status', sf_agg.status))
+                FROM ${schema.submissionFeeds} sf_agg
+                JOIN ${schema.feeds} f_agg ON sf_agg.feed_id = f_agg.id
+                WHERE sf_agg.submission_id = ${schema.submissions.tweetId}
+              )`.as("feed_statuses"),
+              moderationHistory: sql<Moderation[]>`(
+                SELECT json_agg(mh.*)
+                FROM ${schema.moderationHistory} mh
+                WHERE mh.tweet_id = ${schema.submissions.tweetId}
+              )`.as("moderation_history"),
+            })
+            .from(schema.submissions)
+            .innerJoin(
+              schema.submissionFeeds,
+              eq(
+                schema.submissions.tweetId,
+                schema.submissionFeeds.submissionId,
+              ),
+            )
+            .where(
+              and(
+                eq(schema.submissionFeeds.feedId, feedId),
+                eq(schema.submissionFeeds.status, status),
+              ),
+            )
+            .orderBy(desc(schema.submissions.submittedAt)); // Default sort, can be removed if not needed for processing
+
+          const results = await itemsQuery;
+          return results.map((item) => ({
+            ...item,
+            submittedAt:
+              item.submittedAt instanceof Date
+                ? item.submittedAt.toISOString()
+                : item.submittedAt,
+            feedStatuses: item.feedStatuses || [],
+            moderationHistory: item.moderationHistory || [],
+          })) as SubmissionWithFeedData[];
+        });
+      },
+      {
+        operationName: "getAllSubmissionsForFeedByStatus",
+        additionalContext: { feedId, status },
+      },
+      [], // Default on error
     );
   }
 

@@ -1,7 +1,8 @@
 import { HiExternalLink } from "react-icons/hi";
+import { StatusFilterType } from "../lib/api";
 import { useBotId } from "../lib/config";
 import { getTweetUrl, handleApprove, handleReject } from "../lib/twitter";
-import { SubmissionStatus, SubmissionWithFeedData } from "../types/twitter";
+import { SubmissionWithFeedData } from "../types/twitter";
 import { formatDate } from "../utils/datetime";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -101,7 +102,7 @@ const ModerationActions = ({
 
 interface FeedItemProps {
   submission: SubmissionWithFeedData;
-  statusFilter: "all" | SubmissionStatus;
+  statusFilter: StatusFilterType;
 }
 
 // Function to truncate text to a specific character count without breaking words

@@ -8,6 +8,7 @@ import {
   insertFeedSchema,
   updateFeedSchema,
 } from "../../validation/feed.validation";
+import { SubmissionStatus } from "types/twitter";
 
 const feedsRoutes = new Hono<Env>();
 
@@ -62,25 +63,6 @@ feedsRoutes.get("/:feedId", async (c) => {
 });
 
 /**
- * Get submissions for a specific feed
- */
-feedsRoutes.get("/:feedId/submissions", async (c) => {
-  const feedId = c.req.param("feedId");
-  try {
-    // Check if feed exists before fetching submissions
-    const feedExists = await feedRepository.getFeedById(feedId);
-    if (!feedExists) {
-      return c.notFound();
-    }
-    const submissions = await feedRepository.getSubmissionsByFeed(feedId);
-    return c.json(submissions);
-  } catch (error) {
-    logger.error(`Error fetching submissions for feed ${feedId}:`, error);
-    return c.json({ error: "Failed to fetch submissions" }, 500);
-  }
-});
-
-/**
  * Update an existing feed
  */
 feedsRoutes.put("/:feedId", async (c) => {
@@ -129,10 +111,11 @@ feedsRoutes.post("/:feedId/process", async (c) => {
   const feedConfig = feed.config; // FeedConfig is nested under 'config' property
 
   // Get approved submissions for this feed
-  const submissions = await feedRepository.getSubmissionsByFeed(feedId);
-  const approvedSubmissions = submissions.filter(
-    (sub) => sub.status === "approved",
-  );
+  const approvedSubmissions =
+    await feedRepository.getAllSubmissionsForFeedByStatus(
+      feedId,
+      SubmissionStatus.APPROVED,
+    );
 
   if (approvedSubmissions.length === 0) {
     return c.json({ processed: 0 });

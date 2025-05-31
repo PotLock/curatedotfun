@@ -27,40 +27,22 @@ submissionRoutes.get(
           SubmissionStatus.REJECTED,
         ])
         .optional(),
+      sortOrder: z.enum(["newest", "oldest"]).optional().default("newest"),
+      q: z.string().optional(),
     }),
   ),
   async (c) => {
-    // Extract validated parameters
-    const { page, limit, status } = c.req.valid("query");
+    const { page, limit, status, sortOrder, q } = c.req.valid("query");
 
-    // Get all submissions with the given status
-    const allSubmissions = await submissionRepository.getAllSubmissions(status);
-
-    // Sort submissions by submittedAt date (newest first)
-    allSubmissions.sort(
-      (a, b) =>
-        new Date(b.submittedAt!).getTime() - new Date(a.submittedAt!).getTime(),
+    const result = await submissionRepository.getAllSubmissions(
+      page,
+      limit,
+      status,
+      sortOrder,
+      q,
     );
 
-    // Get total count for pagination metadata
-    const totalCount = allSubmissions.length;
-
-    // Apply pagination
-    const startIndex = page * limit;
-    const endIndex = startIndex + limit;
-    const paginatedSubmissions = allSubmissions.slice(startIndex, endIndex);
-
-    // Return data with pagination metadata
-    return c.json({
-      items: paginatedSubmissions,
-      pagination: {
-        page,
-        limit,
-        totalCount,
-        totalPages: Math.ceil(totalCount / limit),
-        hasNextPage: endIndex < totalCount,
-      },
-    });
+    return c.json(result);
   },
 );
 
@@ -81,23 +63,44 @@ submissionRoutes.get("/single/:submissionId", async (c) => {
 /**
  * Get submissions for a specific feed
  */
-submissionRoutes.get("/feed/:feedId", async (c) => {
-  const context = c.get("context");
-  const feedId = c.req.param("feedId");
-  const status = c.req.query("status");
+submissionRoutes.get(
+  "/feed/:feedId",
+  zValidator(
+    "query",
+    z.object({
+      page: z.coerce.number().int().min(0).default(0),
+      limit: z.coerce.number().int().min(1).max(100).default(20),
+      status: z
+        .enum([
+          SubmissionStatus.PENDING,
+          SubmissionStatus.APPROVED,
+          SubmissionStatus.REJECTED,
+        ])
+        .optional(),
+      sortOrder: z.enum(["newest", "oldest"]).optional().default("newest"),
+      q: z.string().optional(),
+    }),
+  ),
+  async (c) => {
+    const feedId = c.req.param("feedId");
+    const { page, limit, status, sortOrder, q } = c.req.valid("query");
 
-  const feed = context.configService.getFeedConfig(feedId);
-  if (!feed) {
-    return c.notFound();
-  }
+    const feedExists = await feedRepository.getFeedById(feedId);
+    if (!feedExists) {
+      return c.notFound();
+    }
 
-  let submissions = await feedRepository.getSubmissionsByFeed(feedId);
+    const result = await feedRepository.getSubmissionsByFeed(
+      feedId,
+      page,
+      limit,
+      status,
+      sortOrder,
+      q,
+    );
 
-  if (status) {
-    submissions = submissions.filter((sub) => sub.status === status);
-  }
-
-  return c.json(submissions);
-});
+    return c.json(result);
+  },
+);
 
 export { submissionRoutes };

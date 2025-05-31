@@ -2,8 +2,14 @@ import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
 import type { AppConfig, FeedConfig } from "../types/config";
-import type { SubmissionWithFeedData } from "../types/twitter";
+import type {
+  SubmissionStatus,
+  SubmissionWithFeedData,
+} from "../types/twitter";
 import { usernameSchema, UserProfile } from "./validation/user";
+
+export type SortOrderType = "newest" | "oldest";
+export type StatusFilterType = "all" | SubmissionStatus;
 
 // TODO: Implement a shared types package
 export interface FeedDetails {
@@ -75,30 +81,44 @@ export function useCreateFeed() {
     },
   });
 }
-export function useFeedItems(
-  feedId: string,
-  limit: number = 20,
-  status?: string,
-) {
+export interface SubmissionFilters {
+  limit?: number;
+  status?: StatusFilterType;
+  sortOrder?: SortOrderType;
+  q?: string;
+}
+
+export const submissionSearchSchema = z.object({
+  status: z.enum(["pending", "approved", "rejected", "all"]).optional(),
+  sortOrder: z.enum(["newest", "oldest"]).optional(),
+  q: z.string().optional(),
+});
+
+export function useFeedItems(feedId: string, filters: SubmissionFilters = {}) {
+  const { limit = 20, status, sortOrder, q } = filters;
   return useInfiniteQuery<
     PaginatedResponse<SubmissionWithFeedData>,
     Error,
     TransformedInfiniteData<SubmissionWithFeedData>,
-    [string, string, string | undefined],
+    [
+      string,
+      string,
+      StatusFilterType | undefined,
+      SortOrderType | undefined,
+      string | undefined,
+    ], // queryName, feedId, status, sortOrder, q
     number
   >({
-    queryKey: ["feed-submissions-paginated", feedId, status],
+    queryKey: ["feed-submissions-paginated", feedId, status, sortOrder, q],
     queryFn: async ({ pageParam = 0 }) => {
-      const statusParam = status ? `status=${status}` : "";
-      const pageParamStr = `page=${pageParam}`;
-      const limitParam = `limit=${limit}`;
+      const params = new URLSearchParams();
+      params.append("page", pageParam.toString());
+      params.append("limit", limit.toString());
+      if (status) params.append("status", status);
+      if (sortOrder) params.append("sortOrder", sortOrder);
+      if (q) params.append("q", q);
 
-      // Build query string with available parameters
-      const queryParams = [statusParam, pageParamStr, limitParam]
-        .filter((param) => param !== "")
-        .join("&");
-
-      const url = `/api/feeds/${feedId}/submissions?${queryParams}`;
+      const url = `/api/submissions/feed/${feedId}?${params.toString()}`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch feed submissions");
@@ -120,6 +140,7 @@ export function useFeedItems(
     refetchInterval: 10000,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
+    enabled: feedId !== undefined,
   });
 }
 
@@ -304,27 +325,31 @@ export function useCurrentUserProfile(enabled = true) {
   });
 }
 
-export function useAllSubmissions(limit: number = 20, status?: string) {
+export function useAllSubmissions(filters: SubmissionFilters = {}) {
+  const { limit = 20, status, sortOrder, q } = filters;
   // Use infinite query for direct pagination from the backend
   return useInfiniteQuery<
     PaginatedResponse<SubmissionWithFeedData>,
     Error,
     TransformedInfiniteData<SubmissionWithFeedData>,
-    [string, string | undefined],
+    [
+      string,
+      StatusFilterType | undefined,
+      SortOrderType | undefined,
+      string | undefined,
+    ], // queryName, status, sortOrder, q
     number
   >({
-    queryKey: ["all-submissions-paginated", status],
+    queryKey: ["all-submissions-paginated", status, sortOrder, q],
     queryFn: async ({ pageParam = 0 }) => {
-      const statusParam = status ? `status=${status}` : "";
-      const pageParamStr = `page=${pageParam}`;
-      const limitParam = `limit=${limit}`;
+      const params = new URLSearchParams();
+      params.append("page", pageParam.toString());
+      params.append("limit", limit.toString());
+      if (status) params.append("status", status);
+      if (sortOrder) params.append("sortOrder", sortOrder);
+      if (q) params.append("q", q);
 
-      // Build query string with available parameters
-      const queryParams = [statusParam, pageParamStr, limitParam]
-        .filter((param) => param !== "")
-        .join("&");
-
-      const url = `/api/submissions${queryParams ? `?${queryParams}` : ""}`;
+      const url = `/api/submissions?${params.toString()}`;
 
       const response = await fetch(url);
       if (!response.ok) {
@@ -397,8 +422,8 @@ export interface UserActivityStats {
   feed_id: string | null;
   user_id: number;
   id: number;
-  data: any;
-  metadata: any | null;
+  data: unknown;
+  metadata: unknown | null;
   createdAt: Date;
   updatedAt: Date | null;
   timestamp: Date;
@@ -421,7 +446,7 @@ export interface CuratedFeed {
   curator_rank: number | null;
   points: number;
   data: unknown;
-  metadata: any | null;
+  metadata: unknown | null;
 }
 
 export interface FeedRank {

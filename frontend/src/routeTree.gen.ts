@@ -17,7 +17,6 @@ import { Route as LayoutImport } from "./routes/_layout";
 import { Route as LayoutIndexImport } from "./routes/_layout/index";
 import { Route as LayoutLeaderboardImport } from "./routes/_layout/leaderboard";
 import { Route as LayoutProfileIndexImport } from "./routes/_layout/profile/index";
-import { Route as LayoutExploreIndexImport } from "./routes/_layout/explore/index";
 import { Route as LayoutProfileRootImport } from "./routes/_layout/profile/_root";
 import { Route as LayoutFeedFeedIdImport } from "./routes/_layout/feed/$feedId";
 import { Route as LayoutCreateFeedImport } from "./routes/_layout/create/feed";
@@ -63,12 +62,6 @@ const LayoutProfileIndexRoute = LayoutProfileIndexImport.update({
   id: "/",
   path: "/",
   getParentRoute: () => LayoutProfileRoute,
-} as any);
-
-const LayoutExploreIndexRoute = LayoutExploreIndexImport.update({
-  id: "/explore/",
-  path: "/explore/",
-  getParentRoute: () => LayoutRoute,
 } as any);
 
 const LayoutProfileRootRoute = LayoutProfileRootImport.update({
@@ -191,13 +184,6 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof LayoutProfileRootImport;
       parentRoute: typeof LayoutProfileRoute;
     };
-    "/_layout/explore/": {
-      id: "/_layout/explore/";
-      path: "/explore";
-      fullPath: "/explore";
-      preLoaderRoute: typeof LayoutExploreIndexImport;
-      parentRoute: typeof LayoutImport;
-    };
     "/_layout/profile/": {
       id: "/_layout/profile/";
       path: "/";
@@ -312,7 +298,6 @@ interface LayoutRouteChildren {
   LayoutCreateFeedRoute: typeof LayoutCreateFeedRoute;
   LayoutFeedFeedIdRoute: typeof LayoutFeedFeedIdRouteWithChildren;
   LayoutProfileRoute: typeof LayoutProfileRouteWithChildren;
-  LayoutExploreIndexRoute: typeof LayoutExploreIndexRoute;
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
@@ -321,7 +306,6 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutCreateFeedRoute: LayoutCreateFeedRoute,
   LayoutFeedFeedIdRoute: LayoutFeedFeedIdRouteWithChildren,
   LayoutProfileRoute: LayoutProfileRouteWithChildren,
-  LayoutExploreIndexRoute: LayoutExploreIndexRoute,
 };
 
 const LayoutRouteWithChildren =
@@ -334,7 +318,6 @@ export interface FileRoutesByFullPath {
   "/create/feed": typeof LayoutCreateFeedRoute;
   "/feed/$feedId": typeof LayoutFeedFeedIdRouteWithChildren;
   "/profile": typeof LayoutProfileRootRoute;
-  "/explore": typeof LayoutExploreIndexRoute;
   "/profile/": typeof LayoutProfileIndexRoute;
   "/feed/$feedId/curation": typeof LayoutFeedFeedIdCurationRoute;
   "/feed/$feedId/members": typeof LayoutFeedFeedIdMembersRoute;
@@ -351,7 +334,6 @@ export interface FileRoutesByTo {
   "/": typeof LayoutIndexRoute;
   "/create/feed": typeof LayoutCreateFeedRoute;
   "/profile": typeof LayoutProfileIndexRoute;
-  "/explore": typeof LayoutExploreIndexRoute;
   "/feed/$feedId/curation": typeof LayoutFeedFeedIdCurationRoute;
   "/feed/$feedId/members": typeof LayoutFeedFeedIdMembersRoute;
   "/feed/$feedId/points": typeof LayoutFeedFeedIdPointsRoute;
@@ -371,7 +353,6 @@ export interface FileRoutesById {
   "/_layout/feed/$feedId": typeof LayoutFeedFeedIdRouteWithChildren;
   "/_layout/profile": typeof LayoutProfileRouteWithChildren;
   "/_layout/profile/_root": typeof LayoutProfileRootRoute;
-  "/_layout/explore/": typeof LayoutExploreIndexRoute;
   "/_layout/profile/": typeof LayoutProfileIndexRoute;
   "/_layout/feed/$feedId/curation": typeof LayoutFeedFeedIdCurationRoute;
   "/_layout/feed/$feedId/members": typeof LayoutFeedFeedIdMembersRoute;
@@ -392,7 +373,6 @@ export interface FileRouteTypes {
     | "/create/feed"
     | "/feed/$feedId"
     | "/profile"
-    | "/explore"
     | "/profile/"
     | "/feed/$feedId/curation"
     | "/feed/$feedId/members"
@@ -408,7 +388,6 @@ export interface FileRouteTypes {
     | "/"
     | "/create/feed"
     | "/profile"
-    | "/explore"
     | "/feed/$feedId/curation"
     | "/feed/$feedId/members"
     | "/feed/$feedId/points"
@@ -426,7 +405,6 @@ export interface FileRouteTypes {
     | "/_layout/feed/$feedId"
     | "/_layout/profile"
     | "/_layout/profile/_root"
-    | "/_layout/explore/"
     | "/_layout/profile/"
     | "/_layout/feed/$feedId/curation"
     | "/_layout/feed/$feedId/members"
@@ -467,8 +445,7 @@ export const routeTree = rootRoute
         "/_layout/",
         "/_layout/create/feed",
         "/_layout/feed/$feedId",
-        "/_layout/profile",
-        "/_layout/explore/"
+        "/_layout/profile"
       ]
     },
     "/_layout/leaderboard": {
@@ -508,10 +485,6 @@ export const routeTree = rootRoute
     "/_layout/profile/_root": {
       "filePath": "_layout/profile/_root.tsx",
       "parent": "/_layout/profile"
-    },
-    "/_layout/explore/": {
-      "filePath": "_layout/explore/index.tsx",
-      "parent": "/_layout"
     },
     "/_layout/profile/": {
       "filePath": "_layout/profile/index.tsx",

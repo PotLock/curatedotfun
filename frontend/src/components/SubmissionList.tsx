@@ -1,9 +1,9 @@
-import { Submission, SubmissionWithFeedData } from "../types/twitter";
+import { SubmissionStatus, SubmissionWithFeedData } from "../types/twitter";
 import FeedItem from "./FeedItem";
 
 interface SubmissionListProps {
   items: SubmissionWithFeedData[];
-  statusFilter: "all" | Submission["status"];
+  statusFilter: "all" | SubmissionStatus;
   botId: string | undefined;
   feedId?: string | undefined;
   /**
