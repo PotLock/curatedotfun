@@ -8,7 +8,7 @@ import {
   insertFeedSchema,
   updateFeedSchema,
 } from "../../validation/feed.validation";
-import { SubmissionStatus } from "types/twitter";
+import { SubmissionStatus } from "../../types/twitter";
 
 const feedsRoutes = new Hono<Env>();
 
