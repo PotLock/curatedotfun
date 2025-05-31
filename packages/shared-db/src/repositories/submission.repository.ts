@@ -1,5 +1,6 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, sql, desc, asc, count, SQL, ilike, or } from "drizzle-orm";
 import * as queries from "../queries";
+import * as schema from "../schema";
 import {
   feeds,
   moderationHistory,
@@ -18,18 +19,40 @@ import {
 } from "../validators";
 import { executeWithRetry, withErrorHandling } from "../utils";
 
-interface FeedStatus {
+export interface PaginationMetadata {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+  hasNextPage: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  pagination: PaginationMetadata;
+}
+
+interface BackendFeedStatus {
   feedId: string;
   feedName: string;
   status: SubmissionStatus;
-  moderationResponseTweetId?: string;
 }
 
-export interface SubmissionWithFeedData extends SelectSubmission {
+export interface SubmissionWithFeedData {
+  tweetId: string;
+  userId: string;
+  username: string;
+  curatorId: string | null;
+  curatorUsername: string | null;
+  curatorTweetId: string | null;
+  content: string;
+  curatorNotes: string | null;
+  submittedAt: string; 
+  createdAt: Date; 
+  updatedAt: Date | null; 
+  feedStatuses: BackendFeedStatus[];
   moderationHistory: SelectModerationHistory[];
-  status: SubmissionStatus;
-  feedStatuses: FeedStatus[];
-  moderationResponseTweetId?: string;
+  status: SubmissionStatus; 
 }
 
 /**
@@ -158,266 +181,141 @@ export class SubmissionRepository {
   }
 
   /**
-   * Gets all submissions, optionally filtered by status.
+   * Gets all submissions, optionally filtered by status, with pagination and search.
    *
+   * @param page Page number (0-indexed)
+   * @param limit Number of items per page
    * @param status Optional status filter
-   * @returns Array of submissions with feed data
+   * @param sortOrder Sort order ("newest" or "oldest")
+   * @param q Optional search query for content, username, or curatorUsername
+   * @returns Paginated array of submissions with feed data
    */
-  async getAllSubmissions(status?: string): Promise<SubmissionWithFeedData[]> {
+  async getAllSubmissions(
+    page: number,
+    limit: number,
+    status?: SubmissionStatus,
+    sortOrder: "newest" | "oldest" = "newest",
+    q?: string,
+  ): Promise<PaginatedResponse<SubmissionWithFeedData>> {
     return withErrorHandling(
       async () => {
         return executeWithRetry(async (retryDb) => {
-          // Build the query with or without status filter
-          const queryBuilder = status
-            ? retryDb
-                .select({
-                  s: {
-                    tweetId: submissions.tweetId,
-                    userId: submissions.userId,
-                    username: submissions.username,
-                    content: submissions.content,
-                    curatorNotes: submissions.curatorNotes,
-                    curatorId: submissions.curatorId,
-                    curatorUsername: submissions.curatorUsername,
-                    curatorTweetId: submissions.curatorTweetId,
-                    createdAt: sql<string>`${submissions.createdAt}::text`,
-                    updatedAt: sql<string>`${submissions.updatedAt}::text`,
-                    submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
-                  },
-                  m: {
-                    id: moderationHistory.id,
-                    tweetId: moderationHistory.tweetId,
-                    adminId: moderationHistory.adminId,
-                    action: moderationHistory.action,
-                    note: moderationHistory.note,
-                    createdAt: moderationHistory.createdAt,
-                    updatedAt: moderationHistory.updatedAt,
-                    feedId: moderationHistory.feedId,
-                    // This is selected but will NOT be part of SelectModerationHistory object
-                    moderationResponseTweetId:
-                      submissionFeeds.moderationResponseTweetId,
-                  },
-                  sf: {
-                    submissionId: submissionFeeds.submissionId,
-                    feedId: submissionFeeds.feedId,
-                    status: submissionFeeds.status,
-                    moderationResponseTweetId:
-                      submissionFeeds.moderationResponseTweetId,
-                  },
-                  f: {
-                    id: feeds.id,
-                    name: feeds.name,
-                  },
-                })
-                .from(submissions)
-                .leftJoin(
-                  moderationHistory,
-                  eq(submissions.tweetId, moderationHistory.tweetId),
-                )
-                .leftJoin(
-                  submissionFeeds,
-                  eq(submissions.tweetId, submissionFeeds.submissionId),
-                )
-                .leftJoin(feeds, eq(submissionFeeds.feedId, feeds.id))
-                .where(eq(submissionFeeds.status, status as SubmissionStatus))
-            : retryDb
-                .select({
-                  s: {
-                    tweetId: submissions.tweetId,
-                    userId: submissions.userId,
-                    username: submissions.username,
-                    content: submissions.content,
-                    curatorNotes: submissions.curatorNotes,
-                    curatorId: submissions.curatorId,
-                    curatorUsername: submissions.curatorUsername,
-                    curatorTweetId: submissions.curatorTweetId,
-                    createdAt: sql<string>`${submissions.createdAt}::text`,
-                    updatedAt: sql<string>`${submissions.updatedAt}::text`,
-                    submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
-                  },
-                  m: {
-                    id: moderationHistory.id,
-                    tweetId: moderationHistory.tweetId,
-                    adminId: moderationHistory.adminId,
-                    action: moderationHistory.action,
-                    note: moderationHistory.note,
-                    createdAt: moderationHistory.createdAt,
-                    updatedAt: moderationHistory.updatedAt,
-                    feedId: moderationHistory.feedId,
-                    // This is selected but will NOT be part of SelectModerationHistory object
-                    moderationResponseTweetId:
-                      submissionFeeds.moderationResponseTweetId,
-                  },
-                  sf: {
-                    submissionId: submissionFeeds.submissionId,
-                    feedId: submissionFeeds.feedId,
-                    status: submissionFeeds.status,
-                    moderationResponseTweetId:
-                      submissionFeeds.moderationResponseTweetId,
-                  },
-                  f: {
-                    id: feeds.id,
-                    name: feeds.name,
-                  },
-                })
-                .from(submissions)
-                .leftJoin(
-                  moderationHistory,
-                  eq(submissions.tweetId, moderationHistory.tweetId),
-                )
-                .leftJoin(
-                  submissionFeeds,
-                  eq(submissions.tweetId, submissionFeeds.submissionId),
-                )
-                .leftJoin(feeds, eq(submissionFeeds.feedId, feeds.id));
+          const conditions: SQL[] = [];
 
-          const results = await queryBuilder.orderBy(
-            moderationHistory.createdAt,
-          );
-
-          // Group results by submission
-          const submissionMap = new Map<string, SubmissionWithFeedData>();
-          const feedStatusMap = new Map<string, Map<string, FeedStatus>>();
-
-          for (const result of results) {
-            // Initialize submission if not exists
-            if (!submissionMap.has(result.s.tweetId)) {
-              submissionMap.set(result.s.tweetId, {
-                tweetId: result.s.tweetId,
-                userId: result.s.userId,
-                username: result.s.username,
-                content: result.s.content,
-                curatorNotes: result.s.curatorNotes,
-                curatorId: result.s.curatorId,
-                curatorUsername: result.s.curatorUsername,
-                curatorTweetId: result.s.curatorTweetId,
-                createdAt: new Date(result.s.createdAt),
-                updatedAt: new Date(result.s.updatedAt!),
-                submittedAt: new Date(result.s.submittedAt!),
-                moderationHistory: [],
-                status: status
-                  ? (status as SubmissionStatus)
-                  : submissionStatusZodEnum.Enum.pending, // Use provided status or default
-                feedStatuses: [],
-              });
-
-              // Initialize feed status map for this submission
-              feedStatusMap.set(
-                result.s.tweetId,
-                new Map<string, FeedStatus>(),
-              );
-            }
-
-            // Add moderation history
-            if (
-              result.m &&
-              result.m.adminId !== null &&
-              result.m.tweetId &&
-              result.m.id !== null
-            ) {
-              const submission = submissionMap.get(result.s.tweetId)!;
-              const moderationEntry: SelectModerationHistory = {
-                id: result.m.id!,
-                tweetId: result.m.tweetId!,
-                feedId: result.m.feedId!,
-                adminId: result.m.adminId!,
-                action: result.m.action as "approve" | "reject",
-                note: result.m.note,
-                createdAt: new Date(result.m.createdAt!),
-                updatedAt: new Date(result.m.updatedAt!),
-                // moderationResponseTweetId is NOT part of SelectModerationHistory
-              };
-              submission.moderationHistory.push(moderationEntry);
-            }
-
-            // Add feed status if available
-            if (result.sf?.feedId && result.f?.id) {
-              // If status is provided, only include feeds with that status
-              if (!status || result.sf.status === status) {
-                const feedStatusesForSubmission = feedStatusMap.get(
-                  result.s.tweetId,
-                )!;
-
-                if (!feedStatusesForSubmission.has(result.sf.feedId)) {
-                  feedStatusesForSubmission.set(result.sf.feedId, {
-                    feedId: result.sf.feedId,
-                    feedName: result.f.name,
-                    status: result.sf.status,
-                    moderationResponseTweetId:
-                      result.sf.moderationResponseTweetId ?? undefined,
-                  });
-                }
-              }
-            }
+          if (status) {
+            const subquery = retryDb
+              .select({ id: schema.submissionFeeds.submissionId })
+              .from(schema.submissionFeeds)
+              .where(
+                and(
+                  eq(
+                    schema.submissionFeeds.submissionId,
+                    schema.submissions.tweetId,
+                  ),
+                  eq(schema.submissionFeeds.status, status),
+                ),
+              )
+              .limit(1);
+            conditions.push(sql`exists ${subquery}`);
           }
 
-          // Set the feed statuses and determine the main status for each submission
-          for (const [tweetId, submission] of submissionMap.entries()) {
-            const feedStatusesForSubmission = feedStatusMap.get(tweetId);
-            if (feedStatusesForSubmission) {
-              submission.feedStatuses = Array.from(
-                feedStatusesForSubmission.values(),
-              );
-
-              // Determine the main status based on priority (pending > rejected > approved)
-              let hasPending = false;
-              let hasRejected = false;
-              let hasApproved = false;
-
-              for (const feedStatus of submission.feedStatuses) {
-                if (
-                  feedStatus.status === submissionStatusZodEnum.Enum.pending
-                ) {
-                  hasPending = true;
-                  submission.status = submissionStatusZodEnum.Enum.pending;
-                  submission.moderationResponseTweetId =
-                    feedStatus.moderationResponseTweetId;
-                  break; // Pending has highest priority
-                } else if (
-                  feedStatus.status === submissionStatusZodEnum.Enum.rejected
-                ) {
-                  hasRejected = true;
-                } else if (
-                  feedStatus.status === submissionStatusZodEnum.Enum.approved
-                ) {
-                  hasApproved = true;
-                }
-              }
-
-              if (!hasPending) {
-                if (hasRejected) {
-                  submission.status = submissionStatusZodEnum.Enum.rejected;
-                  // Find first rejected status for moderationResponseTweetId
-                  const rejectedStatus = submission.feedStatuses.find(
-                    (fs) => fs.status === submissionStatusZodEnum.Enum.rejected,
-                  );
-                  if (rejectedStatus) {
-                    submission.moderationResponseTweetId =
-                      rejectedStatus.moderationResponseTweetId;
-                  }
-                } else if (hasApproved) {
-                  submission.status = submissionStatusZodEnum.Enum.approved;
-                  // Find first approved status for moderationResponseTweetId
-                  const approvedStatus = submission.feedStatuses.find(
-                    (fs) => fs.status === submissionStatusZodEnum.Enum.approved,
-                  );
-                  if (approvedStatus) {
-                    submission.moderationResponseTweetId =
-                      approvedStatus.moderationResponseTweetId;
-                  }
-                }
-              }
-            }
+          if (q) {
+            const searchQuery = `%${q}%`;
+            conditions.push(
+              or(
+                ilike(schema.submissions.content, searchQuery),
+                ilike(schema.submissions.username, searchQuery),
+                ilike(schema.submissions.curatorUsername, searchQuery),
+              )!,
+            );
           }
 
-          return Array.from(submissionMap.values());
+          const whereClause =
+            conditions.length > 0 ? and(...conditions) : undefined;
+
+          // Query for items
+          const itemsQuery = retryDb
+            .select({
+              tweetId: schema.submissions.tweetId,
+              userId: schema.submissions.userId,
+              username: schema.submissions.username,
+              curatorId: schema.submissions.curatorId,
+              curatorUsername: schema.submissions.curatorUsername,
+              curatorTweetId: schema.submissions.curatorTweetId,
+              content: schema.submissions.content,
+              curatorNotes: schema.submissions.curatorNotes,
+              submittedAt: schema.submissions.submittedAt,
+              createdAt: schema.submissions.createdAt,
+              updatedAt: schema.submissions.updatedAt,
+              feedStatuses: sql<BackendFeedStatus[]>`(
+                SELECT json_agg(json_build_object('feedId', sf.feed_id, 'feedName', f.name, 'status', sf.status))
+                FROM ${schema.submissionFeeds} sf
+                JOIN ${schema.feeds} f ON sf.feed_id = f.id
+                WHERE sf.submission_id = ${schema.submissions.tweetId}
+              )`.as("feed_statuses"),
+              moderationHistory: sql<SelectModerationHistory[]>`(
+                SELECT json_agg(mh.*)
+                FROM ${schema.moderationHistory} mh
+                WHERE mh.tweet_id = ${schema.submissions.tweetId}
+              )`.as("moderation_history"),
+            })
+            .from(schema.submissions)
+            .where(whereClause)
+            .orderBy(
+              sortOrder === "newest"
+                ? desc(schema.submissions.submittedAt)
+                : asc(schema.submissions.submittedAt),
+            )
+            .limit(limit)
+            .offset(page * limit);
+
+          const submissionsResult = await itemsQuery;
+
+          // Query for total count
+          const totalCountQuery = retryDb
+            .select({ value: count() })
+            .from(schema.submissions)
+            .where(whereClause);
+
+          const totalCountResult = await totalCountQuery;
+          const totalCount = totalCountResult[0]?.value || 0;
+          const totalPages = Math.ceil(totalCount / limit);
+
+          return {
+            items: submissionsResult.map((item) => ({
+              ...item,
+              status: status || submissionStatusZodEnum.Enum.pending,
+              submittedAt:
+                item.submittedAt instanceof Date
+                  ? item.submittedAt.toISOString()
+                  : String(item.submittedAt),
+              feedStatuses: item.feedStatuses || [],
+              moderationHistory: item.moderationHistory || [],
+            })) as SubmissionWithFeedData[],
+            pagination: {
+              page,
+              limit,
+              totalCount,
+              totalPages,
+              hasNextPage: page < totalPages - 1,
+            },
+          };
         }, this.db);
       },
       {
-        operationName: "get all submissions",
-        additionalContext: status ? { status } : {},
+        operationName: "get all submissions (paginated)",
+        additionalContext: { page, limit, status, sortOrder, q },
       },
-      [],
+      {
+        items: [],
+        pagination: {
+          page,
+          limit,
+          totalCount: 0,
+          totalPages: 0,
+          hasNextPage: false,
+        },
+      } as PaginatedResponse<SubmissionWithFeedData>,
     );
   }
 
