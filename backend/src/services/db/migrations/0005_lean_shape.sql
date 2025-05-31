@@ -1,0 +1,1 @@
+ALTER TABLE "submissions" ALTER COLUMN "submitted_at" SET DATA TYPE timestamp;

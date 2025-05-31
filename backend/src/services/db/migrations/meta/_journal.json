@@ -36,6 +36,13 @@
       "when": 1747112673581,
       "tag": "0004_slimy_talon",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1748651327049,
+      "tag": "0005_lean_shape",
+      "breakpoints": true
     }
   ]
 }
