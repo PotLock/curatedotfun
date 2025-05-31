@@ -43,7 +43,7 @@
     # route requests based on path or host
     route {
         # proxy all requests for /api/* to the backend
-        handle_path /api/* {
+        handle /api/* {
             reverse_proxy {
                 dynamic a {
                     name {$BACKEND_DOMAIN}
