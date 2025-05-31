@@ -3,12 +3,7 @@ import { SubmissionWithFeedData, SubmissionStatus } from "../types/twitter";
 import { Badge } from "./ui/badge";
 import { HiExternalLink } from "react-icons/hi";
 import { getTweetUrl } from "../lib/twitter";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 // Updated formatDate function to show hours if posted within 24 hours
 const formatDate = (dateString: string) => {

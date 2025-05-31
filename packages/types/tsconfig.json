@@ -10,12 +10,8 @@
     "module": "ESNext", // Module format for the .d.ts files and any JS (if emitted)
     "moduleResolution": "bundler",
     "emitDeclarationOnly": true,
-    "types": [],
-    "paths": {
-      "@curatedotfun/shared-db": ["../shared-db/dist"]
-    }
+    "types": []
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
-  // "references": [{ "path": "../shared-db" }]
 }

@@ -5,7 +5,7 @@ import {
   PaginationItem,
   PaginationLink,
   PaginationEllipsis,
-} from "../../../components/ui/pagination";
+} from "../../ui/pagination";
 
 export function PaginationControls() {
   return (

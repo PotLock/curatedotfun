@@ -23,8 +23,7 @@
     "db:generate": "pnpm --filter @curatedotfun/shared-db run db:generate",
     "db:migrate": "pnpm --filter @curatedotfun/shared-db run db:migrate",
     "db:studio": "pnpm --filter @curatedotfun/shared-db run db:studio",
-    "db:seed:dev": "pnpm --filter @curatedotfun/shared-db run seed:dev",
-    "prepare": "corepack enable"
+    "db:seed:dev": "pnpm --filter @curatedotfun/shared-db run seed:dev"
   },
   "type": "module"
 }

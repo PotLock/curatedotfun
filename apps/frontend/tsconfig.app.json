@@ -18,7 +18,7 @@
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
-      "@curatedotfun/types/*": ["../packages/types/src/*"],
+      "@curatedotfun/types/*": ["../../packages/types/src/*"],
       "@/*": ["./src/*"]
     },
 
@@ -30,5 +30,5 @@
     "noUncheckedSideEffectImports": true
   },
   "include": ["src"],
-  "references": [{ "path": "../packages/types/tsconfig.json" }]
+  "references": [{ "path": "../../packages/types/tsconfig.json" }]
 }

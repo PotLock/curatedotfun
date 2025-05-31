@@ -1,9 +1,4 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from "../../../components/ui/table";
+import { Table, TableBody, TableCell, TableRow } from "../../ui/table";
 
 import { ArrowDown, ArrowUp, ThumbsUp } from "lucide-react";
 

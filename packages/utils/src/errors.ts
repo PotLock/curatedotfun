@@ -67,9 +67,9 @@ export class AppError extends Error {
     this.isOperational =
       options?.isOperational !== undefined ? options.isOperational : true;
 
-    if (options?.cause) {
-      this.cause = options.cause;
-    }
+    // if (options?.cause) {
+    //   this.cause = options.cause;
+    // }
 
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, this.constructor);

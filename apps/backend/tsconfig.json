@@ -1,5 +1,5 @@
 {
-  "extends": "../tsconfig.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
@@ -16,15 +16,17 @@
     "declaration": true,
     "resolveJsonModule": true,
     "paths": {
-      "@curatedotfun/shared-db/*": ["../packages/shared-db/src/*"],
-      "@curatedotfun/types/*": ["../packages/types/src/*"],
+      "@curatedotfun/shared-db": ["../../packages/shared-db/src"],
+      "@curatedotfun/types": ["../../packages/types/src"],
+      "@curatedotfun/utils": ["../../packages/utils/src"],
       "*": ["src/*"]
     }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests"],
   "references": [
-    { "path": "../packages/shared-db" },
-    { "path": "../packages/types" }
+    { "path": "../../packages/shared-db" },
+    { "path": "../../packages/types" },
+    { "path": "../../packages/utils" }
   ]
 }

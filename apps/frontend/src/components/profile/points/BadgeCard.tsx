@@ -1,4 +1,4 @@
-import { Card, CardContent } from "../../../components/ui/card";
+import { Card, CardContent } from "../../ui/card";
 import { BadgeCent } from "lucide-react";
 
 interface BadgeItem {
