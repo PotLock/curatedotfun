@@ -30,8 +30,6 @@
     # sets the Host header to the header of the dynamic name and port options
     header_up Host {http.reverse_proxy.upstream.hostport}
     # pass through other important headers
-    header_up X-Forwarded-Host {http.request.host}
-    header_up X-Forwarded-Proto {http.request.scheme}
     header_up X-Real-IP {http.request.remote.host} 
 }
 
@@ -57,19 +55,5 @@
                 import common_proxy_settings
             }
         }
-
-        # proxy all requests for /* to the frontend
-        <!-- handle {
-            reverse_proxy {
-                dynamic a {
-                    name {$FRONTEND_DOMAIN}
-                    port {$FRONTEND_PORT}
-                    refresh 1s
-                    dial_timeout 30s
-                    versions ipv4 ipv6
-                }
-                import common_proxy_settings
-            }
-        } -->
     }
 }
