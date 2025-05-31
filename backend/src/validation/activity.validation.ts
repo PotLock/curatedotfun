@@ -1,4 +1,9 @@
-import { activities, activityTypeValues, feedUserStats, userStats } from "@curatedotfun/shared-db";
+import {
+  activities,
+  activityTypeValues,
+  feedUserStats,
+  userStats,
+} from "@curatedotfun/shared-db";
 import {
   createInsertSchema,
   createSelectSchema,
