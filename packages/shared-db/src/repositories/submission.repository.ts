@@ -293,7 +293,7 @@ export class SubmissionRepository {
                 curatorTweetId: result.s.curatorTweetId,
                 createdAt: new Date(result.s.createdAt),
                 updatedAt: new Date(result.s.updatedAt!),
-                submittedAt: result.s.submittedAt,
+                submittedAt: new Date(result.s.submittedAt!),
                 moderationHistory: [],
                 status: status
                   ? (status as SubmissionStatus)

@@ -203,17 +203,3 @@ export const users = table(
     ),
   }),
 );
-
-// will not be needed after Masa
-export const twitterCookies = table("twitter_cookies", {
-  username: text("username").primaryKey(),
-  cookies: text("cookies").notNull(), // JSON string of TwitterCookie[]
-  ...timestamps,
-});
-
-// done differently after Masa
-export const twitterCache = table("twitter_cache", {
-  key: text("key").primaryKey(), // e.g., "last_tweet_id"
-  value: text("value").notNull(),
-  ...timestamps,
-});

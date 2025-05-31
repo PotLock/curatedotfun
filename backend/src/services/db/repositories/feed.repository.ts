@@ -547,10 +547,7 @@ export class FeedRepository {
           return {
             items: submissionsResult.map((item) => ({
               ...item,
-              submittedAt:
-                item.submittedAt instanceof Date
-                  ? item.submittedAt.toISOString()
-                  : item.submittedAt,
+              submittedAt: item.submittedAt,
               feedStatuses: item.feedStatuses || [],
               moderationHistory: item.moderationHistory || [],
             })) as SubmissionWithFeedData[],
@@ -638,10 +635,7 @@ export class FeedRepository {
           const results = await itemsQuery;
           return results.map((item) => ({
             ...item,
-            submittedAt:
-              item.submittedAt instanceof Date
-                ? item.submittedAt.toISOString()
-                : item.submittedAt,
+            submittedAt: item.submittedAt,
             feedStatuses: item.feedStatuses || [],
             moderationHistory: item.moderationHistory || [],
           })) as SubmissionWithFeedData[];

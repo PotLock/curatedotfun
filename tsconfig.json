@@ -5,8 +5,7 @@
     { "path": "./frontend" },
     // SHARED PACKAGES
     { "path": "./packages/types" },
-    { "path": "./packages/shared-db" },
-    { "path": "./packages/api-contract" }
+    // { "path": "./packages/shared-db" },
   ],
   "compilerOptions": {
     "target": "es2022",

@@ -277,9 +277,7 @@ export async function getSubmissionByCuratorTweetId(
     curatorUsername: results[0].s.curatorUsername,
     curatorTweetId: results[0].s.curatorTweetId,
     createdAt: new Date(results[0].s.createdAt),
-    submittedAt: results[0].s.submittedAt
-      ? new Date(results[0].s.submittedAt)
-      : null,
+    submittedAt: new Date(results[0].s.submittedAt),
     moderationHistory: modHistory,
     feeds,
   };
@@ -356,9 +354,7 @@ export async function getSubmission(
     curatorUsername: results[0].s.curatorUsername,
     curatorTweetId: results[0].s.curatorTweetId,
     createdAt: new Date(results[0].s.createdAt),
-    submittedAt: results[0].s.submittedAt
-      ? new Date(results[0].s.submittedAt)
-      : null,
+    submittedAt: new Date(results[0].s.submittedAt),
     moderationHistory: modHistory,
     feeds,
   };
@@ -483,9 +479,7 @@ export async function getAllSubmissions(
         curatorUsername: result.s.curatorUsername,
         curatorTweetId: result.s.curatorTweetId,
         createdAt: new Date(result.s.createdAt),
-        submittedAt: result.s.submittedAt
-          ? new Date(result.s.submittedAt)
-          : null,
+        submittedAt: new Date(result.s.submittedAt),
         moderationHistory: [],
         status: status
           ? (status as SubmissionStatus)
@@ -880,9 +874,7 @@ export async function getSubmissionsByFeed(
         curatorUsername: result.s.curatorUsername,
         curatorTweetId: result.s.curatorTweetId,
         createdAt: new Date(result.s.createdAt),
-        submittedAt: result.s.submittedAt
-          ? new Date(result.s.submittedAt)
-          : null,
+        submittedAt: new Date(result.s.submittedAt),
         moderationHistory: [],
         status: result.sf.status,
         moderationResponseTweetId:

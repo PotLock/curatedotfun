@@ -17,5 +17,5 @@
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../shared-db" }]
+  // "references": [{ "path": "../shared-db" }]
 }

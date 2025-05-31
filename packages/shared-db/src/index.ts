@@ -9,7 +9,7 @@ export * as queries from "./queries";
 
 export * from "./repositories/activity.repository";
 export * from "./repositories/feed.repository";
-export * from "./repositories/lastProcessedState.repository";
+export * from "./repositories/twitter.repository";
 export * from "./repositories/leaderboard.repository";
 export * from "./repositories/submission.repository";
 export * from "./repositories/user.repository";

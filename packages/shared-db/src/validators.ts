@@ -20,12 +20,15 @@ const {
   submissions,
   submissionFeeds,
   moderationHistory,
-  submissionCounts,
-  lastProcessedStateTable,
+  submissionCounts
 } = schema;
 
 // User Schemas and Types
-export const insertUserSchema = createInsertSchema(users);
+export const insertUserSchema = createInsertSchema(users, {
+    id: z.undefined(),
+    createdAt: z.undefined(),
+    updatedAt: z.undefined(),
+});
 export const updateUserSchema = createUpdateSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -103,7 +106,7 @@ export type SelectSubmissionFeed = z.infer<typeof selectSubmissionFeedSchema>;
 export const insertModerationHistorySchema =
   createInsertSchema(moderationHistory);
 export const updateModerationHistorySchema =
-  createUpdateSchema(moderationHistory); // Likely append-only
+  createUpdateSchema(moderationHistory);
 export const selectModerationHistorySchema =
   createSelectSchema(moderationHistory, {
     createdAt: z.date(),
@@ -126,23 +129,3 @@ export const selectSubmissionCountSchema = createSelectSchema(submissionCounts);
 export type InsertSubmissionCount = z.infer<typeof insertSubmissionCountSchema>;
 export type UpdateSubmissionCount = z.infer<typeof updateSubmissionCountSchema>;
 export type SelectSubmissionCount = z.infer<typeof selectSubmissionCountSchema>;
-
-// LastProcessedState Schemas and Types
-export const insertLastProcessedStateSchema = createInsertSchema(
-  lastProcessedStateTable,
-);
-export const updateLastProcessedStateSchema = createUpdateSchema(
-  lastProcessedStateTable,
-);
-export const selectLastProcessedStateSchema = createSelectSchema(
-  lastProcessedStateTable,
-);
-export type InsertLastProcessedState = z.infer<
-  typeof insertLastProcessedStateSchema
->;
-export type UpdateLastProcessedState = z.infer<
-  typeof updateLastProcessedStateSchema
->;
-export type SelectLastProcessedState = z.infer<
-  typeof selectLastProcessedStateSchema
->;

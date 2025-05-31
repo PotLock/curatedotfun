@@ -7,6 +7,7 @@ import {
   serial,
   pgTable as table,
   text,
+  timestamp
 } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
@@ -36,7 +37,7 @@ export const submissions = table(
     curatorTweetId: text("curator_tweet_id").notNull(), // The tweet where they submitted it
     content: text("content").notNull(), // Original tweet content
     curatorNotes: text("curator_notes"),
-    submittedAt: text("submitted_at"),
+    submittedAt: timestamp("submitted_at"),
     ...timestamps,
   },
   (submissions) => [
