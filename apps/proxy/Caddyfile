@@ -40,7 +40,6 @@
     # access logs
     log {
         format json               # set access log format to json mode
-        include req_headers       # include request headers in logs for debugging
     }
 
     # route requests based on path or host
