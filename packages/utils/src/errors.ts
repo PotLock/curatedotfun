@@ -1,5 +1,3 @@
-// packages/utils/src/errors.ts
-
 export enum AppErrorCode {
   // General & Unknown
   UNKNOWN_ERROR = 'UNKNOWN_ERROR',
