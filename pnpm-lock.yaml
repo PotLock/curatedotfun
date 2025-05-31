@@ -401,6 +401,9 @@ importers:
       eslint:
         specifier: ^9.28.0
         version: 9.28.0(jiti@1.21.7)
+      pg:
+        specifier: ^8.15.6
+        version: 8.15.6
       typescript:
         specifier: ^5.8.3
         version: 5.8.3

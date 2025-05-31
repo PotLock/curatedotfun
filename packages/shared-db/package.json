@@ -7,9 +7,11 @@
   "scripts": {
     "build": "rspack && tsc --emitDeclarationOnly",
     "lint": "eslint . --ext .ts",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:generate": "pnpm exec drizzle-kit generate",
+    "db:migrate": "pnpm exec drizzle-kit migrate",
+    "db:studio": "pnpm exec drizzle-kit studio",
+    "seed:dev": "bun ./scripts/seed-dev.ts",
+    "seed:remote": "bun ./scripts/seed-remote.ts"
   },
   "dependencies": {
     "async-retry": "^1.3.3",
@@ -26,7 +28,8 @@
     "dotenv": "^16.5.0",
     "drizzle-kit": "^0.31.1",
     "eslint": "^9.28.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "pg": "^8.15.6"
   },
   "peerDependencies": {
     "drizzle-orm": "^0.43.1",

@@ -20,7 +20,10 @@
     "clean": "turbo run clean",
     "fmt": "prettier --write '**/*.{js,jsx,ts,tsx,json}'",
     "fmt:check": "prettier --check '**/*.{js,jsx,ts,tsx,json}'",
-    "db:migrate": "cd backend && pnpm db:migrate",
+    "db:generate": "pnpm --filter @curatedotfun/shared-db run db:generate",
+    "db:migrate": "pnpm --filter @curatedotfun/shared-db run db:migrate",
+    "db:studio": "pnpm --filter @curatedotfun/shared-db run db:studio",
+    "db:seed:dev": "pnpm --filter @curatedotfun/shared-db run seed:dev",
     "prepare": "corepack enable"
   },
   "type": "module"

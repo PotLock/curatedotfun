@@ -2,7 +2,7 @@ import type { Config } from "drizzle-kit";
 import * as dotenv from "dotenv";
 
 // This path is relative to `packages/shared-db/drizzle.config.ts`
-dotenv.config({ path: "../../.env" });
+dotenv.config({ path: "../../backend/.env" });
 
 export default {
   schema: "./src/schema/index.ts",

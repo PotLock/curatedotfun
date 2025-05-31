@@ -12,8 +12,8 @@ COPY . .
 
 # Disable telemetry and prune the monorepo to include only what's needed
 RUN turbo telemetry disable
-# Prune the monoreispo to include only backend
-RUN turbo prune --scope=@curatedotfun/backend --docker
+# Prune the monorepo to include only backend and shared-db
+RUN turbo prune --scope=@curatedotfun/backend --scope=@curatedotfun/shared-db --docker
 
 # Builder stage for installing dependencies and building
 FROM base AS builder
@@ -45,10 +45,15 @@ RUN addgroup -S app && adduser -S app -G app
 # Copy only the necessary files from the builder stage
 COPY --from=builder --chown=app:app /app/backend/dist ./backend/dist
 COPY --from=builder --chown=app:app /app/backend/package.json ./backend/package.json
-COPY --from=builder --chown=app:app /app/backend/drizzle.config.ts ./backend/drizzle.config.ts
-COPY --from=builder --chown=app:app /app/backend/src/services/db/migrations ./backend/src/services/db/migrations
-COPY --from=builder --chown=app:app /app/backend/src/services/db/schema.ts ./backend/src/services/db/schema.ts
-COPY --from=builder --chown=app:app /app/backend/src/services/db/schema ./backend/src/services/db/schema
+
+# Copy shared-db files necessary for migrations
+COPY --from=builder --chown=app:app /app/packages/shared-db/package.json ./packages/shared-db/package.json
+COPY --from=builder --chown=app:app /app/packages/shared-db/drizzle.config.ts ./packages/shared-db/drizzle.config.ts
+COPY --from=builder --chown=app:app /app/packages/shared-db/migrations ./packages/shared-db/migrations
+COPY --from=builder --chown=app:app /app/packages/shared-db/src ./packages/shared-db/src
+COPY --from=builder --chown=app:app /app/packages/shared-db/dist ./packages/shared-db/dist
+
+# Copy root monorepo configurations
 COPY --from=builder --chown=app:app /app/package.json ./
 COPY --from=builder --chown=app:app /app/pnpm-lock.yaml ./
 COPY --from=builder --chown=app:app /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
@@ -57,8 +62,11 @@ COPY --chown=app:app curate.config.json ./
 # Install pnpm
 RUN npm install -g pnpm
 
-# Install only production dependencies
-RUN cd backend && pnpm install --prod --frozen-lockfile
+# Install dependencies:
+# - Production dependencies for the backend application
+# - All dependencies (including dev like drizzle-kit) for shared-db to allow migrations
+RUN pnpm install --prod --frozen-lockfile --filter @curatedotfun/backend
+RUN pnpm install --frozen-lockfile --filter @curatedotfun/shared-db
 
 # Use the non-root user
 USER app

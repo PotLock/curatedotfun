@@ -1,12 +1,10 @@
-import { z } from "zod";
+import { activities, activityTypeValues, feedUserStats, userStats } from "@curatedotfun/shared-db";
 import {
   createInsertSchema,
   createSelectSchema,
   createUpdateSchema,
 } from "drizzle-zod";
-import { activities, userStats, feedUserStats } from "@curatedotfun/shared-db";
-
-export const activityTypeEnum = z.nativeEnum(ActivityType);
+import { z } from "zod";
 
 // Activity schemas
 export const insertActivitySchema = createInsertSchema(activities, {
@@ -66,7 +64,7 @@ export const updateFeedUserStatsSchema = createUpdateSchema(feedUserStats, {
 export const activityQueryOptionsSchema = z.object({
   limit: z.number().optional().default(20),
   offset: z.number().optional().default(0),
-  types: z.array(activityTypeEnum).optional(),
+  types: z.array(z.enum(activityTypeValues)).optional(),
   feed_id: z.string().optional(),
   from_date: z.string().optional(), // ISO date string
   to_date: z.string().optional(), // ISO date string
@@ -110,7 +108,6 @@ export const globalStatsSchema = z.object({
 export type InsertActivityData = z.infer<typeof insertActivitySchema>;
 export type UpdateActivityData = z.infer<typeof updateActivitySchema>;
 export type SelectActivityData = z.infer<typeof selectActivitySchema>;
-export type ActivityType = z.infer<typeof activityTypeEnum>;
 export type ActivityQueryOptions = z.infer<typeof activityQueryOptionsSchema>;
 export type LeaderboardQueryOptions = z.infer<
   typeof leaderboardQueryOptionsSchema
