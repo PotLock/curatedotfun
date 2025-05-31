@@ -1,0 +1,1 @@
+ALTER TABLE "submission_counts" ALTER COLUMN "last_reset_date" SET DATA TYPE date;
