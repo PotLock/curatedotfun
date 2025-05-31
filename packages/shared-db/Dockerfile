@@ -1,6 +1,6 @@
 FROM node:18-alpine AS base
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm turbo
 
 # Pruner stage
 FROM base AS pruner
