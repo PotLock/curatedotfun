@@ -9,7 +9,7 @@ import {
 import { ConnectPlatform } from "./ConnectPlatform";
 import { useConnectedAccounts } from "../../../../store/platformAccountsStore";
 import { PlatformAccountItem } from "./PlatformAccount";
-import { SUPPORTED_PLATFORMS } from "@crosspost/sdk";
+import { SUPPORTED_PLATFORMS } from "@crosspost/types";
 
 interface ConnectPlatformDialogProps {
   children: React.ReactNode;

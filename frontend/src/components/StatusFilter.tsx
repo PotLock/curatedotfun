@@ -13,8 +13,7 @@ import {
   CommandList,
 } from "./ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-
-import { StatusFilterType } from "../store/useFilterStore";
+import { StatusFilterType } from "../lib/api";
 
 const frameworks = [
   {

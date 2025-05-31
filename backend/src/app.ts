@@ -1,10 +1,8 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
-import path from "path";
 import { apiRoutes } from "./routes/api";
 import { mockTwitterService } from "./routes/api/test";
-import { configureStaticRoutes, staticRoutes } from "./routes/static";
 import { ConfigService, isProduction } from "./services/config.service";
 import { getDatabase } from "./services/db";
 import { feedRepository } from "./services/db/repositories";
@@ -141,13 +139,6 @@ export async function createApp(): Promise<AppInstance> {
 
   // Mount API routes
   app.route("/api", apiRoutes);
-
-  // Configure static routes for production
-  if (isProduction) {
-    const publicDir = path.join(__dirname, "public");
-    configureStaticRoutes(publicDir);
-    app.route("", staticRoutes);
-  }
 
   return { app, context };
 }

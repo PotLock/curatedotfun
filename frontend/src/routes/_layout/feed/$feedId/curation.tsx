@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import RecentSubmissions from "../../../../components/RecentSubmissions"; // Adjusted import path
+import SubmissionFeed from "../../../../components/SubmissionFeed";
+import { submissionSearchSchema } from "../../../../lib/api";
 
 export const Route = createFileRoute("/_layout/feed/$feedId/curation")({
+  validateSearch: (search) => submissionSearchSchema.parse(search),
   component: FeedCurationPage,
 });
 
@@ -9,9 +11,11 @@ function FeedCurationPage() {
   const { feedId } = Route.useParams();
 
   return (
-    <div>
-      <RecentSubmissions title="Recent Curation" feedId={feedId} />
-    </div>
+    <SubmissionFeed
+      title="Recent Curation"
+      feedId={feedId}
+      parentRouteId={Route.id}
+    />
   );
 }
 

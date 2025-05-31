@@ -1,53 +1,45 @@
 import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
-import {
-  Award,
-  Coins,
-  ListFilter,
-  Newspaper,
-  Settings2,
-  UsersRound,
-  Vote,
-} from "lucide-react";
+import { ListFilter, Settings2 } from "lucide-react";
 import FeedLayout from "../../../components/FeedLayout";
 import { Badge } from "../../../components/ui/badge";
 import { useFeed } from "../../../lib/api";
 
 const TABS = [
-  {
-    to: "/feed/$feedId/",
-    label: "Content",
-    icon: Newspaper,
-  },
+  // {
+  //   to: "/feed/$feedId/",
+  //   label: "Content",
+  //   icon: Newspaper,
+  // },
   {
     to: "/feed/$feedId/curation",
     label: "Curation",
     icon: ListFilter,
   },
-  {
-    to: "/feed/$feedId/proposals",
-    label: "Proposals",
-    icon: Vote,
-  },
-  {
-    to: "/feed/$feedId/token",
-    label: "Token",
-    icon: Coins,
-  },
-  {
-    to: "/feed/$feedId/points",
-    label: "Points",
-    icon: Award,
-  },
-  {
-    to: "/feed/$feedId/members",
-    label: "Members",
-    icon: UsersRound,
-  },
-  {
-    to: "/feed/$feedId/settings",
-    label: "Settings",
-    icon: Settings2,
-  },
+  // {
+  //   to: "/feed/$feedId/proposals",
+  //   label: "Proposals",
+  //   icon: Vote,
+  // },
+  // {
+  //   to: "/feed/$feedId/token",
+  //   label: "Token",
+  //   icon: Coins,
+  // },
+  // {
+  //   to: "/feed/$feedId/points",
+  //   label: "Points",
+  //   icon: Award,
+  // },
+  // {
+  //   to: "/feed/$feedId/members",
+  //   label: "Members",
+  //   icon: UsersRound,
+  // },
+  // {
+  //   to: "/feed/$feedId/settings",
+  //   label: "Settings",
+  //   icon: Settings2,
+  // },
 ];
 
 export const Route = createFileRoute("/_layout/feed/$feedId")({

@@ -35,15 +35,6 @@ module.exports = {
     extensions: [".tsx", ".ts", ".js"],
   },
   plugins: [
-    new rspack.CopyRspackPlugin({
-      patterns: [
-        {
-          from: "../frontend/dist",
-          to: "public",
-          noErrorOnMissing: true, // Don't error in development when dist doesn't exist
-        },
-      ],
-    }),
     new rspack.IgnorePlugin({
       resourceRegExp: /^pg-native$|^cloudflare:sockets$/,
     }),
