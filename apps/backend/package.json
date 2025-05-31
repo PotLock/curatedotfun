@@ -7,9 +7,7 @@
     "start": "node dist/main.js",
     "dev": "NODE_ENV=development concurrently --kill-others-on-fail \"rspack build --watch\" \"wait-on -d 500 dist/main.js && node scripts/dev-server.js\"",
     "test": "bun test",
-    "clean": "rm -rf dist coverage .turbo",
-    "db:seed:dev": "bun ./scripts/seed-dev.ts",
-    "db:seed:test": "bun ./test/setup/seed-test.ts"
+    "clean": "rm -rf dist coverage .turbo"
   },
   "browserslist": {
     "production": [
