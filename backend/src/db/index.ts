@@ -7,4 +7,4 @@ const pool = new Pool({
 });
 const db: DB = drizzle(pool, { schema });
 
-export { db };
+export { db, pool };

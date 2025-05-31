@@ -83,13 +83,16 @@ export class TwitterRepository {
             .then((rows) => rows[0] || null);
         }, this.db);
 
-        if (!result || typeof result.cookies !== 'string') {
+        if (!result || typeof result.cookies !== "string") {
           return null;
         }
         try {
           return JSON.parse(result.cookies) as TwitterCookie[];
         } catch (error) {
-          console.error(`Failed to parse Twitter cookies for ${username}:`, error);
+          console.error(
+            `Failed to parse Twitter cookies for ${username}:`,
+            error,
+          );
           return null;
         }
       },

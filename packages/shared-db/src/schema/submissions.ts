@@ -7,7 +7,7 @@ import {
   serial,
   pgTable as table,
   text,
-  timestamp
+  timestamp,
 } from "drizzle-orm/pg-core";
 import { z } from "zod";
 

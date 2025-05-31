@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or, sql, SQL } from "drizzle-orm";
 import * as queries from "../queries";
 import {
   FeedConfig,
@@ -22,7 +22,11 @@ import {
   SelectSubmissionFeed,
   UpdateFeed,
 } from "../validators";
-import { SubmissionWithFeedData } from "./submission.repository";
+import {
+  BackendFeedStatus,
+  PaginatedResponse,
+  SubmissionWithFeedData,
+} from "./submission.repository";
 
 /**
  * Repository for feed-related database operations
@@ -431,109 +435,145 @@ export class FeedRepository {
   }
 
   /**
-   * Gets submissions by feed ID.
+   * Gets submissions by feed ID with pagination, filtering, and sorting.
+   *
+   * @param feedId The feed ID
+   * @param page The page number (0-indexed)
+   * @param limit The number of items per page
+   * @param status Optional filter by submission status
+   * @param sortOrder Optional sort order ("newest" or "oldest"), defaults to "newest"
+   * @param q Optional search query for content, username, or curatorUsername
+   * @returns Paginated array of submissions with feed data
    */
   async getSubmissionsByFeed(
     feedId: string,
-  ): Promise<SubmissionWithFeedData[]> {
+    page: number,
+    limit: number,
+    status?: SubmissionStatus,
+    sortOrder: "newest" | "oldest" = "newest",
+    q?: string,
+  ): Promise<PaginatedResponse<SubmissionWithFeedData>> {
     return withErrorHandling(
       async () =>
-        executeWithRetry(async (dbInstance) => {
-          const results = await dbInstance
+        executeWithRetry(async (retryDb) => {
+          const conditions: SQL[] = [eq(submissionFeeds.feedId, feedId)];
+
+          if (status) {
+            conditions.push(eq(submissionFeeds.status, status));
+          }
+
+          if (q) {
+            const searchQuery = `%${q}%`;
+            conditions.push(
+              or(
+                ilike(submissions.content, searchQuery),
+                ilike(submissions.username, searchQuery),
+                ilike(submissions.curatorUsername, searchQuery),
+              )!,
+            );
+          }
+
+          const whereClause = and(...conditions);
+
+          // Query for items
+          const itemsQuery = retryDb
             .select({
-              s: {
-                tweetId: submissions.tweetId,
-                userId: submissions.userId,
-                username: submissions.username,
-                content: submissions.content,
-                curatorNotes: submissions.curatorNotes,
-                curatorId: submissions.curatorId,
-                curatorUsername: submissions.curatorUsername,
-                curatorTweetId: submissions.curatorTweetId,
-                createdAt: sql<string>`${submissions.createdAt}::text`,
-                updatedAt: sql<string>`${submissions.updatedAt}::text`,
-                submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
-              },
-              sf: {
-                status: submissionFeeds.status,
-              },
-              m: {
-                id: moderationHistory.id,
-                tweetId: moderationHistory.tweetId,
-                adminId: moderationHistory.adminId,
-                action: moderationHistory.action,
-                note: moderationHistory.note,
-                createdAt: moderationHistory.createdAt,
-                updatedAt: moderationHistory.updatedAt,
-                feedId: moderationHistory.feedId,
-                moderationResponseTweetId:
-                  submissionFeeds.moderationResponseTweetId,
-              },
+              // Select fields from submissions table
+              tweetId: submissions.tweetId,
+              userId: submissions.userId,
+              username: submissions.username,
+              curatorId: submissions.curatorId,
+              curatorUsername: submissions.curatorUsername,
+              curatorTweetId: submissions.curatorTweetId,
+              content: submissions.content,
+              curatorNotes: submissions.curatorNotes,
+              submittedAt: submissions.submittedAt,
+              createdAt: submissions.createdAt,
+              updatedAt: submissions.updatedAt,
+              // Select status from submissionFeeds for this specific feed
+              status: submissionFeeds.status,
+              // Aggregate feedStatuses for all feeds the submission belongs to
+              feedStatuses: sql<BackendFeedStatus[]>`(
+                SELECT json_agg(json_build_object('feedId', sf_agg.feed_id, 'feedName', f_agg.name, 'status', sf_agg.status))
+                FROM ${submissionFeeds} sf_agg
+                JOIN ${feeds} f_agg ON sf_agg.feed_id = f_agg.id
+                WHERE sf_agg.submission_id = ${submissions.tweetId}
+              )`.as("feed_statuses"),
+              // Aggregate moderationHistory
+              moderationHistory: sql<SelectModerationHistory[]>`(
+                SELECT json_agg(mh.*)
+                FROM ${moderationHistory} mh
+                WHERE mh.tweet_id = ${submissions.tweetId}
+              )`.as("moderation_history"),
             })
             .from(submissions)
             .innerJoin(
               submissionFeeds,
               eq(submissions.tweetId, submissionFeeds.submissionId),
             )
-            .leftJoin(
-              moderationHistory,
-              eq(submissions.tweetId, moderationHistory.tweetId),
+            .where(whereClause)
+            .orderBy(
+              sortOrder === "newest"
+                ? desc(submissions.submittedAt)
+                : asc(submissions.submittedAt),
             )
-            .where(eq(submissionFeeds.feedId, feedId))
-            .orderBy(moderationHistory.createdAt);
+            .groupBy(submissions.tweetId, submissionFeeds.status) // Group by necessary fields
+            .limit(limit)
+            .offset(page * limit);
 
-          // Group results by submission
-          const submissionMap = new Map<string, SubmissionWithFeedData>();
+          const submissionsResult = await itemsQuery;
 
-          for (const result of results) {
-            if (!submissionMap.has(result.s.tweetId)) {
-              submissionMap.set(result.s.tweetId, {
-                tweetId: result.s.tweetId,
-                userId: result.s.userId,
-                username: result.s.username,
-                content: result.s.content,
-                curatorNotes: result.s.curatorNotes,
-                curatorId: result.s.curatorId,
-                curatorUsername: result.s.curatorUsername,
-                curatorTweetId: result.s.curatorTweetId,
-                createdAt: new Date(result.s.createdAt),
-                updatedAt: new Date(result.s.updatedAt!),
-                submittedAt: result.s.submittedAt,
-                moderationHistory: [],
-                status: result.sf.status,
-                feedStatuses: [],
-                moderationResponseTweetId:
-                  result.m?.moderationResponseTweetId ?? undefined,
-              });
-            }
+          // Query for total count
+          const totalCountSubQuery = retryDb
+            .selectDistinct({ submissionId: submissions.tweetId })
+            .from(submissions)
+            .innerJoin(
+              submissionFeeds,
+              eq(submissions.tweetId, submissionFeeds.submissionId),
+            )
+            .where(whereClause);
 
-            if (
-              result.m &&
-              result.m.adminId !== null &&
-              result.m.id !== null &&
-              result.m.tweetId !== null
-            ) {
-              const submission = submissionMap.get(result.s.tweetId)!;
-              const moderationEntry: SelectModerationHistory = {
-                id: result.m.id!,
-                tweetId: result.m.tweetId!,
-                feedId: result.m.feedId!,
-                adminId: result.m.adminId!,
-                action: result.m.action as "approve" | "reject",
-                note: result.m.note,
-                createdAt: new Date(result.m.createdAt!),
-                updatedAt: new Date(result.m.updatedAt!),
-              };
-              submission.moderationHistory.push(moderationEntry);
-            }
-          }
-          return Array.from(submissionMap.values()) as SubmissionWithFeedData[];
+          const totalCountQuery = retryDb
+            .select({ value: count() })
+            .from(totalCountSubQuery.as("distinct_submissions"));
+
+          const totalCountResult = await totalCountQuery;
+          const totalCountValue = totalCountResult[0]?.value || 0;
+          const totalPages = Math.ceil(totalCountValue / limit);
+
+          return {
+            items: submissionsResult.map((item) => ({
+              ...item,
+              submittedAt: item.submittedAt,
+              createdAt: item.createdAt,
+              updatedAt: item.updatedAt,
+              feedStatuses: item.feedStatuses || [],
+              moderationHistory: item.moderationHistory || [],
+            })) as SubmissionWithFeedData[],
+            pagination: {
+              page,
+              limit,
+              totalCount: totalCountValue,
+              totalPages,
+              hasNextPage: page < totalPages - 1,
+            },
+          };
         }, this.db),
       {
-        operationName: "getSubmissionsByFeed",
-        additionalContext: { feedId },
+        operationName: "getSubmissionsByFeed (paginated)",
+        additionalContext: { feedId, page, limit, status, sortOrder, q },
       },
-      [],
+      {
+        // Default response on error
+        items: [],
+        pagination: {
+          page, // page and limit are available in this scope
+          limit,
+          totalCount: 0,
+          totalPages: 0,
+          hasNextPage: false,
+        },
+      },
     );
   }
 

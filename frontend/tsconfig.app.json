@@ -16,7 +16,7 @@
     "jsx": "react-jsx",
 
     /* Path Aliases */
-    "baseUrl": ".", 
+    "baseUrl": ".",
     "paths": {
       "@curatedotfun/types/*": ["../packages/types/src/*"],
       "@/*": ["./src/*"]
@@ -30,7 +30,5 @@
     "noUncheckedSideEffectImports": true
   },
   "include": ["src"],
-  "references": [
-    { "path": "../packages/types/tsconfig.json" }
-  ]
+  "references": [{ "path": "../packages/types/tsconfig.json" }]
 }

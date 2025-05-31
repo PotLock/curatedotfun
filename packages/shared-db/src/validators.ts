@@ -20,14 +20,14 @@ const {
   submissions,
   submissionFeeds,
   moderationHistory,
-  submissionCounts
+  submissionCounts,
 } = schema;
 
 // User Schemas and Types
 export const insertUserSchema = createInsertSchema(users, {
-    id: z.undefined(),
-    createdAt: z.undefined(),
-    updatedAt: z.undefined(),
+  id: z.undefined(),
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
 });
 export const updateUserSchema = createUpdateSchema(users);
 export const selectUserSchema = createSelectSchema(users);
@@ -107,11 +107,13 @@ export const insertModerationHistorySchema =
   createInsertSchema(moderationHistory);
 export const updateModerationHistorySchema =
   createUpdateSchema(moderationHistory);
-export const selectModerationHistorySchema =
-  createSelectSchema(moderationHistory, {
+export const selectModerationHistorySchema = createSelectSchema(
+  moderationHistory,
+  {
     createdAt: z.date(),
     updatedAt: z.date().nullable(),
-  });
+  },
+);
 export type InsertModerationHistory = z.infer<
   typeof insertModerationHistorySchema
 >;

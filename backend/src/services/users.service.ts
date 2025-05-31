@@ -1,25 +1,32 @@
-import { connect, KeyPair, keyStores, transactions, utils } from "near-api-js";
+import {
+  InsertUser,
+  selectUserSchema,
+  UpdateUser,
+  UserRepository,
+  type DB,
+} from "@curatedotfun/shared-db";
+import { NearIntegrationConfig } from "@curatedotfun/types";
 import {
   NearAccountError,
   NotFoundError,
   UserServiceError,
-} from "../types/errors";
-import { selectUserSchema } from "../validation/users.validation";
-import { UserRepository } from "./db/repositories";
-import {
-  InsertUserData,
-  IUserService,
-  UpdateUserData,
-} from "./interfaces/user.interface";
+} from "@curatedotfun/utils";
+import { connect, KeyPair, keyStores, transactions, utils } from "near-api-js";
 import { KeyPairString } from "near-api-js/lib/utils";
+import { Logger } from "pino";
+import { IBaseService } from "./interfaces/base-service.interface";
 
-export type {
-  InsertUserData,
-  UpdateUserData,
-} from "./interfaces/user.interface";
+export class UserService implements IBaseService {
+  public readonly logger: Logger;
 
-export class UserService implements IUserService {
-  constructor(private userRepository: UserRepository) {}
+  constructor(
+    private userRepository: UserRepository,
+    private db: DB,
+    private nearConfig: NearIntegrationConfig,
+    logger: Logger,
+  ) {
+    this.logger = logger;
+  }
 
   async findUserByAuthProviderId(auth_provider_id: string) {
     const user =
@@ -32,34 +39,32 @@ export class UserService implements IUserService {
     return selectUserSchema.parse(user);
   }
 
-  async createUser(data: InsertUserData) {
+  async createUser(data: InsertUser) {
     const { auth_provider_id, username, near_public_key, email } = data;
-    const parentAccountId =
-      process.env.NEAR_PARENT_ACCOUNT_ID || "users.curatedotfun.testnet";
+    const parentAccountId = this.nearConfig.parentAccountId;
     const new_near_account_id = `${username}.${parentAccountId}`;
 
     try {
-      const parentPrivateKey = process.env.USERS_MASTER_KEYPAIR;
+      const parentPrivateKey = this.nearConfig.parentKeyPair;
 
       if (!parentPrivateKey) {
         throw new NearAccountError(
-          "Missing USERS_MASTER_KEYPAIR environment variable",
+          "Missing parentKeyPair in NEAR integration config",
         );
       }
 
-      const networkId = process.env.NEAR_NETWORK_ID || "testnet";
+      const networkId = this.nearConfig.networkId;
 
       const keyStore = new keyStores.InMemoryKeyStore();
-      const parentKeyPair = KeyPair.fromString(parentPrivateKey as any);
+      const parentKeyPair = KeyPair.fromString(
+        parentPrivateKey as KeyPairString,
+      );
       await keyStore.setKey(networkId, parentAccountId, parentKeyPair);
 
       const connectionConfig = {
         networkId,
         keyStore,
-        nodeUrl: `https://rpc.${networkId}.near.org`,
-        walletUrl: `https://wallet.${networkId}.near.org`,
-        helperUrl: `https://helper.${networkId}.near.org`,
-        explorerUrl: `https://explorer.${networkId}.near.org`,
+        nodeUrl: this.nearConfig.rpcUrl || `https://rpc.${networkId}.near.org`,
       };
 
       const nearConnection = await connect(connectionConfig);
@@ -108,16 +113,34 @@ export class UserService implements IUserService {
     }
 
     try {
-      const newUser = await this.userRepository.createUser({
-        auth_provider_id,
-        near_account_id: new_near_account_id,
-        near_public_key,
-        username,
-        email,
+      // The actual database user creation is now wrapped in a transaction
+      const newUser = await this.db.transaction(async (tx) => {
+        return this.userRepository.createUser(
+          {
+            auth_provider_id,
+            near_account_id: new_near_account_id,
+            near_public_key,
+            username,
+            email,
+          },
+          tx, // Pass the transactional DB instance
+        );
       });
+
+      if (!newUser) {
+        // Should not happen if createUser is expected to return a user or throw
+        throw new UserServiceError("Failed to create user record", 500);
+      }
 
       return selectUserSchema.parse(newUser);
     } catch (error: any) {
+      // If the error is already a UserServiceError or NearAccountError, rethrow it
+      if (
+        error instanceof UserServiceError ||
+        error instanceof NearAccountError
+      ) {
+        throw error;
+      }
       console.error("Error inserting user into database:", error);
       throw new UserServiceError(
         error.message || "Failed to save user profile",
@@ -127,19 +150,24 @@ export class UserService implements IUserService {
     }
   }
 
-  async updateUser(auth_provider_id: string, data: UpdateUserData) {
+  async updateUser(auth_provider_id: string, data: UpdateUser) {
     try {
-      const updatedUser = await this.userRepository.updateUser(
-        auth_provider_id,
-        data,
-      );
+      const updatedUser = await this.db.transaction(async (tx) => {
+        return this.userRepository.updateUser(auth_provider_id, data, tx);
+      });
 
       if (!updatedUser) {
+        // If updateUser can return null for "not found", this is fine.
+        // Otherwise, if it should always return a user or throw, this might indicate an issue.
+        // Assuming repository.updateUser handles "not found" by returning null.
         return null;
       }
 
       return selectUserSchema.parse(updatedUser);
     } catch (error: any) {
+      if (error instanceof UserServiceError || error instanceof NotFoundError) {
+        throw error;
+      }
       console.error("Error updating user:", error);
       throw new UserServiceError(
         error.message || "Failed to update user profile",
@@ -158,18 +186,17 @@ export class UserService implements IUserService {
     }
 
     const { near_account_id } = user;
-    const parentAccountId =
-      process.env.NEAR_PARENT_ACCOUNT_ID || "users.curatedotfun.testnet";
+    const parentAccountId = this.nearConfig.parentAccountId;
 
     try {
-      const parentPrivateKey = process.env.USERS_MASTER_KEYPAIR;
+      const parentPrivateKey = this.nearConfig.parentKeyPair;
       if (!parentPrivateKey) {
         throw new NearAccountError(
-          "Missing USERS_MASTER_KEYPAIR environment variable for account deletion",
+          "Missing parentKeyPair in NEAR integration config for account deletion",
         );
       }
 
-      const networkId = process.env.NEAR_NETWORK_ID || "testnet";
+      const networkId = this.nearConfig.networkId;
       const keyStore = new keyStores.InMemoryKeyStore();
       const parentKeyPair = KeyPair.fromString(
         parentPrivateKey as KeyPairString,
@@ -179,7 +206,7 @@ export class UserService implements IUserService {
       const connectionConfig = {
         networkId,
         keyStore,
-        nodeUrl: `https://rpc.${networkId}.near.org`,
+        nodeUrl: this.nearConfig.rpcUrl || `https://rpc.${networkId}.near.org`,
       };
 
       const nearConnection = await connect(connectionConfig);
@@ -219,21 +246,31 @@ export class UserService implements IUserService {
     }
 
     try {
-      const dbDeletionResult =
-        await this.userRepository.deleteUser(auth_provider_id);
+      const dbDeletionResult = await this.db.transaction(async (tx) => {
+        return this.userRepository.deleteUser(auth_provider_id, tx);
+      });
+
       if (dbDeletionResult) {
         console.log(
           `Successfully deleted user from database: ${auth_provider_id}`,
         );
       } else {
+        // This case implies the repository's deleteUser might return false if user not found.
         console.warn(
-          `User ${auth_provider_id} was not found in the database for deletion, or already deleted.`,
+          `User ${auth_provider_id} was not found in the database for deletion, or was already deleted during the transaction.`,
         );
-        // If NEAR account was deleted but DB user wasn't found, this is a bit inconsistent.
-        // However, returning true as the goal is to remove the user.
       }
-      return true; // Consider true if NEAR account deletion was main goal, even if DB entry was already gone.
+      // The overall deleteUser operation is considered successful if NEAR deletion passed (or was skipped)
+      // and the DB deletion attempt concluded, even if the user was already gone from DB.
+      return true;
     } catch (error: any) {
+      if (
+        error instanceof UserServiceError ||
+        error instanceof NotFoundError ||
+        error instanceof NearAccountError
+      ) {
+        throw error;
+      }
       console.error(
         `Error deleting user ${auth_provider_id} from database:`,
         error,

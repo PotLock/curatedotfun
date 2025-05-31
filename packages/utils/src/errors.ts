@@ -1,45 +1,45 @@
 export enum AppErrorCode {
   // General & Unknown
-  UNKNOWN_ERROR = 'UNKNOWN_ERROR',
-  INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
+  UNKNOWN_ERROR = "UNKNOWN_ERROR",
+  INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR",
 
   // Authentication & Authorization
-  AUTHENTICATION_FAILED = 'AUTHENTICATION_FAILED',
-  UNAUTHENTICATED = 'UNAUTHENTICATED',
-  FORBIDDEN = 'FORBIDDEN',
-  JWT_TOKEN_INVALID = 'JWT_TOKEN_INVALID',
-  JWT_TOKEN_EXPIRED = 'JWT_TOKEN_EXPIRED',
-  JWT_TOKEN_SIGNATURE_MISMATCHED = 'JWT_TOKEN_SIGNATURE_MISMATCHED',
+  AUTHENTICATION_FAILED = "AUTHENTICATION_FAILED",
+  UNAUTHENTICATED = "UNAUTHENTICATED",
+  FORBIDDEN = "FORBIDDEN",
+  JWT_TOKEN_INVALID = "JWT_TOKEN_INVALID",
+  JWT_TOKEN_EXPIRED = "JWT_TOKEN_EXPIRED",
+  JWT_TOKEN_SIGNATURE_MISMATCHED = "JWT_TOKEN_SIGNATURE_MISMATCHED",
 
   // Validation
-  VALIDATION_ERROR = 'VALIDATION_ERROR',
+  VALIDATION_ERROR = "VALIDATION_ERROR",
 
   // Resource Management
-  RESOURCE_NOT_FOUND = 'RESOURCE_NOT_FOUND',
-  RESOURCE_CONFLICT = 'RESOURCE_CONFLICT',
+  RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND",
+  RESOURCE_CONFLICT = "RESOURCE_CONFLICT",
 
   // Database
-  DATABASE_ERROR = 'DATABASE_ERROR',
-  DB_QUERY_FAILED = 'DB_QUERY_FAILED',
-  DB_CONNECTION_ERROR = 'DB_CONNECTION_ERROR',
+  DATABASE_ERROR = "DATABASE_ERROR",
+  DB_QUERY_FAILED = "DB_QUERY_FAILED",
+  DB_CONNECTION_ERROR = "DB_CONNECTION_ERROR",
 
   // Service & Business Logic
-  SERVICE_ERROR = 'SERVICE_ERROR',
-  SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE',
-  EXTERNAL_SERVICE_FAILURE = 'EXTERNAL_SERVICE_FAILURE',
+  SERVICE_ERROR = "SERVICE_ERROR",
+  SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE",
+  EXTERNAL_SERVICE_FAILURE = "EXTERNAL_SERVICE_FAILURE",
 
   // Application Specific
-  SUBMISSION_SERVICE_ERROR = 'SUBMISSION_SERVICE_ERROR',
-  USER_SERVICE_ERROR = 'USER_SERVICE_ERROR',
-  ACTIVITY_SERVICE_ERROR = 'ACTIVITY_SERVICE_ERROR',
-  NEAR_ACCOUNT_ERROR = 'NEAR_ACCOUNT_ERROR',
-  PLUGIN_ERROR = 'PLUGIN_ERROR',
-  PLUGIN_LOAD_ERROR = 'PLUGIN_LOAD_ERROR',
-  PLUGIN_INIT_ERROR = 'PLUGIN_INIT_ERROR',
-  PLUGIN_EXECUTION_ERROR = 'PLUGIN_EXECUTION_ERROR',
-  TRANSFORM_ERROR = 'TRANSFORM_ERROR',
-  PROCESSOR_ERROR = 'PROCESSOR_ERROR',
-  CONFIG_ERROR = 'CONFIG_ERROR',
+  SUBMISSION_SERVICE_ERROR = "SUBMISSION_SERVICE_ERROR",
+  USER_SERVICE_ERROR = "USER_SERVICE_ERROR",
+  ACTIVITY_SERVICE_ERROR = "ACTIVITY_SERVICE_ERROR",
+  NEAR_ACCOUNT_ERROR = "NEAR_ACCOUNT_ERROR",
+  PLUGIN_ERROR = "PLUGIN_ERROR",
+  PLUGIN_LOAD_ERROR = "PLUGIN_LOAD_ERROR",
+  PLUGIN_INIT_ERROR = "PLUGIN_INIT_ERROR",
+  PLUGIN_EXECUTION_ERROR = "PLUGIN_EXECUTION_ERROR",
+  TRANSFORM_ERROR = "TRANSFORM_ERROR",
+  PROCESSOR_ERROR = "PROCESSOR_ERROR",
+  CONFIG_ERROR = "CONFIG_ERROR",
 }
 
 // Step 2: Enhanced Base AppError
@@ -64,7 +64,8 @@ export class AppError extends Error {
     this.errorCode = errorCode;
     this.statusCode = statusCode;
     this.details = options?.details;
-    this.isOperational = options?.isOperational !== undefined ? options.isOperational : true;
+    this.isOperational =
+      options?.isOperational !== undefined ? options.isOperational : true;
 
     if (options?.cause) {
       this.cause = options.cause;
@@ -114,20 +115,26 @@ export class JwtTokenExpired extends AuthError {
 }
 
 export class JwtTokenSignatureMismatched extends AuthError {
-    constructor(message = "JWT token signature mismatch", options?: { cause?: Error }) {
-        super(message, AppErrorCode.JWT_TOKEN_SIGNATURE_MISMATCHED, 401, options);
-    }
+  constructor(
+    message = "JWT token signature mismatch",
+    options?: { cause?: Error },
+  ) {
+    super(message, AppErrorCode.JWT_TOKEN_SIGNATURE_MISMATCHED, 401, options);
+  }
 }
 
 export class ValidationError extends AppError {
   public readonly validationDetails?: Record<string, string[]>;
 
   constructor(
-    message: string = 'Input validation failed',
+    message: string = "Input validation failed",
     validationDetails?: Record<string, string[]>,
     options?: { cause?: Error },
   ) {
-    super(message, AppErrorCode.VALIDATION_ERROR, 400, { ...options, details: validationDetails });
+    super(message, AppErrorCode.VALIDATION_ERROR, 400, {
+      ...options,
+      details: validationDetails,
+    });
     this.validationDetails = validationDetails;
   }
 
@@ -158,20 +165,30 @@ export class DatabaseError extends AppError {
     dbErrorCode?: string,
     options?: { cause?: Error },
   ) {
-    super(message, AppErrorCode.DATABASE_ERROR, 500, { ...options, details: { dbErrorCode } });
+    super(message, AppErrorCode.DATABASE_ERROR, 500, {
+      ...options,
+      details: { dbErrorCode },
+    });
     this.dbErrorCode = dbErrorCode;
   }
   toJSON() {
     const baseJson = super.toJSON();
     return {
       ...baseJson,
-      details: { ...(typeof baseJson.details === 'object' ? baseJson.details : {}), dbErrorCode: this.dbErrorCode },
+      details: {
+        ...(typeof baseJson.details === "object" ? baseJson.details : {}),
+        dbErrorCode: this.dbErrorCode,
+      },
     };
   }
 }
 
 export class NotFoundError extends AppError {
-  constructor(resource: string, identifier?: string | number, options?: { cause?: Error }) {
+  constructor(
+    resource: string,
+    identifier?: string | number,
+    options?: { cause?: Error },
+  ) {
     const message = identifier
       ? `${resource} with identifier '${identifier}' not found`
       : `${resource} not found`;
@@ -187,13 +204,21 @@ export class ConflictError extends AppError {
 
 // --- Application/Plugin Specific Errors ---
 export class SubmissionServiceError extends ServiceError {
-  constructor(message: string, statusCode: number = 500, options?: { cause?: Error }) {
+  constructor(
+    message: string,
+    statusCode: number = 500,
+    options?: { cause?: Error },
+  ) {
     super(message, AppErrorCode.SUBMISSION_SERVICE_ERROR, statusCode, options);
   }
 }
 
 export class UserServiceError extends ServiceError {
-  constructor(message: string, statusCode: number = 500, options?: { cause?: Error }) {
+  constructor(
+    message: string,
+    statusCode: number = 500,
+    options?: { cause?: Error },
+  ) {
     super(message, AppErrorCode.USER_SERVICE_ERROR, statusCode, options);
   }
 }
@@ -203,37 +228,66 @@ export class ActivityServiceError extends ServiceError {
     message: string,
     options?: { statusCode?: number; cause?: Error },
   ) {
-    super(message, AppErrorCode.ACTIVITY_SERVICE_ERROR, options?.statusCode || 500, options);
+    super(
+      message,
+      AppErrorCode.ACTIVITY_SERVICE_ERROR,
+      options?.statusCode || 500,
+      options,
+    );
   }
 }
 
 export class NearAccountError extends ServiceError {
-  constructor(message: string, statusCode: number = 400, options?: { cause?: Error }) {
+  constructor(
+    message: string,
+    statusCode: number = 400,
+    options?: { cause?: Error },
+  ) {
     super(message, AppErrorCode.NEAR_ACCOUNT_ERROR, statusCode, options);
   }
 }
 
 export class PluginError extends AppError {
-  constructor(message: string, errorCode: AppErrorCode = AppErrorCode.PLUGIN_ERROR, options?: { cause?: Error }) {
+  constructor(
+    message: string,
+    errorCode: AppErrorCode = AppErrorCode.PLUGIN_ERROR,
+    options?: { cause?: Error },
+  ) {
     super(message, errorCode, 500, options);
   }
 }
 
 export class PluginLoadError extends PluginError {
   constructor(pluginName: string, url: string, options?: { cause?: Error }) {
-    super(`Failed to load plugin ${pluginName} from ${url}`, AppErrorCode.PLUGIN_LOAD_ERROR, options);
+    super(
+      `Failed to load plugin ${pluginName} from ${url}`,
+      AppErrorCode.PLUGIN_LOAD_ERROR,
+      options,
+    );
   }
 }
 
 export class PluginInitError extends PluginError {
   constructor(pluginName: string, options?: { cause?: Error }) {
-    super(`Failed to initialize plugin ${pluginName}`, AppErrorCode.PLUGIN_INIT_ERROR, options);
+    super(
+      `Failed to initialize plugin ${pluginName}`,
+      AppErrorCode.PLUGIN_INIT_ERROR,
+      options,
+    );
   }
 }
 
 export class PluginExecutionError extends PluginError {
-  constructor(pluginName: string, operation: string, options?: { cause?: Error }) {
-    super(`Plugin ${pluginName} failed during ${operation}`, AppErrorCode.PLUGIN_EXECUTION_ERROR, options);
+  constructor(
+    pluginName: string,
+    operation: string,
+    options?: { cause?: Error },
+  ) {
+    super(
+      `Plugin ${pluginName} failed during ${operation}`,
+      AppErrorCode.PLUGIN_EXECUTION_ERROR,
+      options,
+    );
   }
 }
 
@@ -262,7 +316,12 @@ export class ProcessorError extends AppError {
     message: string,
     options?: { cause?: Error },
   ) {
-    super(`Processing error for feed ${feedId}: ${message}`, AppErrorCode.PROCESSOR_ERROR, 500, options);
+    super(
+      `Processing error for feed ${feedId}: ${message}`,
+      AppErrorCode.PROCESSOR_ERROR,
+      500,
+      options,
+    );
   }
 }
 

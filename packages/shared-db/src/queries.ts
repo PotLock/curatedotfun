@@ -213,7 +213,7 @@ export async function getSubmissionByCuratorTweetId(
     curatorUsername: results[0].s.curatorUsername,
     curatorTweetId: results[0].s.curatorTweetId,
     createdAt: new Date(results[0].s.createdAt),
-    submittedAt: results[0].s.submittedAt,
+    submittedAt: new Date(results[0].s.submittedAt),
     updatedAt: results[0].s.updatedAt ? new Date(results[0].s.updatedAt) : null,
   };
 }
@@ -222,7 +222,6 @@ export async function getSubmission(
   db: DB,
   tweetId: string,
 ): Promise<SelectSubmission | null> {
-  // Changed Submission to SelectSubmission
   const results = await db
     .select({
       s: {
@@ -275,7 +274,7 @@ export async function getSubmission(
     curatorUsername: results[0].s.curatorUsername,
     curatorTweetId: results[0].s.curatorTweetId,
     createdAt: new Date(results[0].s.createdAt),
-    submittedAt: results[0].s.submittedAt,
+    submittedAt: new Date(results[0].s.submittedAt),
     updatedAt: results[0].s.updatedAt ? new Date(results[0].s.updatedAt) : null,
   };
 }

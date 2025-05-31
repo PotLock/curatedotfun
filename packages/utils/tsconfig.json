@@ -16,16 +16,13 @@
   "exclude": ["node_modules", "dist"]
 }
 
-
 // shared-db, remove migration, merge the schemas, move over repositories (maybe keep a _update)
-// export 
+// export
 
 // determine a standard api response (crosspost?)
-// 
+//
 
 // we push and make sure the DB migrates successfully
-
-
 
 // shared-db defines the standard schemas for inserting, updating, and selecting from the database
 // types will define the request and response types for the API

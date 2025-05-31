@@ -4,7 +4,7 @@
     { "path": "./backend" },
     { "path": "./frontend" },
     // SHARED PACKAGES
-    { "path": "./packages/types" },
+    { "path": "./packages/types" }
     // { "path": "./packages/shared-db" },
   ],
   "compilerOptions": {

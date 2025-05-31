@@ -1,10 +1,7 @@
+import { FeedRepository, SubmissionRepository } from "@curatedotfun/shared-db";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import {
-  feedRepository,
-  submissionRepository,
-} from "../../services/db/repositories";
 import { Env } from "../../types/app";
 import { SubmissionStatus } from "../../types/twitter";
 
@@ -32,6 +29,8 @@ submissionRoutes.get(
     }),
   ),
   async (c) => {
+    const db = c.get("db");
+    const submissionRepository = new SubmissionRepository(db);
     const { page, limit, status, sortOrder, q } = c.req.valid("query");
 
     const result = await submissionRepository.getAllSubmissions(
@@ -50,6 +49,8 @@ submissionRoutes.get(
  * Get a specific submission by ID
  */
 submissionRoutes.get("/single/:submissionId", async (c) => {
+  const db = c.get("db");
+  const submissionRepository = new SubmissionRepository(db);
   const submissionId = c.req.param("submissionId");
   const content = await submissionRepository.getSubmission(submissionId);
 
@@ -82,6 +83,8 @@ submissionRoutes.get(
     }),
   ),
   async (c) => {
+    const db = c.get("db");
+    const feedRepository = new FeedRepository(db);
     const feedId = c.req.param("feedId");
     const { page, limit, status, sortOrder, q } = c.req.valid("query");
 

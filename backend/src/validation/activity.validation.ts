@@ -4,21 +4,21 @@ import {
   createSelectSchema,
   createUpdateSchema,
 } from "drizzle-zod";
-import * as schema from "../services/db/schema";
+import { activities, userStats, feedUserStats } from "@curatedotfun/shared-db";
 
-export const activityTypeEnum = z.nativeEnum(schema.ActivityType);
+export const activityTypeEnum = z.nativeEnum(ActivityType);
 
 // Activity schemas
-export const insertActivitySchema = createInsertSchema(schema.activities, {
+export const insertActivitySchema = createInsertSchema(activities, {
   id: z.undefined(),
   createdAt: z.undefined(),
   updatedAt: z.undefined(),
   timestamp: z.undefined(),
 });
 
-export const selectActivitySchema = createSelectSchema(schema.activities);
+export const selectActivitySchema = createSelectSchema(activities);
 
-export const updateActivitySchema = createUpdateSchema(schema.activities, {
+export const updateActivitySchema = createUpdateSchema(activities, {
   id: z.undefined(),
   user_id: z.undefined(),
   type: z.undefined(),
@@ -28,43 +28,35 @@ export const updateActivitySchema = createUpdateSchema(schema.activities, {
 });
 
 // User Stats schemas
-export const insertUserStatsSchema = createInsertSchema(schema.userStats, {
+export const insertUserStatsSchema = createInsertSchema(userStats, {
   createdAt: z.undefined(),
   updatedAt: z.undefined(),
 });
 
-export const selectUserStatsSchema = createSelectSchema(schema.userStats);
+export const selectUserStatsSchema = createSelectSchema(userStats);
 
-export const updateUserStatsSchema = createUpdateSchema(schema.userStats, {
+export const updateUserStatsSchema = createUpdateSchema(userStats, {
   user_id: z.undefined(),
   createdAt: z.undefined(),
   updatedAt: z.undefined(),
 });
 
 // Feed User Stats schemas
-export const insertFeedUserStatsSchema = createInsertSchema(
-  schema.feedUserStats,
-  {
-    id: z.undefined(),
-    createdAt: z.undefined(),
-    updatedAt: z.undefined(),
-  },
-);
+export const insertFeedUserStatsSchema = createInsertSchema(feedUserStats, {
+  id: z.undefined(),
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
 
-export const selectFeedUserStatsSchema = createSelectSchema(
-  schema.feedUserStats,
-);
+export const selectFeedUserStatsSchema = createSelectSchema(feedUserStats);
 
-export const updateFeedUserStatsSchema = createUpdateSchema(
-  schema.feedUserStats,
-  {
-    id: z.undefined(),
-    user_id: z.undefined(),
-    feed_id: z.undefined(),
-    createdAt: z.undefined(),
-    updatedAt: z.undefined(),
-  },
-);
+export const updateFeedUserStatsSchema = createUpdateSchema(feedUserStats, {
+  id: z.undefined(),
+  user_id: z.undefined(),
+  feed_id: z.undefined(),
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
 
 // Additional schemas for API requests and responses
 

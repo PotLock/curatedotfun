@@ -1,14 +1,8 @@
 import { Hono } from "hono";
 import { Env } from "../../types/app";
-import { feedRepository } from "../../services/db/repositories";
-import { serviceUnavailable, badRequest } from "../../utils/error";
+import { badRequest } from "../../utils/error";
 import { logger } from "../../utils/logger";
-import { DistributorConfig, StreamConfig } from "../../types/config";
-import {
-  insertFeedSchema,
-  updateFeedSchema,
-} from "../../validation/feed.validation";
-import { SubmissionStatus } from "../../types/twitter";
+import { insertFeedSchema, updateFeedSchema } from "@curatedotfun/shared-db";
 
 const feedsRoutes = new Hono<Env>();
 
@@ -16,8 +10,10 @@ const feedsRoutes = new Hono<Env>();
  * Get all feeds
  */
 feedsRoutes.get("/", async (c) => {
+  const sp = c.get("sp");
+  const feedService = sp.getFeedService();
   try {
-    const feeds = await feedRepository.getAllFeeds();
+    const feeds = await feedService.getAllFeeds();
     return c.json(feeds);
   } catch (error) {
     logger.error("Error fetching all feeds:", error);
@@ -36,8 +32,10 @@ feedsRoutes.post("/", async (c) => {
     return badRequest(c, "Invalid feed data", validationResult.error.flatten());
   }
 
+  const sp = c.get("sp");
+  const feedService = sp.getFeedService();
   try {
-    const newFeed = await feedRepository.createFeed(validationResult.data);
+    const newFeed = await feedService.createFeed(validationResult.data);
     return c.json(newFeed, 201);
   } catch (error) {
     logger.error("Error creating feed:", error);
@@ -50,8 +48,10 @@ feedsRoutes.post("/", async (c) => {
  */
 feedsRoutes.get("/:feedId", async (c) => {
   const feedId = c.req.param("feedId");
+  const sp = c.get("sp");
+  const feedService = sp.getFeedService();
   try {
-    const feed = await feedRepository.getFeedById(feedId);
+    const feed = await feedService.getFeedById(feedId);
     if (!feed) {
       return c.notFound();
     }
@@ -74,11 +74,13 @@ feedsRoutes.put("/:feedId", async (c) => {
     return badRequest(c, "Invalid feed data", validationResult.error.flatten());
   }
 
+  const sp = c.get("sp");
+  const feedService = sp.getFeedService();
   try {
-    const updatedFeed = await feedRepository.updateFeed(
+    const updatedFeed = await feedService.updateFeed(
       feedId,
       validationResult.data,
-    ); // Assumes this method exists
+    );
     if (!updatedFeed) {
       return c.notFound();
     }
@@ -95,116 +97,30 @@ feedsRoutes.put("/:feedId", async (c) => {
  * Example: /api/feeds/solana/process?distributors=@curatedotfun/rss
  */
 feedsRoutes.post("/:feedId/process", async (c) => {
-  const context = c.get("context");
+  const sp = c.get("sp");
+  const feedService = sp.getFeedService();
+
   const feedId = c.req.param("feedId");
-
-  let feed;
-  try {
-    feed = await feedRepository.getFeedById(feedId);
-    if (!feed) {
-      return c.notFound();
-    }
-  } catch (error) {
-    logger.error(`Error fetching feed ${feedId} for processing:`, error);
-    return c.json({ error: "Failed to fetch feed for processing" }, 500);
-  }
-  const feedConfig = feed.config; // FeedConfig is nested under 'config' property
-
-  // Get approved submissions for this feed
-  const approvedSubmissions =
-    await feedRepository.getAllSubmissionsForFeedByStatus(
-      feedId,
-      SubmissionStatus.APPROVED,
-    );
-
-  if (approvedSubmissions.length === 0) {
-    return c.json({ processed: 0 });
-  }
-
-  // Process each submission through stream output
-  let processed = 0;
-  const usedDistributors = new Set<string>();
-
-  if (!context.processorService) {
-    throw serviceUnavailable("Processor");
-  }
-
-  // Get optional distributors filter from query params
   const distributorsParam = c.req.query("distributors");
 
-  for (const submission of approvedSubmissions) {
-    try {
-      if (!feedConfig.outputs.stream || !feedConfig.outputs.stream.distribute) {
-        continue;
-      }
-
-      // Create a copy of the stream config
-      const streamConfig: StreamConfig = { ...feedConfig.outputs.stream };
-
-      // If no distributors specified, use all available
-      if (!distributorsParam) {
-        // Track all distributors
-        streamConfig.distribute!.forEach((d: DistributorConfig) =>
-          usedDistributors.add(d.plugin),
-        );
-      } else {
-        // Parse and validate requested distributors
-        const requestedDistributors = distributorsParam
-          .split(",")
-          .map((d) => d.trim());
-        const availableDistributors = streamConfig.distribute!.map(
-          (d) => d.plugin,
-        );
-
-        // Filter to only valid distributors
-        const validDistributors = requestedDistributors.filter((d) =>
-          availableDistributors.includes(d),
-        );
-
-        // Log warnings for invalid distributors
-        const invalidDistributors = requestedDistributors.filter(
-          (d) => !availableDistributors.includes(d),
-        );
-
-        if (invalidDistributors.length > 0) {
-          logger.warn(
-            `Invalid distributor(s) specified: ${invalidDistributors.join(", ")}. ` +
-              `Available distributors: ${availableDistributors.join(", ")}`,
-          );
-        }
-
-        // If no valid distributors, skip distribution entirely
-        if (validDistributors.length === 0) {
-          logger.warn(
-            "No valid distributors specified. Skipping distribution.",
-          );
-          continue; // Skip to the next submission
-        } else {
-          // Filter to only requested distributors
-          streamConfig.distribute = streamConfig.distribute!.filter((d: any) =>
-            validDistributors.includes(d.plugin),
-          );
-
-          // Track used distributors
-          validDistributors.forEach((d) => usedDistributors.add(d));
-
-          logger.info(
-            `Processing submission ${submission.tweetId} with selected distributors: ${validDistributors.join(", ")}`,
-          );
-        }
-      }
-
-      await context.processorService.process(submission, streamConfig);
-      processed++;
-    } catch (error) {
-      logger.error(`Error processing submission ${submission.tweetId}:`, error);
+  try {
+    const result = await feedService.processFeed(feedId, distributorsParam);
+    return c.json(result);
+  } catch (error: any) {
+    logger.error(`Error processing feed ${feedId}:`, error);
+    // FeedService.processFeed might throw specific errors (e.g., NotFoundError)
+    // For now, a generic 500, but could be more specific based on error type
+    if (error.message && error.message.startsWith("Feed not found")) {
+      return c.json({ error: error.message }, 404);
     }
+    if (
+      error.message &&
+      error.message.startsWith("Feed configuration not found")
+    ) {
+      return c.json({ error: error.message }, 404); // Or 500 if it's an internal config issue
+    }
+    return c.json({ error: "Failed to process feed" }, 500);
   }
-
-  return c.json({
-    processed,
-    distributors: Array.from(usedDistributors),
-  });
 });
 
 export { feedsRoutes };

@@ -8,10 +8,6 @@
     "dev": "NODE_ENV=development concurrently --kill-others-on-fail \"rspack build --watch\" \"wait-on -d 500 dist/main.js && node scripts/dev-server.js\"",
     "test": "bun test",
     "clean": "rm -rf dist coverage .turbo",
-    "db:generate": "drizzle-kit generate --config drizzle.config.ts",
-    "db:migrate": "drizzle-kit migrate --config drizzle.config.ts",
-    "db:check": "drizzle-kit check",
-    "db:studio": "drizzle-kit studio",
     "db:seed:dev": "bun ./scripts/seed-dev.ts",
     "db:seed:test": "bun ./test/setup/seed-test.ts"
   },
@@ -28,7 +24,7 @@
     ]
   },
   "devDependencies": {
-    "@curatedotfun/types": "^0.0.5",
+    "@curatedotfun/types": "workspace:*",
     "@module-federation/node": "^2.6.30",
     "@rspack/binding": "1.2.8",
     "@rspack/cli": "1.2.8",

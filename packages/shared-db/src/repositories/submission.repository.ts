@@ -1,23 +1,21 @@
-import { and, eq, sql, desc, asc, count, SQL, ilike, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or, sql, SQL } from "drizzle-orm";
 import * as queries from "../queries";
 import * as schema from "../schema";
 import {
-  feeds,
   moderationHistory,
   submissionCounts,
-  submissionFeeds,
   submissions,
   SubmissionStatus,
   submissionStatusZodEnum,
 } from "../schema";
+import { executeWithRetry, withErrorHandling } from "../utils";
 import {
   DB,
   InsertModerationHistory,
   InsertSubmission,
-  SelectSubmission,
   SelectModerationHistory,
+  SelectSubmission,
 } from "../validators";
-import { executeWithRetry, withErrorHandling } from "../utils";
 
 export interface PaginationMetadata {
   page: number;
@@ -32,7 +30,7 @@ export interface PaginatedResponse<T> {
   pagination: PaginationMetadata;
 }
 
-interface BackendFeedStatus {
+export interface BackendFeedStatus {
   feedId: string;
   feedName: string;
   status: SubmissionStatus;
@@ -47,12 +45,12 @@ export interface SubmissionWithFeedData {
   curatorTweetId: string | null;
   content: string;
   curatorNotes: string | null;
-  submittedAt: string; 
-  createdAt: Date; 
-  updatedAt: Date | null; 
+  submittedAt: Date;
+  createdAt: Date;
+  updatedAt: Date | null;
   feedStatuses: BackendFeedStatus[];
   moderationHistory: SelectModerationHistory[];
-  status: SubmissionStatus; 
+  status: SubmissionStatus;
 }
 
 /**
@@ -285,10 +283,7 @@ export class SubmissionRepository {
             items: submissionsResult.map((item) => ({
               ...item,
               status: status || submissionStatusZodEnum.Enum.pending,
-              submittedAt:
-                item.submittedAt instanceof Date
-                  ? item.submittedAt.toISOString()
-                  : String(item.submittedAt),
+              submittedAt: item.submittedAt,
               feedStatuses: item.feedStatuses || [],
               moderationHistory: item.moderationHistory || [],
             })) as SubmissionWithFeedData[],

@@ -19,12 +19,12 @@ module.exports = {
   },
   externals: {
     "drizzle-orm": "commonjs drizzle-orm",
-    "postgres": "commonjs postgres",
-    "zod": "commonjs zod",
+    postgres: "commonjs postgres",
+    zod: "commonjs zod",
     "async-retry": "commonjs async-retry",
     "drizzle-zod": "commonjs drizzle-zod",
     "pg-native": "commonjs pg-native",
-    "bufferutil": "commonjs bufferutil",
+    bufferutil: "commonjs bufferutil",
   },
   module: {
     rules: [
@@ -36,7 +36,7 @@ module.exports = {
     ],
   },
   resolve: {
-    extensions: [".ts", ".js"]
+    extensions: [".ts", ".js"],
   },
   plugins: [
     new rspack.IgnorePlugin({
