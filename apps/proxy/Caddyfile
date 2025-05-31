@@ -60,7 +60,7 @@
         }
 
         # proxy all requests for /* to the frontend
-        handle {
+        <!-- handle {
             reverse_proxy {
                 dynamic a {
                     name {$FRONTEND_DOMAIN}
@@ -71,6 +71,6 @@
                 }
                 import common_proxy_settings
             }
-        }
+        } -->
     }
 }
