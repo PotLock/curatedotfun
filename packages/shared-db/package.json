@@ -1,7 +1,6 @@
 {
   "name": "@curatedotfun/shared-db",
   "version": "0.1.0",
-  "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -34,5 +33,12 @@
   "peerDependencies": {
     "drizzle-orm": "^0.43.1",
     "typescript": "^5.0.0"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "package.json"
+  ]
 }

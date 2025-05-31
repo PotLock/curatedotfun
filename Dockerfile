@@ -63,10 +63,10 @@ COPY --chown=app:app curate.config.json ./
 RUN npm install -g pnpm
 
 # Install dependencies:
+  # - All dependencies (including dev like drizzle-kit) for shared-db to allow migrations
 # - Production dependencies for the backend application
-# - All dependencies (including dev like drizzle-kit) for shared-db to allow migrations
-RUN pnpm install --prod --frozen-lockfile --filter @curatedotfun/backend
 RUN pnpm install --frozen-lockfile --filter @curatedotfun/shared-db
+RUN pnpm install --prod --frozen-lockfile --filter @curatedotfun/backend
 
 # Use the non-root user
 USER app
