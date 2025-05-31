@@ -4,10 +4,10 @@ import {
   createSelectSchema,
   createUpdateSchema,
 } from "drizzle-zod";
-import * as schema from "../services/db/schema";
 import { feedConfigSchema } from "./config.validation";
+import { feeds } from "@curatedotfun/shared-db";
 
-export const insertFeedSchema = createInsertSchema(schema.feeds, {
+export const insertFeedSchema = createInsertSchema(feeds, {
   // id is the primary key (text) and should be provided by the user (e.g., hashtag)
   id: z.string().min(1, "Feed ID (hashtag) cannot be empty"),
   name: z.string().min(1, "Feed name cannot be empty"),
@@ -17,9 +17,9 @@ export const insertFeedSchema = createInsertSchema(schema.feeds, {
   updatedAt: z.undefined(),
 });
 
-export const selectFeedSchema = createSelectSchema(schema.feeds);
+export const selectFeedSchema = createSelectSchema(feeds);
 
-export const updateFeedSchema = createUpdateSchema(schema.feeds, {
+export const updateFeedSchema = createUpdateSchema(feeds, {
   // id should not be updatable (TODO: migrate away from hashtag being id)
   id: z.undefined(),
   name: z.string().min(1, "Feed name cannot be empty").optional(),

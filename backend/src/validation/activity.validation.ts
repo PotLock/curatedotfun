@@ -1,24 +1,27 @@
-import { z } from "zod";
+import {
+  activities,
+  activityTypeValues,
+  feedUserStats,
+  userStats,
+} from "@curatedotfun/shared-db";
 import {
   createInsertSchema,
   createSelectSchema,
   createUpdateSchema,
 } from "drizzle-zod";
-import * as schema from "../services/db/schema";
-
-export const activityTypeEnum = z.nativeEnum(schema.ActivityType);
+import { z } from "zod";
 
 // Activity schemas
-export const insertActivitySchema = createInsertSchema(schema.activities, {
+export const insertActivitySchema = createInsertSchema(activities, {
   id: z.undefined(),
   createdAt: z.undefined(),
   updatedAt: z.undefined(),
   timestamp: z.undefined(),
 });
 
-export const selectActivitySchema = createSelectSchema(schema.activities);
+export const selectActivitySchema = createSelectSchema(activities);
 
-export const updateActivitySchema = createUpdateSchema(schema.activities, {
+export const updateActivitySchema = createUpdateSchema(activities, {
   id: z.undefined(),
   user_id: z.undefined(),
   type: z.undefined(),
@@ -28,43 +31,35 @@ export const updateActivitySchema = createUpdateSchema(schema.activities, {
 });
 
 // User Stats schemas
-export const insertUserStatsSchema = createInsertSchema(schema.userStats, {
+export const insertUserStatsSchema = createInsertSchema(userStats, {
   createdAt: z.undefined(),
   updatedAt: z.undefined(),
 });
 
-export const selectUserStatsSchema = createSelectSchema(schema.userStats);
+export const selectUserStatsSchema = createSelectSchema(userStats);
 
-export const updateUserStatsSchema = createUpdateSchema(schema.userStats, {
+export const updateUserStatsSchema = createUpdateSchema(userStats, {
   user_id: z.undefined(),
   createdAt: z.undefined(),
   updatedAt: z.undefined(),
 });
 
 // Feed User Stats schemas
-export const insertFeedUserStatsSchema = createInsertSchema(
-  schema.feedUserStats,
-  {
-    id: z.undefined(),
-    createdAt: z.undefined(),
-    updatedAt: z.undefined(),
-  },
-);
+export const insertFeedUserStatsSchema = createInsertSchema(feedUserStats, {
+  id: z.undefined(),
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
 
-export const selectFeedUserStatsSchema = createSelectSchema(
-  schema.feedUserStats,
-);
+export const selectFeedUserStatsSchema = createSelectSchema(feedUserStats);
 
-export const updateFeedUserStatsSchema = createUpdateSchema(
-  schema.feedUserStats,
-  {
-    id: z.undefined(),
-    user_id: z.undefined(),
-    feed_id: z.undefined(),
-    createdAt: z.undefined(),
-    updatedAt: z.undefined(),
-  },
-);
+export const updateFeedUserStatsSchema = createUpdateSchema(feedUserStats, {
+  id: z.undefined(),
+  user_id: z.undefined(),
+  feed_id: z.undefined(),
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
 
 // Additional schemas for API requests and responses
 
@@ -74,7 +69,7 @@ export const updateFeedUserStatsSchema = createUpdateSchema(
 export const activityQueryOptionsSchema = z.object({
   limit: z.number().optional().default(20),
   offset: z.number().optional().default(0),
-  types: z.array(activityTypeEnum).optional(),
+  types: z.array(z.enum(activityTypeValues)).optional(),
   feed_id: z.string().optional(),
   from_date: z.string().optional(), // ISO date string
   to_date: z.string().optional(), // ISO date string
@@ -118,7 +113,6 @@ export const globalStatsSchema = z.object({
 export type InsertActivityData = z.infer<typeof insertActivitySchema>;
 export type UpdateActivityData = z.infer<typeof updateActivitySchema>;
 export type SelectActivityData = z.infer<typeof selectActivitySchema>;
-export type ActivityType = z.infer<typeof activityTypeEnum>;
 export type ActivityQueryOptions = z.infer<typeof activityQueryOptionsSchema>;
 export type LeaderboardQueryOptions = z.infer<
   typeof leaderboardQueryOptionsSchema

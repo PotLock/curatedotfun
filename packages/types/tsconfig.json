@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "noEmit": false, // Needs to emit .d.ts files at least
+    "declaration": true, // Crucial for sharing types
+    "declarationMap": true, // Useful for debugging types
+    "composite": true, // Required for project references
+    "module": "ESNext", // Module format for the .d.ts files and any JS (if emitted)
+    "moduleResolution": "bundler",
+    "emitDeclarationOnly": true,
+    "types": [],
+    "paths": {
+      "@curatedotfun/shared-db": ["../shared-db/dist"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+  // "references": [{ "path": "../shared-db" }]
+}

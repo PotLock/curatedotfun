@@ -1,21 +1,21 @@
-import { z } from "zod";
+import { users } from "@curatedotfun/shared-db";
 import {
   createInsertSchema,
   createSelectSchema,
   createUpdateSchema,
 } from "drizzle-zod";
-import * as schema from "../services/db/schema";
+import { z } from "zod";
 
-export const insertUserSchema = createInsertSchema(schema.users, {
+export const insertUserSchema = createInsertSchema(users, {
   id: z.undefined(),
   auth_provider_id: z.undefined(),
   createdAt: z.undefined(),
   updatedAt: z.undefined(),
 });
 
-export const selectUserSchema = createSelectSchema(schema.users);
+export const selectUserSchema = createSelectSchema(users);
 
-export const updateUserSchema = createUpdateSchema(schema.users, {
+export const updateUserSchema = createUpdateSchema(users, {
   id: z.undefined(),
   auth_provider_id: z.undefined(),
   near_account_id: z.undefined(),
