@@ -14,7 +14,7 @@ COPY . .
 # Disable telemetry and prune the monorepo to include only what's needed
 RUN turbo telemetry disable
 # Prune for backend and its direct workspace dependencies (shared-db, types, utils)
-RUN turbo prune --scope=@curatedotfun/backend --scope=@curatedotfun/shared-db --scope=@curatedotfun/types --scope=@curatedotfun/utils --docker
+RUN turbo prune --scope=@curatedotfun/api --scope=@curatedotfun/shared-db --scope=@curatedotfun/types --scope=@curatedotfun/utils --docker
 
 # Builder stage: Installs all dependencies and builds the application
 FROM base AS builder
@@ -37,7 +37,7 @@ COPY --from=pruner /app/out/full/ .
 
 # Build ONLY the backend application
 ENV NODE_ENV="production"
-RUN pnpm run build --filter=@curatedotfun/backend
+RUN pnpm run build --filter=@curatedotfun/api
 
 # Production stage: Minimal image for running the backend
 FROM node:18-alpine AS production
@@ -47,7 +47,7 @@ WORKDIR /app
 RUN addgroup -S app && adduser -S app -G app
 
 # Copy the production-ready code from the builder stage.
-COPY --from=builder --chown=app:app /app/apps/backend ./apps/backend
+COPY --from=builder --chown=app:app /app/apps/api ./apps/api
 COPY --from=builder --chown=app:app /app/packages/shared-db ./packages/shared-db
 COPY --from=builder --chown=app:app /app/packages/utils ./packages/utils
 
@@ -57,7 +57,7 @@ COPY --from=builder --chown=app:app /app/package.json ./package.json
 COPY --from=builder --chown=app:app /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=builder --chown=app:app /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
-COPY --from=builder --chown=app:app /app/apps/backend/curate.config.json ./apps/backend/curate.config.json
+COPY --from=builder --chown=app:app /app/apps/api/curate.config.json ./apps/api/curate.config.json
 
 # Use the non-root user
 USER app
@@ -66,7 +66,7 @@ USER app
 EXPOSE 3000
 
 # Set the final working directory to the backend application's root
-WORKDIR /app/apps/backend
+WORKDIR /app/apps/api
 
 # Start the application.
 CMD ["node", "dist/main.js"]

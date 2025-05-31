@@ -94,7 +94,7 @@ services:
   app:
     build:
       context: . 
-      dockerfile: apps/backend/Dockerfile
+      dockerfile: apps/api/Dockerfile
     depends_on:
       postgres_prod:
         condition: service_healthy
@@ -102,7 +102,7 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@postgres_prod:5432/curatedotfun
       NODE_ENV: production
     env_file:
-      - ./apps/backend/.env
+      - ./apps/api/.env
     ports:
       - "3000:3000"
     profiles: ["prod"] # we can run the app profile to test a production run

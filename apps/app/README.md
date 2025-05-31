@@ -5,7 +5,7 @@
 
 <div align="center">
 
-<h1 style="font-size: 2.5rem; font-weight: bold;">curate.fun frontend</h1>
+<h1 style="font-size: 2.5rem; font-weight: bold;">app.curate.fun</h1>
 
   <p>
     <strong>React-based frontend application for the curate.fun platform</strong>
@@ -110,14 +110,14 @@ The app will be available at `http://localhost:5173`
 
 ## Backend Integration
 
-The frontend communicates with the [backend service](../backend/README.md) through a RESTful API:
+The frontend communicates with the [backend service](../api/README.md) through a RESTful API:
 
 - Content retrieval via `/api/feeds` endpoints
 - Settings management through `/api/settings`
 - Plugin configuration via `/api/plugins`
 - Content submission through Twitter integration
 
-See the [Backend README](../backend/README.md) for detailed API documentation and service architecture.
+See the [Backend README](../api/README.md) for detailed API documentation and service architecture.
 
 <div align="right">
 <a href="https://nearbuilders.org" target="_blank">

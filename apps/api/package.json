@@ -1,5 +1,5 @@
 {
-  "name": "@curatedotfun/backend",
+  "name": "@curatedotfun/api",
   "version": "0.0.1",
   "scripts": {
     "schemas:generate": "bun ./scripts/generate-json-schemas.ts",

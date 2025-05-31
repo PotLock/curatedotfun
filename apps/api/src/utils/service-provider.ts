@@ -7,7 +7,7 @@ import { IBackgroundTaskService } from "../services/interfaces/background-task.i
 import { PluginService } from "../services/plugin.service";
 import { ProcessorService } from "../services/processor.service";
 import { TransformationService } from "../services/transformation.service";
-import { logger } from "../utils/logger";
+import { logger } from "./logger";
 import { UserService } from "services/users.service";
 import { ActivityService } from "services/activity.service";
 

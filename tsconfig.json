@@ -1,11 +1,11 @@
 {
   "files": [],
   "references": [
-    { "path": "./backend" },
-    { "path": "./frontend" },
+    { "path": "./apps/api" },
+    { "path": "./apps/app" },
     // SHARED PACKAGES
     { "path": "./packages/types" }
-    // { "path": "./packages/shared-db" },
+    { "path": "./packages/shared-db" },
   ],
   "compilerOptions": {
     "target": "es2022",

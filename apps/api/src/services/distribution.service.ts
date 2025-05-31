@@ -1,9 +1,9 @@
-import { Submission } from "./../types/twitter";
+import { Submission } from "../types/twitter";
 import { DistributorConfig } from "@curatedotfun/shared-db";
 import { ActionArgs } from "@curatedotfun/types";
 import { PluginError, PluginExecutionError } from "@curatedotfun/utils";
 import { Logger } from "pino";
-import { isStaging } from "../services/config.service";
+import { isStaging } from "./config.service";
 import { logger } from "../utils/logger";
 import { sanitizeJson } from "../utils/sanitize";
 import { IBaseService } from "./interfaces/base-service.interface";

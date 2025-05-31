@@ -132,20 +132,20 @@ graph TD
 
 ### Key Components
 
-- **[Frontend](./frontend/README.md)**
+- **[Frontend](./app/README.md)**
 
   - React-based web interface
   - Built with RSBuild and Tailwind CSS
   - Handles user interactions and submissions
-  - See [Frontend README](./frontend/README.md) for detailed documentation
+  - See [Frontend README](./app/README.md) for detailed documentation
 
-- **[Backend](./backend/README.md)**
+- **[Backend](./api/README.md)**
   - Node.js runtime with Hono.js framework
   - Plugin-based architecture with module federation
   - Service-oriented design with clear boundaries
   - Twitter bot functionality
   - API endpoints for frontend
-  - See [Backend README](./backend/README.md) for detailed documentation
+  - See [Backend README](./api/README.md) for detailed documentation
 
 ### Monorepo Overview
 

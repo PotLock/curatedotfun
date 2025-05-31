@@ -44,13 +44,13 @@ jobs:
         run: pnpm install
 
       - name: Migrate and seed DB
-        working-directory: ./backend
+        working-directory: ./api
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5433/test
         run: pnpm run db:migrate
 
       - name: Seed DB
-        working-directory: ./backend
+        working-directory: ./api
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5433/test
         run: bun ./test/setup/seed-test.ts

@@ -21,7 +21,7 @@ importers:
         specifier: latest
         version: 2.5.3
 
-  apps/backend:
+  apps/api:
     dependencies:
       '@crosspost/scheduler-sdk':
         specifier: ^0.1.1
@@ -139,7 +139,7 @@ importers:
         specifier: ^3.24.4
         version: 3.25.42
 
-  apps/frontend:
+  apps/app:
     dependencies:
       '@builddao/near-social-js':
         specifier: ^1.1.0

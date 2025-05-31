@@ -1,8 +1,8 @@
 import { DistributorConfig, TransformConfig } from "@curatedotfun/shared-db";
 import { ProcessorError, TransformError } from "@curatedotfun/utils";
 import { Logger } from "pino";
-import { logger } from "./../utils/logger";
-import { sanitizeJson } from "./../utils/sanitize";
+import { logger } from "../utils/logger";
+import { sanitizeJson } from "../utils/sanitize";
 import { DistributionService } from "./distribution.service";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { TransformationService } from "./transformation.service";

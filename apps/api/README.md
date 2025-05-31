@@ -5,7 +5,7 @@
 
 <div align="center">
 
-<h1 style="font-size: 2.5rem; font-weight: bold;">curate.fun backend</h1>
+<h1 style="font-size: 2.5rem; font-weight: bold;">api.curate.fun</h1>
 
   <p>
     <strong>Node.js/Hono.js backend service for the curate.fun platform</strong>
