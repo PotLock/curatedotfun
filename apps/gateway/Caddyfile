@@ -1,4 +1,5 @@
 # global options
+
 {
     admin off                   # theres no need for the admin api in railway's environment
     persist_config off          # storage isn't persistent anyway
@@ -14,6 +15,7 @@
 }
 
 # settings used across applications
+
 (common_proxy_settings) {
     # load balancing, uses round robin
     lb_policy round_robin
@@ -34,7 +36,9 @@
 }
 
 # ==========================================================
+
 # API Domain Group: curate.fun (mainnet & testnet)
+
 # ==========================================================
 
 app.curate.fun:{$PORT} {
@@ -63,30 +67,29 @@ app.curate.fun:{$PORT} {
 
 staging.curate.fun:{$PORT} {
     log { format json }
-    handle /api/* {
-        reverse_proxy {
-            dynamic a {
-                name {$API_DOMAIN}
-                port {$API_PORT}
-                refresh 1s
-                dial_timeout 30s
-                versions ipv4 ipv6
-            }
-            import common_proxy_settings
+    @staging_api_requests path /api/*
+    reverse_proxy @staging_api_requests {
+        dynamic a {
+            name {$API_DOMAIN}
+            port {$API_PORT}
+            refresh 1s
+            dial_timeout 30s
+            versions ipv4 ipv6
         }
+        import common_proxy_settings
     }
 
-    handle {
-        reverse_proxy https://curatedotfun-app-git-staging-potlock.vercel.app {
-            import common_proxy_settings
-            # Ensure Vercel gets the original Host header for correct routing on its end
-            header_up Host {http.request.host}
-        }
+    reverse_proxy https://curatedotfun-app-git-staging-potlock.vercel.app {
+        import common_proxy_settings
+        # Ensure Vercel gets the original Host header for correct routing on its end
+        header_up Host {http.request.host}
     }
 }
 
 # ==========================================================
+
 # API Domain Group: curate.press (mainnet & testnet)
+
 # ==========================================================
 
 app.curate.press:{$PORT} {
@@ -115,31 +118,29 @@ app.curate.press:{$PORT} {
 
 staging.curate.press:{$PORT} {
     log { format json }
-    handle /api/* {
-        reverse_proxy {
-            dynamic a {
-                name {$API_DOMAIN}
-                port {$API_PORT}
-                refresh 1s
-                dial_timeout 30s
-                versions ipv4 ipv6
-            }
-            import common_proxy_settings
+    @staging_api_requests path /api/*
+    reverse_proxy @staging_api_requests {
+        dynamic a {
+            name {$API_DOMAIN}
+            port {$API_PORT}
+            refresh 1s
+            dial_timeout 30s
+            versions ipv4 ipv6
         }
+        import common_proxy_settings
     }
 
-    handle {
-        reverse_proxy https://curatedotfun-app-git-staging-potlock.vercel.app {
-            import common_proxy_settings
-            # Ensure Vercel gets the original Host header for correct routing on its end
-            header_up Host {http.request.host}
-        }
+    reverse_proxy https://curatedotfun-app-git-staging-potlock.vercel.app {
+        import common_proxy_settings
+        # Ensure Vercel gets the original Host header for correct routing on its end
+        header_up Host {http.request.host}
     }
 }
 
-
 # ==========================================================
+
 # API Domain Group: curate.tools (mainnet & testnet)
+
 # ==========================================================
 
 app.curate.tools:{$PORT} {
