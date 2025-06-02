@@ -1,0 +1,52 @@
+@import "tailwindcss" source("../");
+/* @import "@tailwindcss/typography"; */
+
+@theme {
+  --font-family-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
+  --font-family-mono: "JetBrains Mono", monospace;
+  --font-family-londrina: "Londrina Solid", sans-serif;
+  --box-shadow-sharp: 4px 4px 0 rgba(0, 0, 0, 1);
+  --box-shadow-sharp-hover: 6px 6px 0 rgba(0, 0, 0, 1);
+}
+
+@font-face {
+  font-family: "Londrina Solid";
+  src: url("/fonts/LondrinaSolid-NNS.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+
+@layer base {
+  html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    @apply bg-white font-sans antialiased max-w-[1440px]  mx-auto;
+  }
+
+  h1,
+  h2,
+  h3 {
+    /* @apply londrina; */
+  }
+
+  h1 {
+    @apply text-4xl font-black;
+  }
+
+  h2 {
+    @apply text-2xl font-black;
+  }
+
+  h3 {
+    @apply text-xl font-black;
+  }
+
+  p,
+  .text-base {
+    @apply font-sans;
+  }
+}
