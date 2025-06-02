@@ -16,6 +16,7 @@ import { AuthAdapter } from "@web3auth/auth-adapter";
 import { Web3AuthContext } from "../hooks/use-web3-auth";
 import { connect, KeyPair, keyStores, utils } from "near-api-js";
 import { NearAccountInfo } from "../types/web3auth";
+import { getApiTarget } from "../lib/api";
 
 // Define a type for your backend user profile (adjust fields as needed)
 interface UserProfile {
@@ -175,7 +176,7 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
       const idToken = await authInstance.authenticateUser();
 
       // Call backend to check for existing profile
-      const response = await fetch("/api/users/me", {
+      const response = await fetch(`${getApiTarget()}/api/users/me`, {
         headers: {
           Authorization: `Bearer ${idToken.idToken}`,
         },

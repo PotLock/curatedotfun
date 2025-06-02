@@ -3,17 +3,7 @@ import { pluginReact } from "@rsbuild/plugin-react";
 import { TanStackRouterRspack } from "@tanstack/router-plugin/rspack";
 import { pluginNodePolyfill } from "@rsbuild/plugin-node-polyfill";
 import path from "path";
-
-const getProxyTarget = () => {
-  switch (process.env.NODE_ENV) {
-    case "production":
-      return "https://app.curate.fun";
-    case "staging":
-      return "https://curatedotfun-staging-31fe.up.railway.app";
-    default: // development
-      return "http://localhost:3000";
-  }
-};
+import 'dotenv/config'
 
 export default defineConfig({
   plugins: [
@@ -33,10 +23,13 @@ export default defineConfig({
       "@fonts": path.resolve(__dirname, "public/fonts"),
     },
     define: {
-      "import.meta.env.PUBLIC_WEB3_CLIENT_ID": JSON.stringify(
-        "BGv7EZrPFf601UlYbS5DH40oIUQyEghhP5hOrheXU9m7cz5BcXkEDfY4KIg_fOu0m336UzTRca08Ic4y-wzqoPs",
-      ),
-      "import.meta.env.PUBLIC_NETWORK": JSON.stringify("testnet"),
+      ...Object.keys(process.env)
+        .filter((key) => key.startsWith('PUBLIC_'))
+        .reduce((acc, key) => {
+          // @ts-expect-error whatever
+          acc[`process.env.${key}`] = JSON.stringify(process.env[key]);
+          return acc;
+        }, {}),
     },
   },
   output: {
@@ -62,17 +55,6 @@ export default defineConfig({
             },
           },
         ],
-      },
-    },
-  },
-  server: {
-    port: 5173,
-    proxy: {
-      "/api": {
-        target: getProxyTarget(),
-        secure: process.env.NODE_ENV !== "development", // secure should be true for https (prod/staging)
-        changeOrigin: true,
-        ws: true,
       },
     },
   },

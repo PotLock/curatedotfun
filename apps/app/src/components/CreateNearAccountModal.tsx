@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
+import { getApiTarget } from "../lib/api";
 import { Modal } from "./Modal";
 
 interface CreateNearAccountModalProps {
@@ -67,7 +68,7 @@ export const CreateNearAccountModal = ({
       const idToken = await web3auth.authenticateUser();
 
       // Call backend POST /api/users
-      const response = await fetch("/api/users", {
+      const response = await fetch(`${getApiTarget()}/api/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

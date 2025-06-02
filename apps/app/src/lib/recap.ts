@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RecapConfig } from "../types/recap";
+import { getApiTarget } from "./api";
 
 // Type for recap with state information
 export interface RecapWithState extends RecapConfig {
@@ -26,7 +27,7 @@ export function useRecaps(feedId: string) {
   return useQuery<GetRecapsResponse>({
     queryKey: ["recaps", feedId],
     queryFn: async () => {
-      const response = await fetch(`/api/feeds/${feedId}/recap`);
+      const response = await fetch(`${getApiTarget()}/api/feeds/${feedId}/recap`);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
@@ -45,7 +46,7 @@ export function useRecap(feedId: string, recapIndex: number) {
   return useQuery<GetRecapResponse>({
     queryKey: ["recap", feedId, recapIndex],
     queryFn: async () => {
-      const response = await fetch(`/api/feeds/${feedId}/recap/${recapIndex}`);
+      const response = await fetch(`${getApiTarget()}/api/feeds/${feedId}/recap/${recapIndex}`);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
@@ -65,7 +66,7 @@ export function useAddRecap(feedId: string) {
 
   return useMutation({
     mutationFn: async (recapConfig: RecapConfig) => {
-      const response = await fetch(`/api/feeds/${feedId}/recap`, {
+      const response = await fetch(`${getApiTarget()}/api/feeds/${feedId}/recap`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -98,7 +99,7 @@ export function useUpdateRecap(feedId: string, recapIndex: number) {
 
   return useMutation({
     mutationFn: async (recapConfig: RecapConfig) => {
-      const response = await fetch(`/api/feeds/${feedId}/recap/${recapIndex}`, {
+      const response = await fetch(`${getApiTarget()}/api/feeds/${feedId}/recap/${recapIndex}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -137,7 +138,7 @@ export function useDeleteRecap(feedId: string, recapIndex: number) {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await fetch(`/api/feeds/${feedId}/recap/${recapIndex}`, {
+      const response = await fetch(`${getApiTarget()}/api/feeds/${feedId}/recap/${recapIndex}`, {
         method: "DELETE",
       });
 
@@ -169,7 +170,7 @@ export function useRunRecap(feedId: string, recapIndex: number) {
   return useMutation({
     mutationFn: async () => {
       const response = await fetch(
-        `/api/feeds/${feedId}/recap/${recapIndex}/run`,
+        `${getApiTarget()}/api/feeds/${feedId}/recap/${recapIndex}/run`,
         {
           method: "POST",
         },

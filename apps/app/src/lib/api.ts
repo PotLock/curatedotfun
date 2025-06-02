@@ -11,6 +11,18 @@ import { usernameSchema, UserProfile } from "./validation/user";
 export type SortOrderType = "newest" | "oldest";
 export type StatusFilterType = "all" | SubmissionStatus;
 
+export const getApiTarget = () => {
+  // switch (import.meta.env.PUBLIC_CURATEDOTFUN_API) {
+  //   case "production":
+  //     return "https://api.curate.fun";
+  //   case "staging":
+  //     return "https://api.staging.curate.fun";
+  //   default: // development
+  //     return "http://localhost:3000";
+  // }
+  return process.env.PUBLIC_CURATEDOTFUN_API || "";
+};
+
 // TODO: Implement a shared types package
 export interface FeedDetails {
   id: string;
@@ -25,7 +37,7 @@ export function useFeed(feedId: string) {
   return useQuery<FeedDetails>({
     queryKey: ["feed-details", feedId],
     queryFn: async () => {
-      const response = await fetch(`/api/feeds/${feedId}`);
+      const response = await fetch(`${getApiTarget()}/api/feeds/${feedId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch feed details");
       }
@@ -49,7 +61,7 @@ export async function createFeed(
     config: feed, // Include the entire feed object as the config
   };
 
-  return fetch("/api/feeds", {
+  return fetch(`${getApiTarget()}/api/feeds`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -118,7 +130,7 @@ export function useFeedItems(feedId: string, filters: SubmissionFilters = {}) {
       if (sortOrder) params.append("sortOrder", sortOrder);
       if (q) params.append("q", q);
 
-      const url = `/api/submissions/feed/${feedId}?${params.toString()}`;
+      const url = `${getApiTarget()}/api/submissions/feed/${feedId}?${params.toString()}`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch feed submissions");
@@ -148,7 +160,7 @@ export function useAppConfig() {
   return useQuery<AppConfig>({
     queryKey: ["app-config"],
     queryFn: async () => {
-      const response = await fetch("/api/config");
+      const response = await fetch(`${getApiTarget()}/api/config`);
       if (!response.ok) {
         throw new Error("Failed to fetch app config");
       }
@@ -161,7 +173,7 @@ export function useGetLastTweetId() {
   return useQuery<{ lastTweetId: string }>({
     queryKey: ["last-tweet-id"],
     queryFn: async () => {
-      const response = await fetch("/api/twitter/last-tweet-id");
+      const response = await fetch(`${getApiTarget()}/api/twitter/last-tweet-id`);
       if (!response.ok) {
         throw new Error("Failed to fetch last tweet ID");
       }
@@ -173,7 +185,7 @@ export function useGetLastTweetId() {
 export function useUpdateLastTweetId() {
   return useMutation({
     mutationFn: async (tweetId: string) => {
-      const response = await fetch("/api/twitter/last-tweet-id", {
+      const response = await fetch(`${getApiTarget()}/api/twitter/last-tweet-id`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -220,7 +232,7 @@ export function useLeaderboard(
       if (limit !== undefined) params.append("limit", limit.toString());
 
       const queryString = params.toString();
-      const url = `/api/leaderboard${queryString ? `?${queryString}` : ""}`;
+      const url = `${getApiTarget()}/api/leaderboard${queryString ? `?${queryString}` : ""}`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch leaderboard");
@@ -262,7 +274,7 @@ export type CreateUserProfilePayload = {
 export function createUserProfile(payload: CreateUserProfilePayload) {
   const { idToken, ...body } = payload;
 
-  return fetch("/api/users", {
+  return fetch(`${getApiTarget()}/api/users`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -294,7 +306,7 @@ export function useCreateUserProfile() {
 }
 
 export function getCurrentUserProfile(idToken: string) {
-  return fetch("/api/users/me", {
+  return fetch(`${getApiTarget()}/api/users/me`, {
     headers: {
       Authorization: `Bearer ${idToken}`,
     },
@@ -349,7 +361,7 @@ export function useAllSubmissions(filters: SubmissionFilters = {}) {
       if (sortOrder) params.append("sortOrder", sortOrder);
       if (q) params.append("q", q);
 
-      const url = `/api/submissions?${params.toString()}`;
+      const url = `${getApiTarget()}/api/submissions?${params.toString()}`;
 
       const response = await fetch(url);
       if (!response.ok) {
@@ -392,7 +404,7 @@ export function useGlobalActivityStats() {
   return useQuery<GlobalActivityStats>({
     queryKey: ["global-activity-stats"],
     queryFn: async () => {
-      const response = await fetch("/api/activity/stats");
+      const response = await fetch(`${getApiTarget()}/api/activity/stats`);
       if (!response.ok) {
         throw new Error("Failed to fetch global activity stats");
       }
@@ -471,7 +483,7 @@ export function useMyActivity() {
       if (!web3auth) throw new Error("Web3Auth not initialized");
       const authResult = await web3auth.authenticateUser();
 
-      const response = await fetch("/api/activity/user/me", {
+      const response = await fetch(`${getApiTarget()}/api/activity/user/me`, {
         headers: {
           Authorization: `Bearer ${authResult.idToken}`,
         },
@@ -529,7 +541,7 @@ export function useUserActivity(
   return useQuery<UserActivityStats[]>({
     queryKey: ["user-activity", userId, options],
     queryFn: async () => {
-      const url = `/api/activity/user/${userId}${queryString ? `?${queryString}` : ""}`;
+      const url = `${getApiTarget()}/api/activity/user/${userId}${queryString ? `?${queryString}` : ""}`;
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -552,7 +564,7 @@ export function useMyCuratedFeeds() {
       if (!web3auth) throw new Error("Web3Auth not initialized");
       const authResult = await web3auth.authenticateUser();
 
-      const response = await fetch("/api/activity/feeds/curated-by/me", {
+      const response = await fetch(`${getApiTarget()}/api/activity/feeds/curated-by/me`, {
         headers: {
           Authorization: `Bearer ${authResult.idToken}`,
         },
@@ -579,7 +591,7 @@ export function useMyApprovedFeeds() {
       if (!web3auth) throw new Error("Web3Auth not initialized");
       const authResult = await web3auth.authenticateUser();
 
-      const response = await fetch("/api/activity/feeds/approved-by/me", {
+      const response = await fetch(`${getApiTarget()}/api/activity/feeds/approved-by/me`, {
         headers: {
           Authorization: `Bearer ${authResult.idToken}`,
         },
@@ -606,7 +618,7 @@ export function useMyFeedRank(feedId: string) {
       if (!web3auth) throw new Error("Web3Auth not initialized");
       const authResult = await web3auth.authenticateUser();
 
-      const response = await fetch(`/api/activity/feeds/${feedId}/my-rank`, {
+      const response = await fetch(`${getApiTarget()}/api/activity/feeds/${feedId}/my-rank`, {
         headers: {
           Authorization: `Bearer ${authResult.idToken}`,
         },
