@@ -35,7 +35,7 @@
     header_up X-Real-IP {http.request.remote.host} 
 }
 
-staging.curate.press:{$PORT} {
+http://staging.curate.press:{$PORT} {
     log { format json }
 
     route {
