@@ -130,14 +130,6 @@ staging.curate.press:{$PORT} {
             import common_proxy_settings
         }
     }
-<!-- 
-    route {
-        reverse_proxy https://curatedotfun-app-git-staging-potlock.vercel.app {
-            import common_proxy_settings
-            # Ensure Vercel gets the original Host header for correct routing on its end
-            header_up Host {http.request.host}
-        }
-    } -->
 }
 
 # ==========================================================
