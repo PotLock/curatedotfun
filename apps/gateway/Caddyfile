@@ -118,22 +118,25 @@ app.curate.press:{$PORT} {
 
 staging.curate.press:{$PORT} {
     log { format json }
-    @staging_api_requests path /api/*
-    reverse_proxy @staging_api_requests {
-        dynamic a {
-            name {$API_DOMAIN}
-            port {$API_PORT}
-            refresh 1s
-            dial_timeout 30s
-            versions ipv4 ipv6
+    route /api/* {
+        reverse_proxy {
+            dynamic a {
+                name {$API_DOMAIN}
+                port {$API_PORT}
+                refresh 1s
+                dial_timeout 30s
+                versions ipv4 ipv6
+            }
+            import common_proxy_settings
         }
-        import common_proxy_settings
     }
 
-    reverse_proxy https://curatedotfun-app-git-staging-potlock.vercel.app {
-        import common_proxy_settings
-        # Ensure Vercel gets the original Host header for correct routing on its end
-        header_up Host {http.request.host}
+    route {
+        reverse_proxy https://curatedotfun-app-git-staging-potlock.vercel.app {
+            import common_proxy_settings
+            # Ensure Vercel gets the original Host header for correct routing on its end
+            header_up Host {http.request.host}
+        }
     }
 }
 
