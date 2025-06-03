@@ -107,6 +107,37 @@ export class FeedRepository {
     );
   }
 
+  /**
+   * Delete a feed by ID.
+   * This will also remove associated entries from submissionFeeds and feedRecapsState
+   * due to foreign key constraints with ON DELETE CASCADE (assumed).
+   * If ON DELETE CASCADE is not set, these would need to be deleted manually here.
+   */
+  async deleteFeed(feedId: string, txDb: DB): Promise<number> {
+    return withErrorHandling(
+      async () => {
+        // First, delete related records if not handled by CASCADE
+        // For example, delete from submissionFeeds
+        await txDb
+          .delete(submissionFeeds)
+          .where(eq(submissionFeeds.feedId, feedId));
+
+        // Then, delete from feedRecapsState
+        await txDb
+          .delete(feedRecapsState)
+          .where(eq(feedRecapsState.feedId, feedId));
+        
+        // Finally, delete the feed itself
+        const result = await txDb
+          .delete(feeds)
+          .where(eq(feeds.id, feedId))
+          .returning({ id: feeds.id }); // Drizzle returns array of deleted objects
+        return result.length; // Return the count of deleted feeds (should be 0 or 1)
+      },
+      { operationName: "deleteFeed", additionalContext: { feedId } },
+    );
+  }
+
   // --- Existing methods for feed config and recap state ---
   /**
    * Get a feed's configuration by ID

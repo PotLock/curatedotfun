@@ -44,6 +44,7 @@ export interface FeedConfig {
   id: string;
   name: string;
   description: string;
+  image?: string;
   moderation: ModerationConfig;
   outputs: {
     stream?: StreamConfig;

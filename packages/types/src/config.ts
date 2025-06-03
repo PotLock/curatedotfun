@@ -76,6 +76,7 @@ export const FeedConfigSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
+  image: z.string().url().optional(),
   enabled: z.boolean().optional().default(true),
   pollingIntervalMs: z.number().int().positive().optional(),
   moderation: ModerationConfigSchema,

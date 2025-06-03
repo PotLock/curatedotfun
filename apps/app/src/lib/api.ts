@@ -1,7 +1,8 @@
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
-import type { AppConfig, FeedConfig } from "../types/config";
+import type { FeedConfig } from "@curatedotfun/types";
+import type { AppConfig } from "@/types/config";
 import type {
   SubmissionStatus,
   SubmissionWithFeedData,
@@ -20,7 +21,7 @@ export const getApiTarget = () => {
   //   default: // development
   //     return "http://localhost:3000";
   // }
-  return process.env.PUBLIC_CURATEDOTFUN_API || "";
+  return "";
 };
 
 // TODO: Implement a shared types package
@@ -79,6 +80,72 @@ export async function createFeed(
     }
 
     return data;
+  });
+}
+
+export async function updateFeed(
+  feedId: string,
+  // The config part of the body will be the full FeedConfig object
+  // The backend's updateFeedSchema will validate this.
+  // We send the whole config, not just partial updates to config.
+  payload: { config: FeedConfig },
+  idToken: string,
+) {
+  return fetch(`${getApiTarget()}/api/feeds/${feedId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`,
+    },
+    body: JSON.stringify(payload), // Send { config: { ... } }
+  }).then(async (response) => {
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(
+        data.error || `Failed to update feed (HTTP ${response.status})`,
+      );
+    }
+    return data;
+  });
+}
+
+export function useUpdateFeed(feedId: string) {
+  const { web3auth } = useWeb3Auth();
+  return useMutation({
+    mutationFn: async (payload: { config: FeedConfig }) => {
+      if (!web3auth) throw new Error("Web3Auth not initialized");
+      const authResult = await web3auth.authenticateUser();
+      return updateFeed(feedId, payload, authResult.idToken);
+    },
+  });
+}
+
+export async function deleteFeedApi(feedId: string) {
+  return fetch(`${getApiTarget()}/api/feeds/${feedId}`, {
+    method: "DELETE",
+    // headers: {
+    //   Authorization: `Bearer ${idToken}`,
+    // },
+  }).then(async (response) => {
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({})); // Try to parse JSON, default to empty object on error
+      throw new Error(
+        data.error || `Failed to delete feed (HTTP ${response.status})`,
+      );
+    }
+    // DELETE might not return a body or return a simple success message
+    return { success: true, message: "Feed deleted successfully" };
+  });
+}
+
+export function useDeleteFeed(feedId: string) {
+  // const { web3auth } = useWeb3Auth();
+  return useMutation({
+    mutationFn: async () => {
+      // if (!web3auth) throw new Error("Web3Auth not initialized");
+      // const authResult = await web3auth.authenticateUser();
+      return deleteFeedApi(feedId);
+    },
   });
 }
 

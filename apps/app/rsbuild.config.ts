@@ -58,6 +58,18 @@ export default defineConfig({
       },
     },
   },
+  server: {
+    port: 5173,
+    proxy: {
+      "/api": {
+        target: "https://staging.curate.press",
+        // target: "http://localhost:3000",
+        secure: false,
+        changeOrigin: true,
+        ws: true,
+      },
+    },
+  },
   dev: {
     assetPrefix: "/",
     writeToDisk: true,
