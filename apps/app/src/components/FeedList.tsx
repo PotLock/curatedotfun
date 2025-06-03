@@ -39,8 +39,8 @@ const FeedList = () => {
               >
                 <div className="flex items-center border border-1 border-neutral-200 rounded-md justify-center gap-3 py-2 px-3">
                   <img
-                    src="/images/feed-image.png"
-                    alt="Feed Image"
+                    src={feed?.image}
+                    alt={feed.name}
                     className="w-[50px] h-[50px] aspect-square object-cover"
                     width={40}
                     height={40}

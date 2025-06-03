@@ -1,5 +1,5 @@
 import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
-import { ListFilter, Settings2 } from "lucide-react";
+import { ListFilter } from "lucide-react";
 import FeedLayout from "../../../components/FeedLayout";
 import { Badge } from "../../../components/ui/badge";
 import { useFeed } from "../../../lib/api";
@@ -57,8 +57,8 @@ function FeedPageLayout() {
         <div className="flex flex-col gap-4 sm:gap-6 p-4 sm:p-6 rounded-md border border-neutral-400 bg-white">
           <div className="flex flex-col sm:flex-row sm:gap-[40px] gap-4 items-center sm:items-start w-full border-b border-1 border-dashed border-black pb-4">
             <img
-              src="/images/feed-image.png"
-              alt="Feed Image"
+              src={feed?.config.image}
+              alt={feed?.config.name}
               className="h-[80px] w-[80px] sm:h-[108px] sm:w-[108px]"
             />
             <div className="flex flex-col gap-2 sm:gap-3 text-center sm:text-left">
