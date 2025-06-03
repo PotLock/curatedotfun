@@ -1,0 +1,19 @@
+{
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm run build",
+
+  "projects": [
+    {
+      "name": "curatedotfun-app",
+      "root": "apps/app",
+      "buildCommand": "pnpm turbo build --filter=@curatedotfun/app",
+      "outputDirectory": "apps/app/dist",
+      "rewrites": [
+        {
+          "source": "/(.*)",
+          "destination": "/index.html"
+        }
+      ]
+    }
+  ]
+}
