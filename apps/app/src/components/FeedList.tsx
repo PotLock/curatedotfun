@@ -1,14 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type { FeedConfig } from "../types/config";
-import { getApiTarget } from "../lib/api";
 
 const FeedList = () => {
   // TODO: useQuery
   const { data: feeds = [] } = useQuery<FeedConfig[]>({
     queryKey: ["feeds"],
     queryFn: async () => {
-      const response = await fetch(`${getApiTarget()}/api/feeds`);
+      const response = await fetch("/api/feeds");
       if (!response.ok) {
         throw new Error("Failed to fetch feeds");
       }

@@ -1,15 +1,19 @@
-import { JsonEditor } from "../../../components/content-progress/JsonEditor";
-import { Alert, AlertDescription, AlertTitle } from "../../../components/ui/alert";
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
-import { Label } from "../../../components/ui/label";
-import { Loading } from "../../../components/ui/loading";
-import { toast } from "../../../hooks/use-toast";
-import { useDeleteFeed, useFeed, useUpdateFeed } from "../../../lib/api";
 import type { FeedConfig } from "@curatedotfun/types";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Terminal } from "lucide-react";
 import { useEffect, useState } from "react";
+import { JsonEditor } from "../../../components/content-progress/JsonEditor";
+import { ImageUpload } from "../../../components/ImageUpload";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "../../../components/ui/alert";
+import { Button } from "../../../components/ui/button";
+import { Label } from "../../../components/ui/label";
+import { Loading } from "../../../components/ui/loading";
+import { toast } from "../../../hooks/use-toast";
+import { useDeleteFeed, useFeed, useUpdateFeed } from "../../../lib/api";
 
 export const Route = createFileRoute("/_layout/edit/feed/$feedId")({
   component: EditFeedComponent,
@@ -28,8 +32,21 @@ function EditFeedComponent() {
 
   const [currentConfig, setCurrentConfig] = useState<FeedConfig | null>(null);
   const [jsonString, setJsonString] = useState<string>("");
-  const [imageUrlPreview, setImageUrlPreview] = useState<string | null>(null);
-  const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
+
+  const handleImageUploaded = (_ipfsHash: string, ipfsUrl: string) => {
+    setCurrentConfig((prevConfig) => {
+      const newConfig = {
+        ...(prevConfig || { id: feedId, name: "", description: "" }),
+        image: ipfsUrl,
+      } as FeedConfig;
+      setJsonString(JSON.stringify(newConfig, null, 2));
+      return newConfig;
+    });
+    toast({
+      title: "Image Updated",
+      description: "Image URL has been updated in the JSON config.",
+    });
+  };
 
   useEffect(() => {
     if (feedData?.config) {
@@ -40,27 +57,19 @@ function EditFeedComponent() {
         name: feedData.config.name,
         description: feedData.config.description,
         image: feedData.config.image || undefined,
-        enabled:
-          feedData.config.enabled !== undefined
-            ? feedData.config.enabled
-            : true, // Default to true if undefined
+        enabled: feedData.config.enabled || false,
         moderation: feedData.config.moderation || {
           approvers: { twitter: [] },
         }, // Default
-        outputs: feedData.config.outputs || { stream: { enabled: false } }, // Default
-        // Add other fields from FeedConfig (from @curatedotfun/types) with defaults if not in feedData.config
-        pollingIntervalMs:
-          (feedData.config).pollingIntervalMs || undefined,
-        sources: (feedData.config).sources || [],
-        ingestion: (feedData.config).ingestion || undefined,
+        outputs: feedData.config.outputs || { stream: { enabled: false } },
+        pollingIntervalMs: feedData.config.pollingIntervalMs || undefined,
+        sources: feedData.config.sources || [],
+        ingestion: feedData.config.ingestion || undefined,
       };
       setCurrentConfig(configWithPotentiallyMissingFields);
       setJsonString(
         JSON.stringify(configWithPotentiallyMissingFields, null, 2),
       );
-      if (configWithPotentiallyMissingFields.image) {
-        setImageUrlPreview(configWithPotentiallyMissingFields.image);
-      }
     }
   }, [feedData]);
 
@@ -70,65 +79,7 @@ function EditFeedComponent() {
       const parsedConfig = JSON.parse(newJsonString);
       setCurrentConfig(parsedConfig);
     } catch (e) {
-      // Error will be shown by JsonEditor, but we might want to prevent setting invalid config
       console.error("Invalid JSON:", e);
-    }
-  };
-
-  const handleImageUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setIsUploadingImage(true);
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        if (!import.meta.env.PUBLIC_PINATA_JWT_KEY) {
-          throw new Error("Pinata JWT key is not configured");
-        }
-
-        const response = await fetch(
-          "https://api.pinata.cloud/pinning/pinFileToIPFS",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${import.meta.env.PUBLIC_PINATA_JWT_KEY}`,
-            },
-            body: formData,
-          },
-        );
-
-        if (!response.ok) {
-          const errorData = await response
-            .json()
-            .catch(() => ({ message: "Failed to upload file to Pinata" }));
-          throw new Error(
-            errorData.message || "Failed to upload file to Pinata",
-          );
-        }
-
-        const data = await response.json();
-        const ipfsUrl = `https://ipfs.io/ipfs/${data.IpfsHash}`;
-        setImageUrlPreview(ipfsUrl);
-        toast({
-          title: "Image Uploaded",
-          description:
-            "You can copy the URL below and paste it into the 'image' field in the JSON config.",
-        });
-      } catch (error) {
-        console.error("Error uploading file to Pinata:", error);
-        toast({
-          title: "Upload Failed",
-          description:
-            error.message || "Failed to upload image. Please try again.",
-          variant: "destructive",
-        });
-        setImageUrlPreview(null);
-      } finally {
-        setIsUploadingImage(false);
-      }
     }
   };
 
@@ -142,18 +93,17 @@ function EditFeedComponent() {
       return;
     }
     try {
-      // Validate currentConfig against FeedConfigSchema if possible, or ensure it's well-formed
-      // For now, we assume currentConfig is valid if JSON.parse succeeded
       await updateFeedMutation.mutateAsync({ config: currentConfig });
       toast({
         title: "Success",
         description: "Feed configuration updated successfully.",
       });
-    } catch (error) {
-      console.error("Failed to update feed:", error);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      console.error("Failed to update feed:", err);
       toast({
         title: "Update Failed",
-        description: error.message || "Could not update feed configuration.",
+        description: err.message || "Could not update feed configuration.",
         variant: "destructive",
       });
     }
@@ -168,12 +118,13 @@ function EditFeedComponent() {
       try {
         await deleteFeedMutation.mutateAsync();
         toast({ title: "Success", description: "Feed deleted successfully." });
-        navigate({ to: "/" }); // Navigate to homepage or feeds list
-      } catch (error) {
-        console.error("Failed to delete feed:", error);
+        navigate({ to: "/" });
+      } catch (error: unknown) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        console.error("Failed to delete feed:", err);
         toast({
           title: "Deletion Failed",
-          description: error.message || "Could not delete feed.",
+          description: err.message || "Could not delete feed.",
           variant: "destructive",
         });
       }
@@ -198,38 +149,16 @@ function EditFeedComponent() {
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      <h1 className="text-2xl font-bold">Edit Feed: {feedData.name}</h1>
+      <h1 className="text-2xl font-bold">
+        Edit Feed: {currentConfig?.name || feedId}
+      </h1>
 
-      <div className="space-y-2">
-        <Label htmlFor="image-upload-input">Upload New Image</Label>
-        <Input
-          id="image-upload-input"
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          disabled={isUploadingImage}
-        />
-        {isUploadingImage && <Loading />}
-        {imageUrlPreview && (
-          <div className="mt-2 space-y-1">
-            <p className="text-sm text-muted-foreground">
-              Image uploaded. Copy this URL into the JSON config's "image"
-              field:
-            </p>
-            <Input
-              type="text"
-              readOnly
-              value={imageUrlPreview}
-              className="font-mono"
-            />
-            <img
-              src={imageUrlPreview}
-              alt="Preview"
-              className="mt-2 max-w-xs h-auto rounded border"
-            />
-          </div>
-        )}
-      </div>
+      <ImageUpload
+        label="Feed Image"
+        initialImageUrl={currentConfig?.image || null}
+        onUploadSuccess={handleImageUploaded}
+        recommendedText="Update the image for this feed."
+      />
 
       <div className="space-y-2">
         <Label>Feed Configuration (JSON)</Label>
@@ -242,7 +171,7 @@ function EditFeedComponent() {
       <div className="flex space-x-4">
         <Button
           onClick={handleSaveChanges}
-          disabled={updateFeedMutation.isPending || isUploadingImage}
+          disabled={updateFeedMutation.isPending}
         >
           {updateFeedMutation.isPending ? <Loading /> : null}
           Save Changes

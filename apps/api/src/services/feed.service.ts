@@ -54,8 +54,11 @@ export class FeedService implements IBaseService {
     this.logger.info({ feedId }, "FeedService: deleteFeed called");
     return this.db.transaction(async (tx) => {
       const result = await this.feedRepository.deleteFeed(feedId, tx);
-      if (result === 0) { 
-        this.logger.warn({ feedId }, "FeedService: deleteFeed - Feed not found or not deleted");
+      if (result === 0) {
+        this.logger.warn(
+          { feedId },
+          "FeedService: deleteFeed - Feed not found or not deleted",
+        );
         return 0;
       }
       return result;

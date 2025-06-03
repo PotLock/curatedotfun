@@ -1,5 +1,4 @@
 import { SubmissionWithFeedData } from "../types/twitter";
-import { getApiTarget } from "./api";
 
 export const getTweetUrl = (tweetId: string, username: string) => {
   return `https://x.com/${username}/status/${tweetId}`;
@@ -21,7 +20,7 @@ export const handleApprove = async (
 ) => {
   if (isDev()) {
     const newTweetId = generateTweetId();
-    const response = await fetch(`${getApiTarget()}/api/test/tweets`, {
+    const response = await fetch(`/api/test/tweets`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -62,7 +61,7 @@ export const handleReject = async (
 ) => {
   if (isDev()) {
     const newTweetId = generateTweetId();
-    const response = await fetch(`${getApiTarget()}/api/test/tweets`, {
+    const response = await fetch(`/api/test/tweets`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

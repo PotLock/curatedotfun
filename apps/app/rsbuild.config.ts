@@ -3,7 +3,7 @@ import { pluginReact } from "@rsbuild/plugin-react";
 import { TanStackRouterRspack } from "@tanstack/router-plugin/rspack";
 import { pluginNodePolyfill } from "@rsbuild/plugin-node-polyfill";
 import path from "path";
-import 'dotenv/config'
+import "dotenv/config";
 
 export default defineConfig({
   plugins: [
@@ -24,7 +24,7 @@ export default defineConfig({
     },
     define: {
       ...Object.keys(process.env)
-        .filter((key) => key.startsWith('PUBLIC_'))
+        .filter((key) => key.startsWith("PUBLIC_"))
         .reduce((acc, key) => {
           // @ts-expect-error whatever
           acc[`process.env.${key}`] = JSON.stringify(process.env[key]);
@@ -62,8 +62,8 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "https://staging.curate.press",
-        // target: "http://localhost:3000",
+        // target: "https://staging.curate.press",
+        target: "http://localhost:3000",
         secure: false,
         changeOrigin: true,
         ws: true,

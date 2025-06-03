@@ -126,7 +126,7 @@ export class FeedRepository {
         await txDb
           .delete(feedRecapsState)
           .where(eq(feedRecapsState.feedId, feedId));
-        
+
         // Finally, delete the feed itself
         const result = await txDb
           .delete(feeds)
