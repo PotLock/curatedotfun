@@ -12,6 +12,7 @@ import { twitterRoutes } from "./twitter";
 import { Env } from "types/app";
 import { usersRoutes } from "./users";
 import { activityRoutes } from "./activity";
+import { uploadRoutes } from "./upload";
 
 // Create main API router
 export const apiRoutes = new Hono<Env>();
@@ -32,3 +33,4 @@ apiRoutes.route("/stats", statsRoutes);
 apiRoutes.route("/trigger", triggerRoutes);
 apiRoutes.route("/users", usersRoutes);
 apiRoutes.route("/activity", activityRoutes);
+apiRoutes.route("/upload", uploadRoutes);

@@ -123,4 +123,23 @@ feedsRoutes.post("/:feedId/process", async (c) => {
   }
 });
 
+/**
+ * Delete a specific feed by its ID
+ */
+feedsRoutes.delete("/:feedId", async (c) => {
+  const feedId = c.req.param("feedId");
+  const sp = c.get("sp");
+  const feedService = sp.getFeedService();
+  try {
+    const result = await feedService.deleteFeed(feedId);
+    if (!result) {
+      return c.notFound();
+    }
+    return c.json({ message: "Feed deleted successfully" }, 200);
+  } catch (error) {
+    logger.error(`Error deleting feed ${feedId}:`, error);
+    return c.json({ error: "Failed to delete feed" }, 500);
+  }
+});
+
 export { feedsRoutes };

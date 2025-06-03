@@ -50,6 +50,21 @@ export class FeedService implements IBaseService {
     });
   }
 
+  async deleteFeed(feedId: string) {
+    this.logger.info({ feedId }, "FeedService: deleteFeed called");
+    return this.db.transaction(async (tx) => {
+      const result = await this.feedRepository.deleteFeed(feedId, tx);
+      if (result === 0) {
+        this.logger.warn(
+          { feedId },
+          "FeedService: deleteFeed - Feed not found or not deleted",
+        );
+        return 0;
+      }
+      return result;
+    });
+  }
+
   // This is a core method
   // In order to process a feed, you must be the feed owner
   // this is called by trigger/
