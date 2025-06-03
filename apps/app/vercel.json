@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "cd ../../ && pnpm install",
+  "buildCommand": "pnpm turbo build --filter=@curatedotfun/app",
+  "outputDirectory": "dist",
+
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
