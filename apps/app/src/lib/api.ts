@@ -77,13 +77,13 @@ export async function updateFeed(
   // The backend's updateFeedSchema will validate this.
   // We send the whole config, not just partial updates to config.
   payload: { config: FeedConfig },
-  idToken: string,
+  // idToken: string,
 ) {
   return fetch(`/api/feeds/${feedId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${idToken}`,
+      // Authorization: `Bearer ${idToken}`,
     },
     body: JSON.stringify(payload), // Send { config: { ... } }
   }).then(async (response) => {
@@ -98,12 +98,12 @@ export async function updateFeed(
 }
 
 export function useUpdateFeed(feedId: string) {
-  const { web3auth } = useWeb3Auth();
+  // const { web3auth } = useWeb3Auth();
   return useMutation({
     mutationFn: async (payload: { config: FeedConfig }) => {
-      if (!web3auth) throw new Error("Web3Auth not initialized");
-      const authResult = await web3auth.authenticateUser();
-      return updateFeed(feedId, payload, authResult.idToken);
+      // if (!web3auth) throw new Error("Web3Auth not initialized");
+      // const authResult = await web3auth.authenticateUser();
+      return updateFeed(feedId, payload);
     },
   });
 }
