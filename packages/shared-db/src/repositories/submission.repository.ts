@@ -13,8 +13,9 @@ import {
   DB,
   InsertModerationHistory,
   InsertSubmission,
+  RichSubmission,
   SelectModerationHistory,
-  SelectSubmission,
+  SelectSubmissionFeed
 } from "../validators";
 
 export interface PaginationMetadata {
@@ -135,15 +136,35 @@ export class SubmissionRepository {
    * Gets a submission by tweet ID along with its associated feeds.
    *
    * @param tweetId The tweet ID
-   * @returns The submission with feeds or null if not found
+   * @returns The rich submission object with feeds and moderation history, or null if not found
    */
-  async getSubmission(tweetId: string): Promise<SelectSubmission | null> {
+  async getSubmission(tweetId: string): Promise<RichSubmission | null> {
     return withErrorHandling(
       async () => {
-        return executeWithRetry(
+        const baseSubmission = await executeWithRetry(
           (retryDb) => queries.getSubmission(retryDb, tweetId),
           this.db,
         );
+
+        if (!baseSubmission) {
+          return null;
+        }
+
+        const feeds: SelectSubmissionFeed[] = await executeWithRetry(
+          (retryDb) => queries.getFeedsBySubmission(retryDb, tweetId),
+          this.db,
+        );
+
+        const moderationHistory: SelectModerationHistory[] = await executeWithRetry(
+          (retryDb) => queries.getModerationHistory(retryDb, tweetId),
+          this.db,
+        );
+
+        return {
+          ...baseSubmission,
+          feeds,
+          moderationHistory,
+        };
       },
       {
         operationName: "get submission",
@@ -154,21 +175,41 @@ export class SubmissionRepository {
   }
 
   /**
-   * Gets a submission by curator tweet ID.
+   * Gets a submission by curator tweet ID, including its associated feeds and moderation history.
    *
    * @param curatorTweetId The curator tweet ID
-   * @returns The submission or null if not found
+   * @returns The rich submission object or null if not found
    */
   async getSubmissionByCuratorTweetId(
     curatorTweetId: string,
-  ): Promise<SelectSubmission | null> {
+  ): Promise<RichSubmission | null> {
     return withErrorHandling(
       async () => {
-        return executeWithRetry(
+        const baseSubmission = await executeWithRetry(
           (retryDb) =>
             queries.getSubmissionByCuratorTweetId(retryDb, curatorTweetId),
           this.db,
         );
+
+        if (!baseSubmission) {
+          return null;
+        }
+
+        const feeds: SelectSubmissionFeed[] = await executeWithRetry(
+          (retryDb) => queries.getFeedsBySubmission(retryDb, baseSubmission.tweetId),
+          this.db,
+        );
+
+        const moderationHistory: SelectModerationHistory[] = await executeWithRetry(
+          (retryDb) => queries.getModerationHistory(retryDb, baseSubmission.tweetId),
+          this.db,
+        );
+
+        return {
+          ...baseSubmission,
+          feeds,
+          moderationHistory,
+        };
       },
       {
         operationName: "get submission by curator tweet ID",

@@ -7,6 +7,7 @@ import { ConfigService, isProduction } from "../services/config.service";
 import { DistributionService } from "../services/distribution.service";
 import { FeedService } from "../services/feed.service";
 import { IBackgroundTaskService } from "../services/interfaces/background-task.interface";
+import { ModerationService } from "../services/moderation.service";
 import { PluginService } from "../services/plugin.service";
 import { ProcessorService } from "../services/processor.service";
 import { TransformationService } from "../services/transformation.service";
@@ -79,6 +80,7 @@ export class ServiceProvider {
     const twitterService = this.services.get("twitterService");
     const processorService = this.services.get("processorService");
     const configService: ConfigService = this.services.get("configService");
+    const feedService = this.services.get("feedService");
 
     await configService.loadConfig();
 
@@ -87,6 +89,16 @@ export class ServiceProvider {
     const feedRepository = new FeedRepository(db);
     const twitterRespository = new TwitterRepository(db);
     const submissionRepository = new SubmissionRepository(db);
+
+    const moderationService = new ModerationService(
+      feedRepository,
+      submissionRepository,
+      processorService,
+      configService.getConfig(),
+      db,
+      logger,
+    );
+    this.services.set("moderationService", moderationService);
 
     const submissionService = twitterService
       ? new SubmissionService(
@@ -97,6 +109,8 @@ export class ServiceProvider {
         submissionRepository,
         twitterRespository,
         db,
+        moderationService,
+        feedService,
         logger
       )
       : null;

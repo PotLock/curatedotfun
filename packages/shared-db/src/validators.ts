@@ -94,6 +94,11 @@ export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
 export type UpdateSubmission = z.infer<typeof updateSubmissionSchema>;
 export type SelectSubmission = z.infer<typeof selectSubmissionSchema>;
 
+export type RichSubmission = SelectSubmission & {
+  feeds: SelectSubmissionFeed[];
+  moderationHistory: SelectModerationHistory[];
+};
+
 // SubmissionFeed Schemas and Types
 export const insertSubmissionFeedSchema = createInsertSchema(submissionFeeds);
 export const updateSubmissionFeedSchema = createUpdateSchema(submissionFeeds);
