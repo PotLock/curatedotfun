@@ -13,3 +13,4 @@ export * from "./repositories/twitter.repository";
 export * from "./repositories/leaderboard.repository";
 export * from "./repositories/submission.repository";
 export * from "./repositories/user.repository";
+export * from "./repositories/plugin.repository";

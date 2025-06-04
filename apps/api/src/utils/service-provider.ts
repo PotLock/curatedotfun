@@ -48,7 +48,7 @@ export class ServiceProvider {
       twitterService = new MockTwitterService();
     }
 
-    const pluginService = new PluginService(configService, logger);
+    const pluginService = new PluginService(logger);
     const transformationService = new TransformationService(
       pluginService,
       logger,
@@ -99,7 +99,7 @@ export class ServiceProvider {
       feedRepository,
       submissionRepository,
       processorService,
-      configService.getConfig(),
+      feedService,
       db,
       logger,
     );
@@ -108,7 +108,6 @@ export class ServiceProvider {
     const submissionService = twitterService
       ? new SubmissionService(
           twitterService,
-          configService.getConfig(),
           feedRepository,
           submissionRepository,
           twitterRespository,

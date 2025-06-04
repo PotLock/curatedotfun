@@ -1,12 +1,4 @@
 {
-  "global": {
-    "botId": "curatedotfun",
-    "defaultStatus": "pending",
-    "maxSubmissionsPerUser": 100,
-    "blacklist": {
-      "twitter": []
-    }
-  },
   "plugins": {
     "@curatedotfun/telegram": {
       "type": "distributor",

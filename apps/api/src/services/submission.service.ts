@@ -1,19 +1,17 @@
 import {
   DB,
-  SelectSubmissionFeed,
   FeedRepository,
   InsertSubmission,
   InsertSubmissionFeed,
   RichSubmission,
   SelectFeed,
+  SelectSubmissionFeed,
   SubmissionRepository,
   TwitterRepository,
   submissionStatusZodEnum,
-  SubmissionStatus,
 } from "@curatedotfun/shared-db";
 import { Tweet } from "agent-twitter-client";
 import { Logger } from "pino";
-import { AppConfig } from "../types/config";
 import { FeedService } from "./feed.service";
 import { IBackgroundTaskService } from "./interfaces/background-task.interface";
 import { ModerationService } from "./moderation.service";
@@ -25,7 +23,6 @@ export class SubmissionService implements IBackgroundTaskService {
 
   constructor(
     private readonly twitterService: TwitterService,
-    private readonly config: AppConfig,
     private readonly feedRepository: FeedRepository,
     private readonly submissionRepository: SubmissionRepository,
     private readonly twitterRepository: TwitterRepository,
@@ -182,17 +179,10 @@ export class SubmissionService implements IBackgroundTaskService {
       return null;
     }
 
-    if (
-      curatorTweet.username.toLowerCase() ===
-        this.config.global.botId.toLowerCase() ||
-      (this.config.global.blacklist?.["twitter"] || []).some(
-        (blacklisted: string) =>
-          blacklisted.toLowerCase() === curatorTweet.username?.toLowerCase(),
-      )
-    ) {
+    if (curatorTweet.username.toLowerCase() === "curatedotfun") {
       this.logger.error(
         { tweetId: tweet.id, username: curatorTweet.username },
-        "Submitted by bot or blacklisted user.",
+        "Submitted by bot.",
       );
       return null;
     }
@@ -239,16 +229,16 @@ export class SubmissionService implements IBackgroundTaskService {
     curatorTweet: Tweet,
     curatorUserId: string,
   ): Promise<RichSubmission | null> {
-    const dailyCount =
-      await this.submissionRepository.getDailySubmissionCount(curatorUserId);
-    const maxSubmissions = this.config.global.maxDailySubmissionsPerUser;
-    if (dailyCount >= maxSubmissions) {
-      this.logger.error(
-        { tweetId: curatorTweet.id, userId: curatorUserId },
-        "User has reached daily submission limit.",
-      );
-      return null;
-    }
+    // const dailyCount =
+    //   await this.submissionRepository.getDailySubmissionCount(curatorUserId);
+    // const maxSubmissions = this.config.global.maxDailySubmissionsPerUser;
+    // if (dailyCount >= maxSubmissions) {
+    //   this.logger.error(
+    //     { tweetId: curatorTweet.id, userId: curatorUserId },
+    //     "User has reached daily submission limit.",
+    //   );
+    //   return null;
+    // }
 
     const curatorNotes = this.extractDescription(
       originalTweet.username!,
@@ -750,7 +740,7 @@ export class SubmissionService implements IBackgroundTaskService {
   private extractNote(username: string, tweet: Tweet): string | null {
     const text = tweet.text
       ?.replace(/#\w+/g, "")
-      .replace(new RegExp(`@${this.config.global.botId}`, "i"), "")
+      .replace(new RegExp(`@curatedotfun`, "i"), "")
       .replace(new RegExp(`@${username}`, "i"), "")
       .replace(/!approve|!reject/gi, "")
       .trim();

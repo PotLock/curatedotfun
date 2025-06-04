@@ -1,4 +1,4 @@
-import { SubmissionStatus } from "./twitter";
+import { SubmissionStatus } from "@curatedotfun/shared-db";
 import type { FeedConfig } from "@curatedotfun/shared-db";
 export interface GlobalConfig {
   botId: string;
@@ -7,8 +7,8 @@ export interface GlobalConfig {
   blacklist: Record<string, string[]>;
 }
 
-export interface PluginConfig {
-  type: "distributor" | "transformer";
+export interface PluginConfig<T extends string = string> {
+  type: T;
   url: string;
   config?: Record<string, unknown>;
 }

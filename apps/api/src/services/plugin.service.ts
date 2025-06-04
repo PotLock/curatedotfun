@@ -1,3 +1,4 @@
+import { PluginRepository } from "@curatedotfun/shared-db";
 import {
   BotPlugin,
   DistributorPlugin,
@@ -11,11 +12,12 @@ import { PluginError, PluginLoadError } from "@curatedotfun/utils";
 import { performReload } from "@module-federation/node/utils";
 import { init, loadRemote } from "@module-federation/runtime";
 import { Logger } from "pino";
+import { PluginConfig } from "types/config";
+import { db } from "../db";
 import { logger } from "../utils/logger";
 import { createPluginInstanceKey } from "../utils/plugin";
-import { ConfigService, isProduction } from "./config.service";
+import { isProduction } from "./config.service";
 import { IBaseService } from "./interfaces/base-service.interface";
-import { PluginConfig } from "types/config";
 
 /**
  * Cache entry for a loaded plugin
@@ -70,6 +72,7 @@ type PluginContainer<
 export class PluginService implements IBaseService {
   private remotes: Map<string, RemoteState> = new Map();
   private instances: Map<string, InstanceState<PluginType>> = new Map();
+  private pluginRepository: PluginRepository;
 
   // Time in milliseconds before cached items are considered stale
   private readonly instanceCacheTimeout: number = 7 * 24 * 60 * 60 * 1000; // 7 days (instance of a plugin with config)
@@ -80,11 +83,9 @@ export class PluginService implements IBaseService {
   private readonly retryDelays: number[] = [1000, 5000]; // Delays between retries in ms
 
   public readonly logger: Logger;
-  constructor(
-    private configService: ConfigService,
-    logger: Logger,
-  ) {
+  constructor(logger: Logger) {
     this.logger = logger;
+    this.pluginRepository = new PluginRepository(db);
   }
 
   /**
@@ -100,21 +101,30 @@ export class PluginService implements IBaseService {
     pluginConfig: { type: T; config: TConfig },
   ): Promise<PluginTypeMap<TInput, TOutput, TConfig>[T]> {
     try {
-      // Get plugin metadata from app config
-      const pluginMeta = this.configService.getPluginByName(name);
+      // Get plugin metadata from database
+      const registeredPlugin = await this.pluginRepository.getPlugin(name);
 
-      if (!pluginMeta) {
+      if (!registeredPlugin) {
         throw new PluginLoadError(
           name,
           "",
-          // new Error(`Plugin ${name} not found in app configuration`),
+          // new Error(`Plugin ${name} not found in database`),
         );
       }
 
-      // Create full config with URL from app config
+      // Validate requested type matches registered type
+      if (pluginConfig.type !== registeredPlugin.type) {
+        throw new PluginLoadError(
+          name,
+          registeredPlugin.entryPoint,
+          // new Error(`Plugin type mismatch: requested ${pluginConfig.type}, but plugin is registered as ${registeredPlugin.type}`),
+        );
+      }
+
+      // Create full config with URL from database
       const config: PluginConfig<T> = {
         type: pluginConfig.type,
-        url: pluginMeta.url,
+        url: registeredPlugin.entryPoint,
         config: pluginConfig.config,
       };
 
@@ -171,7 +181,7 @@ export class PluginService implements IBaseService {
             TOutput,
             TConfig
           >[T];
-          await newInstance.initialize(config.config);
+          await newInstance.initialize(config.config as TConfig);
 
           // // Validate instance implements required interface
           // if (!this.validatePluginInterface<T, TInput, TOutput, TConfig>(newInstance, config.type)) {

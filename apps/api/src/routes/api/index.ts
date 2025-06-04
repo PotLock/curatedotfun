@@ -3,7 +3,6 @@ import { isProduction } from "../../services/config.service";
 import { configRoutes } from "./config";
 import { feedsRoutes } from "./feeds";
 import { leaderboardRoutes } from "./leaderboard";
-import { pluginRoutes } from "./plugin";
 import { statsRoutes } from "./stats";
 import { submissionRoutes } from "./submission";
 import { testRoutes } from "./test";
@@ -13,6 +12,7 @@ import { Env } from "types/app";
 import { usersRoutes } from "./users";
 import { activityRoutes } from "./activity";
 import { uploadRoutes } from "./upload";
+import { pluginsRoutes } from "./plugins";
 
 // Create main API router
 export const apiRoutes = new Hono<Env>();
@@ -27,7 +27,7 @@ apiRoutes.route("/twitter", twitterRoutes);
 apiRoutes.route("/submissions", submissionRoutes);
 apiRoutes.route("/feeds", feedsRoutes);
 apiRoutes.route("/config", configRoutes);
-apiRoutes.route("/plugins", pluginRoutes);
+apiRoutes.route("/plugins", pluginsRoutes);
 apiRoutes.route("/leaderboard", leaderboardRoutes);
 apiRoutes.route("/stats", statsRoutes);
 apiRoutes.route("/trigger", triggerRoutes);
