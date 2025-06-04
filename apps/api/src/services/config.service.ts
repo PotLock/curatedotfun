@@ -27,7 +27,7 @@ export class ConfigService {
       );
     } else {
       // Production environment
-      this.configPath = path.resolve(process.cwd(), "../curate.config.json");
+      this.configPath = path.resolve(process.cwd(), "/curate.config.json");
     }
 
     logger.info(`Using configuration from: ${this.configPath}`);
