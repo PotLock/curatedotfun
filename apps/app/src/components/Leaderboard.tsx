@@ -1,10 +1,10 @@
-import { Search, ChevronDown, ChevronUp } from "lucide-react";
-import { useState, useRef, useEffect, useMemo } from "react";
-import { LeaderboardEntry, useAppConfig } from "../lib/api";
 import { Link } from "@tanstack/react-router";
-import { Hero } from "./Hero";
+import { ChevronDown, ChevronUp, Search } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { LeaderboardEntry, useAllFeeds } from "../lib/api";
 import { Container } from "./Container";
 import { UserLink } from "./FeedItem";
+import { Hero } from "./Hero";
 
 interface LeaderboardSearch {
   feed: string;
@@ -26,7 +26,7 @@ export default function Leaderboard({
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
   const [showFeedDropdown, setShowFeedDropdown] = useState<boolean>(false);
   const [showTimeDropdown, setShowTimeDropdown] = useState<boolean>(false);
-  const { data: config } = useAppConfig();
+  const { data: allFeeds = [] } = useAllFeeds();
   const feedDropdownRef = useRef<HTMLDivElement>(null);
   const timeDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -44,13 +44,13 @@ export default function Leaderboard({
         value: "all feeds",
       },
       ...(
-        config?.feeds.map((feed) => ({
+        allFeeds.map((feed) => ({
           label: feed.name,
           value: feed.id,
         })) || []
       ).filter((feed) => feed.value !== "all"),
     ];
-  }, [config]);
+  }, [allFeeds]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
