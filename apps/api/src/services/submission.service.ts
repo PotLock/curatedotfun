@@ -149,250 +149,333 @@ export class SubmissionService implements IBackgroundTaskService {
     }
   }
 
-  private async handleSubmission(tweet: Tweet): Promise<void> {
+  private async validateAndPrepareSubmissionData(tweet: Tweet): Promise<{
+    curatorTweet: Tweet;
+    originalTweet: Tweet;
+    curatorUserId: string;
+    feedIds: string[];
+  } | null> {
     const curatorUserId = tweet.userId;
-    if (!curatorUserId || !tweet.id) return;
+    if (!curatorUserId || !tweet.id) {
+      this.logger.error(
+        { tweetId: tweet.id, userId: curatorUserId },
+        "Curator user ID or tweet ID is invalid.",
+      );
+      return null;
+    }
 
     const inReplyToId = tweet.inReplyToStatusId;
     if (!inReplyToId) {
       this.logger.error(
         { tweetId: tweet.id },
-        "Submission is not a reply to another tweet",
+        "Submission is not a reply to another tweet.",
       );
-      return;
+      return null;
     }
 
-    try {
-      const curatorTweet = await this.twitterService.getTweet(tweet.id!);
-      if (!curatorTweet || !curatorTweet.username) {
-        this.logger.error(
-          { tweetId: tweet.id },
-          "Could not fetch curator tweet details",
-        );
-        return;
-      }
-
-      if (
-        curatorTweet.username.toLowerCase() ===
-          this.config.global.botId.toLowerCase() ||
-        (this.config.global.blacklist?.["twitter"] || []).some(
-          (blacklisted: string) =>
-            blacklisted.toLowerCase() === curatorTweet.username?.toLowerCase(),
-        )
-      ) {
-        this.logger.error(
-          { tweetId: tweet.id, username: curatorTweet.username },
-          "Submitted by bot or blacklisted user",
-        );
-        return;
-      }
-
-      const feedIdsFromHashtags = (tweet.hashtags || []).map((h) =>
-        h.toLowerCase(),
+    const curatorTweet = await this.twitterService.getTweet(tweet.id!);
+    if (!curatorTweet || !curatorTweet.username) {
+      this.logger.error(
+        { tweetId: tweet.id },
+        "Could not fetch curator tweet details.",
       );
-      if (
-        feedIdsFromHashtags.length === 0 &&
-        !tweet.text?.toLowerCase().includes("#all")
-      ) {
-        feedIdsFromHashtags.push("all");
-      } else if (
-        tweet.text?.toLowerCase().includes("#all") &&
-        !feedIdsFromHashtags.includes("all")
-      ) {
-        feedIdsFromHashtags.push("all");
+      return null;
+    }
+
+    if (
+      curatorTweet.username.toLowerCase() ===
+        this.config.global.botId.toLowerCase() ||
+      (this.config.global.blacklist?.["twitter"] || []).some(
+        (blacklisted: string) =>
+          blacklisted.toLowerCase() === curatorTweet.username?.toLowerCase(),
+      )
+    ) {
+      this.logger.error(
+        { tweetId: tweet.id, username: curatorTweet.username },
+        "Submitted by bot or blacklisted user.",
+      );
+      return null;
+    }
+
+    const feedIdsFromHashtags = (tweet.hashtags || []).map((h) =>
+      h.toLowerCase(),
+    );
+    if (
+      feedIdsFromHashtags.length === 0 &&
+      !tweet.text?.toLowerCase().includes("#all")
+    ) {
+      feedIdsFromHashtags.push("all");
+    } else if (
+      tweet.text?.toLowerCase().includes("#all") &&
+      !feedIdsFromHashtags.includes("all")
+    ) {
+      feedIdsFromHashtags.push("all");
+    }
+
+    const originalTweet = await this.twitterService.getTweet(inReplyToId);
+    if (
+      !originalTweet ||
+      !originalTweet.id ||
+      !originalTweet.userId ||
+      !originalTweet.username
+    ) {
+      this.logger.error(
+        { tweetId: tweet.id, originalTweetId: inReplyToId },
+        "Could not fetch complete original tweet details.",
+      );
+      return null;
+    }
+
+    return {
+      curatorTweet,
+      originalTweet,
+      curatorUserId,
+      feedIds: [...new Set(feedIdsFromHashtags)], // Ensure unique feed IDs
+    };
+  }
+
+  private async createNewSubmission(
+    originalTweet: Tweet,
+    curatorTweet: Tweet,
+    curatorUserId: string,
+  ): Promise<RichSubmission | null> {
+    const dailyCount =
+      await this.submissionRepository.getDailySubmissionCount(curatorUserId);
+    const maxSubmissions = this.config.global.maxDailySubmissionsPerUser;
+    if (dailyCount >= maxSubmissions) {
+      this.logger.error(
+        { tweetId: curatorTweet.id, userId: curatorUserId },
+        "User has reached daily submission limit.",
+      );
+      return null;
+    }
+
+    const curatorNotes = this.extractDescription(
+      originalTweet.username!,
+      curatorTweet,
+    );
+
+    const newSubmissionData: InsertSubmission = {
+      userId: originalTweet.userId!,
+      tweetId: originalTweet.id!,
+      content: originalTweet.text || "",
+      username: originalTweet.username!,
+      createdAt: originalTweet.timeParsed || new Date(),
+      curatorId: curatorUserId,
+      curatorUsername: curatorTweet.username!,
+      curatorNotes,
+      curatorTweetId: curatorTweet.id!,
+      submittedAt: new Date(),
+    };
+
+    try {
+      await this.db.transaction(async (tx) => {
+        await this.submissionRepository.saveSubmission(newSubmissionData, tx);
+        await this.submissionRepository.incrementDailySubmissionCount(
+          curatorUserId,
+          tx,
+        );
+      });
+
+      const createdSubmission = await this.submissionRepository.getSubmission(
+        originalTweet.id!,
+      );
+      if (!createdSubmission) {
+        this.logger.error(
+          {
+            tweetId: curatorTweet.id,
+            originalTweetId: originalTweet.id!,
+          },
+          "Failed to retrieve submission after creation.",
+        );
+        return null;
+      }
+      return createdSubmission;
+    } catch (submissionError) {
+      this.logger.error(
+        {
+          error: submissionError,
+          tweetId: curatorTweet.id,
+          originalTweetId: originalTweet.id!,
+        },
+        "Error saving new submission or incrementing count.",
+      );
+      return null;
+    }
+  }
+
+  private async handleAutoApprovalForFeed(
+    activeSubmission: RichSubmission,
+    submissionFeedEntryDb: SelectSubmissionFeed,
+    curatorTweet: Tweet,
+    originalTweetUsername: string,
+    isModerator: boolean,
+  ): Promise<void> {
+    if (
+      isModerator &&
+      submissionFeedEntryDb.status === submissionStatusZodEnum.Enum.pending
+    ) {
+      await this.moderationService.processApprovalDecision(
+        activeSubmission,
+        submissionFeedEntryDb,
+        curatorTweet.username!,
+        curatorTweet.id!,
+        this.extractDescription(originalTweetUsername, curatorTweet) || null,
+        curatorTweet.timeParsed || new Date(),
+      );
+    } else if (
+      isModerator &&
+      submissionFeedEntryDb.status !== submissionStatusZodEnum.Enum.pending
+    ) {
+      this.logger.info(
+        {
+          tweetId: curatorTweet.id,
+          submissionId: activeSubmission.tweetId,
+          feedId: submissionFeedEntryDb.feedId,
+          status: submissionFeedEntryDb.status,
+        },
+        "Auto-approval skipped: submission feed entry is not pending.",
+      );
+    }
+  }
+
+  private async processFeedSubmissions(
+    activeSubmissionRef: { current: RichSubmission }, // Use a ref object to allow modification
+    feedIds: string[],
+    curatorTweet: Tweet,
+    originalTweet: Tweet,
+  ): Promise<void> {
+    for (const feedId of feedIds) {
+      const lowercaseFeedId = feedId.toLowerCase();
+      const feedFromService: SelectFeed | null =
+        await this.feedService.getFeedById(lowercaseFeedId);
+
+      if (!feedFromService || !feedFromService.config) {
+        this.logger.warn(
+          { tweetId: curatorTweet.id, feedIdAttempt: lowercaseFeedId },
+          "Feed or feed config not found while processing feed submissions.",
+        );
+        continue;
+      }
+      const feedConfig = feedFromService.config;
+
+      if (!feedConfig.moderation?.approvers?.twitter) {
+        this.logger.warn(
+          { tweetId: curatorTweet.id, feedId: feedConfig.id },
+          "Moderation approvers not configured for feed.",
+        );
+        continue;
       }
 
-      const originalTweet = await this.twitterService.getTweet(inReplyToId);
-      if (
-        !originalTweet ||
-        !originalTweet.id ||
-        !originalTweet.userId ||
-        !originalTweet.username
-      ) {
-        this.logger.error(
-          { tweetId: tweet.id, originalTweetId: inReplyToId },
-          "Could not fetch complete original tweet details",
+      const isModerator = feedConfig.moderation.approvers.twitter.some(
+        (approver: string) =>
+          approver.toLowerCase() === curatorTweet.username!.toLowerCase(),
+      );
+
+      let submissionFeedEntryDb: SelectSubmissionFeed | undefined =
+        activeSubmissionRef.current.feeds.find(
+          (sf) => sf.feedId.toLowerCase() === lowercaseFeedId,
         );
-        return;
+
+      try {
+        await this.db.transaction(async (tx) => {
+          if (!submissionFeedEntryDb) {
+            const newSfEntryData: InsertSubmissionFeed = {
+              submissionId: activeSubmissionRef.current.tweetId,
+              feedId: feedConfig.id,
+              status: submissionStatusZodEnum.Enum.pending,
+            };
+
+            const createdSubmissionFeed =
+              await this.feedRepository.saveSubmissionToFeed(
+                newSfEntryData,
+                tx,
+              );
+            submissionFeedEntryDb = createdSubmissionFeed;
+
+            // Re-fetch activeSubmission to update its 'feeds' array
+            const updatedSubmission =
+              await this.submissionRepository.getSubmission(
+                activeSubmissionRef.current.tweetId,
+              );
+            if (updatedSubmission) {
+              activeSubmissionRef.current = updatedSubmission; // Update the ref
+            } else {
+              this.logger.error(
+                { tweetId: activeSubmissionRef.current.tweetId },
+                "Failed to re-fetch active submission after saving to feed. Auto-approval will use stale data.",
+              );
+              // Continue with the potentially stale activeSubmissionRef.current but with the new submissionFeedEntryDb
+            }
+          }
+
+          if (submissionFeedEntryDb) {
+            // Ensure submissionFeedEntryDb is defined
+            await this.handleAutoApprovalForFeed(
+              activeSubmissionRef.current,
+              submissionFeedEntryDb,
+              curatorTweet,
+              originalTweet.username!,
+              isModerator,
+            );
+          } else {
+            this.logger.warn(
+              {
+                tweetId: curatorTweet.id,
+                submissionId: activeSubmissionRef.current.tweetId,
+                feedId: lowercaseFeedId,
+              },
+              "Could not find or create submission feed entry for auto-approval.",
+            );
+          }
+        });
+      } catch (feedProcessingError) {
+        this.logger.error(
+          {
+            error: feedProcessingError,
+            tweetId: curatorTweet.id,
+            feedId: lowercaseFeedId,
+          },
+          "Error processing feed for submission.",
+        );
+        // Continue to next feed if one fails
       }
+    }
+  }
+
+  private async handleSubmission(tweet: Tweet): Promise<void> {
+    try {
+      const prepData = await this.validateAndPrepareSubmissionData(tweet);
+      if (!prepData) return;
+      const { curatorTweet, originalTweet, curatorUserId, feedIds } = prepData;
 
       let activeSubmission: RichSubmission | null =
-        await this.submissionRepository.getSubmission(originalTweet.id);
+        await this.submissionRepository.getSubmission(originalTweet.id!);
 
       if (!activeSubmission) {
-        const dailyCount =
-          await this.submissionRepository.getDailySubmissionCount(
-            curatorUserId,
-          );
-        const maxSubmissions = this.config.global.maxDailySubmissionsPerUser;
-        if (dailyCount >= maxSubmissions) {
-          this.logger.error(
-            { tweetId: tweet.id, userId: curatorUserId },
-            "User has reached daily submission limit.",
-          );
-          return;
-        }
-
-        const curatorNotes = this.extractDescription(
-          originalTweet.username,
-          tweet,
+        activeSubmission = await this.createNewSubmission(
+          originalTweet,
+          curatorTweet,
+          curatorUserId,
         );
-
-        const newSubmissionData: InsertSubmission = {
-          userId: originalTweet.userId,
-          tweetId: originalTweet.id,
-          content: originalTweet.text || "",
-          username: originalTweet.username,
-          createdAt: originalTweet.timeParsed || new Date(),
-          curatorId: curatorUserId,
-          curatorUsername: curatorTweet.username!,
-          curatorNotes,
-          curatorTweetId: tweet.id!,
-          submittedAt: new Date(),
-        };
-
-        try {
-          await this.db.transaction(async (tx) => {
-            await this.submissionRepository.saveSubmission(
-              newSubmissionData,
-              tx,
-            );
-            await this.submissionRepository.incrementDailySubmissionCount(
-              curatorUserId,
-              tx,
-            );
-          });
-          // Re-fetch the submission to get the full RichSubmission object with IDs and empty relations
-          activeSubmission = await this.submissionRepository.getSubmission(
-            originalTweet.id,
-          );
-          if (!activeSubmission) {
-            this.logger.error(
-              { tweetId: tweet.id, originalTweetId: originalTweet.id },
-              "Failed to retrieve submission after creation.",
-            );
-            return;
-          }
-        } catch (submissionError) {
-          this.logger.error(
-            {
-              error: submissionError,
-              tweetId: tweet.id,
-              originalTweetId: originalTweet.id,
-            },
-            "Error saving new submission or incrementing count.",
-          );
-          return;
+        if (!activeSubmission) {
+          return; // Errors logged in createNewSubmission
         }
       }
 
-      for (const feedId of [...new Set(feedIdsFromHashtags)]) {
-        const lowercaseFeedId = feedId.toLowerCase();
-        const feedFromService: SelectFeed | null =
-          await this.feedService.getFeedById(lowercaseFeedId);
+      // Use a ref object for activeSubmission so processFeedSubmissions can update it
+      const activeSubmissionRef = { current: activeSubmission };
+      await this.processFeedSubmissions(
+        activeSubmissionRef,
+        feedIds,
+        curatorTweet,
+        originalTweet,
+      );
+      // activeSubmission is updated via activeSubmissionRef.current if re-fetched
 
-        if (!feedFromService || !feedFromService.config) {
-          this.logger.warn(
-            { tweetId: tweet.id, feedIdAttempt: lowercaseFeedId },
-            "Feed or feed config not found",
-          );
-          continue;
-        }
-        const feedConfig = feedFromService.config;
-
-        if (!feedConfig.moderation?.approvers?.twitter) {
-          this.logger.warn(
-            { tweetId: tweet.id, feedId: feedConfig.id },
-            "Moderation approvers not configured for feed",
-          );
-          continue;
-        }
-
-        const isModerator = feedConfig.moderation.approvers.twitter.some(
-          (approver: string) =>
-            approver.toLowerCase() === curatorTweet.username!.toLowerCase(),
-        );
-
-        let submissionFeedEntryDb: SelectSubmissionFeed | undefined =
-          activeSubmission.feeds.find(
-            (sf) => sf.feedId.toLowerCase() === lowercaseFeedId,
-          );
-
-        try {
-          await this.db.transaction(async (tx) => {
-            if (!submissionFeedEntryDb) {
-              const newSfEntryData: InsertSubmissionFeed = {
-                submissionId: activeSubmission!.tweetId,
-                feedId: feedConfig.id,
-                status: submissionStatusZodEnum.Enum.pending,
-              };
-
-              const createdSubmissionFeed =
-                await this.feedRepository.saveSubmissionToFeed(
-                  newSfEntryData,
-                  tx,
-                );
-              submissionFeedEntryDb = createdSubmissionFeed;
-
-              // Re-fetch activeSubmission to ensure its 'feeds' array and other properties are fresh
-              // for the auto-approval call or any other subsequent operations.
-              const updatedSubmission =
-                await this.submissionRepository.getSubmission(
-                  activeSubmission!.tweetId,
-                );
-              if (updatedSubmission) {
-                activeSubmission = updatedSubmission;
-              } else {
-                this.logger.error(
-                  { tweetId: activeSubmission!.tweetId },
-                  "Failed to re-fetch active submission after saving to feed. Auto-approval will use the version of activeSubmission from before this feed entry was saved, but with the correct new submissionFeedEntryDb.",
-                );
-              }
-            }
-
-            if (
-              isModerator &&
-              submissionFeedEntryDb &&
-              submissionFeedEntryDb.status ===
-                submissionStatusZodEnum.Enum.pending
-            ) {
-              if (activeSubmission && submissionFeedEntryDb) {
-                await this.moderationService.processApprovalDecision(
-                  activeSubmission,
-                  submissionFeedEntryDb,
-                  curatorTweet.username!,
-                  tweet.id!,
-                  this.extractDescription(originalTweet.username!, tweet) ||
-                    null,
-                  curatorTweet.timeParsed || new Date(),
-                );
-              } else {
-                this.logger.warn(
-                  {
-                    tweetId: tweet.id,
-                    submissionId: activeSubmission?.tweetId,
-                    feedId: lowercaseFeedId,
-                  },
-                  "Could not find submission or pending feed entry for auto-approval after potential creation/update.",
-                );
-              }
-            }
-          });
-        } catch (feedProcessingError) {
-          this.logger.error(
-            {
-              error: feedProcessingError,
-              tweetId: tweet.id,
-              feedId: lowercaseFeedId,
-            },
-            "Error processing feed for submission",
-          );
-          // Continue to next feed if one fails
-        }
-      }
       await this.handleAcknowledgement(tweet);
       this.logger.info(
-        { tweetId: tweet.id, originalTweetId: originalTweet.id },
+        { tweetId: tweet.id, originalTweetId: originalTweet.id! },
         "Successfully processed submission",
       );
     } catch (error) {
@@ -407,150 +490,228 @@ export class SubmissionService implements IBackgroundTaskService {
     await this.twitterService.likeTweet(tweet.id!);
   }
 
-  private async handleModeration(tweet: Tweet): Promise<void> {
-    const adminPlatformUserId = tweet.userId;
-    if (!adminPlatformUserId || !tweet.id) {
+  private async validateModerationTweet(
+    tweet: Tweet,
+  ): Promise<{ adminPlatformUserId: string; curatorTweetId: string } | null> {
+    if (!tweet.userId || !tweet.id) {
       this.logger.error(
-        { tweetId: tweet.id, userId: adminPlatformUserId },
+        { tweetId: tweet.id, userId: tweet.userId },
         "Moderator user ID or tweet ID is invalid.",
       );
-      return;
+      return null;
     }
-    try {
-      if (!this.isAdmin(adminPlatformUserId)) {
-        this.logger.error(
-          { tweetId: tweet.id, userId: adminPlatformUserId },
-          "User is not an admin.",
-        );
-        return;
-      }
-
-      const curatorTweetId = tweet.inReplyToStatusId;
-      if (!curatorTweetId) {
-        this.logger.error(
-          { tweetId: tweet.id },
-          "Moderation tweet is not a reply.",
-        );
-        return;
-      }
-
-      const submissionDb =
-        await this.submissionRepository.getSubmissionByCuratorTweetId(
-          curatorTweetId,
-        );
-      if (!submissionDb) {
-        this.logger.error(
-          { tweetId: tweet.id, curatorTweetId },
-          "Received moderation for an unsaved or unknown submission.",
-        );
-        return;
-      }
-      if (!submissionDb) {
-        this.logger.error(
-          { tweetId: tweet.id, curatorTweetId },
-          "Submission not found for moderation via curator tweet ID.",
-        );
-        return;
-      }
-
-      const action = this.getModerationAction(tweet);
-      if (!action) {
-        this.logger.warn(
-          { tweetId: tweet.id },
-          "No valid moderation action determined from tweet text.",
-        );
-        return;
-      }
-
-      const adminUsername = this.adminIdCache.get(adminPlatformUserId);
-      if (!adminUsername) {
-        this.logger.error(
-          { tweetId: tweet.id, userId: adminPlatformUserId },
-          "Could not find username for admin ID.",
-        );
-        return;
-      }
-
-      const noteForModeration =
-        this.extractNote(submissionDb.username, tweet) || null;
-
-      const feedsToModerate: SelectSubmissionFeed[] = [];
-      for (const sf of submissionDb.feeds) {
-        if (sf.status === submissionStatusZodEnum.Enum.pending) {
-          const feedFromService = await this.feedService.getFeedById(sf.feedId);
-          if (
-            feedFromService?.config?.moderation?.approvers?.twitter?.some(
-              (approver: string) =>
-                approver.toLowerCase() === adminUsername.toLowerCase(),
-            )
-          ) {
-            feedsToModerate.push(sf);
-          }
-        }
-      }
-
-      if (feedsToModerate.length === 0) {
-        this.logger.info(
-          { tweetId: tweet.id, submissionId: submissionDb.tweetId },
-          "No pending feeds found for this submission that this admin can moderate.",
-        );
-        return;
-      }
-
-      for (const feedEntry of feedsToModerate) {
-        if (feedEntry.moderationResponseTweetId === tweet.id!) {
-          this.logger.info(
-            {
-              tweetId: tweet.id,
-              submissionId: submissionDb.tweetId,
-              feedId: feedEntry.feedId,
-            },
-            "This feed entry was already moderated by this exact tweet.",
-          );
-          continue;
-        }
-        if (feedEntry.status !== submissionStatusZodEnum.Enum.pending) {
-          this.logger.info(
-            {
-              tweetId: tweet.id,
-              submissionId: submissionDb.tweetId,
-              feedId: feedEntry.feedId,
-              currentStatus: feedEntry.status,
-            },
-            "This feed entry is no longer pending.",
-          );
-          continue;
-        }
-
-        if (action === "approve") {
-          await this.moderationService.processApprovalDecision(
-            submissionDb,
-            feedEntry,
-            adminUsername,
-            tweet.id!,
-            noteForModeration,
-            tweet.timeParsed || new Date(),
-          );
-        } else {
-          // action === "reject"
-          await this.moderationService.processRejectionDecision(
-            submissionDb,
-            feedEntry,
-            adminUsername,
-            tweet.id!,
-            noteForModeration,
-            tweet.timeParsed || new Date(),
-          );
-        }
-      }
-
-      await this.handleAcknowledgement(tweet);
-      this.logger.info(
-        { tweetId: tweet.id, submissionId: submissionDb.tweetId, action },
-        "Successfully processed moderation.",
+    const curatorTweetId = tweet.inReplyToStatusId;
+    if (!curatorTweetId) {
+      this.logger.error(
+        { tweetId: tweet.id },
+        "Moderation tweet is not a reply.",
       );
+      return null;
+    }
+    return { adminPlatformUserId: tweet.userId, curatorTweetId };
+  }
+
+  private async checkAdminPrivileges(
+    adminPlatformUserId: string,
+    tweetId: string,
+  ): Promise<string | null> {
+    if (!this.isAdmin(adminPlatformUserId)) {
+      this.logger.error(
+        { tweetId, userId: adminPlatformUserId },
+        "User is not an admin.",
+      );
+      return null;
+    }
+    const adminUsername = this.adminIdCache.get(adminPlatformUserId);
+    if (!adminUsername) {
+      this.logger.error(
+        { tweetId, userId: adminPlatformUserId },
+        "Could not find username for admin ID.",
+      );
+      return null;
+    }
+    return adminUsername;
+  }
+
+  private async getModerationSubject(
+    curatorTweetId: string,
+    tweetId: string,
+  ): Promise<RichSubmission | null> {
+    const submissionDb =
+      await this.submissionRepository.getSubmissionByCuratorTweetId(
+        curatorTweetId,
+      );
+    if (!submissionDb) {
+      this.logger.error(
+        { tweetId, curatorTweetId },
+        "Submission not found for moderation via curator tweet ID.",
+      );
+      return null;
+    }
+    return submissionDb;
+  }
+
+  private determineModerationActionAndNote(
+    tweet: Tweet,
+    submissionUsername: string,
+  ): { action: "approve" | "reject" | null; note: string | null } {
+    const action = this.getModerationAction(tweet);
+    if (!action) {
+      this.logger.warn(
+        { tweetId: tweet.id },
+        "No valid moderation action determined from tweet text.",
+      );
+    }
+    const note = this.extractNote(submissionUsername, tweet) || null;
+    return { action, note };
+  }
+
+  private async filterFeedsForModeration(
+    submissionDb: RichSubmission,
+    adminUsername: string,
+    tweetId: string,
+  ): Promise<SelectSubmissionFeed[]> {
+    const feedsToModerate: SelectSubmissionFeed[] = [];
+    for (const sf of submissionDb.feeds) {
+      if (sf.status === submissionStatusZodEnum.Enum.pending) {
+        const feedFromService = await this.feedService.getFeedById(sf.feedId);
+        if (
+          feedFromService?.config?.moderation?.approvers?.twitter?.some(
+            (approver: string) =>
+              approver.toLowerCase() === adminUsername.toLowerCase(),
+          )
+        ) {
+          feedsToModerate.push(sf);
+        }
+      }
+    }
+    if (feedsToModerate.length === 0) {
+      this.logger.info(
+        { tweetId, submissionId: submissionDb.tweetId },
+        "No pending feeds found for this submission that this admin can moderate.",
+      );
+    }
+    return feedsToModerate;
+  }
+
+  private async processModerationActionForFeed(
+    feedEntry: SelectSubmissionFeed,
+    submissionDb: RichSubmission,
+    action: "approve" | "reject",
+    adminUsername: string,
+    moderationTweetId: string,
+    note: string | null,
+    moderationTime: Date,
+  ): Promise<boolean> {
+    if (feedEntry.moderationResponseTweetId === moderationTweetId) {
+      this.logger.info(
+        {
+          tweetId: moderationTweetId,
+          submissionId: submissionDb.tweetId,
+          feedId: feedEntry.feedId,
+        },
+        "This feed entry was already moderated by this exact tweet.",
+      );
+      return false;
+    }
+    if (feedEntry.status !== submissionStatusZodEnum.Enum.pending) {
+      this.logger.info(
+        {
+          tweetId: moderationTweetId,
+          submissionId: submissionDb.tweetId,
+          feedId: feedEntry.feedId,
+          currentStatus: feedEntry.status,
+        },
+        "This feed entry is no longer pending.",
+      );
+      return false;
+    }
+
+    if (action === "approve") {
+      await this.moderationService.processApprovalDecision(
+        submissionDb,
+        feedEntry,
+        adminUsername,
+        moderationTweetId,
+        note,
+        moderationTime,
+      );
+    } else {
+      // action === "reject"
+      await this.moderationService.processRejectionDecision(
+        submissionDb,
+        feedEntry,
+        adminUsername,
+        moderationTweetId,
+        note,
+        moderationTime,
+      );
+    }
+    return true;
+  }
+
+  private async handleModeration(tweet: Tweet): Promise<void> {
+    try {
+      const validationResult = await this.validateModerationTweet(tweet);
+      if (!validationResult) return;
+      const { adminPlatformUserId, curatorTweetId } = validationResult;
+
+      const adminUsername = await this.checkAdminPrivileges(
+        adminPlatformUserId,
+        tweet.id!,
+      );
+      if (!adminUsername) return;
+
+      const submissionDb = await this.getModerationSubject(
+        curatorTweetId,
+        tweet.id!,
+      );
+      if (!submissionDb) return;
+
+      const { action, note: noteForModeration } =
+        this.determineModerationActionAndNote(tweet, submissionDb.username);
+      if (!action) return;
+
+      const feedsToModerate = await this.filterFeedsForModeration(
+        submissionDb,
+        adminUsername,
+        tweet.id!,
+      );
+      // No early return if feedsToModerate is empty, to allow logging below if no action was taken.
+
+      let actionTakenOnAnyFeed = false;
+      for (const feedEntry of feedsToModerate) {
+        const actionPerformed = await this.processModerationActionForFeed(
+          feedEntry,
+          submissionDb,
+          action,
+          adminUsername,
+          tweet.id!,
+          noteForModeration,
+          tweet.timeParsed || new Date(),
+        );
+        if (actionPerformed) {
+          actionTakenOnAnyFeed = true;
+        }
+      }
+
+      if (actionTakenOnAnyFeed) {
+        await this.handleAcknowledgement(tweet);
+        this.logger.info(
+          { tweetId: tweet.id, submissionId: submissionDb.tweetId, action },
+          "Successfully processed moderation.",
+        );
+      } else {
+        this.logger.info(
+          {
+            tweetId: tweet.id,
+            submissionId: submissionDb.tweetId,
+            action,
+          },
+          "Moderation command received, but no feeds were actionable (e.g., already moderated, not pending, or no eligible feeds).",
+        );
+      }
     } catch (error) {
-      // Closing the try-catch for handleModeration
       this.logger.error(
         { error, tweetId: tweet.id },
         "Error while handling moderation",

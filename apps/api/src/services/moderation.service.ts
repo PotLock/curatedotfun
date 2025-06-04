@@ -94,7 +94,7 @@ export class ModerationService implements IBaseService {
     submission: RichSubmission,
     feed: SelectSubmissionFeed,
     moderationTweetId: string,
-    tx: any,
+    tx: DB,
   ): Promise<void> {
     const feedFromDb = await this.feedService.getFeedById(feed.feedId);
     if (!feedFromDb || !feedFromDb.config) {
@@ -149,7 +149,7 @@ export class ModerationService implements IBaseService {
     submission: RichSubmission,
     feed: SelectSubmissionFeed,
     moderationTweetId: string,
-    tx: any,
+    tx: DB,
   ): Promise<void> {
     try {
       await this.feedRepository.updateSubmissionFeedStatus(
