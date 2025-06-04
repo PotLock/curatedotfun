@@ -1,12 +1,11 @@
+import type {
+  FeedConfig,
+  Submission,
+  SubmissionStatus,
+} from "@curatedotfun/types";
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
-import type { FeedConfig } from "@curatedotfun/types";
-import type { AppConfig } from "@/types/config";
-import type {
-  SubmissionStatus,
-  SubmissionWithFeedData,
-} from "../types/twitter";
 import { usernameSchema, UserProfile } from "./validation/user";
 
 export type SortOrderType = "newest" | "oldest";
@@ -29,6 +28,19 @@ export function useFeed(feedId: string) {
       const response = await fetch(`/api/feeds/${feedId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch feed details");
+      }
+      return response.json();
+    },
+  });
+}
+
+export function useAllFeeds() {
+  return useQuery<FeedDetails[]>({
+    queryKey: ["feeds"],
+    queryFn: async () => {
+      const response = await fetch("/api/feeds");
+      if (!response.ok) {
+        throw new Error("Failed to fetch feeds");
       }
       return response.json();
     },
@@ -164,9 +176,9 @@ export const submissionSearchSchema = z.object({
 export function useFeedItems(feedId: string, filters: SubmissionFilters = {}) {
   const { limit = 20, status, sortOrder, q } = filters;
   return useInfiniteQuery<
-    PaginatedResponse<SubmissionWithFeedData>,
+    PaginatedResponse<Submission>,
     Error,
-    TransformedInfiniteData<SubmissionWithFeedData>,
+    TransformedInfiniteData<Submission>,
     [
       string,
       string,
@@ -208,19 +220,6 @@ export function useFeedItems(feedId: string, filters: SubmissionFilters = {}) {
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     enabled: feedId !== undefined,
-  });
-}
-
-export function useAppConfig() {
-  return useQuery<AppConfig>({
-    queryKey: ["app-config"],
-    queryFn: async () => {
-      const response = await fetch(`/api/config`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch app config");
-      }
-      return response.json();
-    },
   });
 }
 
@@ -396,9 +395,9 @@ export function useAllSubmissions(filters: SubmissionFilters = {}) {
   const { limit = 20, status, sortOrder, q } = filters;
   // Use infinite query for direct pagination from the backend
   return useInfiniteQuery<
-    PaginatedResponse<SubmissionWithFeedData>,
+    PaginatedResponse<Submission>,
     Error,
-    TransformedInfiniteData<SubmissionWithFeedData>,
+    TransformedInfiniteData<Submission>,
     [
       string,
       StatusFilterType | undefined,

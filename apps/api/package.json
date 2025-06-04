@@ -22,7 +22,6 @@
     ]
   },
   "devDependencies": {
-    "@curatedotfun/types": "workspace:*",
     "@module-federation/node": "^2.6.30",
     "@rspack/binding": "1.2.8",
     "@rspack/cli": "1.2.8",
@@ -37,6 +36,7 @@
   },
   "dependencies": {
     "@crosspost/scheduler-sdk": "^0.1.1",
+    "@curatedotfun/types": "workspace:*",
     "@curatedotfun/shared-db": "workspace:*",
     "@curatedotfun/utils": "workspace:*",
     "@hono/node-server": "^1.8.2",

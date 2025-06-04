@@ -1,4 +1,8 @@
-import { FeedRepository, SubmissionRepository, TwitterRepository } from "@curatedotfun/shared-db";
+import {
+  FeedRepository,
+  SubmissionRepository,
+  TwitterRepository,
+} from "@curatedotfun/shared-db";
 import { SubmissionService } from "services/submission.service";
 import { MockTwitterService } from "../__test__/mocks/twitter-service.mock";
 import { db } from "../db";
@@ -7,6 +11,7 @@ import { ConfigService, isProduction } from "../services/config.service";
 import { DistributionService } from "../services/distribution.service";
 import { FeedService } from "../services/feed.service";
 import { IBackgroundTaskService } from "../services/interfaces/background-task.interface";
+import { ModerationService } from "../services/moderation.service";
 import { PluginService } from "../services/plugin.service";
 import { ProcessorService } from "../services/processor.service";
 import { TransformationService } from "../services/transformation.service";
@@ -28,12 +33,15 @@ export class ServiceProvider {
 
     let twitterService: TwitterService | null = null;
     if (isProduction) {
-      twitterService = new TwitterService({
-        username: process.env.TWITTER_USERNAME!,
-        password: process.env.TWITTER_PASSWORD!,
-        email: process.env.TWITTER_EMAIL!,
-        twoFactorSecret: process.env.TWITTER_2FA_SECRET,
-      }, twitterRespository);
+      twitterService = new TwitterService(
+        {
+          username: process.env.TWITTER_USERNAME!,
+          password: process.env.TWITTER_PASSWORD!,
+          email: process.env.TWITTER_EMAIL!,
+          twoFactorSecret: process.env.TWITTER_2FA_SECRET,
+        },
+        twitterRespository,
+      );
     } else {
       // Use mock service in test and development
       // You can trigger the mock via the frontend's Test Panel
@@ -59,7 +67,6 @@ export class ServiceProvider {
       logger,
     );
 
-
     this.services.set("configService", configService);
     this.services.set("pluginService", pluginService);
     this.services.set("transformationService", transformationService);
@@ -72,13 +79,13 @@ export class ServiceProvider {
     // if (sourceService) {
     //   this.backgroundTaskServices.push(sourceService);
     // }
-
   }
 
   async init() {
     const twitterService = this.services.get("twitterService");
     const processorService = this.services.get("processorService");
     const configService: ConfigService = this.services.get("configService");
+    const feedService = this.services.get("feedService");
 
     await configService.loadConfig();
 
@@ -88,17 +95,28 @@ export class ServiceProvider {
     const twitterRespository = new TwitterRepository(db);
     const submissionRepository = new SubmissionRepository(db);
 
+    const moderationService = new ModerationService(
+      feedRepository,
+      submissionRepository,
+      processorService,
+      configService.getConfig(),
+      db,
+      logger,
+    );
+    this.services.set("moderationService", moderationService);
+
     const submissionService = twitterService
       ? new SubmissionService(
-        twitterService,
-        processorService,
-        configService.getConfig(),
-        feedRepository,
-        submissionRepository,
-        twitterRespository,
-        db,
-        logger
-      )
+          twitterService,
+          configService.getConfig(),
+          feedRepository,
+          submissionRepository,
+          twitterRespository,
+          db,
+          moderationService,
+          feedService,
+          logger,
+        )
       : null;
 
     if (submissionService) {

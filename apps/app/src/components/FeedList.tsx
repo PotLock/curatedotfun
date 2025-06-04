@@ -1,19 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import type { FeedConfig } from "../types/config";
+import { useAllFeeds } from "../lib/api";
 
 const FeedList = () => {
-  // TODO: useQuery
-  const { data: feeds = [] } = useQuery({
-    queryKey: ["feeds"],
-    queryFn: async () => {
-      const response = await fetch("/api/feeds");
-      if (!response.ok) {
-        throw new Error("Failed to fetch feeds");
-      }
-      return response.json();
-    },
-  });
+  const { data: feeds = [] } = useAllFeeds();
 
   return (
     <div className="flex flex-col gap-6">

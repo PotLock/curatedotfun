@@ -3,7 +3,6 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import { Env } from "../../types/app";
-import { SubmissionStatus } from "../../types/twitter";
 
 const submissionRoutes = new Hono<Env>();
 
@@ -17,13 +16,7 @@ submissionRoutes.get(
     z.object({
       page: z.coerce.number().int().min(0).default(0),
       limit: z.coerce.number().int().min(1).max(100).default(20),
-      status: z
-        .enum([
-          SubmissionStatus.PENDING,
-          SubmissionStatus.APPROVED,
-          SubmissionStatus.REJECTED,
-        ])
-        .optional(),
+      status: z.enum(["pending", "approved", "rejected"]).optional(),
       sortOrder: z.enum(["newest", "oldest"]).optional().default("newest"),
       q: z.string().optional(),
     }),
@@ -73,9 +66,10 @@ submissionRoutes.get(
       limit: z.coerce.number().int().min(1).max(100).default(20),
       status: z
         .enum([
-          SubmissionStatus.PENDING,
-          SubmissionStatus.APPROVED,
-          SubmissionStatus.REJECTED,
+          // TODO reference enum schema
+          "pending",
+          "approved",
+          "rejected",
         ])
         .optional(),
       sortOrder: z.enum(["newest", "oldest"]).optional().default("newest"),

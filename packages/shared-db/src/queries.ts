@@ -12,38 +12,7 @@ import {
   SelectModerationHistory,
   SelectSubmission,
   SelectSubmissionFeed,
-  SelectFeed,
 } from "./validators";
-
-export async function upsertFeeds(
-  db: DB,
-  feedsToUpsert: SelectFeed["config"][],
-): Promise<void> {
-  await db.transaction(async (tx) => {
-    for (const feedConfig of feedsToUpsert) {
-      await tx
-        .insert(feeds)
-        .values({
-          id: feedConfig.id,
-          config: feedConfig,
-          name: feedConfig.name,
-          description: feedConfig.description,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .onConflictDoUpdate({
-          target: feeds.id,
-          set: {
-            config: feedConfig,
-            name: feedConfig.name,
-            description: feedConfig.description,
-            updatedAt: new Date(),
-          },
-        })
-        .execute();
-    }
-  });
-}
 
 export async function saveSubmissionToFeed(
   db: DB,
@@ -162,60 +131,14 @@ export async function getSubmissionByCuratorTweetId(
   curatorTweetId: string,
 ): Promise<SelectSubmission | null> {
   const results = await db
-    .select({
-      s: {
-        tweetId: submissions.tweetId,
-        userId: submissions.userId,
-        username: submissions.username,
-        content: submissions.content,
-        curatorNotes: submissions.curatorNotes,
-        curatorId: submissions.curatorId,
-        curatorUsername: submissions.curatorUsername,
-        curatorTweetId: submissions.curatorTweetId,
-        createdAt: sql<string>`${submissions.createdAt}::text`,
-        submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
-        updatedAt: sql<string>`${submissions.updatedAt}::text`,
-      },
-      m: {
-        tweetId: moderationHistory.tweetId,
-        adminId: moderationHistory.adminId,
-        action: moderationHistory.action,
-        note: moderationHistory.note,
-        createdAt: moderationHistory.createdAt,
-        feedId: moderationHistory.feedId,
-        moderationResponseTweetId: submissionFeeds.moderationResponseTweetId,
-      },
-    })
+    .select()
     .from(submissions)
-    .leftJoin(
-      moderationHistory,
-      eq(submissions.tweetId, moderationHistory.tweetId),
-    )
-    .leftJoin(
-      submissionFeeds,
-      and(
-        eq(submissions.tweetId, submissionFeeds.submissionId),
-        eq(moderationHistory.feedId, submissionFeeds.feedId),
-      ),
-    )
     .where(eq(submissions.curatorTweetId, curatorTweetId))
-    .orderBy(moderationHistory.createdAt);
+    .limit(1);
 
   if (!results.length) return null;
 
-  return {
-    tweetId: results[0].s.tweetId,
-    userId: results[0].s.userId,
-    username: results[0].s.username,
-    content: results[0].s.content,
-    curatorNotes: results[0].s.curatorNotes,
-    curatorId: results[0].s.curatorId,
-    curatorUsername: results[0].s.curatorUsername,
-    curatorTweetId: results[0].s.curatorTweetId,
-    createdAt: new Date(results[0].s.createdAt),
-    submittedAt: new Date(results[0].s.submittedAt),
-    updatedAt: results[0].s.updatedAt ? new Date(results[0].s.updatedAt) : null,
-  };
+  return results[0] as SelectSubmission;
 }
 
 export async function getSubmission(
@@ -223,60 +146,15 @@ export async function getSubmission(
   tweetId: string,
 ): Promise<SelectSubmission | null> {
   const results = await db
-    .select({
-      s: {
-        tweetId: submissions.tweetId,
-        userId: submissions.userId,
-        username: submissions.username,
-        content: submissions.content,
-        curatorNotes: submissions.curatorNotes,
-        curatorId: submissions.curatorId,
-        curatorUsername: submissions.curatorUsername,
-        curatorTweetId: submissions.curatorTweetId,
-        createdAt: sql<string>`${submissions.createdAt}::text`,
-        submittedAt: sql<string>`COALESCE(${submissions.submittedAt}::text, ${submissions.createdAt}::text)`,
-        updatedAt: sql<string>`${submissions.updatedAt}::text`,
-      },
-      m: {
-        tweetId: moderationHistory.tweetId,
-        adminId: moderationHistory.adminId,
-        action: moderationHistory.action,
-        note: moderationHistory.note,
-        createdAt: moderationHistory.createdAt,
-        feedId: moderationHistory.feedId,
-        moderationResponseTweetId: submissionFeeds.moderationResponseTweetId,
-      },
-    })
+    .select()
     .from(submissions)
-    .leftJoin(
-      moderationHistory,
-      eq(submissions.tweetId, moderationHistory.tweetId),
-    )
-    .leftJoin(
-      submissionFeeds,
-      and(
-        eq(submissions.tweetId, submissionFeeds.submissionId),
-        eq(moderationHistory.feedId, submissionFeeds.feedId),
-      ),
-    )
     .where(eq(submissions.tweetId, tweetId))
-    .orderBy(moderationHistory.createdAt);
+    .limit(1);
 
   if (!results.length) return null;
 
-  return {
-    tweetId: results[0].s.tweetId,
-    userId: results[0].s.userId,
-    username: results[0].s.username,
-    content: results[0].s.content,
-    curatorNotes: results[0].s.curatorNotes,
-    curatorId: results[0].s.curatorId,
-    curatorUsername: results[0].s.curatorUsername,
-    curatorTweetId: results[0].s.curatorTweetId,
-    createdAt: new Date(results[0].s.createdAt),
-    submittedAt: new Date(results[0].s.submittedAt),
-    updatedAt: results[0].s.updatedAt ? new Date(results[0].s.updatedAt) : null,
-  };
+  // Drizzle returns date objects directly if not cast to text in SQL
+  return results[0] as SelectSubmission;
 }
 
 export async function getDailySubmissionCount(

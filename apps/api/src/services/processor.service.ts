@@ -1,4 +1,8 @@
-import { DistributorConfig, TransformConfig } from "@curatedotfun/shared-db";
+import {
+  DistributorConfig,
+  RichSubmission,
+  TransformConfig,
+} from "@curatedotfun/shared-db";
 import { ProcessorError, TransformError } from "@curatedotfun/utils";
 import { Logger } from "pino";
 import { logger } from "../utils/logger";
@@ -28,7 +32,7 @@ export class ProcessorService implements IBaseService {
    * Process content through transformation pipeline and distribute
    * Can be used for both individual submissions and bulk content (like recaps)
    */
-  async process(content: any, config: ProcessConfig) {
+  async process(content: RichSubmission, config: ProcessConfig) {
     try {
       // Apply global transforms if any
       let processed = content;
@@ -52,7 +56,7 @@ export class ProcessorService implements IBaseService {
         }
       }
 
-      // 2. For each distributor, apply its transforms and distribute
+      // For each distributor, apply its transforms and distribute
       if (!config.distribute?.length) {
         throw new ProcessorError("unknown", "No distributors configured");
       }
@@ -106,11 +110,7 @@ export class ProcessorService implements IBaseService {
 
       // If all distributors failed, throw an error
       if (errors.length === config.distribute.length) {
-        throw new ProcessorError(
-          "unknown",
-          "All distributors failed",
-          // new AggregateError(errors),
-        );
+        throw new ProcessorError("unknown", "All distributors failed");
       }
     } catch (error) {
       // Wrap any unknown errors
@@ -120,7 +120,6 @@ export class ProcessorService implements IBaseService {
       throw new ProcessorError(
         "unknown",
         error instanceof Error ? error.message : "Unknown error",
-        // error instanceof Error ? error : undefined,
       );
     }
   }
@@ -221,11 +220,7 @@ export class ProcessorService implements IBaseService {
 
       // If all distributors failed, throw an error
       if (errors.length === config.distribute.length) {
-        throw new ProcessorError(
-          "unknown",
-          "All distributors failed",
-          // new AggregateError(errors),
-        );
+        throw new ProcessorError("unknown", "All distributors failed");
       }
     } catch (error) {
       if (error instanceof ProcessorError || error instanceof TransformError) {
@@ -234,7 +229,6 @@ export class ProcessorService implements IBaseService {
       throw new ProcessorError(
         "unknown",
         error instanceof Error ? error.message : "Unknown error",
-        // error instanceof Error ? error : undefined,
       );
     }
   }
