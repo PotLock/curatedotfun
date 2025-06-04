@@ -138,7 +138,6 @@ export class FeedRepository {
     );
   }
 
-  // --- Existing methods for feed config and recap state ---
   /**
    * Get a feed's configuration by ID
    */
@@ -393,15 +392,28 @@ export class FeedRepository {
   async saveSubmissionToFeed(
     data: InsertSubmissionFeed,
     txDb: DB,
-  ): Promise<void> {
+  ): Promise<SelectSubmissionFeed> {
+    // Changed return type
     return withErrorHandling(
       async () => {
-        await queries.saveSubmissionToFeed(
-          txDb,
-          data.submissionId,
-          data.feedId,
-          data.status ?? submissionStatusZodEnum.Enum.pending,
-        );
+        // Directly insert and return the created record
+        const result = await txDb
+          .insert(submissionFeeds)
+          .values({
+            submissionId: data.submissionId,
+            feedId: data.feedId,
+            status: data.status ?? submissionStatusZodEnum.Enum.pending,
+            // moderationResponseTweetId is not part of InsertSubmissionFeed for new entries,
+            // so it will default to null in the DB if the column is nullable.
+            // Timestamps (createdAt, updatedAt) should be handled by Drizzle/DB defaults if configured in schema.
+          })
+          .returning();
+        if (result.length === 0) {
+          throw new Error(
+            "Failed to save submission to feed, no record returned.",
+          );
+        }
+        return result[0] as SelectSubmissionFeed;
       },
       {
         operationName: "saveSubmissionToFeed",

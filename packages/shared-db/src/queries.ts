@@ -11,7 +11,7 @@ import {
   DB,
   SelectModerationHistory,
   SelectSubmission,
-  SelectSubmissionFeed
+  SelectSubmissionFeed,
 } from "./validators";
 
 export async function saveSubmissionToFeed(

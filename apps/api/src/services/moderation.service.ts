@@ -1,18 +1,16 @@
 import {
   DB,
   FeedRepository,
+  InsertModerationHistory,
+  RichSubmission,
+  SelectSubmissionFeed,
   SubmissionRepository,
+  submissionStatusZodEnum,
 } from "@curatedotfun/shared-db";
 import { Logger } from "pino";
-import { AppConfig } from "../types/config";
-import {
-  Moderation,
-  Submission,
-  SubmissionFeed,
-  SubmissionStatusEnum as SubmissionStatus,
-} from "@curatedotfun/types";
-import { ProcessorService } from "./processor.service";
+import { FeedService } from "./feed.service";
 import { IBaseService } from "./interfaces/base-service.interface";
+import { ProcessorService } from "./processor.service";
 
 export class ModerationService implements IBaseService {
   public readonly logger: Logger;
@@ -21,7 +19,7 @@ export class ModerationService implements IBaseService {
     private readonly feedRepository: FeedRepository,
     private readonly submissionRepository: SubmissionRepository,
     private readonly processorService: ProcessorService,
-    private readonly config: AppConfig,
+    private readonly feedService: FeedService,
     private readonly db: DB,
     logger: Logger,
   ) {
@@ -29,117 +27,111 @@ export class ModerationService implements IBaseService {
   }
 
   public async processApprovalDecision(
-    submission: Submission,
-    feedEntry: SubmissionFeed,
-    adminUsername: string, 
-    moderationTriggerTweetId: string, 
+    submission: RichSubmission,
+    feedEntry: SelectSubmissionFeed,
+    adminUsername: string,
+    moderationTriggerTweetId: string, // The tweet ID of the !approve command
     note: string | null,
     timestamp: Date,
-  ): Promise<Moderation> {
-    const moderationAction: Moderation = {
+  ): Promise<void> {
+    const moderationActionData: InsertModerationHistory = {
       adminId: adminUsername,
       action: "approve",
-      timestamp,
-      tweetId: submission.tweetId,
+      createdAt: timestamp,
+      tweetId: submission.tweetId, // This is the submission's tweetId
       feedId: feedEntry.feedId,
       note,
+      // moderationTriggerTweetId is passed to approveSubmission for SubmissionFeed update,
+      // not directly stored in ModerationHistory via this object unless schema changes.
     };
 
-    await this.submissionRepository.saveModerationAction(
-      moderationAction,
-      this.db,
-    );
-
-    await this.approveSubmission(
-      submission,
-      feedEntry,
-      moderationTriggerTweetId,
-    );
-
-    return moderationAction;
+    return this.db.transaction(async (tx) => {
+      await this.submissionRepository.saveModerationAction(
+        moderationActionData,
+        tx,
+      );
+      await this.approveSubmission(
+        submission,
+        feedEntry,
+        moderationTriggerTweetId, // This is the tweet ID of the moderation action itself
+        tx,
+      );
+    });
   }
 
   public async processRejectionDecision(
-    submission: Submission,
-    feedEntry: SubmissionFeed,
+    submission: RichSubmission,
+    feedEntry: SelectSubmissionFeed,
     adminUsername: string,
-    moderationTriggerTweetId: string,
+    moderationTriggerTweetId: string, // The tweet ID of the !reject command
     note: string | null,
     timestamp: Date,
-  ): Promise<Moderation> {
-    const moderationAction: Moderation = {
+  ): Promise<void> {
+    const moderationActionData: InsertModerationHistory = {
       adminId: adminUsername,
       action: "reject",
-      timestamp,
-      tweetId: submission.tweetId,
+      createdAt: timestamp,
+      tweetId: submission.tweetId, // This is the submission's tweetId
       feedId: feedEntry.feedId,
       note,
     };
 
-    await this.submissionRepository.saveModerationAction(
-      moderationAction,
-      this.db,
-    );
-
-    await this.rejectSubmission(
-      submission,
-      feedEntry,
-      moderationTriggerTweetId,
-    );
-
-    return moderationAction;
+    return this.db.transaction(async (tx) => {
+      await this.submissionRepository.saveModerationAction(
+        moderationActionData,
+        tx,
+      );
+      await this.rejectSubmission(
+        submission,
+        feedEntry,
+        moderationTriggerTweetId,
+        tx,
+      );
+    });
   }
 
   async approveSubmission(
-    submission: Submission,
-    feed: SubmissionFeed,
+    submission: RichSubmission,
+    feed: SelectSubmissionFeed,
     moderationTweetId: string,
+    tx: any,
   ): Promise<void> {
-    const feedConfig = this.config.feeds.find(
-      (f) => f.id.toLowerCase() === feed.feedId.toLowerCase(),
-    );
-
-    if (!feedConfig) {
+    const feedFromDb = await this.feedService.getFeedById(feed.feedId);
+    if (!feedFromDb || !feedFromDb.config) {
       this.logger.error(
         { submissionId: submission.tweetId, feedId: feed.feedId },
-        "Feed configuration not found for approval.",
+        "Feed or feed configuration not found for approval.",
       );
-      return;
+      // Decide if to throw to rollback transaction or just return
+      throw new Error(`Feed configuration not found for feed ${feed.feedId}`);
     }
-
-    // Note: Saving ModerationHistory record should happen before calling this,
-    // or be passed in to be saved here within the transaction.
-    // For now, assuming it's saved by the caller (SubmissionService)
+    const feedConfig = feedFromDb.config;
 
     try {
-      await this.db.transaction(async (tx) => {
-        // Update status in submissionFeeds table
-        await this.feedRepository.updateSubmissionFeedStatus(
-          submission.tweetId,
-          feed.feedId,
-          SubmissionStatus.APPROVED,
-          moderationTweetId,
-          tx,
-        );
+      await this.feedRepository.updateSubmissionFeedStatus(
+        submission.tweetId,
+        feed.feedId,
+        submissionStatusZodEnum.Enum.approved,
+        moderationTweetId,
+        tx,
+      );
 
+      this.logger.info(
+        { submissionId: submission.tweetId, feedId: feed.feedId },
+        "Submission status updated to APPROVED.",
+      );
+
+      // If stream output is enabled for this feed, process it
+      if (feedConfig.outputs?.stream?.enabled) {
         this.logger.info(
           { submissionId: submission.tweetId, feedId: feed.feedId },
-          "Submission status updated to APPROVED.",
+          "Processing approved submission for stream.",
         );
-
-        // If stream output is enabled for this feed, process it
-        if (feedConfig.outputs.stream?.enabled) {
-          this.logger.info(
-            { submissionId: submission.tweetId, feedId: feed.feedId },
-            "Processing approved submission for stream.",
-          );
-          await this.processorService.process(
-            submission, // Requires the full submission object
-            feedConfig.outputs.stream,
-            // tx, // ProcessorService might need transaction
-          );
-        }
-      });
+        await this.processorService.process(
+          submission,
+          feedConfig.outputs.stream,
+        );
+      }
     } catch (error) {
       this.logger.error(
         {
@@ -154,24 +146,23 @@ export class ModerationService implements IBaseService {
   }
 
   async rejectSubmission(
-    submission: Submission,
-    feed: SubmissionFeed, 
+    submission: RichSubmission,
+    feed: SelectSubmissionFeed,
     moderationTweetId: string,
+    tx: any,
   ): Promise<void> {
     try {
-      await this.db.transaction(async (tx) => {
-        await this.feedRepository.updateSubmissionFeedStatus(
-          submission.tweetId,
-          feed.feedId,
-          SubmissionStatus.REJECTED,
-          moderationTweetId,
-          tx,
-        );
-        this.logger.info(
-          { submissionId: submission.tweetId, feedId: feed.feedId },
-          "Submission status updated to REJECTED.",
-        );
-      });
+      await this.feedRepository.updateSubmissionFeedStatus(
+        submission.tweetId,
+        feed.feedId,
+        submissionStatusZodEnum.Enum.rejected,
+        moderationTweetId,
+        tx,
+      );
+      this.logger.info(
+        { submissionId: submission.tweetId, feedId: feed.feedId },
+        "Submission status updated to REJECTED.",
+      );
     } catch (error) {
       this.logger.error(
         {

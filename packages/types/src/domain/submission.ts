@@ -11,7 +11,7 @@ export interface SubmissionFeed {
   submissionId: string;
   feedId: string;
   status: SubmissionStatus;
-  moderationResponseTweetId?: string | null; 
+  moderationResponseTweetId?: string | null;
   createdAt?: Date;
   updatedAt?: Date | null;
 }
@@ -19,8 +19,8 @@ export interface SubmissionFeed {
 export interface Moderation {
   adminId: string;
   action: "approve" | "reject";
-  timestamp: Date; 
-  tweetId: string; 
+  timestamp: Date;
+  tweetId: string;
   feedId: string;
   note: string | null;
   moderationResponseTweetId?: string | null;
@@ -35,9 +35,9 @@ export interface Submission {
   content: string;
   curatorNotes: string | null;
   curatorTweetId: string;
-  createdAt: Date; 
-  submittedAt: Date | null; 
+  createdAt: Date;
+  submittedAt: Date | null;
   updatedAt?: Date | null;
-  moderationHistory: Moderation[]; 
+  moderationHistory: Moderation[];
   feeds: SubmissionFeed[];
 }
