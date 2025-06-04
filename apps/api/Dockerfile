@@ -57,8 +57,6 @@ COPY --from=builder --chown=app:app /app/package.json ./package.json
 COPY --from=builder --chown=app:app /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=builder --chown=app:app /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
-COPY --from=builder --chown=app:app /app/apps/api/curate.config.json ./apps/api/curate.config.json
-
 # Use the non-root user
 USER app
 

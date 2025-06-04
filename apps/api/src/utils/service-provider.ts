@@ -84,10 +84,7 @@ export class ServiceProvider {
   async init() {
     const twitterService = this.services.get("twitterService");
     const processorService = this.services.get("processorService");
-    const configService: ConfigService = this.services.get("configService");
     const feedService = this.services.get("feedService");
-
-    await configService.loadConfig();
 
     await twitterService.initialize();
 
