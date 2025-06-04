@@ -67,7 +67,7 @@ export class FeedService implements IBaseService {
 
   // This is a core method
   // In order to process a feed, you must be the feed owner
-  // this is called by trigger/
+  // this will be called by trigger/
   async processFeed(feedId: string, distributorsParam?: string) {
     this.logger.info(
       { feedId, distributorsParam },

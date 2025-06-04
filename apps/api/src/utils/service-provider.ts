@@ -1,15 +1,18 @@
-import { FeedRepository } from "@curatedotfun/shared-db";
+import { FeedRepository, SubmissionRepository, TwitterRepository } from "@curatedotfun/shared-db";
+import { SubmissionService } from "services/submission.service";
+import { MockTwitterService } from "../__test__/mocks/twitter-service.mock";
 import { db } from "../db";
-import { ConfigService } from "../services/config.service";
+import { ActivityService } from "../services/activity.service";
+import { ConfigService, isProduction } from "../services/config.service";
 import { DistributionService } from "../services/distribution.service";
 import { FeedService } from "../services/feed.service";
 import { IBackgroundTaskService } from "../services/interfaces/background-task.interface";
 import { PluginService } from "../services/plugin.service";
 import { ProcessorService } from "../services/processor.service";
 import { TransformationService } from "../services/transformation.service";
+import { TwitterService } from "../services/twitter/client";
+import { UserService } from "../services/users.service";
 import { logger } from "./logger";
-import { UserService } from "services/users.service";
-import { ActivityService } from "services/activity.service";
 
 export class ServiceProvider {
   private static instance: ServiceProvider;
@@ -18,36 +21,24 @@ export class ServiceProvider {
 
   private constructor() {
     const feedRepository = new FeedRepository(db);
+    const twitterRespository = new TwitterRepository(db);
+    const submissionRepository = new SubmissionRepository(db);
 
     const configService = new ConfigService();
 
-    // let twitterService: TwitterService | null = null;
-    // if (isProduction) {
-    //   twitterService = new TwitterService({
-    //     username: process.env.TWITTER_USERNAME!,
-    //     password: process.env.TWITTER_PASSWORD!,
-    //     email: process.env.TWITTER_EMAIL!,
-    //     twoFactorSecret: process.env.TWITTER_2FA_SECRET,
-    //   });
-    //   await twitterService.initialize();
-    // } else {
-    //   // Use mock service in test and development
-    //   // You can trigger the mock via the frontend's Test Panel
-    //   twitterService = mockTwitterService;
-    //   await twitterService.initialize();
-    // }
-
-    // const submissionService = twitterService
-    //   ? new SubmissionService(
-    //       twitterService,
-    //       processorService,
-    //       configService.getConfig(),
-    //     )
-    //   : null;
-
-    // if (submissionService) {
-    //   submissionService.initialize();
-    // }
+    let twitterService: TwitterService | null = null;
+    if (isProduction) {
+      twitterService = new TwitterService({
+        username: process.env.TWITTER_USERNAME!,
+        password: process.env.TWITTER_PASSWORD!,
+        email: process.env.TWITTER_EMAIL!,
+        twoFactorSecret: process.env.TWITTER_2FA_SECRET,
+      }, twitterRespository);
+    } else {
+      // Use mock service in test and development
+      // You can trigger the mock via the frontend's Test Panel
+      twitterService = new MockTwitterService();
+    }
 
     const pluginService = new PluginService(configService, logger);
     const transformationService = new TransformationService(
@@ -68,6 +59,7 @@ export class ServiceProvider {
       logger,
     );
 
+
     this.services.set("configService", configService);
     this.services.set("pluginService", pluginService);
     this.services.set("transformationService", transformationService);
@@ -75,9 +67,44 @@ export class ServiceProvider {
     this.services.set("processorService", processorService);
     this.services.set("feedService", feedService);
 
+    this.services.set("twitterService", twitterService);
+
     // if (sourceService) {
     //   this.backgroundTaskServices.push(sourceService);
     // }
+
+  }
+
+  async init() {
+    const twitterService = this.services.get("twitterService");
+    const processorService = this.services.get("processorService");
+    const configService: ConfigService = this.services.get("configService");
+
+    await configService.loadConfig();
+
+    await twitterService.initialize();
+
+    const feedRepository = new FeedRepository(db);
+    const twitterRespository = new TwitterRepository(db);
+    const submissionRepository = new SubmissionRepository(db);
+
+    const submissionService = twitterService
+      ? new SubmissionService(
+        twitterService,
+        processorService,
+        configService.getConfig(),
+        feedRepository,
+        submissionRepository,
+        twitterRespository,
+        db,
+        logger
+      )
+      : null;
+
+    if (submissionService) {
+      submissionService.initialize(); // TODO: remove
+      this.backgroundTaskServices.push(submissionService);
+    }
   }
 
   /**

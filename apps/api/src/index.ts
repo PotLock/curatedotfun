@@ -22,6 +22,8 @@ async function startServer() {
     const { app } = await createApp();
     const sp = ServiceProvider.getInstance();
 
+    await sp.init();
+
     app.get("/health", (c) => {
       const health = {
         status: "OK",
@@ -137,7 +139,7 @@ async function startServer() {
     process.once("SIGINT", () => gracefulShutdown("SIGINT"));
     process.once("SIGTERM", () => gracefulShutdown("SIGTERM"));
   } catch (error) {
-    logger.error("Error during startup:", error);
+    logger.error(`Error during startup: ${error}`);
     cleanup();
     process.exit(1);
   }

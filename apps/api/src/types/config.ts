@@ -1,5 +1,5 @@
 import { SubmissionStatus } from "./twitter";
-
+import type { FeedConfig } from "@curatedotfun/shared-db";
 export interface GlobalConfig {
   botId: string;
   defaultStatus: SubmissionStatus;
@@ -39,18 +39,6 @@ export interface StreamConfig {
 import { RecapConfig } from "./recap";
 
 export type PluginsConfig = Record<string, PluginConfig>;
-
-export interface FeedConfig {
-  id: string;
-  name: string;
-  description: string;
-  image?: string;
-  moderation: ModerationConfig;
-  outputs: {
-    stream?: StreamConfig;
-    recap?: RecapConfig[];
-  };
-}
 
 export interface AppConfig {
   global: GlobalConfig;

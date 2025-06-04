@@ -1,6 +1,6 @@
 import { useAppConfig } from "./api";
 
-const DEFAULT_BOT_ID = "test_curation";
+const DEFAULT_BOT_ID = "curatedotfun";
 
 export function useBotId() {
   const { data: config } = useAppConfig();

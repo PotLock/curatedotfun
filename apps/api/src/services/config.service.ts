@@ -1,5 +1,4 @@
 import {
-  AppConfig,
   PluginRegistrationConfig,
   PluginsConfig,
 } from "@curatedotfun/types";
@@ -7,6 +6,7 @@ import fs from "fs/promises";
 import path from "path";
 import { hydrateConfigValues } from "../utils/config";
 import { logger } from "../utils/logger";
+import { AppConfig } from "../types/config";
 
 export const isProduction = process.env.NODE_ENV === "production";
 export const isTest = process.env.NODE_ENV === "test";
