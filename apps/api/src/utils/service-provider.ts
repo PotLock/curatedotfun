@@ -1,4 +1,8 @@
-import { FeedRepository, SubmissionRepository, TwitterRepository } from "@curatedotfun/shared-db";
+import {
+  FeedRepository,
+  SubmissionRepository,
+  TwitterRepository,
+} from "@curatedotfun/shared-db";
 import { SubmissionService } from "services/submission.service";
 import { MockTwitterService } from "../__test__/mocks/twitter-service.mock";
 import { db } from "../db";
@@ -29,12 +33,15 @@ export class ServiceProvider {
 
     let twitterService: TwitterService | null = null;
     if (isProduction) {
-      twitterService = new TwitterService({
-        username: process.env.TWITTER_USERNAME!,
-        password: process.env.TWITTER_PASSWORD!,
-        email: process.env.TWITTER_EMAIL!,
-        twoFactorSecret: process.env.TWITTER_2FA_SECRET,
-      }, twitterRespository);
+      twitterService = new TwitterService(
+        {
+          username: process.env.TWITTER_USERNAME!,
+          password: process.env.TWITTER_PASSWORD!,
+          email: process.env.TWITTER_EMAIL!,
+          twoFactorSecret: process.env.TWITTER_2FA_SECRET,
+        },
+        twitterRespository,
+      );
     } else {
       // Use mock service in test and development
       // You can trigger the mock via the frontend's Test Panel
@@ -60,7 +67,6 @@ export class ServiceProvider {
       logger,
     );
 
-
     this.services.set("configService", configService);
     this.services.set("pluginService", pluginService);
     this.services.set("transformationService", transformationService);
@@ -73,7 +79,6 @@ export class ServiceProvider {
     // if (sourceService) {
     //   this.backgroundTaskServices.push(sourceService);
     // }
-
   }
 
   async init() {
@@ -102,17 +107,16 @@ export class ServiceProvider {
 
     const submissionService = twitterService
       ? new SubmissionService(
-        twitterService,
-        processorService,
-        configService.getConfig(),
-        feedRepository,
-        submissionRepository,
-        twitterRespository,
-        db,
-        moderationService,
-        feedService,
-        logger
-      )
+          twitterService,
+          configService.getConfig(),
+          feedRepository,
+          submissionRepository,
+          twitterRespository,
+          db,
+          moderationService,
+          feedService,
+          logger,
+        )
       : null;
 
     if (submissionService) {

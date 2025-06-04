@@ -11,39 +11,8 @@ import {
   DB,
   SelectModerationHistory,
   SelectSubmission,
-  SelectSubmissionFeed,
-  SelectFeed,
+  SelectSubmissionFeed
 } from "./validators";
-
-export async function upsertFeeds(
-  db: DB,
-  feedsToUpsert: SelectFeed["config"][],
-): Promise<void> {
-  await db.transaction(async (tx) => {
-    for (const feedConfig of feedsToUpsert) {
-      await tx
-        .insert(feeds)
-        .values({
-          id: feedConfig.id,
-          config: feedConfig,
-          name: feedConfig.name,
-          description: feedConfig.description,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .onConflictDoUpdate({
-          target: feeds.id,
-          set: {
-            config: feedConfig,
-            name: feedConfig.name,
-            description: feedConfig.description,
-            updatedAt: new Date(),
-          },
-        })
-        .execute();
-    }
-  });
-}
 
 export async function saveSubmissionToFeed(
   db: DB,
@@ -185,7 +154,7 @@ export async function getSubmission(
   if (!results.length) return null;
 
   // Drizzle returns date objects directly if not cast to text in SQL
-  return results[0] as SelectSubmission; 
+  return results[0] as SelectSubmission;
 }
 
 export async function getDailySubmissionCount(

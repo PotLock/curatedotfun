@@ -29,6 +29,9 @@ importers:
       '@curatedotfun/shared-db':
         specifier: workspace:*
         version: link:../../packages/shared-db
+      '@curatedotfun/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@curatedotfun/utils':
         specifier: workspace:*
         version: link:../../packages/utils
@@ -108,9 +111,6 @@ importers:
         specifier: ^3.24.5
         version: 3.24.5(zod@3.25.42)
     devDependencies:
-      '@curatedotfun/types':
-        specifier: workspace:*
-        version: link:../../packages/types
       '@module-federation/node':
         specifier: ^2.6.30
         version: 2.6.33(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.7(esbuild@0.25.5))

@@ -15,7 +15,7 @@ import {
   InsertSubmission,
   RichSubmission,
   SelectModerationHistory,
-  SelectSubmissionFeed
+  SelectSubmissionFeed,
 } from "../validators";
 
 export interface PaginationMetadata {
@@ -155,10 +155,11 @@ export class SubmissionRepository {
           this.db,
         );
 
-        const moderationHistory: SelectModerationHistory[] = await executeWithRetry(
-          (retryDb) => queries.getModerationHistory(retryDb, tweetId),
-          this.db,
-        );
+        const moderationHistory: SelectModerationHistory[] =
+          await executeWithRetry(
+            (retryDb) => queries.getModerationHistory(retryDb, tweetId),
+            this.db,
+          );
 
         return {
           ...baseSubmission,
@@ -196,14 +197,17 @@ export class SubmissionRepository {
         }
 
         const feeds: SelectSubmissionFeed[] = await executeWithRetry(
-          (retryDb) => queries.getFeedsBySubmission(retryDb, baseSubmission.tweetId),
+          (retryDb) =>
+            queries.getFeedsBySubmission(retryDb, baseSubmission.tweetId),
           this.db,
         );
 
-        const moderationHistory: SelectModerationHistory[] = await executeWithRetry(
-          (retryDb) => queries.getModerationHistory(retryDb, baseSubmission.tweetId),
-          this.db,
-        );
+        const moderationHistory: SelectModerationHistory[] =
+          await executeWithRetry(
+            (retryDb) =>
+              queries.getModerationHistory(retryDb, baseSubmission.tweetId),
+            this.db,
+          );
 
         return {
           ...baseSubmission,

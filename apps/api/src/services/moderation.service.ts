@@ -1,11 +1,16 @@
-import { DB, FeedRepository, SubmissionRepository } from "@curatedotfun/shared-db";
+import {
+  DB,
+  FeedRepository,
+  SubmissionRepository,
+} from "@curatedotfun/shared-db";
 import { Logger } from "pino";
 import { AppConfig } from "../types/config";
-import { 
-  Submission, 
-  SubmissionFeed, 
-  SubmissionStatusEnum as SubmissionStatus 
-} from "@curatedotfun/types"; // Updated import path
+import {
+  Moderation,
+  Submission,
+  SubmissionFeed,
+  SubmissionStatusEnum as SubmissionStatus,
+} from "@curatedotfun/types";
 import { ProcessorService } from "./processor.service";
 import { IBaseService } from "./interfaces/base-service.interface";
 
@@ -16,19 +21,79 @@ export class ModerationService implements IBaseService {
     private readonly feedRepository: FeedRepository,
     private readonly submissionRepository: SubmissionRepository,
     private readonly processorService: ProcessorService,
-    private readonly config: AppConfig, // For feed output stream config
+    private readonly config: AppConfig,
     private readonly db: DB,
     logger: Logger,
   ) {
     this.logger = logger.child({ service: ModerationService.name });
   }
 
+  public async processApprovalDecision(
+    submission: Submission,
+    feedEntry: SubmissionFeed,
+    adminUsername: string, 
+    moderationTriggerTweetId: string, 
+    note: string | null,
+    timestamp: Date,
+  ): Promise<Moderation> {
+    const moderationAction: Moderation = {
+      adminId: adminUsername,
+      action: "approve",
+      timestamp,
+      tweetId: submission.tweetId,
+      feedId: feedEntry.feedId,
+      note,
+    };
+
+    await this.submissionRepository.saveModerationAction(
+      moderationAction,
+      this.db,
+    );
+
+    await this.approveSubmission(
+      submission,
+      feedEntry,
+      moderationTriggerTweetId,
+    );
+
+    return moderationAction;
+  }
+
+  public async processRejectionDecision(
+    submission: Submission,
+    feedEntry: SubmissionFeed,
+    adminUsername: string,
+    moderationTriggerTweetId: string,
+    note: string | null,
+    timestamp: Date,
+  ): Promise<Moderation> {
+    const moderationAction: Moderation = {
+      adminId: adminUsername,
+      action: "reject",
+      timestamp,
+      tweetId: submission.tweetId,
+      feedId: feedEntry.feedId,
+      note,
+    };
+
+    await this.submissionRepository.saveModerationAction(
+      moderationAction,
+      this.db,
+    );
+
+    await this.rejectSubmission(
+      submission,
+      feedEntry,
+      moderationTriggerTweetId,
+    );
+
+    return moderationAction;
+  }
+
   async approveSubmission(
     submission: Submission,
-    feed: SubmissionFeed, // The specific feed entry for the submission
-    moderationTweetId: string, // ID of the tweet that triggered approval (admin's tweet or curator's auto-approve tweet)
-    // moderatorPlatformUserId: string, // We'll use adminId from submission for now as per user direction
-    // note?: string | null, // Notes can be part of the Moderation object saved before calling this
+    feed: SubmissionFeed,
+    moderationTweetId: string,
   ): Promise<void> {
     const feedConfig = this.config.feeds.find(
       (f) => f.id.toLowerCase() === feed.feedId.toLowerCase(),
@@ -84,20 +149,15 @@ export class ModerationService implements IBaseService {
         },
         "Failed to process approved submission in ModerationService.",
       );
-      // Re-throw to allow caller to handle, or handle more gracefully here
       throw error;
     }
   }
 
   async rejectSubmission(
     submission: Submission,
-    feed: SubmissionFeed, // The specific feed entry for the submission
-    moderationTweetId: string, // ID of the tweet that triggered rejection
-    // moderatorPlatformUserId: string,
-    // note?: string | null,
+    feed: SubmissionFeed, 
+    moderationTweetId: string,
   ): Promise<void> {
-    // Note: Saving ModerationHistory record should happen before calling this.
-
     try {
       await this.db.transaction(async (tx) => {
         await this.feedRepository.updateSubmissionFeedStatus(

@@ -388,22 +388,6 @@ export class FeedRepository {
   }
 
   /**
-   * Upserts feeds in the database.
-   */
-  async upsertFeeds(feedsToUpsert: FeedConfig[], txDb: DB): Promise<void> {
-    return withErrorHandling(
-      async () => {
-        // Assuming queries.upsertFeeds is designed to work with txDb
-        await queries.upsertFeeds(txDb, feedsToUpsert);
-      },
-      {
-        operationName: "upsertFeeds",
-        additionalContext: { feedCount: feedsToUpsert.length },
-      },
-    );
-  }
-
-  /**
    * Saves a submission to a feed.
    */
   async saveSubmissionToFeed(
