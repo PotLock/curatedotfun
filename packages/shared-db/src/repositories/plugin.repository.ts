@@ -1,21 +1,16 @@
-import { SQLWrapper, and, desc, eq, or, sql } from "drizzle-orm";
-import { DB } from "../validators";
+import { SQLWrapper, and, desc, eq, or } from "drizzle-orm";
 import {
   InsertPlugin,
-  RegisteredPlugin,
   PluginType,
+  RegisteredPlugin,
   plugins,
 } from "../schema/plugins";
 import { executeWithRetry, withErrorHandling } from "../utils";
+import { DB } from "../validators";
 
 export interface IPluginRepository {
-  getPlugin: (
-    pluginIdentifier: string,
-  ) => Promise<RegisteredPlugin | undefined>;
-  listPlugins: (
-    filters?: PluginFilters,
-    latestVersionsOnly?: boolean,
-  ) => Promise<RegisteredPlugin[]>;
+  getPlugin: (pluginId: string) => Promise<RegisteredPlugin | undefined>;
+  listPlugins: (filters?: PluginFilters) => Promise<RegisteredPlugin[]>;
   createPlugin: (data: InsertPlugin) => Promise<RegisteredPlugin>;
   updatePlugin: (
     pluginId: string,
@@ -26,14 +21,11 @@ export interface IPluginRepository {
 
 export type PluginFilters = {
   type?: PluginType;
-  tags?: string[];
-  isPublic?: boolean;
   name?: string;
-  version?: string;
 };
 
 export type PluginUpdateData = Partial<
-  Omit<InsertPlugin, "id" | "createdAt" | "name" | "version" | "type">
+  Omit<InsertPlugin, "id" | "createdAt" | "name" | "repoUrl">
 >;
 
 export class PluginRepository implements IPluginRepository {
@@ -43,44 +35,52 @@ export class PluginRepository implements IPluginRepository {
     this.db = db;
   }
 
-  /**
-   * Get a plugin by its identifier. The identifier can be either:
-   * - Just the name (e.g. "@curatedotfun/telegram") to get the latest version
-   * - Name@version (e.g. "@curatedotfun/telegram@1.0.0") to get a specific version
-   */
-  async getPlugin(
-    pluginIdentifier: string,
-  ): Promise<RegisteredPlugin | undefined> {
+  async getPlugin(pluginId: string): Promise<RegisteredPlugin | undefined> {
     return withErrorHandling(
       async () =>
         executeWithRetry(async (dbInstance) => {
-          const [name, version] = this.parsePluginIdentifier(pluginIdentifier);
-
-          const conditions: SQLWrapper[] = [eq(plugins.name, name)];
-          if (version) {
-            conditions.push(eq(plugins.version, version));
-          }
-
           const result = await dbInstance
             .select()
             .from(plugins)
-            .where(and(...conditions))
-            .orderBy(desc(plugins.version))
+            .where(eq(plugins.id, pluginId))
             .limit(1);
 
           return result[0];
         }, this.db),
       {
         operationName: "PluginRepository.getPlugin",
-        additionalContext: { pluginIdentifier },
+        additionalContext: { pluginId },
       },
     );
   }
 
-  async listPlugins(
-    filters: PluginFilters = {},
-    latestVersionsOnly: boolean = false,
-  ): Promise<RegisteredPlugin[]> {
+  /**
+   * Get a plugin by its identifier. The identifier can be either:
+   * - Just the name (e.g. "@curatedotfun/telegram") to get the latest version
+   * - Name@version (e.g. "@curatedotfun/telegram@1.0.0") to get a specific version
+   */
+  async getPluginByName(
+    pluginName: string,
+  ): Promise<RegisteredPlugin | undefined> {
+    return withErrorHandling(
+      async () =>
+        executeWithRetry(async (dbInstance) => {
+          const result = await dbInstance
+            .select()
+            .from(plugins)
+            .where(eq(plugins.name, pluginName))
+            .limit(1);
+
+          return result[0];
+        }, this.db),
+      {
+        operationName: "PluginRepository.getPluginByName",
+        additionalContext: { pluginName },
+      },
+    );
+  }
+
+  async listPlugins(filters: PluginFilters = {}): Promise<RegisteredPlugin[]> {
     return withErrorHandling(
       async () =>
         executeWithRetry(async (dbInstance) => {
@@ -88,49 +88,21 @@ export class PluginRepository implements IPluginRepository {
           if (filters.type) {
             conditions.push(eq(plugins.type, filters.type));
           }
-          if (filters.tags && filters.tags.length > 0) {
-            const tagSqlConditions = filters.tags.map(
-              (tag) => sql`${plugins.tags} ? ${tag.trim()}`,
-            );
-            if (tagSqlConditions.length > 0) {
-              const orCondition = or(...tagSqlConditions);
-              if (orCondition) {
-                conditions.push(orCondition);
-              }
-            }
-          }
-          if (filters.isPublic !== undefined) {
-            conditions.push(eq(plugins.isPublic, filters.isPublic));
-          }
           if (filters.name) {
             conditions.push(eq(plugins.name, filters.name));
-          }
-          if (filters.version) {
-            conditions.push(eq(plugins.version, filters.version));
           }
 
           const query = dbInstance
             .select()
             .from(plugins)
             .where(and(...conditions))
-            .orderBy(desc(plugins.name), desc(plugins.version));
+            .orderBy(desc(plugins.name));
 
-          const allMatchingPlugins = await query;
-
-          if (latestVersionsOnly) {
-            const latestVersionsMap = new Map<string, RegisteredPlugin>();
-            for (const p of allMatchingPlugins) {
-              if (!latestVersionsMap.has(p.name)) {
-                latestVersionsMap.set(p.name, p);
-              }
-            }
-            return Array.from(latestVersionsMap.values());
-          }
-          return allMatchingPlugins;
+          return query;
         }, this.db),
       {
         operationName: "PluginRepository.listPlugins",
-        additionalContext: { filters, latestVersionsOnly },
+        additionalContext: { filters },
       },
     );
   }
@@ -143,16 +115,16 @@ export class PluginRepository implements IPluginRepository {
             .select({ id: plugins.id })
             .from(plugins)
             .where(
-              and(
+              or(
                 eq(plugins.name, data.name),
-                eq(plugins.version, data.version),
+                eq(plugins.repoUrl, data.repoUrl),
               ),
             )
             .limit(1);
 
           if (existingPlugin.length > 0) {
             const err = new Error(
-              `Plugin '${data.name}' version '${data.version}' already exists.`,
+              `Plugin with name '${data.name}' or repository URL '${data.repoUrl}' already exists.`,
             );
             (err as any).code = "PLUGIN_ALREADY_EXISTS";
             throw err;
@@ -221,17 +193,17 @@ export class PluginRepository implements IPluginRepository {
    * - "@curatedotfun/telegram" -> ["@curatedotfun/telegram", undefined]
    * - "@curatedotfun/telegram@1.0.0" -> ["@curatedotfun/telegram", "1.0.0"]
    */
-  private parsePluginIdentifier(
-    identifier: string,
-  ): [string, string | undefined] {
-    const parts = identifier.split("@");
-    if (parts.length === 1) {
-      return [parts[0], undefined];
-    }
-    // Handle scoped packages (e.g. "@scope/name@version")
-    if (parts[0] === "") {
-      return [`@${parts[1]}`, parts[2]];
-    }
-    return [parts[0], parts[1]];
-  }
+  //   private parsePluginIdentifier(
+  //     identifier: string,
+  //   ): [string, string | undefined] {
+  //     const parts = identifier.split("@");
+  //     if (parts.length === 1) {
+  //       return [parts[0], undefined];
+  //     }
+  //     // Handle scoped packages (e.g. "@scope/name@version")
+  //     if (parts[0] === "") {
+  //       return [`@${parts[1]}`, parts[2]];
+  //     }
+  //     return [parts[0], parts[1]];
+  //   }
 }

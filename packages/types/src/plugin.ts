@@ -76,8 +76,6 @@ export interface AsyncJobProgress {
   submittedAt: string; // ISO timestamp
   lastCheckedAt?: string; // ISO timestamp
   errorMessage?: string;
-  // Optionally, store the original query or parameters for this job
-  // queryDetails?: Record<string, any>;
 }
 
 /**
@@ -106,10 +104,6 @@ export interface LastProcessedState<
 > {
   // The `data` field holds the strongly-typed, platform-specific state.
   data: TData;
-  // Optional: A unique identifier for this state object itself, if needed for storage/retrieval.
-  // id?: string;
-  // Optional: Timestamp of when this state was generated.
-  // timestamp?: number;
 }
 
 /**
@@ -133,8 +127,8 @@ export interface SourcePluginSearchResults<
  */
 export interface SourcePlugin<
   TItem extends SourceItem = SourceItem,
-  TConfig extends Record<string, unknown> = Record<string, unknown>, // Configuration for the plugin instance
-  TPlatformState extends PlatformState = PlatformState, // Generic for the platform-specific part of LastProcessedState
+  TConfig extends Record<string, unknown> = Record<string, unknown>,
+  TPlatformState extends PlatformState = PlatformState,
 > extends BotPlugin<TConfig> {
   type: "source";
 
@@ -153,7 +147,7 @@ export interface SourcePlugin<
    */
   search(
     lastProcessedState: LastProcessedState<TPlatformState> | null,
-    options: SourcePluginSearchOptions<any>, // platformArgs will be validated by the service
+    options: SourcePluginSearchOptions<any>,
   ): Promise<SourcePluginSearchResults<TItem, TPlatformState>>;
 }
 
@@ -161,43 +155,72 @@ export interface SourcePlugin<
 export interface IPlatformSearchService<
   TItem extends SourceItem,
   TPlatformOptions = Record<string, unknown>,
-  // TPlatformState now extends the new generic PlatformState
   TPlatformState extends PlatformState = PlatformState,
 > {
   initialize?(config?: any): Promise<void>;
   search(
     options: TPlatformOptions,
-    // currentState now uses the generic LastProcessedState with TPlatformState
     currentState: LastProcessedState<TPlatformState> | null,
   ): Promise<{ items: TItem[]; nextStateData: TPlatformState | null }>;
-  shutdown?(): Promise<void>; // Added for service cleanup
+  shutdown?(): Promise<void>;
 }
 
 /**
  * The structure of an individual item returned by a source plugin.
- * This is the `TItem` in `SourcePluginSearchResults`.
  */
 export interface SourceItem {
-  id: string; // Unique identifier for the item from the source plugin/platform (e.g., Masa's ID)
-  externalId: string; // Platform-specific external identifier (e.g., Tweet ID, Reddit post ID)
-  content: string; // Main text content of the item
-  createdAt?: string; // ISO 8601 timestamp of item creation on the original platform
+  id: string;
+  externalId: string;
+  content: string;
+  createdAt?: string;
   author?: {
-    id?: string; // Author's platform-specific user ID
-    username?: string; // Author's username or handle
-    displayName?: string; // Author's display name
-    [key: string]: any; // Other author-specific details
+    id?: string;
+    username?: string;
+    displayName?: string;
+    [key: string]: any;
   };
   metadata?: {
-    sourcePlugin: string; // Name of the plugin that sourced this item
-    searchType: string; // The 'type' from SourcePluginSearchOptions used
-    url?: string; // URL to the original item
-    language?: string; // Language code
+    sourcePlugin: string;
+    searchType: string;
+    url?: string;
+    language?: string;
     isReply?: boolean;
-    inReplyToId?: string; // External ID of the item this is a reply to
+    inReplyToId?: string;
     conversationId?: string;
-    [key: string]: any; // Other platform-specific or plugin-specific metadata
+    [key: string]: any;
   };
-  raw?: any; // Optional: The original raw data from the source, for debugging or advanced processing
-  [key: string]: any; // Other top-level fields from the source
+  raw?: any;
+  [key: string]: any;
 }
+
+// --- Frontend Specific Plugin Types ---
+
+export type PluginTypeEnum =
+  | "transformer"
+  | "distributor"
+  | "source"
+  | "rule"
+  | "outcome";
+
+export interface FrontendPlugin {
+  id: string;
+  name: string;
+  repoUrl: string;
+  entryPoint: string;
+  type: PluginTypeEnum;
+  schemaDefinition?: Record<string, any> | null;
+  createdAt: string;
+  updatedAt?: string | null;
+}
+
+export interface CreateFrontendPlugin {
+  name: string;
+  repoUrl: string;
+  entryPoint: string;
+  type: PluginTypeEnum;
+  schemaDefinition?: Record<string, any> | null;
+}
+
+export type UpdateFrontendPlugin = Partial<
+  Omit<FrontendPlugin, "id" | "createdAt" | "updatedAt" | "name" | "repoUrl">
+>;

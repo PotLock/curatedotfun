@@ -23,20 +23,16 @@ pluginsRoutes.post(
     insertPluginSchema.omit({ id: true, createdAt: true, updatedAt: true }),
   ),
   async (c) => {
-    const pluginData = c.req.valid("json") as Omit<
-      InsertPlugin,
-      "id" | "createdAt" | "updatedAt"
-    >;
+    const pluginData = c.req.valid("json");
 
     try {
       const newPlugin = await pluginRepository.createPlugin(pluginData);
       return c.json(newPlugin, 201);
     } catch (error: any) {
+      console.error("Error registering plugin:", { error, pluginData });
       if (error.code === "PLUGIN_ALREADY_EXISTS") {
-        // TODO: Establish error codes
         throw new HTTPException(409, { message: error.message });
       }
-      console.error("Error registering plugin:", error);
       throw new HTTPException(500, { message: "Failed to register plugin" });
     }
   },
@@ -57,52 +53,29 @@ pluginsRoutes.get(
   },
 );
 
-// --- Get a specific Plugin by identifier (name or name@version) ---
-pluginsRoutes.get(
-  "/by-identifier/:identifier",
-  zValidator("param", z.object({ identifier: z.string() })),
-  async (c) => {
-    const { identifier } = c.req.valid("param");
-    const plugin = await pluginRepository.getPlugin(identifier);
-
-    if (!plugin) {
-      throw new HTTPException(404, {
-        message: `Plugin '${identifier}' not found`,
-      });
-    }
-    return c.json(plugin);
-  },
-);
-
-// --- List Plugins (filter by type, tags, isPublic) ---
+// --- List Plugins (filter by type and name) ---
 pluginsRoutes.get(
   "/",
   zValidator(
     "query",
     z.object({
       type: selectPluginSchema.shape.type.optional(),
-      tag: z.string().optional(),
-      isPublic: z.boolean().optional(),
-      latestVersionsOnly: z.boolean().optional().default(false),
+      name: z.string().optional(),
     }),
   ),
   async (c) => {
-    const { type, tag, isPublic, latestVersionsOnly } = c.req.valid("query");
+    const { type, name } = c.req.valid("query");
 
     const filters: any = {};
     if (type) filters.type = type;
-    if (tag) filters.tags = tag.split(",").map((t) => t.trim());
-    if (isPublic !== undefined) filters.isPublic = isPublic;
+    if (name) filters.name = name;
 
-    const result = await pluginRepository.listPlugins(
-      filters,
-      latestVersionsOnly,
-    );
+    const result = await pluginRepository.listPlugins(filters);
     return c.json(result);
   },
 );
 
-// --- Update a Plugin (e.g., description, tags, entryPoint for a specific version) ---
+// --- Update a Plugin (e.g., entryPoint, schemaDefinition) ---
 pluginsRoutes.patch(
   "/:pluginId",
   zValidator("param", z.object({ pluginId: z.string().uuid() })),
@@ -112,10 +85,9 @@ pluginsRoutes.patch(
       id: true,
       createdAt: true,
       name: true,
-      version: true,
-      type: true,
+      repoUrl: true,
     }),
-  ), // Name, version, type usually immutable
+  ),
   async (c) => {
     const { pluginId } = c.req.valid("param");
     const updateData = c.req.valid("json");
@@ -138,16 +110,12 @@ pluginsRoutes.patch(
   },
 );
 
-// --- Delete a Plugin (specific version by ID) ---
-// Consider implications: if a plugin version is in use, deletion might be problematic.
+// --- Delete a Plugin ---
 pluginsRoutes.delete(
   "/:pluginId",
   zValidator("param", z.object({ pluginId: z.string().uuid() })),
   async (c) => {
     const { pluginId } = c.req.valid("param");
-
-    // TODO: Check if this plugin version is part of any active RulesConfiguration.
-    // If so, prevent deletion or require force flag.
 
     const deletedPlugin = await pluginRepository.deletePlugin(pluginId);
 

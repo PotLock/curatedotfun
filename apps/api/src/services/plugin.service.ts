@@ -102,7 +102,8 @@ export class PluginService implements IBaseService {
   ): Promise<PluginTypeMap<TInput, TOutput, TConfig>[T]> {
     try {
       // Get plugin metadata from database
-      const registeredPlugin = await this.pluginRepository.getPlugin(name);
+      const registeredPlugin =
+        await this.pluginRepository.getPluginByName(name);
 
       if (!registeredPlugin) {
         throw new PluginLoadError(

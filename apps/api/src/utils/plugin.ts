@@ -1,6 +1,8 @@
 import { createHash } from "crypto";
 import { PluginType } from "@curatedotfun/types";
-import { PluginConfig } from "types/config";
+import { PluginConfig } from "../types/config";
+import { z } from "zod";
+import { logger } from "./logger";
 
 /**
  * Creates a deterministic cache key for a plugin instance by combining and hashing
@@ -13,7 +15,7 @@ import { PluginConfig } from "types/config";
  */
 export function createPluginInstanceKey(
   name: string,
-  config: PluginConfig<PluginType, any>,
+  config: PluginConfig<PluginType>,
 ): string {
   // Sort object keys recursively to ensure deterministic ordering
   const sortedData = sortObjectKeys({
@@ -68,9 +70,7 @@ export function sortObjectKeys<T>(obj: T): T {
  * @param config - Plugin configuration to validate
  * @throws Error if configuration is invalid
  */
-export function validatePluginConfig(
-  config: PluginConfig<PluginType, any>,
-): void {
+export function validatePluginConfig(config: PluginConfig<PluginType>): void {
   if (!config) {
     throw new Error("Plugin configuration is required");
   }
@@ -92,5 +92,154 @@ export function validatePluginConfig(
   // Config is optional but must be an object if present
   if (config.config && typeof config.config !== "object") {
     throw new Error("Plugin config must be an object");
+  }
+}
+
+const packageJsonSchema = z.object({
+  name: z.string(),
+  version: z.string(),
+  description: z.string().optional(),
+  author: z
+    .union([
+      z.string(),
+      z.object({
+        name: z.string().optional(),
+        email: z.string().optional(),
+        url: z.string().optional(),
+      }),
+    ])
+    .optional(),
+  keywords: z.array(z.string()).optional(),
+});
+
+export type ParsedPackageJson = z.infer<typeof packageJsonSchema>;
+
+/**
+ * Fetches and parses package.json from a repository URL.
+ * Currently supports GitHub, GitLab, and Bitbucket public repositories.
+ * @param repoUrl - The URL to the repository (e.g., https://github.com/user/repo)
+ * @returns Parsed package.json content or null if an error occurs.
+ */
+export async function fetchPackageJsonFromRepo(
+  repoUrl: string,
+): Promise<ParsedPackageJson | null> {
+  if (!repoUrl) return null;
+
+  let packageJsonUrlAttempted = "";
+
+  try {
+    const url = new URL(repoUrl);
+    let userOrOrg, repoNameWithGit, repoName, potentialBranch, packageSubpath;
+
+    const pathSegments = url.pathname.split("/").filter(Boolean);
+
+    if (pathSegments.length < 2) {
+      logger.warn(`Invalid repo URL path: ${url.pathname} from ${repoUrl}`);
+      return null;
+    }
+
+    userOrOrg = pathSegments[0];
+    repoNameWithGit = pathSegments[1];
+    repoName = repoNameWithGit.replace(".git", "");
+
+    // Check for /tree/branch/subpath or /-/blob/branch/subpath (GitLab)
+    let branchIndicatorIndex = pathSegments.indexOf("tree"); // GitHub, Bitbucket (sometimes)
+    if (branchIndicatorIndex === -1) {
+      branchIndicatorIndex = pathSegments.indexOf("blob"); // GitLab uses blob for files, tree for dirs
+      if (
+        branchIndicatorIndex !== -1 &&
+        pathSegments[branchIndicatorIndex - 1] === "-"
+      ) {
+        // GitLab specific /-/blob/
+        // Adjust for GitLab's /-/blob structure
+      } else {
+        branchIndicatorIndex = -1; // Not a valid branch indicator here
+      }
+    }
+
+    if (
+      branchIndicatorIndex !== -1 &&
+      pathSegments.length > branchIndicatorIndex + 1
+    ) {
+      potentialBranch = pathSegments[branchIndicatorIndex + 1];
+      packageSubpath = pathSegments.slice(branchIndicatorIndex + 2).join("/");
+    } else {
+      // No explicit branch/subpath in URL, assume root and try common branches
+      potentialBranch = null; // Will iterate through commonBranches
+      packageSubpath = "";
+    }
+
+    const branchesToTry = potentialBranch
+      ? [potentialBranch]
+      : ["main", "master", "develop"];
+    let success = false;
+
+    for (const branch of branchesToTry) {
+      let currentSubpath = packageSubpath;
+      // If trying common branches and a subpath was part of the original URL (but no branch),
+      // it's tricky. The original code assumed package.json at root if no branch.
+      // For now, if potentialBranch was null, we assume package.json is at the root of these common branches.
+      // If a subpath was detected alongside a branch, we use that subpath.
+      // If repoUrl was like github.com/user/repo/packages/my-plugin (no /tree/branch), this logic is imperfect.
+      // The most robust way is to require /tree/branch/ in the URL if not root.
+      // For simplicity, if no branch in URL, assume package.json at root of common branches.
+      // If URL has /tree/branch/path/to/package, then currentSubpath is path/to/package.
+
+      const packagePathInRepo = `${currentSubpath ? currentSubpath + "/" : ""}package.json`;
+
+      let rawFileUrl = "";
+      if (url.hostname === "github.com") {
+        rawFileUrl = `https://raw.githubusercontent.com/${userOrOrg}/${repoName}/${branch}/${packagePathInRepo}`;
+      } else if (url.hostname === "gitlab.com") {
+        // GitLab raw URL structure: host/user/repo/-/raw/branch/filepath
+        rawFileUrl = `${url.protocol}//${url.hostname}/${userOrOrg}/${repoName}/-/raw/${branch}/${packagePathInRepo}`;
+      } else if (url.hostname === "bitbucket.org") {
+        // Bitbucket raw URL structure: host/user/repo/raw/branch/filepath
+        rawFileUrl = `https://bitbucket.org/${userOrOrg}/${repoName}/raw/${branch}/${packagePathInRepo}`;
+      } else {
+        logger.warn(
+          `Unsupported repository host: ${url.hostname} for URL ${repoUrl}`,
+        );
+        return null;
+      }
+
+      packageJsonUrlAttempted = rawFileUrl;
+      try {
+        logger.debug(
+          `Attempting to fetch package.json from: ${packageJsonUrlAttempted}`,
+        );
+        const response = await fetch(packageJsonUrlAttempted);
+        if (response.ok) {
+          const packageJson = await response.json();
+          logger.info(
+            `Successfully fetched package.json from: ${packageJsonUrlAttempted}`,
+          );
+          success = true;
+          return packageJsonSchema.parse(packageJson);
+        } else {
+          logger.debug(
+            `Failed to fetch ${packageJsonUrlAttempted}: ${response.status}`,
+          );
+        }
+      } catch (e: any) {
+        logger.debug(
+          `Error fetching or parsing package.json from ${packageJsonUrlAttempted}`,
+          { error: e.message },
+        );
+      }
+    }
+
+    if (!success) {
+      logger.warn(
+        `Could not find or parse package.json for repo: ${repoUrl}. Last tried: ${packageJsonUrlAttempted}`,
+      );
+    }
+    return null;
+  } catch (error: any) {
+    logger.error(
+      `Error processing repo URL ${repoUrl} (last attempted URL: ${packageJsonUrlAttempted}): ${error.message}`,
+      { error },
+    );
+    return null;
   }
 }
