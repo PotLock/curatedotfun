@@ -16,17 +16,14 @@ import {
   InsertFeed,
   InsertFeedRecapState,
   InsertSubmissionFeed,
+  RichSubmission,
   SelectFeed,
   SelectFeedRecapState,
   SelectModerationHistory,
   SelectSubmissionFeed,
   UpdateFeed,
 } from "../validators";
-import {
-  BackendFeedStatus,
-  PaginatedResponse,
-  SubmissionWithFeedData,
-} from "./submission.repository";
+import { PaginatedResponse } from "./submission.repository";
 
 /**
  * Repository for feed-related database operations
@@ -95,7 +92,6 @@ export class FeedRepository {
   ): Promise<SelectFeed | null> {
     return withErrorHandling(
       async () => {
-        // Reverted to idiomatic Drizzle: set({ ...data, ... })
         const result = await txDb
           .update(feeds)
           .set({ ...data, updatedAt: new Date() })
@@ -117,7 +113,6 @@ export class FeedRepository {
     return withErrorHandling(
       async () => {
         // First, delete related records if not handled by CASCADE
-        // For example, delete from submissionFeeds
         await txDb
           .delete(submissionFeeds)
           .where(eq(submissionFeeds.feedId, feedId));
@@ -131,8 +126,8 @@ export class FeedRepository {
         const result = await txDb
           .delete(feeds)
           .where(eq(feeds.id, feedId))
-          .returning({ id: feeds.id }); // Drizzle returns array of deleted objects
-        return result.length; // Return the count of deleted feeds (should be 0 or 1)
+          .returning({ id: feeds.id });
+        return result.length;
       },
       { operationName: "deleteFeed", additionalContext: { feedId } },
     );
@@ -338,7 +333,7 @@ export class FeedRepository {
           .update(feedRecapsState)
           .set({
             lastSuccessfulCompletion: timestamp,
-            lastRunError: null, // Clear any previous error
+            lastRunError: null,
             updatedAt: new Date(),
           })
           .where(
@@ -393,19 +388,14 @@ export class FeedRepository {
     data: InsertSubmissionFeed,
     txDb: DB,
   ): Promise<SelectSubmissionFeed> {
-    // Changed return type
     return withErrorHandling(
       async () => {
-        // Directly insert and return the created record
         const result = await txDb
           .insert(submissionFeeds)
           .values({
             submissionId: data.submissionId,
             feedId: data.feedId,
             status: data.status ?? submissionStatusZodEnum.Enum.pending,
-            // moderationResponseTweetId is not part of InsertSubmissionFeed for new entries,
-            // so it will default to null in the DB if the column is nullable.
-            // Timestamps (createdAt, updatedAt) should be handled by Drizzle/DB defaults if configured in schema.
           })
           .returning();
         if (result.length === 0) {
@@ -479,7 +469,7 @@ export class FeedRepository {
     status?: SubmissionStatus,
     sortOrder: "newest" | "oldest" = "newest",
     q?: string,
-  ): Promise<PaginatedResponse<SubmissionWithFeedData>> {
+  ): Promise<PaginatedResponse<RichSubmission>> {
     return withErrorHandling(
       async () =>
         executeWithRetry(async (retryDb) => {
@@ -517,15 +507,12 @@ export class FeedRepository {
               submittedAt: submissions.submittedAt,
               createdAt: submissions.createdAt,
               updatedAt: submissions.updatedAt,
-              // Select status from submissionFeeds for this specific feed
-              status: submissionFeeds.status,
-              // Aggregate feedStatuses for all feeds the submission belongs to
-              feedStatuses: sql<BackendFeedStatus[]>`(
-                SELECT json_agg(json_build_object('feedId', sf_agg.feed_id, 'feedName', f_agg.name, 'status', sf_agg.status))
+              // Aggregate feeds (complete submission_feeds records)
+              feeds: sql<SelectSubmissionFeed[]>`(
+                SELECT json_agg(sf_agg.*)
                 FROM ${submissionFeeds} sf_agg
-                JOIN ${feeds} f_agg ON sf_agg.feed_id = f_agg.id
                 WHERE sf_agg.submission_id = ${submissions.tweetId}
-              )`.as("feed_statuses"),
+              )`.as("feeds"),
               // Aggregate moderationHistory
               moderationHistory: sql<SelectModerationHistory[]>`(
                 SELECT json_agg(mh.*)
@@ -544,7 +531,7 @@ export class FeedRepository {
                 ? desc(submissions.submittedAt)
                 : asc(submissions.submittedAt),
             )
-            .groupBy(submissions.tweetId, submissionFeeds.status) // Group by necessary fields
+            .groupBy(submissions.tweetId)
             .limit(limit)
             .offset(page * limit);
 
@@ -574,9 +561,9 @@ export class FeedRepository {
               submittedAt: item.submittedAt,
               createdAt: item.createdAt,
               updatedAt: item.updatedAt,
-              feedStatuses: item.feedStatuses || [],
+              feeds: item.feeds || [],
               moderationHistory: item.moderationHistory || [],
-            })) as SubmissionWithFeedData[],
+            })) as RichSubmission[],
             pagination: {
               page,
               limit,
@@ -591,16 +578,94 @@ export class FeedRepository {
         additionalContext: { feedId, page, limit, status, sortOrder, q },
       },
       {
-        // Default response on error
         items: [],
         pagination: {
-          page, // page and limit are available in this scope
+          page,
           limit,
           totalCount: 0,
           totalPages: 0,
           hasNextPage: false,
         },
       },
+    );
+  }
+
+  /**
+   * Gets all submissions by feed ID, optionally filtered by status.
+   * This method is intended for backend processing and does not include pagination.
+   *
+   * @param feedId The feed ID
+   * @param status Optional filter by submission status
+   * @returns Array of submissions with feed data
+   */
+  async getAllSubmissionsByFeed(
+    feedId: string,
+    status?: SubmissionStatus,
+  ): Promise<RichSubmission[]> {
+    return withErrorHandling(
+      async () =>
+        executeWithRetry(async (retryDb) => {
+          const conditions: SQL[] = [eq(submissionFeeds.feedId, feedId)];
+
+          if (status) {
+            conditions.push(eq(submissionFeeds.status, status));
+          }
+
+          const whereClause = and(...conditions);
+
+          // Query for items
+          const itemsQuery = retryDb
+            .select({
+              // Select fields from submissions table for SelectSubmission
+              tweetId: submissions.tweetId,
+              userId: submissions.userId,
+              username: submissions.username,
+              curatorId: submissions.curatorId,
+              curatorUsername: submissions.curatorUsername,
+              curatorTweetId: submissions.curatorTweetId,
+              content: submissions.content,
+              curatorNotes: submissions.curatorNotes,
+              submittedAt: submissions.submittedAt,
+              createdAt: submissions.createdAt,
+              updatedAt: submissions.updatedAt,
+              // Aggregate feeds (complete submission_feeds records)
+              feeds: sql<SelectSubmissionFeed[]>`(
+                SELECT json_agg(sf_agg.*)
+                FROM ${submissionFeeds} sf_agg
+                WHERE sf_agg.submission_id = ${submissions.tweetId}
+              )`.as("feeds"),
+              // Aggregate moderationHistory
+              moderationHistory: sql<SelectModerationHistory[]>`(
+                SELECT json_agg(mh.*)
+                FROM ${moderationHistory} mh
+                WHERE mh.tweet_id = ${submissions.tweetId}
+              )`.as("moderation_history"),
+            })
+            .from(submissions)
+            .innerJoin(
+              submissionFeeds,
+              eq(submissions.tweetId, submissionFeeds.submissionId),
+            )
+            .where(whereClause)
+            .orderBy(desc(submissions.submittedAt))
+            .groupBy(submissions.tweetId);
+
+          const submissionsResult = await itemsQuery;
+
+          return submissionsResult.map((item) => ({
+            ...item,
+            submittedAt: item.submittedAt,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
+            feeds: item.feeds || [],
+            moderationHistory: item.moderationHistory || [],
+          })) as RichSubmission[];
+        }, this.db),
+      {
+        operationName: "getAllSubmissionsByFeed",
+        additionalContext: { feedId, status },
+      },
+      [],
     );
   }
 

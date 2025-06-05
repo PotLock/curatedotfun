@@ -2,6 +2,7 @@ import {
   DistributorConfig,
   FeedRepository,
   InsertFeed,
+  RichSubmission,
   StreamConfig,
   submissionStatusZodEnum,
   UpdateFeed,
@@ -24,34 +25,26 @@ export class FeedService implements IBaseService {
   }
 
   async getAllFeeds() {
-    this.logger.info("FeedService: getAllFeeds called");
     return this.feedRepository.getAllFeeds();
   }
 
   async createFeed(data: InsertFeed) {
-    this.logger.info({ feedData: data }, "FeedService: createFeed called");
     return this.db.transaction(async (tx) => {
       return this.feedRepository.createFeed(data, tx);
     });
   }
 
   async getFeedById(feedId: string) {
-    this.logger.info({ feedId }, "FeedService: getFeedById called");
     return this.feedRepository.getFeedById(feedId);
   }
 
   async updateFeed(feedId: string, data: UpdateFeed) {
-    this.logger.info(
-      { feedId, updateData: data },
-      "FeedService: updateFeed called",
-    );
     return this.db.transaction(async (tx) => {
       return this.feedRepository.updateFeed(feedId, data, tx);
     });
   }
 
   async deleteFeed(feedId: string) {
-    this.logger.info({ feedId }, "FeedService: deleteFeed called");
     return this.db.transaction(async (tx) => {
       const result = await this.feedRepository.deleteFeed(feedId, tx);
       if (result === 0) {
@@ -69,11 +62,6 @@ export class FeedService implements IBaseService {
   // In order to process a feed, you must be the feed owner
   // this will be called by trigger/
   async processFeed(feedId: string, distributorsParam?: string) {
-    this.logger.info(
-      { feedId, distributorsParam },
-      "FeedService: processFeed called",
-    );
-
     const feed = await this.feedRepository.getFeedById(feedId);
     if (!feed) {
       this.logger.error(
@@ -92,10 +80,11 @@ export class FeedService implements IBaseService {
       throw new Error(`Feed configuration not found for feedId: ${feedId}`);
     }
 
-    const submissions = await this.feedRepository.getSubmissionsByFeed(feedId);
-    const approvedSubmissions = submissions.filter(
-      (sub) => sub.status === submissionStatusZodEnum.Enum.approved,
-    );
+    const approvedSubmissions: RichSubmission[] =
+      await this.feedRepository.getAllSubmissionsByFeed(
+        feedId,
+        submissionStatusZodEnum.Enum.approved,
+      );
 
     if (approvedSubmissions.length === 0) {
       this.logger.info(
@@ -165,10 +154,6 @@ export class FeedService implements IBaseService {
           }
         }
 
-        // Ensure submission has all necessary fields for processorService.process
-        // The submission from getSubmissionsByFeed might be a partial type.
-        // If processorService needs the full Submission object, we might need to fetch it individually.
-        // For now, assuming the structure is compatible.
         await this.processorService.process(submission, streamConfig);
         processedCount++;
       } catch (error) {
