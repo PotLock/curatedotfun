@@ -2,6 +2,33 @@ export type PluginType = "transformer" | "distributor" | "source";
 
 // --- General Plugin Configuration Types ---
 
+export interface PluginErrorContext {
+  pluginName: string;
+  operation: string; // 'transform', 'distribute', 'initialize', 'shutdown', etc.
+  attempt?: number; // For retry tracking in the service
+}
+
+/**
+ * Describes the shape of a standardized plugin error object.
+ * This interface is implemented by the PluginError class in @curatedotfun/utils.
+ */
+export interface PluginErrorInterface {
+  name: string;
+  message: string;
+  stack?: string;
+  context: PluginErrorContext;
+  pluginErrorCode: string;
+  retryable: boolean;
+  originalError?: Error;
+
+  errorCode: string; // AppErrorCode.PLUGIN_FAILURE
+  statusCode: number;
+  details?: unknown;
+  isOperational: boolean;
+
+  toJSON?: () => Record<string, any>;
+}
+
 // Base plugin interface
 export interface BotPlugin<
   TConfig extends Record<string, unknown> = Record<string, unknown>,
@@ -9,6 +36,18 @@ export interface BotPlugin<
   type: PluginType;
   initialize: (config?: TConfig) => Promise<void>;
   shutdown?: () => Promise<void>;
+  /**
+   * Optional method for plugins to implement to standardize their error reporting.
+   * Services calling the plugin can use this to get a PluginError.
+   * If not implemented by the plugin, the service will wrap the error.
+   */
+  handleError?: (
+    error: Error,
+    operation: string,
+    pluginName: string,
+    pluginErrorCode?: string,
+    retryable?: boolean,
+  ) => PluginErrorInterface;
 }
 
 // Specific plugin interfaces

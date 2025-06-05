@@ -17,6 +17,7 @@
     "lint": "tsc --noEmit"
   },
   "devDependencies": {
+    "@curatedotfun/types": "workspace:*",
     "typescript": "^5.8.3"
   }
 }

@@ -9,7 +9,6 @@
     "composite": true, // Required for project references and building this package
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "types": [],
     "baseUrl": "."
   },
   "include": ["src/**/*.ts"],

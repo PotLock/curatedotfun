@@ -1,8 +1,9 @@
 import { TransformConfig } from "@curatedotfun/shared-db";
-import { ActionArgs } from "@curatedotfun/types";
-import { TransformError } from "@curatedotfun/utils";
+import type { ActionArgs } from "@curatedotfun/types";
+import { PluginError, PluginErrorCode } from "@curatedotfun/utils";
 import { merge } from "lodash";
-import { Logger } from "pino";
+import type { Logger } from "pino";
+import { logPluginError } from "../utils/error";
 import { logger } from "../utils/logger";
 import { sanitizeJson } from "../utils/sanitize";
 import { IBaseService } from "./interfaces/base-service.interface";
@@ -69,12 +70,20 @@ export class TransformationService implements IBaseService {
 
         // Validate transform output
         if (transformResult === undefined || transformResult === null) {
-          throw new TransformError(
-            transform.plugin,
-            stage,
-            i,
+          const pluginError = new PluginError(
             "Transform returned null or undefined",
+            {
+              pluginName: transform.plugin,
+              operation: "transform",
+              attempt: i + 1,
+            },
+            PluginErrorCode.PLUGIN_OUTPUT_VALIDATION_FAILED,
+            false, // Not retryable - plugin should be fixed
           );
+          logPluginError(pluginError, this.logger, {
+            context: { stage, transformIndex: i },
+          });
+          throw pluginError;
         }
 
         const sanitizedResult = sanitizeJson(transformResult);
@@ -82,19 +91,29 @@ export class TransformationService implements IBaseService {
         // Combine results, either merging objects or using new result
         result = this.combineResults(result, sanitizedResult);
       } catch (error) {
-        // If it's already a TransformError, rethrow it
-        if (error instanceof TransformError) {
+        if (error instanceof PluginError) {
+          logPluginError(error, this.logger, {
+            context: { stage, transformIndex: i },
+          });
           throw error;
         }
 
-        // Otherwise wrap it in a TransformError
-        throw new TransformError(
-          transform.plugin,
-          stage,
-          i,
-          error instanceof Error ? error.message : "Unknown error",
-          // error instanceof Error ? error : undefined,
+        const pluginError = new PluginError(
+          error instanceof Error ? error.message : "Unknown transform error",
+          {
+            pluginName: transform.plugin,
+            operation: "transform",
+            attempt: i + 1,
+          },
+          PluginErrorCode.PLUGIN_INTERNAL_ERROR,
+          false, // Not retryable by default
+          {
+            cause: error instanceof Error ? error : undefined,
+            details: { stage, transformIndex: i },
+          },
         );
+        logPluginError(pluginError, this.logger);
+        throw pluginError;
       }
     }
 

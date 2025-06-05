@@ -5,7 +5,8 @@
     { "path": "./apps/app" },
     // SHARED PACKAGES
     { "path": "./packages/types" },
-    { "path": "./packages/shared-db" }
+    { "path": "./packages/shared-db" },
+    { "path": "./packages/utils" }
   ],
   "compilerOptions": {
     "target": "es2022",
@@ -15,7 +16,6 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true
+    "forceConsistentCasingInFileNames": true
   }
 }

@@ -1,3 +1,21 @@
+import { PluginErrorInterface, PluginErrorContext } from "@curatedotfun/types";
+
+export enum PluginErrorCode {
+  // General Plugin Errors
+  UNKNOWN_PLUGIN_ERROR = "UNKNOWN_PLUGIN_ERROR",
+  PLUGIN_INITIALIZATION_FAILED = "PLUGIN_INITIALIZATION_FAILED",
+  PLUGIN_SHUTDOWN_FAILED = "PLUGIN_SHUTDOWN_FAILED",
+  PLUGIN_AUTHENTICATION_FAILURE = "PLUGIN_AUTHENTICATION_FAILURE",
+  PLUGIN_AUTHORIZATION_FAILURE = "PLUGIN_AUTHORIZATION_FAILURE",
+  PLUGIN_CONFIG_INVALID = "PLUGIN_CONFIG_INVALID",
+  PLUGIN_INPUT_VALIDATION_FAILED = "PLUGIN_INPUT_VALIDATION_FAILED",
+  PLUGIN_OUTPUT_VALIDATION_FAILED = "PLUGIN_OUTPUT_VALIDATION_FAILED",
+  PLUGIN_RATE_LIMITED = "PLUGIN_RATE_LIMITED",
+  PLUGIN_TIMEOUT = "PLUGIN_TIMEOUT",
+  PLUGIN_OPERATION_UNSUPPORTED = "PLUGIN_OPERATION_UNSUPPORTED",
+  PLUGIN_INTERNAL_ERROR = "PLUGIN_INTERNAL_ERROR",
+}
+
 export enum AppErrorCode {
   // General & Unknown
   UNKNOWN_ERROR = "UNKNOWN_ERROR",
@@ -33,10 +51,7 @@ export enum AppErrorCode {
   USER_SERVICE_ERROR = "USER_SERVICE_ERROR",
   ACTIVITY_SERVICE_ERROR = "ACTIVITY_SERVICE_ERROR",
   NEAR_ACCOUNT_ERROR = "NEAR_ACCOUNT_ERROR",
-  PLUGIN_ERROR = "PLUGIN_ERROR",
-  PLUGIN_LOAD_ERROR = "PLUGIN_LOAD_ERROR",
-  PLUGIN_INIT_ERROR = "PLUGIN_INIT_ERROR",
-  PLUGIN_EXECUTION_ERROR = "PLUGIN_EXECUTION_ERROR",
+  PLUGIN_FAILURE = "PLUGIN_FAILURE",
   TRANSFORM_ERROR = "TRANSFORM_ERROR",
   PROCESSOR_ERROR = "PROCESSOR_ERROR",
   CONFIG_ERROR = "CONFIG_ERROR",
@@ -48,6 +63,7 @@ export class AppError extends Error {
   public readonly statusCode: number;
   public readonly details?: unknown;
   public readonly isOperational: boolean;
+  public readonly cause?: Error;
 
   constructor(
     message: string,
@@ -67,9 +83,9 @@ export class AppError extends Error {
     this.isOperational =
       options?.isOperational !== undefined ? options.isOperational : true;
 
-    // if (options?.cause) {
-    //   this.cause = options.cause;
-    // }
+    if (options?.cause) {
+      this.cause = options.cause;
+    }
 
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, this.constructor);
@@ -247,50 +263,6 @@ export class NearAccountError extends ServiceError {
   }
 }
 
-export class PluginError extends AppError {
-  constructor(
-    message: string,
-    errorCode: AppErrorCode = AppErrorCode.PLUGIN_ERROR,
-    options?: { cause?: Error },
-  ) {
-    super(message, errorCode, 500, options);
-  }
-}
-
-export class PluginLoadError extends PluginError {
-  constructor(pluginName: string, url: string, options?: { cause?: Error }) {
-    super(
-      `Failed to load plugin ${pluginName} from ${url}`,
-      AppErrorCode.PLUGIN_LOAD_ERROR,
-      options,
-    );
-  }
-}
-
-export class PluginInitError extends PluginError {
-  constructor(pluginName: string, options?: { cause?: Error }) {
-    super(
-      `Failed to initialize plugin ${pluginName}`,
-      AppErrorCode.PLUGIN_INIT_ERROR,
-      options,
-    );
-  }
-}
-
-export class PluginExecutionError extends PluginError {
-  constructor(
-    pluginName: string,
-    operation: string,
-    options?: { cause?: Error },
-  ) {
-    super(
-      `Plugin ${pluginName} failed during ${operation}`,
-      AppErrorCode.PLUGIN_EXECUTION_ERROR,
-      options,
-    );
-  }
-}
-
 export type TransformStage = "global" | "distributor" | "batch";
 
 export class TransformError extends AppError {
@@ -328,5 +300,67 @@ export class ProcessorError extends AppError {
 export class ConfigError extends AppError {
   constructor(message: string, options?: { cause?: Error; details?: unknown }) {
     super(message, AppErrorCode.CONFIG_ERROR, 500, options);
+  }
+}
+
+export class PluginError extends AppError implements PluginErrorInterface {
+  public readonly context: PluginErrorContext;
+  public readonly pluginErrorCode: PluginErrorCode;
+  public readonly retryable: boolean;
+
+  constructor(
+    message: string,
+    context: PluginErrorContext,
+    pluginErrorCode: PluginErrorCode,
+    retryable: boolean = false,
+    options?: {
+      cause?: Error; // This will be the originalError from the plugin
+      details?: unknown;
+      isOperational?: boolean;
+      statusCode?: number; // Allow overriding statusCode if needed, defaults to 500
+    },
+  ) {
+    super(
+      message,
+      AppErrorCode.PLUGIN_FAILURE, // Use the general plugin failure category
+      options?.statusCode || 500, // Default to 500 if not specified
+      {
+        cause: options?.cause,
+        details: {
+          ...(options?.details || {}),
+          pluginContext: context,
+          pluginErrorCode,
+        },
+        isOperational:
+          options?.isOperational !== undefined ? options.isOperational : true,
+      },
+    );
+    this.name = "PluginError";
+    this.context = context;
+    this.pluginErrorCode = pluginErrorCode;
+    this.retryable = retryable;
+  }
+
+  get originalError(): Error | undefined {
+    return this.cause instanceof Error ? this.cause : undefined;
+  }
+
+  toJSON() {
+    const baseJson = super.toJSON();
+    // Ensure details from AppError are preserved and augmented
+    const existingDetails =
+      typeof baseJson.details === "object" && baseJson.details !== null
+        ? baseJson.details
+        : {};
+    return {
+      ...baseJson,
+      details: {
+        ...existingDetails, // Spread existing details from AppError's toJSON
+        pluginContext: this.context, // Add plugin-specific context
+      },
+      pluginErrorCode: this.pluginErrorCode,
+      retryable: this.retryable,
+      // originalError: this.originalError ? { name: this.originalError.name, message: this.originalError.message } : undefined,
+    };
   }
 }

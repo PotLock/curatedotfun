@@ -1,11 +1,11 @@
 import { DistributorConfig, RichSubmission } from "@curatedotfun/shared-db";
-import { ActionArgs } from "@curatedotfun/types";
-import { PluginError, PluginExecutionError } from "@curatedotfun/utils";
-import { Logger } from "pino";
+import type { ActionArgs } from "@curatedotfun/types";
+import { PluginError, PluginErrorCode } from "@curatedotfun/utils";
+import type { Logger } from "pino";
 import { isStaging } from "./config.service";
-import { logger } from "../utils/logger";
+import { logPluginError } from "../utils/error";
 import { sanitizeJson } from "../utils/sanitize";
-import { IBaseService } from "./interfaces/base-service.interface";
+import type { IBaseService } from "./interfaces/base-service.interface";
 import { PluginService } from "./plugin.service";
 
 export class DistributionService implements IBaseService {
@@ -43,23 +43,44 @@ export class DistributionService implements IBaseService {
           await plugin.distribute(args);
         }
       } catch (error) {
-        throw new PluginExecutionError(
-          pluginName,
-          "distribute",
-          // TODO: error as unknown,
+        const pluginError = new PluginError(
+          error instanceof Error ? error.message : "Distribution failed",
+          {
+            pluginName,
+            operation: "distribute",
+            attempt: 1,
+          },
+          PluginErrorCode.PLUGIN_INTERNAL_ERROR,
+          false, // Not retryable by default
+          {
+            cause: error instanceof Error ? error : undefined,
+            details: { isStaging },
+          },
         );
+        logPluginError(pluginError, this.logger);
+        throw pluginError;
       }
     } catch (error) {
-      // Log but don't crash on plugin errors
-      logger.error(`Error distributing content with plugin ${pluginName}:`, {
-        error,
-        pluginName,
-      });
-
-      // Only throw if it's not a plugin error (system error)
-      if (!(error instanceof PluginError)) {
+      if (error instanceof PluginError) {
         throw error;
       }
+
+      const pluginError = new PluginError(
+        "Plugin system error",
+        {
+          pluginName,
+          operation: "system",
+          attempt: 1,
+        },
+        PluginErrorCode.PLUGIN_INTERNAL_ERROR,
+        false,
+        {
+          cause: error instanceof Error ? error : undefined,
+          details: { isStaging },
+        },
+      );
+      logPluginError(pluginError, this.logger);
+      throw pluginError;
     }
   }
 

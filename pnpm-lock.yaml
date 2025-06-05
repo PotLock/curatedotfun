@@ -113,13 +113,13 @@ importers:
     devDependencies:
       '@module-federation/node':
         specifier: ^2.6.30
-        version: 2.6.33(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.7)
+        version: 2.6.33(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.7(esbuild@0.25.5))
       '@rspack/binding':
         specifier: 1.2.8
         version: 1.2.8
       '@rspack/cli':
         specifier: 1.2.8
-        version: 1.2.8(@rspack/core@1.2.8(@swc/helpers@0.5.17))(@types/express@4.17.22)(webpack@5.99.7)
+        version: 1.2.8(@rspack/core@1.2.8(@swc/helpers@0.5.17))(@types/express@4.17.21)(webpack@5.99.7(esbuild@0.25.5))
       '@rspack/core':
         specifier: 1.2.8
         version: 1.2.8(@swc/helpers@0.5.17)
@@ -394,7 +394,7 @@ importers:
     devDependencies:
       '@rspack/cli':
         specifier: 1.2.8
-        version: 1.2.8(@rspack/core@1.2.8(@swc/helpers@0.5.17))(@types/express@4.17.21)(webpack@5.99.7(esbuild@0.25.5))
+        version: 1.2.8(@rspack/core@1.2.8(@swc/helpers@0.5.17))(@types/express@4.17.22)(webpack@5.99.7)
       '@rspack/core':
         specifier: 1.2.8
         version: 1.2.8(@swc/helpers@0.5.17)
@@ -432,6 +432,9 @@ importers:
 
   packages/utils:
     devDependencies:
+      '@curatedotfun/types':
+        specifier: workspace:*
+        version: link:../types
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -7039,7 +7042,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@module-federation/enhanced@0.11.4(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.7)':
+  '@module-federation/enhanced@0.11.4(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.7(esbuild@0.25.5))':
     dependencies:
       '@module-federation/bridge-react-webpack-plugin': 0.11.4
       '@module-federation/cli': 0.11.4(typescript@5.8.3)
@@ -7056,7 +7059,7 @@ snapshots:
       upath: 2.0.1
     optionalDependencies:
       typescript: 5.8.3
-      webpack: 5.99.7
+      webpack: 5.99.7(esbuild@0.25.5)
     transitivePeerDependencies:
       - '@rspack/core'
       - bufferutil
@@ -7095,16 +7098,16 @@ snapshots:
       - utf-8-validate
       - vue-tsc
 
-  '@module-federation/node@2.6.33(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.7)':
+  '@module-federation/node@2.6.33(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.7(esbuild@0.25.5))':
     dependencies:
-      '@module-federation/enhanced': 0.11.4(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.7)
+      '@module-federation/enhanced': 0.11.4(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.7(esbuild@0.25.5))
       '@module-federation/runtime': 0.11.4
       '@module-federation/sdk': 0.11.4
-      '@module-federation/utilities': 3.1.51(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.99.7)
+      '@module-federation/utilities': 3.1.51(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.99.7(esbuild@0.25.5))
       btoa: 1.2.1
       encoding: 0.1.13
       node-fetch: 2.7.0(encoding@0.1.13)
-      webpack: 5.99.7
+      webpack: 5.99.7(esbuild@0.25.5)
     optionalDependencies:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -7185,10 +7188,10 @@ snapshots:
       fs-extra: 9.1.0
       resolve: 1.22.8
 
-  '@module-federation/utilities@3.1.51(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.99.7)':
+  '@module-federation/utilities@3.1.51(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.99.7(esbuild@0.25.5))':
     dependencies:
       '@module-federation/sdk': 0.11.4
-      webpack: 5.99.7
+      webpack: 5.99.7(esbuild@0.25.5)
     optionalDependencies:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -12360,7 +12363,6 @@ snapshots:
       webpack: 5.99.7(esbuild@0.25.5)
     optionalDependencies:
       esbuild: 0.25.5
-    optional: true
 
   terser-webpack-plugin@5.3.14(webpack@5.99.7):
     dependencies:
@@ -12370,6 +12372,7 @@ snapshots:
       serialize-javascript: 6.0.2
       terser: 5.40.0
       webpack: 5.99.7
+    optional: true
 
   terser@5.40.0:
     dependencies:
@@ -12833,6 +12836,7 @@ snapshots:
       - '@swc/core'
       - esbuild
       - uglify-js
+    optional: true
 
   webpack@5.99.7(esbuild@0.25.5):
     dependencies:
@@ -12864,7 +12868,6 @@ snapshots:
       - '@swc/core'
       - esbuild
       - uglify-js
-    optional: true
 
   websocket-driver@0.7.4:
     dependencies:

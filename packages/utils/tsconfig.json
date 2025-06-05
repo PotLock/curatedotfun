@@ -11,23 +11,13 @@
     "declaration": true,
     "declarationMap": true,
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "paths": {
+      "@curatedotfun/types/*": ["../types/src"],
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "references": [{ "path": "../types/tsconfig.json" }]
 }
-
-// shared-db, remove migration, merge the schemas, move over repositories (maybe keep a _update)
-// export
-
-// determine a standard api response (crosspost?)
-//
-
-// we push and make sure the DB migrates successfully
-
-// shared-db defines the standard schemas for inserting, updating, and selecting from the database
-// types will define the request and response types for the API
-// frontend will define it's own types, depending on what gets returned from api, and what it wants to use in components
-// (instead of SubmissionStatus, do Submission["status"]... I think)
-
-// api takes a request an validates against it

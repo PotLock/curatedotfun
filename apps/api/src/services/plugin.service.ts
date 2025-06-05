@@ -1,5 +1,5 @@
 import { PluginRepository } from "@curatedotfun/shared-db";
-import {
+import type {
   BotPlugin,
   DistributorPlugin,
   PluginType,
@@ -8,12 +8,13 @@ import {
   SourcePlugin,
   TransformerPlugin,
 } from "@curatedotfun/types";
-import { PluginError, PluginLoadError } from "@curatedotfun/utils";
+import { PluginError, PluginErrorCode } from "@curatedotfun/utils";
 import { performReload } from "@module-federation/node/utils";
 import { init, loadRemote } from "@module-federation/runtime";
-import { Logger } from "pino";
+import type { Logger } from "pino";
 import { PluginConfig } from "types/config";
 import { db } from "../db";
+import { logPluginError } from "../utils/error";
 import { logger } from "../utils/logger";
 import { createPluginInstanceKey } from "../utils/plugin";
 import { isProduction } from "./config.service";
@@ -106,20 +107,39 @@ export class PluginService implements IBaseService {
         await this.pluginRepository.getPluginByName(name);
 
       if (!registeredPlugin) {
-        throw new PluginLoadError(
-          name,
-          "",
-          // new Error(`Plugin ${name} not found in database`),
+        const error = new PluginError(
+          `Plugin ${name} not found in database`,
+          {
+            pluginName: name,
+            operation: "load",
+          },
+          PluginErrorCode.PLUGIN_INITIALIZATION_FAILED,
+          false,
         );
+        logPluginError(error, this.logger);
+        throw error;
       }
 
       // Validate requested type matches registered type
       if (pluginConfig.type !== registeredPlugin.type) {
-        throw new PluginLoadError(
-          name,
-          registeredPlugin.entryPoint,
-          // new Error(`Plugin type mismatch: requested ${pluginConfig.type}, but plugin is registered as ${registeredPlugin.type}`),
+        const error = new PluginError(
+          `Plugin type mismatch: requested ${pluginConfig.type}, but plugin is registered as ${registeredPlugin.type}`,
+          {
+            pluginName: name,
+            operation: "load",
+          },
+          PluginErrorCode.PLUGIN_CONFIG_INVALID,
+          false,
+          {
+            details: {
+              requestedType: pluginConfig.type,
+              registeredType: registeredPlugin.type,
+              entryPoint: registeredPlugin.entryPoint,
+            },
+          },
         );
+        logPluginError(error, this.logger);
+        throw error;
       }
 
       // Create full config with URL from database
@@ -136,7 +156,17 @@ export class PluginService implements IBaseService {
       const instance = this.instances.get(instanceId);
       if (instance) {
         if (instance.authFailures >= this.maxAuthFailures) {
-          throw new PluginError(`Plugin ${name} disabled due to auth failures`);
+          const error = new PluginError(
+            `Plugin ${name} disabled due to auth failures`,
+            {
+              pluginName: name,
+              operation: "load",
+            },
+            PluginErrorCode.PLUGIN_AUTHENTICATION_FAILURE,
+            false,
+          );
+          logPluginError(error, this.logger);
+          throw error;
         }
 
         if (!this.isStale(instance.loadedAt, this.instanceCacheTimeout)) {
@@ -217,10 +247,18 @@ export class PluginService implements IBaseService {
             instance.authFailures += 1;
 
             if (instance.authFailures >= this.maxAuthFailures) {
-              logger.error(`Plugin ${name} disabled due to auth failures`);
-              throw new PluginError(
+              const error = new PluginError(
                 `Plugin ${name} disabled after ${instance.authFailures} auth failures`,
+                {
+                  pluginName: name,
+                  operation: "load",
+                  attempt: instance.authFailures,
+                },
+                PluginErrorCode.PLUGIN_AUTHENTICATION_FAILURE,
+                false,
               );
+              logPluginError(error, this.logger);
+              throw error;
             }
           }
 
@@ -239,14 +277,33 @@ export class PluginService implements IBaseService {
 
       // If we get here, all retries failed
       // Clean up failed remote
-      throw lastError || new PluginError(`Failed to initialize plugin ${name}`);
+      const error = new PluginError(
+        lastError?.message || `Failed to initialize plugin ${name}`,
+        {
+          pluginName: name,
+          operation: "load",
+        },
+        PluginErrorCode.PLUGIN_INITIALIZATION_FAILED,
+        false,
+        { cause: lastError || undefined },
+      );
+      logPluginError(error, this.logger);
+      throw error;
     } catch (error) {
       logger.error(`Plugin error: ${name}`, { error });
       throw error instanceof PluginError
         ? error
         : new PluginError(
             `Unexpected error with plugin ${name}`,
-            // error as Error,
+            {
+              pluginName: name,
+              operation: "unknown",
+            },
+            PluginErrorCode.UNKNOWN_PLUGIN_ERROR,
+            false,
+            {
+              cause: error instanceof Error ? error : undefined,
+            },
           );
     }
   }
@@ -269,11 +326,20 @@ export class PluginService implements IBaseService {
         `${remote.config.name}/plugin`,
       );
       if (!container) {
-        throw new PluginLoadError(
-          remote.config.name,
-          remote.config.entry,
-          // new Error("Plugin module not found"),
+        const error = new PluginError(
+          "Plugin module not found",
+          {
+            pluginName: remote.config.name,
+            operation: "load",
+          },
+          PluginErrorCode.PLUGIN_INITIALIZATION_FAILED,
+          false,
+          {
+            details: { entryPoint: remote.config.entry },
+          },
         );
+        logPluginError(error, this.logger);
+        throw error;
       }
 
       // Handle both default export and direct constructor
@@ -281,11 +347,20 @@ export class PluginService implements IBaseService {
         typeof container === "function" ? container : container.default;
 
       if (!module || typeof module !== "function") {
-        throw new PluginLoadError(
-          remote.config.name,
-          remote.config.entry,
-          // new Error("Invalid plugin format - no constructor found"),
+        const error = new PluginError(
+          "Invalid plugin format - no constructor found",
+          {
+            pluginName: remote.config.name,
+            operation: "load",
+          },
+          PluginErrorCode.PLUGIN_INITIALIZATION_FAILED,
+          false,
+          {
+            details: { entryPoint: remote.config.entry },
+          },
         );
+        logPluginError(error, this.logger);
+        throw error;
       }
 
       remote.module = module;
@@ -317,7 +392,16 @@ export class PluginService implements IBaseService {
         } catch (error) {
           const pluginError = new PluginError(
             `Failed to shutdown plugin instance ${id}`,
-            // error as Error,
+            {
+              pluginName: state.remoteName,
+              operation: "shutdown",
+            },
+            PluginErrorCode.PLUGIN_SHUTDOWN_FAILED,
+            false,
+            {
+              cause: error instanceof Error ? error : undefined,
+              details: { instanceId: id },
+            },
           );
           errors.push(pluginError);
           logger.error(`Shutdown error`, {
