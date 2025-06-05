@@ -1,5 +1,4 @@
-import { Submission } from "../types/twitter";
-import { DistributorConfig } from "@curatedotfun/shared-db";
+import { DistributorConfig, RichSubmission } from "@curatedotfun/shared-db";
 import { ActionArgs } from "@curatedotfun/types";
 import { PluginError, PluginExecutionError } from "@curatedotfun/utils";
 import { Logger } from "pino";
@@ -19,7 +18,7 @@ export class DistributionService implements IBaseService {
     this.logger = logger;
   }
 
-  async distributeContent<T = Submission>(
+  async distributeContent<T = RichSubmission>(
     distributor: DistributorConfig,
     input: T,
   ): Promise<void> {
