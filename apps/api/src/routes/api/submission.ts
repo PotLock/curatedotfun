@@ -1,4 +1,4 @@
-import { FeedRepository, SubmissionRepository } from "@curatedotfun/shared-db";
+import { FeedRepository, SubmissionRepository, submissionStatusZodEnum } from "@curatedotfun/shared-db";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
@@ -64,14 +64,7 @@ submissionRoutes.get(
     z.object({
       page: z.coerce.number().int().min(0).default(0),
       limit: z.coerce.number().int().min(1).max(100).default(20),
-      status: z
-        .enum([
-          // TODO reference enum schema
-          "pending",
-          "approved",
-          "rejected",
-        ])
-        .optional(),
+      status: submissionStatusZodEnum.optional(),
       sortOrder: z.enum(["newest", "oldest"]).optional().default("newest"),
       q: z.string().optional(),
     }),

@@ -10,12 +10,24 @@ import {
   TwitterRepository,
   submissionStatusZodEnum,
 } from "@curatedotfun/shared-db";
+import {
+  EventUser,
+  ItemModerationEvent,
+} from "@curatedotfun/types";
 import { Tweet } from "agent-twitter-client";
+import { Effect, Exit, Data } from "effect"; // Added Data for potential TaggedError creation if not already present
 import { Logger } from "pino";
 import { FeedService } from "./feed.service";
 import { IBackgroundTaskService } from "./interfaces/background-task.interface";
 import { ModerationService } from "./moderation.service";
 import { TwitterService } from "./twitter/client";
+
+class SubmissionError extends Data.TaggedError("SubmissionError")<{
+  readonly message: string;
+  readonly cause?: unknown;
+  readonly details?: Record<string, any>;
+}> {}
+
 export class SubmissionService implements IBackgroundTaskService {
   public readonly logger: Logger;
   private checkInterval: NodeJS.Timeout | null = null;
@@ -224,74 +236,113 @@ export class SubmissionService implements IBackgroundTaskService {
     };
   }
 
-  private async createNewSubmission(
+  private createNewSubmission(
     originalTweet: Tweet,
     curatorTweet: Tweet,
     curatorUserId: string,
-  ): Promise<RichSubmission | null> {
-    // const dailyCount =
-    //   await this.submissionRepository.getDailySubmissionCount(curatorUserId);
-    // const maxSubmissions = this.config.global.maxDailySubmissionsPerUser;
-    // if (dailyCount >= maxSubmissions) {
-    //   this.logger.error(
-    //     { tweetId: curatorTweet.id, userId: curatorUserId },
-    //     "User has reached daily submission limit.",
-    //   );
-    //   return null;
-    // }
+  ): Effect.Effect<RichSubmission, SubmissionError> {
+    return Effect.gen(this, function* (_) {
+      // const dailyCount = yield* _(Effect.tryPromise({
+      //   try: () => this.submissionRepository.getDailySubmissionCount(curatorUserId),
+      //   catch: (error) => new SubmissionError({ message: "Failed to get daily submission count", cause: error }),
+      // }));
+      // const maxSubmissions = this.config.global.maxDailySubmissionsPerUser; // Assuming config is accessible
+      // if (dailyCount >= maxSubmissions) {
+      //   this.logger.error(
+      //     { tweetId: curatorTweet.id, userId: curatorUserId },
+      //     "User has reached daily submission limit.",
+      //   );
+      //   return yield* _(Effect.fail(new SubmissionError({ message: "User has reached daily submission limit" })));
+      // }
 
-    const curatorNotes = this.extractDescription(
-      originalTweet.username!,
-      curatorTweet,
-    );
-
-    const newSubmissionData: InsertSubmission = {
-      userId: originalTweet.userId!,
-      tweetId: originalTweet.id!,
-      content: originalTweet.text || "",
-      username: originalTweet.username!,
-      createdAt: originalTweet.timeParsed || new Date(),
-      curatorId: curatorUserId,
-      curatorUsername: curatorTweet.username!,
-      curatorNotes,
-      curatorTweetId: curatorTweet.id!,
-      submittedAt: new Date(),
-    };
-
-    try {
-      await this.db.transaction(async (tx) => {
-        await this.submissionRepository.saveSubmission(newSubmissionData, tx);
-        await this.submissionRepository.incrementDailySubmissionCount(
-          curatorUserId,
-          tx,
-        );
-      });
-
-      const createdSubmission = await this.submissionRepository.getSubmission(
-        originalTweet.id!,
+      const curatorNotes = this.extractDescription(
+        originalTweet.username!,
+        curatorTweet,
       );
+
+      const newSubmissionData: InsertSubmission = {
+        userId: originalTweet.userId!,
+        tweetId: originalTweet.id!,
+        content: originalTweet.text || "",
+        username: originalTweet.username!,
+        createdAt: originalTweet.timeParsed || new Date(),
+        curatorId: curatorUserId,
+        curatorUsername: curatorTweet.username!,
+        curatorNotes,
+        curatorTweetId: curatorTweet.id!,
+        submittedAt: new Date(),
+      };
+
+      yield* _(
+        Effect.tryPromise({
+          try: () =>
+            this.db.transaction(async (tx) => {
+              await this.submissionRepository.saveSubmission(
+                newSubmissionData,
+                tx,
+              );
+              await this.submissionRepository.incrementDailySubmissionCount(
+                curatorUserId,
+                tx,
+              );
+            }),
+          catch: (error) => {
+            this.logger.error(
+              {
+                error,
+                tweetId: curatorTweet.id,
+                originalTweetId: originalTweet.id!,
+              },
+              "Error saving new submission or incrementing count.",
+            );
+            return new SubmissionError({
+              message: "Error saving new submission or incrementing count",
+              cause: error,
+            });
+          },
+        }),
+      );
+
+      const createdSubmission = yield* _(
+        Effect.tryPromise({
+          try: () =>
+            this.submissionRepository.getSubmission(originalTweet.id!),
+          catch: (error) => {
+            this.logger.error(
+              {
+                error,
+                tweetId: curatorTweet.id,
+                originalTweetId: originalTweet.id!,
+              },
+              "Error retrieving submission after creation.",
+            );
+            return new SubmissionError({
+              message: "Error retrieving submission after creation",
+              cause: error,
+            });
+          },
+        }),
+      );
+
       if (!createdSubmission) {
         this.logger.error(
           {
             tweetId: curatorTweet.id,
             originalTweetId: originalTweet.id!,
           },
-          "Failed to retrieve submission after creation.",
+          "Failed to retrieve submission after creation (submission is null/undefined).",
         );
-        return null;
+        return yield* _(
+          Effect.fail(
+            new SubmissionError({
+              message:
+                "Failed to retrieve submission after creation (submission is null/undefined)",
+            }),
+          ),
+        );
       }
       return createdSubmission;
-    } catch (submissionError) {
-      this.logger.error(
-        {
-          error: submissionError,
-          tweetId: curatorTweet.id,
-          originalTweetId: originalTweet.id!,
-        },
-        "Error saving new submission or incrementing count.",
-      );
-      return null;
-    }
+    });
   }
 
   private async handleAutoApprovalForFeed(
@@ -305,14 +356,52 @@ export class SubmissionService implements IBackgroundTaskService {
       isModerator &&
       submissionFeedEntryDb.status === submissionStatusZodEnum.Enum.pending
     ) {
-      await this.moderationService.processApprovalDecision(
-        activeSubmission,
-        submissionFeedEntryDb,
-        curatorTweet.username!,
-        curatorTweet.id!,
-        this.extractDescription(originalTweetUsername, curatorTweet) || null,
-        curatorTweet.timeParsed || new Date(),
-      );
+      // Construct EventUser for the moderator (who is the curator in this case)
+      const moderatorUser: EventUser = {
+        platformId: curatorTweet.userId, // Curator's platform ID
+        handle: curatorTweet.username,   // Curator's handle
+      };
+
+      const moderationNotes = this.extractDescription(originalTweetUsername, curatorTweet) || undefined;
+
+      // Construct ItemModerationEvent for auto-approval
+      const event: ItemModerationEvent = {
+        _tag: "ItemModerationEvent",
+        action: "approve", // Auto-approval is always an "approve" action
+        targetItemExternalId: activeSubmission.tweetId, // ID of the original content
+        targetPipelineId: submissionFeedEntryDb.feedId, // Feed ID
+        moderatorUser,
+        moderationNotes,
+        triggeringEventId: curatorTweet.id!, // The submission tweet itself triggers auto-approval
+        timestamp: curatorTweet.timeParsed || new Date(),
+      };
+
+      this.logger.info({ event }, `Constructing ItemModerationEvent for auto-approval on feed ${submissionFeedEntryDb.feedId}`);
+
+      const moderationEffect = this.moderationService.handleItemModerationEvent(event);
+      const exit = await Effect.runPromiseExit(moderationEffect);
+
+      if (Exit.isSuccess(exit)) {
+        this.logger.info(
+          {
+            tweetId: curatorTweet.id!, // ID of the curator's (submission) tweet
+            submissionId: activeSubmission.tweetId,
+            feedId: submissionFeedEntryDb.feedId,
+            result: exit.value, // PipelineItem on success
+          },
+          "Successfully processed auto-approval event for feed.",
+        );
+      } else {
+        this.logger.error(
+          {
+            error: Exit.causeOption(exit),
+            tweetId: curatorTweet.id!,
+            submissionId: activeSubmission.tweetId,
+            feedId: submissionFeedEntryDb.feedId,
+          },
+          "Failed to process auto-approval event for feed.",
+        );
+      }
     } else if (
       isModerator &&
       submissionFeedEntryDb.status !== submissionStatusZodEnum.Enum.pending
@@ -443,13 +532,25 @@ export class SubmissionService implements IBackgroundTaskService {
         await this.submissionRepository.getSubmission(originalTweet.id!);
 
       if (!activeSubmission) {
-        activeSubmission = await this.createNewSubmission(
+        const creationEffect = this.createNewSubmission(
           originalTweet,
           curatorTweet,
           curatorUserId,
         );
-        if (!activeSubmission) {
-          return; // Errors logged in createNewSubmission
+        const creationExit = await Effect.runPromiseExit(creationEffect);
+
+        if (Exit.isSuccess(creationExit)) {
+          activeSubmission = creationExit.value;
+        } else {
+          this.logger.error(
+            {
+              error: Exit.causeOption(creationExit),
+              tweetId: curatorTweet.id,
+              originalTweetId: originalTweet.id!,
+            },
+            "Failed to create new submission.",
+          );
+          return; // Exit if submission creation failed
         }
       }
 
@@ -584,63 +685,9 @@ export class SubmissionService implements IBackgroundTaskService {
     return feedsToModerate;
   }
 
-  private async processModerationActionForFeed(
-    feedEntry: SelectSubmissionFeed,
-    submissionDb: RichSubmission,
-    action: "approve" | "reject",
-    adminUsername: string,
-    moderationTweetId: string,
-    note: string | null,
-    moderationTime: Date,
-  ): Promise<boolean> {
-    if (feedEntry.moderationResponseTweetId === moderationTweetId) {
-      this.logger.info(
-        {
-          tweetId: moderationTweetId,
-          submissionId: submissionDb.tweetId,
-          feedId: feedEntry.feedId,
-        },
-        "This feed entry was already moderated by this exact tweet.",
-      );
-      return false;
-    }
-    if (feedEntry.status !== submissionStatusZodEnum.Enum.pending) {
-      this.logger.info(
-        {
-          tweetId: moderationTweetId,
-          submissionId: submissionDb.tweetId,
-          feedId: feedEntry.feedId,
-          currentStatus: feedEntry.status,
-        },
-        "This feed entry is no longer pending.",
-      );
-      return false;
-    }
-
-    if (action === "approve") {
-      await this.moderationService.processApprovalDecision(
-        submissionDb,
-        feedEntry,
-        adminUsername,
-        moderationTweetId,
-        note,
-        moderationTime,
-      );
-    } else {
-      // action === "reject"
-      await this.moderationService.processRejectionDecision(
-        submissionDb,
-        feedEntry,
-        adminUsername,
-        moderationTweetId,
-        note,
-        moderationTime,
-      );
-    }
-    return true;
-  }
-
   private async handleModeration(tweet: Tweet): Promise<void> {
+    // This block removes the faulty processModerationActionForFeed and the duplicated handleModeration.
+    // The actual logic changes will be applied to the remaining original handleModeration method.
     try {
       const validationResult = await this.validateModerationTweet(tweet);
       if (!validationResult) return;
@@ -667,21 +714,83 @@ export class SubmissionService implements IBackgroundTaskService {
         adminUsername,
         tweet.id!,
       );
-      // No early return if feedsToModerate is empty, to allow logging below if no action was taken.
 
       let actionTakenOnAnyFeed = false;
       for (const feedEntry of feedsToModerate) {
-        const actionPerformed = await this.processModerationActionForFeed(
-          feedEntry,
-          submissionDb,
-          action,
-          adminUsername,
-          tweet.id!,
-          noteForModeration,
-          tweet.timeParsed || new Date(),
-        );
-        if (actionPerformed) {
+        // Pre-checks: Ensure the feed entry hasn't been moderated by this tweet already
+        // and is still in 'pending' status.
+        if (feedEntry.moderationResponseTweetId === tweet.id!) {
+          this.logger.info(
+            {
+              tweetId: tweet.id!,
+              submissionId: submissionDb.tweetId,
+              feedId: feedEntry.feedId,
+            },
+            "This feed entry was already moderated by this exact tweet (pre-check).",
+          );
+          continue;
+        }
+        if (feedEntry.status !== submissionStatusZodEnum.Enum.pending) {
+          this.logger.info(
+            {
+              tweetId: tweet.id!,
+              submissionId: submissionDb.tweetId,
+              feedId: feedEntry.feedId,
+              currentStatus: feedEntry.status,
+            },
+            "This feed entry is no longer pending (pre-check).",
+          );
+          continue;
+        }
+
+        // Construct the EventUser for the moderator
+        const actor: EventUser = {
+          platformId: adminPlatformUserId,
+          handle: adminUsername, // Corrected: 'handle' for username/handle
+        };
+
+        // Construct the ItemModerationEvent
+        const event: ItemModerationEvent = {
+          _tag: "ItemModerationEvent", // Discriminator tag
+          action: action, // "approve" or "reject"
+          targetItemExternalId: submissionDb.tweetId, // ID of the item being moderated
+          targetPipelineId: feedEntry.feedId, // ID of the feed/pipeline
+          moderatorUser: actor,
+          moderationNotes: noteForModeration ?? undefined,
+          triggeringEventId: tweet.id!, // ID of the tweet that triggered moderation
+          timestamp: tweet.timeParsed || new Date(),
+        };
+
+        this.logger.info({ event }, `Constructing ItemModerationEvent for ${action} on feed ${feedEntry.feedId}`);
+
+        // Call the refactored ModerationService method
+        const moderationEffect = this.moderationService.handleItemModerationEvent(event);
+        const exit = await Effect.runPromiseExit(moderationEffect);
+
+        if (Exit.isSuccess(exit)) {
+          this.logger.info(
+            {
+              tweetId: tweet.id!,
+              submissionId: submissionDb.tweetId,
+              feedId: feedEntry.feedId,
+              action,
+              result: exit.value, // Contains the PipelineItem on success
+            },
+            "Successfully processed moderation event for feed.",
+          );
           actionTakenOnAnyFeed = true;
+        } else {
+          this.logger.error(
+            {
+              error: Exit.causeOption(exit), // Provides a structured way to view the error cause
+              tweetId: tweet.id!,
+              submissionId: submissionDb.tweetId,
+              feedId: feedEntry.feedId,
+              action,
+            },
+            "Failed to process moderation event for feed.",
+          );
+          // Consider if an error for one feed should stop processing for others
         }
       }
 

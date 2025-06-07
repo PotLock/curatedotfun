@@ -220,3 +220,6 @@ export class JwtTokenSignatureMismatched extends AuthError {
     this.name = "JwtTokenSignatureMismatched";
   }
 }
+
+// Effect-TS compatible errors
+import { Data } from "effect";

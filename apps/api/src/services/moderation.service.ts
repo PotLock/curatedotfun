@@ -1,5 +1,6 @@
 import {
   DB,
+  FeedConfig,
   FeedRepository,
   InsertModerationHistory,
   RichSubmission,
@@ -7,10 +8,22 @@ import {
   SubmissionRepository,
   submissionStatusZodEnum,
 } from "@curatedotfun/shared-db";
+import {
+  ItemModerationEvent,
+  PipelineItem,
+  PipelineItemStatus,
+} from "@curatedotfun/types";
+import { Data, Effect } from "effect";
 import { Logger } from "pino";
 import { FeedService } from "./feed.service";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { ProcessorService } from "./processor.service";
+
+class ModerationError extends Data.TaggedError("ModerationError")<{
+  cause?: unknown;
+  message: string;
+  details?: Record<string, any>;
+}> { }
 
 export class ModerationService implements IBaseService {
   public readonly logger: Logger;
@@ -26,153 +39,227 @@ export class ModerationService implements IBaseService {
     this.logger = logger.child({ service: ModerationService.name });
   }
 
-  public async processApprovalDecision(
-    submission: RichSubmission,
-    feedEntry: SelectSubmissionFeed,
-    adminUsername: string,
-    moderationTriggerTweetId: string, // The tweet ID of the !approve command
-    note: string | null,
-    timestamp: Date,
-  ): Promise<void> {
-    const moderationActionData: InsertModerationHistory = {
-      adminId: adminUsername,
-      action: "approve",
-      createdAt: timestamp,
-      tweetId: submission.tweetId, // This is the submission's tweetId
-      feedId: feedEntry.feedId,
-      note,
-      // moderationTriggerTweetId is passed to approveSubmission for SubmissionFeed update,
-      // not directly stored in ModerationHistory via this object unless schema changes.
-    };
-
-    return this.db.transaction(async (tx) => {
-      await this.submissionRepository.saveModerationAction(
-        moderationActionData,
-        tx,
-      );
-      await this.approveSubmission(
-        submission,
-        feedEntry,
-        moderationTriggerTweetId, // This is the tweet ID of the moderation action itself
-        tx,
-      );
-    });
-  }
-
-  public async processRejectionDecision(
-    submission: RichSubmission,
-    feedEntry: SelectSubmissionFeed,
-    adminUsername: string,
-    moderationTriggerTweetId: string, // The tweet ID of the !reject command
-    note: string | null,
-    timestamp: Date,
-  ): Promise<void> {
-    const moderationActionData: InsertModerationHistory = {
-      adminId: adminUsername,
-      action: "reject",
-      createdAt: timestamp,
-      tweetId: submission.tweetId, // This is the submission's tweetId
-      feedId: feedEntry.feedId,
-      note,
-    };
-
-    return this.db.transaction(async (tx) => {
-      await this.submissionRepository.saveModerationAction(
-        moderationActionData,
-        tx,
-      );
-      await this.rejectSubmission(
-        submission,
-        feedEntry,
-        moderationTriggerTweetId,
-        tx,
-      );
-    });
-  }
-
-  async approveSubmission(
-    submission: RichSubmission,
-    feed: SelectSubmissionFeed,
-    moderationTweetId: string,
-    tx: DB,
-  ): Promise<void> {
-    const feedFromDb = await this.feedService.getFeedById(feed.feedId);
-    if (!feedFromDb || !feedFromDb.config) {
-      this.logger.error(
-        { submissionId: submission.tweetId, feedId: feed.feedId },
-        "Feed or feed configuration not found for approval.",
-      );
-      // Decide if to throw to rollback transaction or just return
-      throw new Error(`Feed configuration not found for feed ${feed.feedId}`);
-    }
-    const feedConfig = feedFromDb.config;
-
-    try {
-      await this.feedRepository.updateSubmissionFeedStatus(
-        submission.tweetId,
-        feed.feedId,
-        submissionStatusZodEnum.Enum.approved,
-        moderationTweetId,
-        tx,
-      );
-
+  /**
+   * Handles an ItemModerationEvent to approve or reject a PipelineItem.
+   */
+  public handleItemModerationEvent(
+    event: ItemModerationEvent,
+  ): Effect.Effect<PipelineItem, ModerationError> {
+    return Effect.gen(this, function* (_: Effect.Adapter) {
       this.logger.info(
-        { submissionId: submission.tweetId, feedId: feed.feedId },
-        "Submission status updated to APPROVED.",
+        { event },
+        `Processing ItemModerationEvent for ${event.targetItemExternalId} in pipeline ${event.targetPipelineId}`,
       );
 
-      // If stream output is enabled for this feed, process it
-      if (feedConfig.outputs?.stream?.enabled) {
-        this.logger.info(
-          { submissionId: submission.tweetId, feedId: feed.feedId },
-          "Processing approved submission for stream.",
-        );
-        await this.processorService.process(
-          submission,
-          feedConfig.outputs.stream,
+      const pipelineItemEffect = Effect.tryPromise({
+        try: () =>
+          this.submissionRepository.getSubmission(event.targetItemExternalId),
+        catch: (e: unknown) =>
+          new ModerationError({
+            message: `Failed to fetch submission ${event.targetItemExternalId}`,
+            cause: e as Error,
+          }),
+      });
+      const richSubmission = yield* _(pipelineItemEffect);
+
+      if (!richSubmission) {
+        return yield* _(
+          Effect.fail(
+            new ModerationError({
+              message: `Submission (PipelineItem) ${event.targetItemExternalId} not found.`,
+            }),
+          ),
         );
       }
-    } catch (error) {
-      this.logger.error(
-        {
-          error,
-          submissionId: submission.tweetId,
-          feedId: feed.feedId,
-        },
-        "Failed to process approved submission in ModerationService.",
-      );
-      throw error;
-    }
-  }
 
-  async rejectSubmission(
-    submission: RichSubmission,
-    feed: SelectSubmissionFeed,
-    moderationTweetId: string,
-    tx: DB,
-  ): Promise<void> {
-    try {
-      await this.feedRepository.updateSubmissionFeedStatus(
-        submission.tweetId,
-        feed.feedId,
-        submissionStatusZodEnum.Enum.rejected,
-        moderationTweetId,
-        tx,
+      // Find the specific feed entry within the RichSubmission that matches targetPipelineId
+      const submissionFeedEntry = richSubmission.feeds.find(
+        (f: SelectSubmissionFeed) => f.feedId === event.targetPipelineId,
       );
-      this.logger.info(
-        { submissionId: submission.tweetId, feedId: feed.feedId },
-        "Submission status updated to REJECTED.",
-      );
-    } catch (error) {
-      this.logger.error(
-        {
-          error,
-          submissionId: submission.tweetId,
-          feedId: feed.feedId,
+
+      if (!submissionFeedEntry) {
+        return yield* _(
+          Effect.fail(
+            new ModerationError({
+              message: `Feed entry for pipeline ${event.targetPipelineId} not found on submission ${event.targetItemExternalId}.`,
+              details: { availableFeeds: richSubmission.feeds.map((sf: SelectSubmissionFeed) => sf.feedId) }
+            }),
+          ),
+        );
+      }
+
+      let currentPipelineItem: PipelineItem = {
+        id: `${richSubmission.tweetId}-${submissionFeedEntry.feedId}`,
+        pipelineId: submissionFeedEntry.feedId,
+        originalContentExternalId: richSubmission.tweetId,
+        content: richSubmission.content,
+        authorUsername: richSubmission.username,
+        curatorUsername: richSubmission.curatorUsername,
+        curatorNotes: richSubmission.curatorNotes ?? undefined, // Handle null
+        curatorTriggerEventId: richSubmission.curatorTweetId,
+        status: submissionFeedEntry.status as PipelineItemStatus,
+        moderation: {
+          moderationTriggerEventId: submissionFeedEntry.moderationResponseTweetId || undefined,
         },
-        "Failed to process rejected submission in ModerationService.",
+        rawSubmissionDetails: richSubmission,
+        createdAt: richSubmission.submittedAt ?? undefined,
+        updatedAt: submissionFeedEntry.updatedAt ?? undefined,
+      };
+
+
+      // Fetch FeedConfig for moderation rules
+      const feedConfigEffect = Effect.tryPromise({
+        try: () => this.feedService.getFeedById(event.targetPipelineId),
+        catch: (e: unknown) =>
+          new ModerationError({
+            message: `Failed to fetch feed config for ${event.targetPipelineId}`,
+            cause: e as Error,
+          }),
+      });
+      const feed = yield* _(feedConfigEffect);
+
+      if (!feed || !feed.config) {
+        return yield* _(
+          Effect.fail(
+            new ModerationError({
+              message: `Feed configuration for ${event.targetPipelineId} not found.`,
+            }),
+          ),
+        );
+      }
+      const feedConfig = feed.config as FeedConfig;
+
+      // Validate moderator permissions
+      const moderatorHandle = event.moderatorUser.handle;
+      if (!moderatorHandle) {
+        return yield* _(
+          Effect.fail(
+            new ModerationError({
+              message: "Moderator handle is missing in the event.",
+            }),
+          ),
+        );
+      }
+
+      const approvers = feedConfig.moderation?.approvers?.twitter || [];
+      if (!approvers.some((approver: string) => approver.toLowerCase() === moderatorHandle.toLowerCase())) {
+        return yield* _(
+          Effect.fail(
+            new ModerationError({
+              message: `User ${moderatorHandle} is not an authorized approver for pipeline ${event.targetPipelineId}.`,
+              details: { approvers }
+            }),
+          ),
+        );
+      }
+
+      // Check if the item is already moderated by this exact event or not pending
+      if (currentPipelineItem.moderation?.moderationTriggerEventId === event.triggeringEventId) {
+        this.logger.info({ event }, "Item already moderated by this exact event. Skipping.");
+        return currentPipelineItem; // Idempotency: return current state
+      }
+      if (currentPipelineItem.status !== submissionStatusZodEnum.Enum.pending) {
+        this.logger.warn(
+          { event, currentStatus: currentPipelineItem.status },
+          "Item is not in pending state. Skipping moderation action.",
+        );
+        return yield* _(Effect.fail(new ModerationError({ message: `Item not pending, current status: ${currentPipelineItem.status}` })));
+      }
+
+
+      // Perform the moderation action (Approve or Reject)
+      const newStatus = event.action === "approve"
+        ? submissionStatusZodEnum.Enum.approved
+        : submissionStatusZodEnum.Enum.rejected;
+
+      const moderationHistoryData: InsertModerationHistory = {
+        adminId: moderatorHandle, // Using handle as adminId
+        action: event.action,
+        createdAt: event.timestamp,
+        tweetId: event.targetItemExternalId, // This is the submission's tweetId
+        feedId: event.targetPipelineId,
+        note: event.moderationNotes || null,
+      };
+
+      // Transaction: Save moderation history & update submission feed status
+      const transactionEffect = Effect.tryPromise({
+        try: () =>
+          this.db.transaction(async (tx: DB) => {
+            await this.submissionRepository.saveModerationAction(
+              moderationHistoryData,
+              tx,
+            );
+            await this.feedRepository.updateSubmissionFeedStatus(
+              event.targetItemExternalId,
+              event.targetPipelineId,
+              newStatus,
+              event.triggeringEventId,
+              tx,
+            );
+          }),
+        catch: (e: unknown) =>
+          new ModerationError({
+            message: `Database transaction failed for ${event.action} action.`,
+            cause: e as Error,
+          }),
+      });
+      yield* _(transactionEffect);
+
+      this.logger.info(
+        {
+          itemExternalId: event.targetItemExternalId,
+          pipelineId: event.targetPipelineId,
+          newStatus,
+        },
+        `Item status updated to ${newStatus}.`,
       );
-      throw error;
-    }
+
+      currentPipelineItem = {
+        ...currentPipelineItem,
+        status: newStatus as PipelineItemStatus,
+        moderation: {
+          ...currentPipelineItem.moderation,
+          moderatorUsername: moderatorHandle,
+          action: event.action,
+          notes: event.moderationNotes,
+          moderationTriggerEventId: event.triggeringEventId,
+          timestamp: event.timestamp,
+        },
+        updatedAt: new Date(),
+      };
+
+
+      // If approved and stream output is enabled, process it (using existing ProcessorService)
+      if (newStatus === submissionStatusZodEnum.Enum.approved && feedConfig.outputs?.stream?.enabled) {
+        this.logger.info(
+          { itemExternalId: event.targetItemExternalId, pipelineId: event.targetPipelineId },
+          "Processing approved item for stream.",
+        );
+        // We need the full RichSubmission for the current ProcessorService
+        const processEffect = Effect.tryPromise({
+          try: () =>
+            this.processorService.process(
+              richSubmission,
+              feedConfig.outputs!.stream!,
+            ),
+          catch: (e: unknown) =>
+            new ModerationError({
+              message: "Failed to process approved item for stream.",
+              cause: e as Error,
+            }),
+        });
+        yield* _(processEffect);
+        currentPipelineItem.processedAt = new Date();
+      }
+
+      return currentPipelineItem; // Return the updated conceptual PipelineItem
+    }).pipe(
+      Effect.catchTags({
+        ModerationError: (err: ModerationError) => {
+          this.logger.error({ error: err.toJSON ? err.toJSON() : { message: err.message, cause: err.cause, details: err.details } }, err.message);
+          return Effect.fail(err);
+        }
+      })
+    );
   }
 }
