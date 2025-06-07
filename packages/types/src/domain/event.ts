@@ -1,4 +1,4 @@
-import { PipelineItem } from "./pipeline";
+import { CuratedItem } from "./pipeline";
 import { SourceItem as CanonicalSourceItem } from "../plugin";
 
 /**
@@ -40,7 +40,7 @@ export interface ItemModerationEvent {
  * Represents a recognized action or event that the system needs to act upon.
  * This is a discriminated union.
  */
-export type SystemEvent = ItemModerationEvent;
+export type SystemEvent = ItemModerationEvent | CuratedContentEvent;
 
 // --- Supporting types that might be used by other events later ---
 

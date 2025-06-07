@@ -1,4 +1,4 @@
-export type PipelineItemStatus =
+export type CuratedItemStatus =
   | "pending"
   | "approved"
   | "rejected"
@@ -6,14 +6,14 @@ export type PipelineItemStatus =
   | "failed"
   | "auto-approved";
 
-export interface PipelineItem {
+export interface CuratedItem {
   /**
-   * Unique identifier for this item's instance within a specific pipeline.
-   * Could be a composite ID (e.g., originalContentExternalId + pipelineId) or a new UUID.
+   * Unique identifier for this item's instance within a specific feed.
+   * Could be a composite ID (e.g., originalContentExternalId + feedId) or a new UUID.
    */
   id: string;
-  /** The ID of the pipeline (e.g., feed ID) this item belongs to. */
-  pipelineId: string;
+  /** The ID of the feed this item belongs to. */
+  feedId: string;
   /** External ID of the original source content (e.g., Tweet ID, Reddit Post ID). */
   originalContentExternalId: string;
 
@@ -29,8 +29,8 @@ export interface PipelineItem {
   /** Identifier of the event that triggered the curation (e.g., ID of the curator's '!submit' tweet). */
   curatorTriggerEventId?: string;
 
-  /** Current status of the item within this pipeline. */
-  status: PipelineItemStatus;
+  /** Current status of the item within this feed. */
+  status: CuratedItemStatus;
 
   /** Details related to the moderation action performed on this item. */
   moderation?: {

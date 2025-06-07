@@ -223,3 +223,37 @@ export class JwtTokenSignatureMismatched extends AuthError {
 
 // Effect-TS compatible errors
 import { Data } from "effect";
+
+// --- New Effect-TS Tagged Errors ---
+
+export class IngestionError extends Data.TaggedError("IngestionError")<{
+  readonly cause?: unknown;
+  readonly message: string;
+  readonly details?: Record<string, any>;
+}> {}
+
+export class RoutingError extends Data.TaggedError("RoutingError")<{
+  readonly cause?: unknown;
+  readonly message: string;
+  readonly details?: Record<string, any>;
+}> {}
+
+export class CuratedItemError extends Data.TaggedError("CuratedItemError")<{
+  readonly cause?: unknown;
+  readonly message: string;
+  readonly details?: Record<string, any>;
+}> {}
+
+export class SourceFetchingError extends Data.TaggedError("SourceFetchingError")<{
+  readonly cause?: unknown;
+  readonly message: string;
+  readonly sourcePluginName?: string;
+  readonly searchId?: string;
+  readonly details?: Record<string, any>;
+}> {}
+
+export class ModerationError extends Data.TaggedError("ModerationError")<{
+  readonly cause?: unknown;
+  readonly message: string;
+  readonly details?: Record<string, any>;
+}> {}

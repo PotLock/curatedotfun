@@ -14,3 +14,4 @@ export * from "./repositories/leaderboard.repository";
 export * from "./repositories/submission.repository";
 export * from "./repositories/user.repository";
 export * from "./repositories/plugin.repository";
+export * from "./repositories/lastProcessedState.repository";

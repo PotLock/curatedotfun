@@ -9,21 +9,16 @@ import {
   submissionStatusZodEnum,
 } from "@curatedotfun/shared-db";
 import {
+  CuratedItem,
+  CuratedItemStatus,
   ItemModerationEvent,
-  PipelineItem,
-  PipelineItemStatus,
 } from "@curatedotfun/types";
-import { Data, Effect } from "effect";
+import { Effect } from "effect";
 import { Logger } from "pino";
+import { ModerationError } from "../types/errors";
 import { FeedService } from "./feed.service";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { ProcessorService } from "./processor.service";
-
-class ModerationError extends Data.TaggedError("ModerationError")<{
-  cause?: unknown;
-  message: string;
-  details?: Record<string, any>;
-}> { }
 
 export class ModerationService implements IBaseService {
   public readonly logger: Logger;
@@ -44,7 +39,7 @@ export class ModerationService implements IBaseService {
    */
   public handleItemModerationEvent(
     event: ItemModerationEvent,
-  ): Effect.Effect<PipelineItem, ModerationError> {
+  ): Effect.Effect<CuratedItem, ModerationError> {
     return Effect.gen(this, function* (_: Effect.Adapter) {
       this.logger.info(
         { event },
@@ -88,16 +83,16 @@ export class ModerationService implements IBaseService {
         );
       }
 
-      let currentPipelineItem: PipelineItem = {
+      let currentPipelineItem: CuratedItem = {
         id: `${richSubmission.tweetId}-${submissionFeedEntry.feedId}`,
-        pipelineId: submissionFeedEntry.feedId,
+        feedId: submissionFeedEntry.feedId,
         originalContentExternalId: richSubmission.tweetId,
         content: richSubmission.content,
         authorUsername: richSubmission.username,
         curatorUsername: richSubmission.curatorUsername,
         curatorNotes: richSubmission.curatorNotes ?? undefined, // Handle null
         curatorTriggerEventId: richSubmission.curatorTweetId,
-        status: submissionFeedEntry.status as PipelineItemStatus,
+        status: submissionFeedEntry.status as CuratedItemStatus,
         moderation: {
           moderationTriggerEventId: submissionFeedEntry.moderationResponseTweetId || undefined,
         },
@@ -216,7 +211,7 @@ export class ModerationService implements IBaseService {
 
       currentPipelineItem = {
         ...currentPipelineItem,
-        status: newStatus as PipelineItemStatus,
+        status: newStatus as CuratedItemStatus,
         moderation: {
           ...currentPipelineItem.moderation,
           moderatorUsername: moderatorHandle,
