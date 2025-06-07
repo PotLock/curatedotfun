@@ -1,5 +1,3 @@
-import { SubmissionWithFeedData } from "../types/twitter";
-
 export const getTweetUrl = (tweetId: string, username: string) => {
   return `https://x.com/${username}/status/${tweetId}`;
 };
@@ -41,8 +39,6 @@ export const handleApprove = async (
     console.log("Development mode: Submitted approval tweet", { newTweetId });
     return;
   }
-
-  console.log("hello");
 
   // In production, open Twitter intent
   window.open(

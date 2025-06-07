@@ -12,7 +12,9 @@ import { PluginError, PluginErrorCode } from "@curatedotfun/utils";
 import { performReload } from "@module-federation/node/utils";
 import { init, loadRemote } from "@module-federation/runtime";
 import type { Logger } from "pino";
+import Mustache from "mustache";
 import { PluginConfig } from "types/config";
+import { env } from "../env";
 import { db } from "../db";
 import { logPluginError } from "../utils/error";
 import { logger } from "../utils/logger";
@@ -212,7 +214,13 @@ export class PluginService implements IBaseService {
             TOutput,
             TConfig
           >[T];
-          await newInstance.initialize(config.config as TConfig);
+
+          // Hydrate config with environment variables
+          const stringifiedConfig = JSON.stringify(config.config);
+          const populatedConfigString = Mustache.render(stringifiedConfig, env); // TODO: Whitelist values
+          const hydratedConfig = JSON.parse(populatedConfigString) as TConfig;
+
+          await newInstance.initialize(hydratedConfig);
 
           // // Validate instance implements required interface
           // if (!this.validatePluginInterface<T, TInput, TOutput, TConfig>(newInstance, config.type)) {

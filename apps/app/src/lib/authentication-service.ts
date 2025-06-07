@@ -150,16 +150,6 @@ export async function authenticate(
     const messageBuffer = Buffer.from(message);
     const signature = nearAccount.keyPair.sign(messageBuffer);
 
-    console.log("authentication", {
-      message,
-      nonce: Buffer.from(nonce),
-      recipient,
-      callback_url: callbackUrl,
-      signature: Buffer.from(signature.signature).toString("base64"),
-      account_id: accountId,
-      public_key: nearAccount.keyPair.getPublicKey().toString(),
-    });
-
     return {
       message,
       nonce: Buffer.from(nonce),
