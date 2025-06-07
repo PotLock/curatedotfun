@@ -37,10 +37,34 @@ export interface ItemModerationEvent {
 }
 
 /**
+ * Enum for System Event types
+ */
+export const EventType = {
+  ITEM_MODERATION_EVENT: "ItemModerationEvent",
+  CURATED_CONTENT_EVENT: "CuratedContentEvent",
+  ADMIN_COMMAND_EVENT: "AdminCommandEvent",
+} as const;
+
+export type EventType = (typeof EventType)[keyof typeof EventType];
+
+/**
+ * Event representing an administrative command.
+ */
+export interface AdminCommandEvent {
+  readonly _tag: "AdminCommandEvent";
+  readonly eventId: string;
+  readonly timestamp: string; // ISO Date string
+  readonly command: string; // e.g., "resyncFeed", "updateUserRole"
+  readonly payload?: Record<string, any>; // Command-specific arguments
+  readonly executedBy?: EventUser; // User who executed the command
+  readonly feedId?: string; // Optional: if command is specific to a feed
+}
+
+/**
  * Represents a recognized action or event that the system needs to act upon.
  * This is a discriminated union.
  */
-export type SystemEvent = ItemModerationEvent | CuratedContentEvent;
+export type SystemEvent = ItemModerationEvent | CuratedContentEvent | AdminCommandEvent;
 
 // --- Supporting types that might be used by other events later ---
 

@@ -1,5 +1,11 @@
 export type PluginType = "transformer" | "distributor" | "source";
 
+/**
+ * Represents the identifier for a source plugin, typically its registered name.
+ * e.g., "twitter-source-v1", "reddit-scraper"
+ */
+export type SourceType = string;
+
 // --- General Plugin Configuration Types ---
 
 export interface PluginErrorContext {

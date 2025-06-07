@@ -2,6 +2,7 @@ import pino from "pino";
 import pretty from "pino-pretty";
 import ora, { Ora } from "ora";
 import stringWidth from "string-width";
+import { Context, Effect, Layer } from 'effect';
 
 // Helper function to serialize error objects properly
 const errorSerializer = (err: any) => {

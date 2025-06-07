@@ -147,7 +147,7 @@ export class SourceService implements IBackgroundTaskService {
               cause: e as Error, sourcePluginName, searchId,
             }),
           }),
-        );
+        );W
 
         itemsToReturnRef = searchResults.items;
 
