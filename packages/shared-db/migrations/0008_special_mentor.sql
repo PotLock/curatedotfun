@@ -8,4 +8,4 @@ UPDATE "moderation_history" mh
 
 SELECT COUNT(*) FROM "moderation_history" WHERE "moderation_tweet_id" IS NULL;
 
-ALTER TABLE "moderation_history" ALTER COLUMN "moderation_tweet_id" SET NOT NULL;
+-- ALTER TABLE "moderation_history" ALTER COLUMN "moderation_tweet_id" SET NOT NULL;

@@ -1,5 +1,5 @@
 {
-  "id": "791faaae-3e08-411a-888a-c4d183d32bbf",
+  "id": "4584e55a-74da-40d2-8664-259433aaf970",
   "prevId": "86d07068-6f21-48cd-8742-ec22f8bae750",
   "version": "7",
   "dialect": "postgresql",
@@ -170,8 +170,12 @@
           "name": "activities_user_id_users_id_fk",
           "tableFrom": "activities",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -179,8 +183,12 @@
           "name": "activities_feed_id_feeds_id_fk",
           "tableFrom": "activities",
           "tableTo": "feeds",
-          "columnsFrom": ["feed_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "feed_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -188,8 +196,12 @@
           "name": "activities_submission_id_submissions_tweet_id_fk",
           "tableFrom": "activities",
           "tableTo": "submissions",
-          "columnsFrom": ["submission_id"],
-          "columnsTo": ["tweet_id"],
+          "columnsFrom": [
+            "submission_id"
+          ],
+          "columnsTo": [
+            "tweet_id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -352,8 +364,12 @@
           "name": "feed_user_stats_user_id_users_id_fk",
           "tableFrom": "feed_user_stats",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -361,8 +377,12 @@
           "name": "feed_user_stats_feed_id_feeds_id_fk",
           "tableFrom": "feed_user_stats",
           "tableTo": "feeds",
-          "columnsFrom": ["feed_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "feed_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -437,8 +457,12 @@
           "name": "user_stats_user_id_users_id_fk",
           "tableFrom": "user_stats",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -523,8 +547,12 @@
           "name": "feed_plugins_feed_id_feeds_id_fk",
           "tableFrom": "feed_plugins",
           "tableTo": "feeds",
-          "columnsFrom": ["feed_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "feed_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -532,7 +560,10 @@
       "compositePrimaryKeys": {
         "feed_plugins_feed_id_plugin_id_pk": {
           "name": "feed_plugins_feed_id_plugin_id_pk",
-          "columns": ["feed_id", "plugin_id"]
+          "columns": [
+            "feed_id",
+            "plugin_id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -623,8 +654,12 @@
           "name": "feed_recaps_state_feed_id_feeds_id_fk",
           "tableFrom": "feed_recaps_state",
           "tableTo": "feeds",
-          "columnsFrom": ["feed_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "feed_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -634,7 +669,9 @@
         "feed_recaps_state_external_job_id_unique": {
           "name": "feed_recaps_state_external_job_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["external_job_id"]
+          "columns": [
+            "external_job_id"
+          ]
         }
       },
       "policies": {},
@@ -814,7 +851,7 @@
           "name": "moderation_tweet_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -883,8 +920,12 @@
           "name": "moderation_history_tweet_id_submissions_tweet_id_fk",
           "tableFrom": "moderation_history",
           "tableTo": "submissions",
-          "columnsFrom": ["tweet_id"],
-          "columnsTo": ["tweet_id"],
+          "columnsFrom": [
+            "tweet_id"
+          ],
+          "columnsTo": [
+            "tweet_id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -892,8 +933,12 @@
           "name": "moderation_history_feed_id_feeds_id_fk",
           "tableFrom": "moderation_history",
           "tableTo": "feeds",
-          "columnsFrom": ["feed_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "feed_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1033,8 +1078,12 @@
           "name": "submission_feeds_submission_id_submissions_tweet_id_fk",
           "tableFrom": "submission_feeds",
           "tableTo": "submissions",
-          "columnsFrom": ["submission_id"],
-          "columnsTo": ["tweet_id"],
+          "columnsFrom": [
+            "submission_id"
+          ],
+          "columnsTo": [
+            "tweet_id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1042,8 +1091,12 @@
           "name": "submission_feeds_feed_id_feeds_id_fk",
           "tableFrom": "submission_feeds",
           "tableTo": "feeds",
-          "columnsFrom": ["feed_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "feed_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1051,7 +1104,10 @@
       "compositePrimaryKeys": {
         "submission_feeds_submission_id_feed_id_pk": {
           "name": "submission_feeds_submission_id_feed_id_pk",
-          "columns": ["submission_id", "feed_id"]
+          "columns": [
+            "submission_id",
+            "feed_id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1306,17 +1362,23 @@
         "users_auth_provider_id_unique": {
           "name": "users_auth_provider_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["auth_provider_id"]
+          "columns": [
+            "auth_provider_id"
+          ]
         },
         "users_near_account_id_unique": {
           "name": "users_near_account_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["near_account_id"]
+          "columns": [
+            "near_account_id"
+          ]
         },
         "users_near_public_key_unique": {
           "name": "users_near_public_key_unique",
           "nullsNotDistinct": false,
-          "columns": ["near_public_key"]
+          "columns": [
+            "near_public_key"
+          ]
         }
       },
       "policies": {},
@@ -1387,12 +1449,16 @@
         "plugins_name_unique": {
           "name": "plugins_name_unique",
           "nullsNotDistinct": false,
-          "columns": ["name"]
+          "columns": [
+            "name"
+          ]
         },
         "plugins_repo_url_unique": {
           "name": "plugins_repo_url_unique",
           "nullsNotDistinct": false,
-          "columns": ["repo_url"]
+          "columns": [
+            "repo_url"
+          ]
         }
       },
       "policies": {},
@@ -1416,12 +1482,22 @@
     "public.submission_status": {
       "name": "submission_status",
       "schema": "public",
-      "values": ["pending", "approved", "rejected"]
+      "values": [
+        "pending",
+        "approved",
+        "rejected"
+      ]
     },
     "public.plugin_type": {
       "name": "plugin_type",
       "schema": "public",
-      "values": ["transformer", "distributor", "source", "rule", "outcome"]
+      "values": [
+        "transformer",
+        "distributor",
+        "source",
+        "rule",
+        "outcome"
+      ]
     }
   },
   "schemas": {},
