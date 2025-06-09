@@ -79,7 +79,7 @@ export const moderationHistory = table(
     adminId: text("admin_id").notNull(),
     action: text("action").notNull(),
     note: text("note"),
-    moderationTweetId: text("moderation_tweet_id").notNull(),
+    moderationTweetId: text("moderation_tweet_id"),
     ...timestamps,
   },
   (table) => [
