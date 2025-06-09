@@ -1,4 +1,17 @@
-import { FeedRepository, SubmissionRepository } from "@curatedotfun/shared-db";
+import {
+  SubmissionRepository,
+  FeedRepository,
+  PaginatedResponse,
+  RichSubmission,
+} from "@curatedotfun/shared-db";
+import {
+  Submission as DomainSubmission,
+  FeedContextSubmission,
+  SubmissionStatus as DomainSubmissionStatus,
+  SubmissionStatusEnum as DomainSubmissionStatusEnum,
+  Moderation as DomainModeration,
+  SubmissionFeed as DomainSubmissionFeed,
+} from "@curatedotfun/types";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
@@ -14,8 +27,8 @@ submissionRoutes.get(
   zValidator(
     "query",
     z.object({
-      page: z.coerce.number().int().min(0).default(0),
-      limit: z.coerce.number().int().min(1).max(100).default(20),
+      page: z.coerce.number().int().min(0).optional(),
+      limit: z.coerce.number().int().min(1).max(100).optional(),
       status: z.enum(["pending", "approved", "rejected"]).optional(),
       sortOrder: z.enum(["newest", "oldest"]).optional().default("newest"),
       q: z.string().optional(),
@@ -26,15 +39,86 @@ submissionRoutes.get(
     const submissionRepository = new SubmissionRepository(db);
     const { page, limit, status, sortOrder, q } = c.req.valid("query");
 
-    const result = await submissionRepository.getAllSubmissions(
-      page,
-      limit,
-      status,
-      sortOrder,
-      q,
-    );
+    const repoResult: PaginatedResponse<RichSubmission> =
+      await submissionRepository.getAllSubmissions(
+        status,
+        sortOrder,
+        q,
+        page,
+        limit,
+      );
 
-    return c.json(result);
+    const domainItems: DomainSubmission[] = repoResult.items.map((rs) => {
+      let overallStatus: DomainSubmissionStatus =
+        DomainSubmissionStatusEnum.PENDING;
+      if (rs.moderationHistory && rs.moderationHistory.length > 0) {
+        // Prefer direct moderation history for overall status if available
+        const approvedAction = rs.moderationHistory.find(
+          (mh) => mh.action === "approve",
+        );
+        const rejectedAction = rs.moderationHistory.find(
+          (mh) => mh.action === "reject",
+        );
+
+        if (approvedAction) overallStatus = DomainSubmissionStatusEnum.APPROVED;
+        else if (rejectedAction)
+          overallStatus = DomainSubmissionStatusEnum.REJECTED;
+        // If only pending or other actions, it remains PENDING by default
+      } else if (rs.feeds && rs.feeds.length > 0) {
+        // Fallback to feed statuses if no direct moderation history
+        if (rs.feeds.some((f) => f.status === "approved")) {
+          overallStatus = DomainSubmissionStatusEnum.APPROVED;
+        } else if (rs.feeds.every((f) => f.status === "rejected")) {
+          overallStatus = DomainSubmissionStatusEnum.REJECTED;
+        }
+        // If feeds are all pending, it remains PENDING
+      }
+
+      return {
+        tweetId: rs.tweetId,
+        userId: rs.userId,
+        username: rs.username,
+        curatorId: rs.curatorId!,
+        curatorUsername: rs.curatorUsername!,
+        content: rs.content,
+        curatorNotes: rs.curatorNotes,
+        curatorTweetId: rs.curatorTweetId!,
+        createdAt: rs.createdAt,
+        submittedAt: rs.submittedAt,
+        updatedAt: rs.updatedAt,
+        moderationHistory: rs.moderationHistory.map(
+          (mh) =>
+            ({
+              adminId: mh.adminId,
+              action: mh.action as "approve" | "reject", // Assuming action is always one of these for DomainModeration
+              timestamp: mh.createdAt,
+              tweetId: mh.tweetId,
+              feedId: mh.feedId,
+              note: mh.note,
+              moderationTweetId: mh.moderationTweetId!,
+            }) as DomainModeration,
+        ),
+        feeds: rs.feeds.map(
+          (sf) =>
+            ({
+              submissionId: sf.submissionId,
+              feedId: sf.feedId,
+              status: sf.status as DomainSubmissionStatus,
+              moderationResponseTweetId: sf.moderationResponseTweetId,
+              createdAt: sf.createdAt,
+              updatedAt: sf.updatedAt,
+            }) as DomainSubmissionFeed,
+        ),
+        displayStatus: overallStatus,
+      };
+    });
+
+    const response: PaginatedResponse<DomainSubmission> = {
+      items: domainItems,
+      pagination: repoResult.pagination,
+    };
+
+    return c.json(response);
   },
 );
 
@@ -45,13 +129,76 @@ submissionRoutes.get("/single/:submissionId", async (c) => {
   const db = c.get("db");
   const submissionRepository = new SubmissionRepository(db);
   const submissionId = c.req.param("submissionId");
-  const content = await submissionRepository.getSubmission(submissionId);
+  const richSubmission = await submissionRepository.getSubmission(submissionId);
 
-  if (!content) {
+  if (!richSubmission) {
     return c.notFound();
   }
 
-  return c.json(content);
+  let overallStatusSingle: DomainSubmissionStatus =
+    DomainSubmissionStatusEnum.PENDING;
+  if (
+    richSubmission.moderationHistory &&
+    richSubmission.moderationHistory.length > 0
+  ) {
+    const approvedAction = richSubmission.moderationHistory.find(
+      (mh) => mh.action === "approve",
+    );
+    const rejectedAction = richSubmission.moderationHistory.find(
+      (mh) => mh.action === "reject",
+    );
+
+    if (approvedAction)
+      overallStatusSingle = DomainSubmissionStatusEnum.APPROVED;
+    else if (rejectedAction)
+      overallStatusSingle = DomainSubmissionStatusEnum.REJECTED;
+  } else if (richSubmission.feeds && richSubmission.feeds.length > 0) {
+    if (richSubmission.feeds.some((f) => f.status === "approved")) {
+      overallStatusSingle = DomainSubmissionStatusEnum.APPROVED;
+    } else if (richSubmission.feeds.every((f) => f.status === "rejected")) {
+      overallStatusSingle = DomainSubmissionStatusEnum.REJECTED;
+    }
+  }
+
+  const domainSubmission: DomainSubmission = {
+    tweetId: richSubmission.tweetId,
+    userId: richSubmission.userId,
+    username: richSubmission.username,
+    curatorId: richSubmission.curatorId!,
+    curatorUsername: richSubmission.curatorUsername!,
+    content: richSubmission.content,
+    curatorNotes: richSubmission.curatorNotes,
+    curatorTweetId: richSubmission.curatorTweetId!,
+    createdAt: richSubmission.createdAt,
+    submittedAt: richSubmission.submittedAt,
+    updatedAt: richSubmission.updatedAt,
+    moderationHistory: richSubmission.moderationHistory.map(
+      (mh) =>
+        ({
+          adminId: mh.adminId,
+          action: mh.action as "approve" | "reject",
+          timestamp: mh.createdAt,
+          tweetId: mh.tweetId,
+          feedId: mh.feedId,
+          note: mh.note,
+          moderationTweetId: mh.moderationTweetId!,
+        }) as DomainModeration,
+    ),
+    feeds: richSubmission.feeds.map(
+      (sf) =>
+        ({
+          submissionId: sf.submissionId,
+          feedId: sf.feedId,
+          status: sf.status as DomainSubmissionStatus,
+          moderationResponseTweetId: sf.moderationResponseTweetId,
+          createdAt: sf.createdAt,
+          updatedAt: sf.updatedAt,
+        }) as DomainSubmissionFeed,
+    ),
+    displayStatus: overallStatusSingle,
+  };
+
+  return c.json(domainSubmission);
 });
 
 /**
@@ -62,16 +209,9 @@ submissionRoutes.get(
   zValidator(
     "query",
     z.object({
-      page: z.coerce.number().int().min(0).default(0),
-      limit: z.coerce.number().int().min(1).max(100).default(20),
-      status: z
-        .enum([
-          // TODO reference enum schema
-          "pending",
-          "approved",
-          "rejected",
-        ])
-        .optional(),
+      page: z.coerce.number().int().min(0).optional(),
+      limit: z.coerce.number().int().min(1).max(100).optional(),
+      status: z.enum(["pending", "approved", "rejected"]).optional(),
       sortOrder: z.enum(["newest", "oldest"]).optional().default("newest"),
       q: z.string().optional(),
     }),
@@ -79,24 +219,60 @@ submissionRoutes.get(
   async (c) => {
     const db = c.get("db");
     const feedRepository = new FeedRepository(db);
-    const feedId = c.req.param("feedId");
+    const feedIdParam = c.req.param("feedId");
     const { page, limit, status, sortOrder, q } = c.req.valid("query");
 
-    const feedExists = await feedRepository.getFeedById(feedId);
-    if (!feedExists) {
-      return c.notFound();
-    }
+    const repoResult: PaginatedResponse<RichSubmission> =
+      await feedRepository.getSubmissionsByFeed(
+        feedIdParam,
+        status,
+        sortOrder,
+        q,
+        page,
+        limit,
+      );
 
-    const result = await feedRepository.getSubmissionsByFeed(
-      feedId,
-      page,
-      limit,
-      status,
-      sortOrder,
-      q,
-    );
+    const domainItems: FeedContextSubmission[] = repoResult.items.map((rs) => {
+      const specificFeedLink = rs.feeds.find((f) => f.feedId === feedIdParam);
 
-    return c.json(result);
+      const statusInFeed: DomainSubmissionStatus = specificFeedLink
+        ? (specificFeedLink.status as DomainSubmissionStatus)
+        : DomainSubmissionStatusEnum.PENDING;
+
+      return {
+        tweetId: rs.tweetId,
+        userId: rs.userId,
+        username: rs.username,
+        curatorId: rs.curatorId!,
+        curatorUsername: rs.curatorUsername!,
+        content: rs.content,
+        curatorNotes: rs.curatorNotes,
+        curatorTweetId: rs.curatorTweetId!,
+        createdAt: rs.createdAt,
+        submittedAt: rs.submittedAt,
+        updatedAt: rs.updatedAt,
+        status: statusInFeed,
+        moderationHistory: rs.moderationHistory.map(
+          (mh) =>
+            ({
+              adminId: mh.adminId,
+              action: mh.action as "approve" | "reject",
+              timestamp: mh.createdAt,
+              tweetId: mh.tweetId,
+              feedId: mh.feedId,
+              note: mh.note,
+              moderationTweetId: mh.moderationTweetId!,
+            }) as DomainModeration,
+        ),
+      };
+    });
+
+    const response: PaginatedResponse<FeedContextSubmission> = {
+      items: domainItems,
+      pagination: repoResult.pagination,
+    };
+
+    return c.json(response);
   },
 );
 

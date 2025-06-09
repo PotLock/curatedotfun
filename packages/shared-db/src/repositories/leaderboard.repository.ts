@@ -1,7 +1,21 @@
 import { sql } from "drizzle-orm";
-import * as queries from "../queries";
-import { DB } from "../validators";
 import { executeWithRetry, withErrorHandling } from "../utils";
+import { DB } from "../validators";
+
+export interface FeedSubmissionCount {
+  feedId: string;
+  count: number;
+  totalInFeed: number;
+}
+
+export interface LeaderboardEntry {
+  curatorId: string;
+  curatorUsername: string;
+  submissionCount: number;
+  approvalCount: number;
+  rejectionCount: number;
+  feedSubmissions: FeedSubmissionCount[];
+}
 
 /**
  * Repository for leaderboard-related database operations.
@@ -22,7 +36,7 @@ export class LeaderboardRepository {
    */
   async getCuratorStatsLeaderboard(
     timeRange: string = "all",
-  ): Promise<queries.LeaderboardEntry[]> {
+  ): Promise<LeaderboardEntry[]> {
     return withErrorHandling(
       async () =>
         executeWithRetry(async (dbInstance) => {

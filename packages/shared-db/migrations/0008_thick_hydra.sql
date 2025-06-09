@@ -1,0 +1,1 @@
+ALTER TABLE "moderation_history" ADD COLUMN "moderation_tweet_id" text NOT NULL;

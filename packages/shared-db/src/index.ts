@@ -5,10 +5,10 @@ export { schema, validators };
 
 export * from "./schema";
 export * from "./validators";
-export * as queries from "./queries";
 
 export * from "./repositories/activity.repository";
 export * from "./repositories/feed.repository";
+export * from "./repositories/feedRecap.repository";
 export * from "./repositories/twitter.repository";
 export * from "./repositories/leaderboard.repository";
 export * from "./repositories/submission.repository";

@@ -16,12 +16,13 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, "dist"),
+    filename: "main.js",
     clean: true,
   },
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
+        test: /\.ts?$/,
         use: "builtin:swc-loader",
         exclude: /node_modules/,
       },
@@ -32,7 +33,7 @@ module.exports = {
     ],
   },
   resolve: {
-    extensions: [".tsx", ".ts", ".js"],
+    extensions: [".ts", ".ts", ".js"],
     alias: {
       services: path.resolve(__dirname, "src/services"),
       utils: path.resolve(__dirname, "src/utils"),

@@ -1,13 +1,6 @@
 import { and, asc, count, desc, eq, ilike, or, sql, SQL } from "drizzle-orm";
-import * as queries from "../queries";
 import * as schema from "../schema";
-import {
-  moderationHistory,
-  submissionCounts,
-  submissions,
-  SubmissionStatus,
-  submissionStatusZodEnum,
-} from "../schema";
+import { SubmissionStatus } from "../schema";
 import { executeWithRetry, withErrorHandling } from "../utils";
 import {
   DB,
@@ -19,39 +12,16 @@ import {
 } from "../validators";
 
 export interface PaginationMetadata {
-  page: number;
-  limit: number;
+  page?: number;
+  limit?: number;
   totalCount: number;
-  totalPages: number;
-  hasNextPage: boolean;
+  totalPages?: number;
+  hasNextPage?: boolean;
 }
 
 export interface PaginatedResponse<T> {
   items: T[];
-  pagination: PaginationMetadata;
-}
-
-export interface BackendFeedStatus {
-  feedId: string;
-  feedName: string;
-  status: SubmissionStatus;
-}
-
-export interface SubmissionWithFeedData {
-  tweetId: string;
-  userId: string;
-  username: string;
-  curatorId: string | null;
-  curatorUsername: string | null;
-  curatorTweetId: string | null;
-  content: string;
-  curatorNotes: string | null;
-  submittedAt: Date;
-  createdAt: Date;
-  updatedAt: Date | null;
-  feedStatuses: BackendFeedStatus[];
-  moderationHistory: SelectModerationHistory[];
-  status: SubmissionStatus;
+  pagination?: PaginationMetadata;
 }
 
 /**
@@ -64,18 +34,11 @@ export class SubmissionRepository {
     this.db = db;
   }
 
-  /**
-   * Saves a Twitter submission to the database.
-   * This method should be called within a service-managed transaction.
-   *
-   * @param submission The submission to save
-   * @param txDb The transactional DB instance
-   */
   async saveSubmission(submission: InsertSubmission, txDb: DB): Promise<void> {
     return withErrorHandling(
       async () => {
         await txDb
-          .insert(submissions)
+          .insert(schema.submissions)
           .values({
             tweetId: submission.tweetId,
             userId: submission.userId,
@@ -97,12 +60,6 @@ export class SubmissionRepository {
     );
   }
 
-  /**
-   * Saves a moderation action to the database.
-   *
-   * @param moderation The moderation action to save
-   * @param txDb The transactional DB instance
-   */
   async saveModerationAction(
     moderation: InsertModerationHistory,
     txDb: DB,
@@ -110,13 +67,14 @@ export class SubmissionRepository {
     return withErrorHandling(
       async () => {
         await txDb
-          .insert(moderationHistory)
+          .insert(schema.moderationHistory)
           .values({
             tweetId: moderation.tweetId,
             feedId: moderation.feedId,
             adminId: moderation.adminId,
             action: moderation.action,
             note: moderation.note,
+            moderationTweetId: moderation.moderationTweetId,
             createdAt: moderation.createdAt,
           })
           .execute();
@@ -132,40 +90,71 @@ export class SubmissionRepository {
     );
   }
 
-  /**
-   * Gets a submission by tweet ID along with its associated feeds.
-   *
-   * @param tweetId The tweet ID
-   * @returns The rich submission object with feeds and moderation history, or null if not found
-   */
   async getSubmission(tweetId: string): Promise<RichSubmission | null> {
     return withErrorHandling(
       async () => {
-        const baseSubmission = await executeWithRetry(
-          (retryDb) => queries.getSubmission(retryDb, tweetId),
+        const result = await executeWithRetry(
+          (retryDb) =>
+            retryDb.query.submissions.findFirst({
+              where: eq(schema.submissions.tweetId, tweetId),
+              with: {
+                moderationHistoryItems: {
+                  orderBy: (mh, { asc }) => [asc(mh.createdAt)],
+                },
+                feedLinks: {
+                  with: {
+                    feed: { columns: { name: true, id: true } },
+                  },
+                },
+              },
+            }),
           this.db,
         );
 
-        if (!baseSubmission) {
+        if (!result) {
           return null;
         }
 
-        const feeds: SelectSubmissionFeed[] = await executeWithRetry(
-          (retryDb) => queries.getFeedsBySubmission(retryDb, tweetId),
-          this.db,
-        );
-
-        const moderationHistory: SelectModerationHistory[] =
-          await executeWithRetry(
-            (retryDb) => queries.getModerationHistory(retryDb, tweetId),
-            this.db,
-          );
-
-        return {
-          ...baseSubmission,
-          feeds,
-          moderationHistory,
+        const richSubmissionData: RichSubmission = {
+          tweetId: result.tweetId,
+          userId: result.userId,
+          username: result.username,
+          curatorId: result.curatorId,
+          curatorUsername: result.curatorUsername,
+          curatorTweetId: result.curatorTweetId,
+          content: result.content,
+          curatorNotes: result.curatorNotes,
+          submittedAt: result.submittedAt,
+          createdAt: result.createdAt,
+          updatedAt: result.updatedAt,
+          feeds:
+            result.feedLinks?.map(
+              (fl) =>
+                ({
+                  submissionId: fl.submissionId,
+                  feedId: fl.feedId,
+                  status: fl.status,
+                  moderationResponseTweetId: fl.moderationResponseTweetId,
+                  createdAt: fl.createdAt,
+                  updatedAt: fl.updatedAt,
+                }) as SelectSubmissionFeed,
+            ) || [],
+          moderationHistory:
+            result.moderationHistoryItems?.map(
+              (mh) =>
+                ({
+                  id: mh.id,
+                  tweetId: mh.tweetId,
+                  feedId: mh.feedId,
+                  adminId: mh.adminId,
+                  action: mh.action,
+                  note: mh.note,
+                  createdAt: mh.createdAt,
+                  updatedAt: mh.updatedAt,
+                }) as SelectModerationHistory,
+            ) || [],
         };
+        return richSubmissionData;
       },
       {
         operationName: "get submission",
@@ -175,45 +164,73 @@ export class SubmissionRepository {
     );
   }
 
-  /**
-   * Gets a submission by curator tweet ID, including its associated feeds and moderation history.
-   *
-   * @param curatorTweetId The curator tweet ID
-   * @returns The rich submission object or null if not found
-   */
   async getSubmissionByCuratorTweetId(
     curatorTweetId: string,
   ): Promise<RichSubmission | null> {
     return withErrorHandling(
       async () => {
-        const baseSubmission = await executeWithRetry(
+        const result = await executeWithRetry(
           (retryDb) =>
-            queries.getSubmissionByCuratorTweetId(retryDb, curatorTweetId),
+            retryDb.query.submissions.findFirst({
+              where: eq(schema.submissions.curatorTweetId, curatorTweetId),
+              with: {
+                moderationHistoryItems: {
+                  orderBy: (mh, { asc }) => [asc(mh.createdAt)],
+                },
+                feedLinks: {
+                  with: {
+                    feed: { columns: { name: true, id: true } },
+                  },
+                },
+              },
+            }),
           this.db,
         );
 
-        if (!baseSubmission) {
+        if (!result) {
           return null;
         }
 
-        const feeds: SelectSubmissionFeed[] = await executeWithRetry(
-          (retryDb) =>
-            queries.getFeedsBySubmission(retryDb, baseSubmission.tweetId),
-          this.db,
-        );
-
-        const moderationHistory: SelectModerationHistory[] =
-          await executeWithRetry(
-            (retryDb) =>
-              queries.getModerationHistory(retryDb, baseSubmission.tweetId),
-            this.db,
-          );
-
-        return {
-          ...baseSubmission,
-          feeds,
-          moderationHistory,
+        const richSubmissionData: RichSubmission = {
+          tweetId: result.tweetId,
+          userId: result.userId,
+          username: result.username,
+          curatorId: result.curatorId,
+          curatorUsername: result.curatorUsername,
+          curatorTweetId: result.curatorTweetId,
+          content: result.content,
+          curatorNotes: result.curatorNotes,
+          submittedAt: result.submittedAt,
+          createdAt: result.createdAt,
+          updatedAt: result.updatedAt,
+          feeds:
+            result.feedLinks?.map(
+              (fl) =>
+                ({
+                  submissionId: fl.submissionId,
+                  feedId: fl.feedId,
+                  status: fl.status,
+                  moderationResponseTweetId: fl.moderationResponseTweetId,
+                  createdAt: fl.createdAt,
+                  updatedAt: fl.updatedAt,
+                }) as SelectSubmissionFeed,
+            ) || [],
+          moderationHistory:
+            result.moderationHistoryItems?.map(
+              (mh) =>
+                ({
+                  id: mh.id,
+                  tweetId: mh.tweetId,
+                  feedId: mh.feedId,
+                  adminId: mh.adminId,
+                  action: mh.action,
+                  note: mh.note,
+                  createdAt: mh.createdAt,
+                  updatedAt: mh.updatedAt,
+                }) as SelectModerationHistory,
+            ) || [],
         };
+        return richSubmissionData;
       },
       {
         operationName: "get submission by curator tweet ID",
@@ -223,43 +240,27 @@ export class SubmissionRepository {
     );
   }
 
-  /**
-   * Gets all submissions, optionally filtered by status, with pagination and search.
-   *
-   * @param page Page number (0-indexed)
-   * @param limit Number of items per page
-   * @param status Optional status filter
-   * @param sortOrder Sort order ("newest" or "oldest")
-   * @param q Optional search query for content, username, or curatorUsername
-   * @returns Paginated array of submissions with feed data
-   */
   async getAllSubmissions(
-    page: number,
-    limit: number,
     status?: SubmissionStatus,
     sortOrder: "newest" | "oldest" = "newest",
     q?: string,
-  ): Promise<PaginatedResponse<SubmissionWithFeedData>> {
+    page?: number,
+    limit?: number,
+  ): Promise<PaginatedResponse<RichSubmission>> {
+    const isPaginated = typeof page === "number" && typeof limit === "number";
     return withErrorHandling(
       async () => {
         return executeWithRetry(async (retryDb) => {
           const conditions: SQL[] = [];
 
           if (status) {
-            const subquery = retryDb
-              .select({ id: schema.submissionFeeds.submissionId })
-              .from(schema.submissionFeeds)
-              .where(
-                and(
-                  eq(
-                    schema.submissionFeeds.submissionId,
-                    schema.submissions.tweetId,
-                  ),
-                  eq(schema.submissionFeeds.status, status),
-                ),
-              )
-              .limit(1);
-            conditions.push(sql`exists ${subquery}`);
+            conditions.push(
+              sql`EXISTS (
+                SELECT 1
+                FROM ${schema.submissionFeeds} sf
+                WHERE sf.submission_id = ${schema.submissions.tweetId} AND sf.status = ${status}
+              )`,
+            );
           }
 
           if (q) {
@@ -276,107 +277,141 @@ export class SubmissionRepository {
           const whereClause =
             conditions.length > 0 ? and(...conditions) : undefined;
 
-          // Query for items
-          const itemsQuery = retryDb
-            .select({
-              tweetId: schema.submissions.tweetId,
-              userId: schema.submissions.userId,
-              username: schema.submissions.username,
-              curatorId: schema.submissions.curatorId,
-              curatorUsername: schema.submissions.curatorUsername,
-              curatorTweetId: schema.submissions.curatorTweetId,
-              content: schema.submissions.content,
-              curatorNotes: schema.submissions.curatorNotes,
-              submittedAt: schema.submissions.submittedAt,
-              createdAt: schema.submissions.createdAt,
-              updatedAt: schema.submissions.updatedAt,
-              feedStatuses: sql<BackendFeedStatus[]>`(
-                SELECT json_agg(json_build_object('feedId', sf.feed_id, 'feedName', f.name, 'status', sf.status))
-                FROM ${schema.submissionFeeds} sf
-                JOIN ${schema.feeds} f ON sf.feed_id = f.id
-                WHERE sf.submission_id = ${schema.submissions.tweetId}
-              )`.as("feed_statuses"),
-              moderationHistory: sql<SelectModerationHistory[]>`(
-                SELECT json_agg(mh.*)
-                FROM ${schema.moderationHistory} mh
-                WHERE mh.tweet_id = ${schema.submissions.tweetId}
-              )`.as("moderation_history"),
-            })
-            .from(schema.submissions)
-            .where(whereClause)
-            .orderBy(
+          const queryOptions: Parameters<
+            typeof retryDb.query.submissions.findMany
+          >[0] = {
+            where: whereClause,
+            orderBy:
               sortOrder === "newest"
                 ? desc(schema.submissions.submittedAt)
                 : asc(schema.submissions.submittedAt),
-            )
-            .limit(limit)
-            .offset(page * limit);
-
-          const submissionsResult = await itemsQuery;
-
-          // Query for total count
-          const totalCountQuery = retryDb
-            .select({ value: count() })
-            .from(schema.submissions)
-            .where(whereClause);
-
-          const totalCountResult = await totalCountQuery;
-          const totalCount = totalCountResult[0]?.value || 0;
-          const totalPages = Math.ceil(totalCount / limit);
-
-          return {
-            items: submissionsResult.map((item) => ({
-              ...item,
-              status: status || submissionStatusZodEnum.Enum.pending,
-              submittedAt: item.submittedAt,
-              feedStatuses: item.feedStatuses || [],
-              moderationHistory: item.moderationHistory || [],
-            })) as SubmissionWithFeedData[],
-            pagination: {
-              page,
-              limit,
-              totalCount,
-              totalPages,
-              hasNextPage: page < totalPages - 1,
+            with: {
+              moderationHistoryItems: {
+                orderBy: (mh, { asc }) => [asc(mh.createdAt)],
+              },
+              feedLinks: {
+                with: {
+                  feed: { columns: { name: true, id: true } },
+                },
+              },
             },
           };
+
+          if (isPaginated) {
+            queryOptions.limit = limit;
+            queryOptions.offset = page * limit;
+          }
+
+          const submissionsResult =
+            await retryDb.query.submissions.findMany(queryOptions);
+
+          const mappedItems = submissionsResult.map((item): RichSubmission => {
+            // item type here should include moderationHistoryItems and feedLinks due to 'with'
+            const typedItem = item as typeof item & {
+              moderationHistoryItems?: SelectModerationHistory[];
+              feedLinks?: (SelectSubmissionFeed & {
+                feed?: { name: string; id: string };
+              })[];
+            };
+
+            return {
+              tweetId: typedItem.tweetId,
+              userId: typedItem.userId,
+              username: typedItem.username,
+              curatorId: typedItem.curatorId,
+              curatorUsername: typedItem.curatorUsername,
+              curatorTweetId: typedItem.curatorTweetId,
+              content: typedItem.content,
+              curatorNotes: typedItem.curatorNotes,
+              submittedAt: typedItem.submittedAt as Date,
+              createdAt: typedItem.createdAt as Date,
+              updatedAt: typedItem.updatedAt as Date | null,
+              feeds:
+                typedItem.feedLinks?.map(
+                  (fl) =>
+                    ({
+                      submissionId: fl.submissionId,
+                      feedId: fl.feedId,
+                      status: fl.status,
+                      moderationResponseTweetId: fl.moderationResponseTweetId,
+                      createdAt: fl.createdAt,
+                      updatedAt: fl.updatedAt,
+                    }) as SelectSubmissionFeed,
+                ) || [],
+              moderationHistory:
+                typedItem.moderationHistoryItems?.map(
+                  (mh) =>
+                    ({
+                      id: mh.id,
+                      tweetId: mh.tweetId,
+                      feedId: mh.feedId,
+                      adminId: mh.adminId,
+                      action: mh.action,
+                      note: mh.note,
+                      createdAt: mh.createdAt,
+                      updatedAt: mh.updatedAt,
+                    }) as SelectModerationHistory,
+                ) || [],
+            };
+          });
+
+          if (isPaginated) {
+            const totalCountResult = await retryDb
+              .select({ value: count() })
+              .from(schema.submissions)
+              .where(whereClause);
+
+            const totalCount = totalCountResult[0]?.value || 0;
+            const totalPages = Math.ceil(totalCount / (limit! || 1));
+
+            return {
+              items: mappedItems,
+              pagination: {
+                page: page!,
+                limit: limit!,
+                totalCount,
+                totalPages,
+                hasNextPage: page! * limit! + mappedItems.length < totalCount,
+              },
+            };
+          } else {
+            return {
+              items: mappedItems,
+            };
+          }
         }, this.db);
       },
       {
-        operationName: "get all submissions (paginated)",
-        additionalContext: { page, limit, status, sortOrder, q },
+        operationName: "get all submissions",
+        additionalContext: { status, sortOrder, q, page, limit },
       },
       {
         items: [],
-        pagination: {
-          page,
-          limit,
-          totalCount: 0,
-          totalPages: 0,
-          hasNextPage: false,
-        },
-      } as PaginatedResponse<SubmissionWithFeedData>,
+        pagination: isPaginated
+          ? {
+              page: page!,
+              limit: limit!,
+              totalCount: 0,
+              totalPages: 0,
+              hasNextPage: false,
+            }
+          : undefined,
+      } as PaginatedResponse<RichSubmission>,
     );
   }
 
-  /**
-   * Gets the daily submission count for a user.
-   *
-   * @param userId The user ID
-   * @returns The daily submission count
-   */
   async getDailySubmissionCount(userId: string): Promise<number> {
     return withErrorHandling(
       async () => {
         return executeWithRetry(async (retryDb) => {
           const results = await retryDb
-            .select({ count: submissionCounts.count })
-            .from(submissionCounts)
+            .select({ count: schema.submissionCounts.count })
+            .from(schema.submissionCounts)
             .where(
               and(
-                eq(submissionCounts.userId, userId),
+                eq(schema.submissionCounts.userId, userId),
                 eq(
-                  sql`${submissionCounts.lastResetDate}::date`,
+                  sql`${schema.submissionCounts.lastResetDate}::date`,
                   sql`CURRENT_DATE`,
                 ),
               ),
@@ -393,17 +428,14 @@ export class SubmissionRepository {
     );
   }
 
-  /**
-   * Cleans up old submission counts.
-   * This method should be called within a service-managed transaction.
-   * @param txDb The transactional DB instance
-   */
   async cleanupOldSubmissionCounts(txDb: DB): Promise<void> {
     return withErrorHandling(
       async () => {
         await txDb
-          .delete(submissionCounts)
-          .where(sql`${submissionCounts.lastResetDate}::date < CURRENT_DATE`)
+          .delete(schema.submissionCounts)
+          .where(
+            sql`${schema.submissionCounts.lastResetDate}::date < CURRENT_DATE`,
+          )
           .execute();
       },
       {
@@ -412,17 +444,11 @@ export class SubmissionRepository {
     );
   }
 
-  /**
-   * Increments the daily submission count for a user.
-   *
-   * @param userId The user ID
-   * @param txDb The transactional DB instance
-   */
   async incrementDailySubmissionCount(userId: string, txDb: DB): Promise<void> {
     return withErrorHandling(
       async () => {
         await txDb
-          .insert(submissionCounts)
+          .insert(schema.submissionCounts)
           .values({
             userId,
             count: 1,
@@ -431,11 +457,11 @@ export class SubmissionRepository {
             updatedAt: new Date(),
           })
           .onConflictDoUpdate({
-            target: submissionCounts.userId,
+            target: schema.submissionCounts.userId,
             set: {
               count: sql`CASE 
-          WHEN ${submissionCounts.lastResetDate}::date < CURRENT_DATE THEN 1
-          ELSE ${submissionCounts.count} + 1
+          WHEN ${schema.submissionCounts.lastResetDate}::date < CURRENT_DATE THEN 1
+          ELSE ${schema.submissionCounts.count} + 1
         END`,
               lastResetDate: sql`CURRENT_DATE`,
             },
@@ -449,16 +475,10 @@ export class SubmissionRepository {
     );
   }
 
-  /**
-   * Gets the total number of posts.
-   *
-   * @returns The total number of posts
-   */
   async getPostsCount(): Promise<number> {
     return withErrorHandling(
       async () => {
         return executeWithRetry(async (retryDb) => {
-          // Count approved submissions
           const result = await retryDb.execute(sql`
     SELECT COUNT(DISTINCT submission_id) as count
     FROM submission_feeds
@@ -473,19 +493,13 @@ export class SubmissionRepository {
     );
   }
 
-  /**
-   * Gets the total number of curators.
-   *
-   * @returns The total number of curators
-   */
   async getCuratorsCount(): Promise<number> {
     return withErrorHandling(
       async () => {
         return executeWithRetry(async (retryDb) => {
-          // Count unique curator IDs
           const result = await retryDb.execute(sql`
     SELECT COUNT(DISTINCT curator_id) as count
-    FROM submissions
+    FROM submissions 
     WHERE curator_id IS NOT NULL
   `);
 

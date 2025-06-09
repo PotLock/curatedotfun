@@ -8,8 +8,8 @@
     "declarationMap": true, // Useful for debugging types
     "composite": true, // Required for project references
     "module": "ESNext", // Module format for the .d.ts files and any JS (if emitted)
-    "moduleResolution": "bundler",
-    "emitDeclarationOnly": true
+    "moduleResolution": "bundler"
+    // "emitDeclarationOnly": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

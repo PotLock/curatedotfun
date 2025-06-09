@@ -9,6 +9,7 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { z } from "zod";
 
 import { feeds } from "./feeds";
@@ -78,6 +79,7 @@ export const moderationHistory = table(
     adminId: text("admin_id").notNull(),
     action: text("action").notNull(),
     note: text("note"),
+    moderationTweetId: text("moderation_tweet_id").notNull(),
     ...timestamps,
   },
   (table) => [
@@ -96,4 +98,45 @@ export const submissionCounts = table(
     ...timestamps,
   },
   (table) => [index("submission_counts_date_idx").on(table.lastResetDate)],
+);
+
+export const submissionsRelations = relations(submissions, ({ many }) => ({
+  moderationHistoryItems: many(moderationHistory, {
+    relationName: "SubmissionModerationHistory",
+  }),
+  feedLinks: many(submissionFeeds, {
+    relationName: "SubmissionFeedLinks",
+  }),
+}));
+
+export const moderationHistoryRelations = relations(
+  moderationHistory,
+  ({ one }) => ({
+    submission: one(submissions, {
+      fields: [moderationHistory.tweetId],
+      references: [submissions.tweetId],
+      relationName: "SubmissionModerationHistory",
+    }),
+    feed: one(feeds, {
+      fields: [moderationHistory.feedId],
+      references: [feeds.id],
+      relationName: "ModerationHistoryFeedReference",
+    }),
+  }),
+);
+
+export const submissionFeedsRelations = relations(
+  submissionFeeds,
+  ({ one }) => ({
+    submission: one(submissions, {
+      fields: [submissionFeeds.submissionId],
+      references: [submissions.tweetId],
+      relationName: "SubmissionFeedLinks",
+    }),
+    feed: one(feeds, {
+      fields: [submissionFeeds.feedId],
+      references: [feeds.id],
+      relationName: "FeedSubmissionLinks",
+    }),
+  }),
 );

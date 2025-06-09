@@ -41,8 +41,7 @@ export class ModerationService implements IBaseService {
       tweetId: submission.tweetId, // This is the submission's tweetId
       feedId: feedEntry.feedId,
       note,
-      // moderationTriggerTweetId is passed to approveSubmission for SubmissionFeed update,
-      // not directly stored in ModerationHistory via this object unless schema changes.
+      moderationTweetId: moderationTriggerTweetId,
     };
 
     return this.db.transaction(async (tx) => {
@@ -74,6 +73,7 @@ export class ModerationService implements IBaseService {
       tweetId: submission.tweetId, // This is the submission's tweetId
       feedId: feedEntry.feedId,
       note,
+      moderationTweetId: moderationTriggerTweetId,
     };
 
     return this.db.transaction(async (tx) => {

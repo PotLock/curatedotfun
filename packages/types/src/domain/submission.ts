@@ -23,7 +23,7 @@ export interface Moderation {
   tweetId: string;
   feedId: string;
   note: string | null;
-  moderationResponseTweetId?: string | null;
+  moderationTweetId: string;
 }
 
 export interface Submission {
@@ -40,4 +40,23 @@ export interface Submission {
   updatedAt?: Date | null;
   moderationHistory: Moderation[];
   feeds: SubmissionFeed[];
+  displayStatus?: SubmissionStatus;
+}
+
+export interface FeedContextSubmission {
+  tweetId: string;
+  userId: string;
+  username: string;
+  curatorId: string;
+  curatorUsername: string;
+  content: string;
+  curatorNotes: string | null;
+  curatorTweetId: string;
+  createdAt: Date;
+  submittedAt: Date | null;
+  updatedAt?: Date | null;
+
+  status: SubmissionStatus;
+
+  moderationHistory: Moderation[];
 }

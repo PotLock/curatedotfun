@@ -8,8 +8,10 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { timestamps } from "./common";
 import { z } from "zod";
+import { submissionFeeds, moderationHistory } from "./submissions";
 
 // Schema for ModerationConfig
 export const ModerationConfigSchema = z.object({
@@ -161,3 +163,14 @@ export const feedPlugins = table(
     primaryKey({ columns: [table.feedId, table.pluginId] }), // Ensure one config per plugin per feed
   ],
 );
+
+// RELATIONS for feeds table
+
+export const feedsRelations = relations(feeds, ({ many }) => ({
+  submissionLinks: many(submissionFeeds, {
+    relationName: "FeedSubmissionLinks",
+  }),
+  moderationHistoryEntries: many(moderationHistory, {
+    relationName: "ModerationHistoryFeedReference",
+  }),
+}));

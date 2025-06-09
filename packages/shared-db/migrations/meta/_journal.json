@@ -57,6 +57,13 @@
       "when": 1749156293712,
       "tag": "0007_sleepy_phalanx",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1749492087424,
+      "tag": "0008_thick_hydra",
+      "breakpoints": true
     }
   ]
 }
