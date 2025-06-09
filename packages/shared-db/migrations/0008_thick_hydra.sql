@@ -8,8 +8,4 @@ UPDATE "moderation_history" mh
 
 SELECT COUNT(*) FROM "moderation_history" WHERE "moderation_tweet_id" IS NULL;
 
-FROM "moderation_history"
-  WHERE "moderation_tweet_id" IS NULL
-  LIMIT 5;
-
 ALTER TABLE "moderation_history" ALTER COLUMN "moderation_tweet_id" SET NOT NULL;
