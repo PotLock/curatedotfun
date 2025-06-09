@@ -1,19 +1,19 @@
+import { relations } from "drizzle-orm";
 import {
   date,
   index,
   integer,
   pgEnum,
   primaryKey,
-  serial,
   pgTable as table,
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
 import { z } from "zod";
 
-import { feeds } from "./feeds";
 import { timestamps } from "./common";
+import { feeds } from "./feeds";
+import { moderationHistory } from "./moderation";
 
 export const submissionStatusValues = [
   "pending",
@@ -57,35 +57,11 @@ export const submissionFeeds = table(
       .notNull()
       .references(() => feeds.id, { onDelete: "cascade" }),
     status: submissionStatusEnum("status").notNull().default("pending"),
-    moderationResponseTweetId: text("moderation_response_tweet_id"),
     ...timestamps,
   },
   (table) => [
     primaryKey({ columns: [table.submissionId, table.feedId] }),
     index("submission_feeds_feed_idx").on(table.feedId),
-  ],
-);
-
-export const moderationHistory = table(
-  "moderation_history",
-  {
-    id: serial("id").primaryKey(),
-    tweetId: text("tweet_id")
-      .notNull()
-      .references(() => submissions.tweetId, { onDelete: "cascade" }),
-    feedId: text("feed_id")
-      .notNull()
-      .references(() => feeds.id, { onDelete: "cascade" }),
-    adminId: text("admin_id").notNull(),
-    action: text("action").notNull(),
-    note: text("note"),
-    moderationTweetId: text("moderation_tweet_id"),
-    ...timestamps,
-  },
-  (table) => [
-    index("moderation_history_tweet_idx").on(table.tweetId),
-    index("moderation_history_admin_idx").on(table.adminId),
-    index("moderation_history_feed_idx").on(table.feedId),
   ],
 );
 
@@ -108,22 +84,6 @@ export const submissionsRelations = relations(submissions, ({ many }) => ({
     relationName: "SubmissionFeedLinks",
   }),
 }));
-
-export const moderationHistoryRelations = relations(
-  moderationHistory,
-  ({ one }) => ({
-    submission: one(submissions, {
-      fields: [moderationHistory.tweetId],
-      references: [submissions.tweetId],
-      relationName: "SubmissionModerationHistory",
-    }),
-    feed: one(feeds, {
-      fields: [moderationHistory.feedId],
-      references: [feeds.id],
-      relationName: "ModerationHistoryFeedReference",
-    }),
-  }),
-);
 
 export const submissionFeedsRelations = relations(
   submissionFeeds,

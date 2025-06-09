@@ -1,5 +1,6 @@
 import {
   FeedRepository,
+  ModerationRepository,
   SubmissionRepository,
   TwitterRepository,
 } from "@curatedotfun/shared-db";
@@ -91,9 +92,11 @@ export class ServiceProvider {
     const feedRepository = new FeedRepository(db);
     const twitterRespository = new TwitterRepository(db);
     const submissionRepository = new SubmissionRepository(db);
+    const moderationRepository = new ModerationRepository(db);
 
     const moderationService = new ModerationService(
       feedRepository,
+      moderationRepository,
       submissionRepository,
       processorService,
       feedService,
@@ -107,9 +110,7 @@ export class ServiceProvider {
           twitterService,
           feedRepository,
           submissionRepository,
-          twitterRespository,
           db,
-          moderationService,
           feedService,
           logger,
         )

@@ -1,7 +1,8 @@
-import { HiExternalLink } from "react-icons/hi";
-import { useBotId } from "../lib/config";
-import { getTweetUrl, handleApprove, handleReject } from "../lib/twitter";
-import { SubmissionWithFeedData } from "../types/twitter";
+import type { FeedContextSubmission } from "@curatedotfun/types";
+import {
+  useApproveSubmission,
+  useRejectSubmission,
+} from "../lib/api/moderation";
 import { formatDate } from "../utils/datetime";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -17,36 +18,14 @@ export const UserLink = ({ username }: { username: string }) => (
   </a>
 );
 
-const TweetLink = ({
-  tweetId,
-  username,
-  title,
-}: {
-  tweetId: string;
-  username: string;
-  title: string;
-}) => (
-  <a
-    href={getTweetUrl(tweetId, username)}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="text-gray-600 hover:text-gray-800 transition-colors"
-    title={title}
-  >
-    <HiExternalLink className="inline h-4 w-4" />
-  </a>
-);
-
 const NotesSection = ({
   title,
   username,
-  tweetId,
   note,
   className = "",
 }: {
   title: string;
   username: string;
-  tweetId: string;
   note: string | null;
   className?: string;
 }) => {
@@ -66,12 +45,6 @@ const NotesSection = ({
         <span className="text-gray-400">·</span>
         <div className="text-gray-600 break-words">
           by <UserLink username={username} />
-          <span className="text-gray-400 mx-1">·</span>
-          <TweetLink
-            tweetId={tweetId}
-            username={username}
-            title={`View ${title.toLowerCase()} on X/Twitter`}
-          />
         </div>
       </div>
       {note && <p className="body-text text-gray-700">{note}</p>}
@@ -81,26 +54,64 @@ const NotesSection = ({
 
 const ModerationActions = ({
   submission,
+  feedId,
 }: {
-  submission: SubmissionWithFeedData;
+  submission: FeedContextSubmission;
+  feedId: string;
 }) => {
-  const botId = useBotId();
+  const approveMutation = useApproveSubmission();
+  const rejectMutation = useRejectSubmission();
+
+  const handleApproveClick = () => {
+    if (!submission.tweetId || !feedId) {
+      console.error("Submission Tweet ID or Feed ID is missing for approval.", {
+        submission,
+        feedId,
+      });
+      return;
+    }
+    approveMutation.mutate({
+      submissionId: submission.tweetId,
+      feedId: feedId,
+    });
+  };
+
+  const handleRejectClick = () => {
+    if (!submission.tweetId || !feedId) {
+      console.error(
+        "Submission Tweet ID or Feed ID is missing for rejection.",
+        { submission, feedId },
+      );
+      return;
+    }
+    rejectMutation.mutate({
+      submissionId: submission.tweetId,
+      feedId: feedId,
+    });
+  };
 
   return (
     <div className="flex justify-center flex-col gap-2">
-      <Button onClick={() => handleApprove(submission, botId)}>Approve</Button>
       <Button
-        onClick={() => handleReject(submission, botId)}
-        variant="destructive"
+        onClick={handleApproveClick}
+        disabled={approveMutation.isPending || rejectMutation.isPending}
       >
-        Reject
+        {approveMutation.isPending ? "Approving..." : "Approve"}
+      </Button>
+      <Button
+        onClick={handleRejectClick}
+        variant="destructive"
+        disabled={approveMutation.isPending || rejectMutation.isPending}
+      >
+        {rejectMutation.isPending ? "Rejecting..." : "Reject"}
       </Button>
     </div>
   );
 };
 
 interface FeedItemProps {
-  submission: SubmissionWithFeedData;
+  submission: FeedContextSubmission;
+  feedId: string; // Added feedId prop
 }
 
 // Function to truncate text to a specific character count without breaking words
@@ -117,7 +128,7 @@ const truncateText = (text: string, maxLength: number): string => {
   return text.substring(0, lastSpace) + "...";
 };
 
-export const FeedItem = ({ submission }: FeedItemProps) => {
+export const FeedItem = ({ submission, feedId }: FeedItemProps) => {
   const lastModeration =
     submission.moderationHistory?.[submission.moderationHistory.length - 1];
 
@@ -175,7 +186,6 @@ export const FeedItem = ({ submission }: FeedItemProps) => {
                 <NotesSection
                   title="Moderation Notes"
                   username={lastModeration.adminId}
-                  tweetId={submission.moderationResponseTweetId!}
                   note={lastModeration.note}
                   // className="mb-4"
                 />
@@ -190,13 +200,12 @@ export const FeedItem = ({ submission }: FeedItemProps) => {
               <NotesSection
                 title="Curator's Notes"
                 username={submission.curatorUsername}
-                tweetId={submission.curatorTweetId}
                 note={submission.curatorNotes}
               />
             </div>
             <div className="flex-col">
               <div className="flex">
-                <ModerationActions submission={submission} />
+                <ModerationActions submission={submission} feedId={feedId} />
               </div>
             </div>
           </div>

@@ -206,8 +206,6 @@ export class FeedRepository {
               submissionId: schema.submissionFeeds.submissionId,
               feedId: schema.submissionFeeds.feedId,
               status: schema.submissionFeeds.status,
-              moderationResponseTweetId:
-                schema.submissionFeeds.moderationResponseTweetId,
               createdAt: schema.submissionFeeds.createdAt,
               updatedAt: schema.submissionFeeds.updatedAt,
             })
@@ -376,7 +374,6 @@ export class FeedRepository {
                 submissionId: fl.submissionId,
                 feedId: fl.feedId,
                 status: fl.status,
-                moderationResponseTweetId: fl.moderationResponseTweetId,
                 createdAt: fl.createdAt,
                 updatedAt: fl.updatedAt,
               })) as SelectSubmissionFeed[],
@@ -455,14 +452,13 @@ export class FeedRepository {
     submissionId: string,
     feedId: string,
     status: SubmissionStatus,
-    moderationResponseTweetId: string | null,
     txDb: DB,
   ): Promise<void> {
     return withErrorHandling(
       async () => {
         await txDb
           .update(schema.submissionFeeds)
-          .set({ status, moderationResponseTweetId, updatedAt: new Date() })
+          .set({ status, updatedAt: new Date() })
           .where(
             and(
               eq(schema.submissionFeeds.submissionId, submissionId),
@@ -476,7 +472,6 @@ export class FeedRepository {
           submissionId,
           feedId,
           status,
-          moderationResponseTweetId,
         },
       },
     );

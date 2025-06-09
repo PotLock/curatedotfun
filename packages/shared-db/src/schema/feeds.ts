@@ -11,7 +11,8 @@ import {
 import { relations } from "drizzle-orm";
 import { timestamps } from "./common";
 import { z } from "zod";
-import { submissionFeeds, moderationHistory } from "./submissions";
+import { submissionFeeds } from "./submissions";
+import { moderationHistory } from "./moderation";
 
 // Schema for ModerationConfig
 export const ModerationConfigSchema = z.object({

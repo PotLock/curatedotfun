@@ -4,10 +4,10 @@ import { SubmissionStatus } from "../schema";
 import { executeWithRetry, withErrorHandling } from "../utils";
 import {
   DB,
-  InsertModerationHistory,
   InsertSubmission,
   RichSubmission,
   SelectModerationHistory,
+  SelectSubmission,
   SelectSubmissionFeed,
 } from "../validators";
 
@@ -34,10 +34,13 @@ export class SubmissionRepository {
     this.db = db;
   }
 
-  async saveSubmission(submission: InsertSubmission, txDb: DB): Promise<void> {
+  async saveSubmission(
+    submission: InsertSubmission,
+    txDb: DB,
+  ): Promise<SelectSubmission> {
     return withErrorHandling(
       async () => {
-        await txDb
+        const result = await txDb
           .insert(schema.submissions)
           .values({
             tweetId: submission.tweetId,
@@ -51,41 +54,17 @@ export class SubmissionRepository {
             createdAt: submission.createdAt,
             submittedAt: submission.submittedAt,
           })
-          .execute();
+          .returning();
+        if (result.length === 0) {
+          throw new Error(
+            "Failed to save submission: no record returned after insert.",
+          );
+        }
+        return result[0] as SelectSubmission;
       },
       {
         operationName: "save submission",
         additionalContext: { tweetId: submission.tweetId },
-      },
-    );
-  }
-
-  async saveModerationAction(
-    moderation: InsertModerationHistory,
-    txDb: DB,
-  ): Promise<void> {
-    return withErrorHandling(
-      async () => {
-        await txDb
-          .insert(schema.moderationHistory)
-          .values({
-            tweetId: moderation.tweetId,
-            feedId: moderation.feedId,
-            adminId: moderation.adminId,
-            action: moderation.action,
-            note: moderation.note,
-            moderationTweetId: moderation.moderationTweetId,
-            createdAt: moderation.createdAt,
-          })
-          .execute();
-      },
-      {
-        operationName: "save moderation action",
-        additionalContext: {
-          tweetId: moderation.tweetId,
-          feedId: moderation.feedId,
-          action: moderation.action,
-        },
       },
     );
   }
@@ -134,7 +113,6 @@ export class SubmissionRepository {
                   submissionId: fl.submissionId,
                   feedId: fl.feedId,
                   status: fl.status,
-                  moderationResponseTweetId: fl.moderationResponseTweetId,
                   createdAt: fl.createdAt,
                   updatedAt: fl.updatedAt,
                 }) as SelectSubmissionFeed,
@@ -210,7 +188,6 @@ export class SubmissionRepository {
                   submissionId: fl.submissionId,
                   feedId: fl.feedId,
                   status: fl.status,
-                  moderationResponseTweetId: fl.moderationResponseTweetId,
                   createdAt: fl.createdAt,
                   updatedAt: fl.updatedAt,
                 }) as SelectSubmissionFeed,
@@ -333,7 +310,6 @@ export class SubmissionRepository {
                       submissionId: fl.submissionId,
                       feedId: fl.feedId,
                       status: fl.status,
-                      moderationResponseTweetId: fl.moderationResponseTweetId,
                       createdAt: fl.createdAt,
                       updatedAt: fl.updatedAt,
                     }) as SelectSubmissionFeed,
