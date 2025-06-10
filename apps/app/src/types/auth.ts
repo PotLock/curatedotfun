@@ -33,8 +33,11 @@ export interface AuthContextType {
   ) => Promise<void>;
   logout: () => Promise<void>;
   getIdToken: (purposeMessage?: string) => Promise<string | null>;
-  fetchUserProfile: () => Promise<UserProfile | null>; 
+  fetchUserProfile: () => Promise<UserProfile | null>;
 
   // Potentially a direct way to get Web3Auth specific credentials if still needed by CreateAccountModal
-  getWeb3AuthNearCredentials: () => Promise<{ keyPair: KeyPair; publicKey: string } | null>;
+  getWeb3AuthNearCredentials: () => Promise<{
+    keyPair: KeyPair;
+    publicKey: string;
+  } | null>;
 }

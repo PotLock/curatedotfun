@@ -17,14 +17,10 @@ export const CreateAccountModal = ({
   isOpen,
   onClose,
 }: CreateAccountModalProps) => {
-  const {
-    logout, 
-    nearAccountDetails,    
-    fetchUserProfile,      
-    authMethod,            
-  } = useAuth();
-  
-  const { getUserInfo: getW3AUserInfo } = useWeb3Auth(); 
+  const { logout, nearAccountDetails, fetchUserProfile, authMethod } =
+    useAuth();
+
+  const { getUserInfo: getW3AUserInfo } = useWeb3Auth();
 
   const [chosenUsername, setChosenUsername] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -41,14 +37,16 @@ export const CreateAccountModal = ({
   }, [isOpen]);
 
   const handleClose = () => {
-    logout(); 
+    logout();
     onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chosenUsername || !nearAccountDetails?.publicKey) {
-      setValidationError("Username and authenticated session (with public key) are required.");
+      setValidationError(
+        "Username and authenticated session (with public key) are required.",
+      );
       return;
     }
 
@@ -67,7 +65,7 @@ export const CreateAccountModal = ({
       let nameFromAuth: string | undefined = undefined;
       let emailFromAuth: string | undefined = undefined;
 
-      if (authMethod === 'web3auth') {
+      if (authMethod === "web3auth") {
         // Get user info from Web3Auth if that's the method
         const w3aUserInfo = await getW3AUserInfo();
         nameFromAuth = w3aUserInfo.name;
@@ -78,11 +76,16 @@ export const CreateAccountModal = ({
 
       // nearAccountDetails.publicKey should be populated by AuthContext
       if (!nearAccountDetails?.publicKey) {
-         setValidationError("NEAR public key is not available. Please try logging in again.");
-         return;
+        setValidationError(
+          "NEAR public key is not available. Please try logging in again.",
+        );
+        return;
       }
-      
-      console.log("Creating user profile with public key:", nearAccountDetails.publicKey);
+
+      console.log(
+        "Creating user profile with public key:",
+        nearAccountDetails.publicKey,
+      );
       const profile = await createUserMutation.mutateAsync({
         username: chosenUsername.toLowerCase(),
         // near_public_key is now handled by useCreateUserProfile hook
@@ -91,7 +94,7 @@ export const CreateAccountModal = ({
       });
 
       // Update the main AuthContext by re-fetching the profile
-      await fetchUserProfile(); 
+      await fetchUserProfile();
       console.log("Account and profile created successfully:", profile);
       onClose(); // Close modal
     } catch (err) {
