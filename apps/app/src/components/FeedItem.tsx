@@ -203,11 +203,11 @@ export const FeedItem = ({ submission, feedId }: FeedItemProps) => {
                 note={submission.curatorNotes}
               />
             </div>
-            <div className="flex-col">
+            {/* <div className="flex-col">
               <div className="flex">
                 <ModerationActions submission={submission} feedId={feedId} />
               </div>
-            </div>
+            </div> */}
           </div>
         )}
       </div>
