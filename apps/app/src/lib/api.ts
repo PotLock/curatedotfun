@@ -214,7 +214,9 @@ export function useFeedItems(feedId: string, filters: SubmissionFilters = {}) {
     select: (data) => ({
       pages: data.pages,
       pageParams: data.pageParams,
-      items: data.pages.flatMap((page) => (Array.isArray(page) ? page : [])),
+      items: data.pages.flatMap((page) =>
+        Array.isArray(page.items) ? page.items : [],
+      ),
     }),
     refetchInterval: 10000,
     refetchOnWindowFocus: true,

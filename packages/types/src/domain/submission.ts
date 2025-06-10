@@ -40,7 +40,7 @@ export interface Submission {
   updatedAt?: Date | null;
   moderationHistory: Moderation[];
   feeds: SubmissionFeed[];
-  displayStatus?: SubmissionStatus;
+  status?: SubmissionStatus;
 }
 
 export interface FeedContextSubmission {
@@ -56,7 +56,7 @@ export interface FeedContextSubmission {
   submittedAt: Date | null;
   updatedAt?: Date | null;
 
-  displayStatus: SubmissionStatus;
+  status: SubmissionStatus;
 
   moderationHistory: Moderation[];
 }

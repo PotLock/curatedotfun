@@ -109,7 +109,7 @@ submissionRoutes.get(
               updatedAt: sf.updatedAt,
             }) as DomainSubmissionFeed,
         ),
-        displayStatus: overallStatus,
+        status: overallStatus,
       };
     });
 
@@ -195,7 +195,7 @@ submissionRoutes.get("/single/:submissionId", async (c) => {
           updatedAt: sf.updatedAt,
         }) as DomainSubmissionFeed,
     ),
-    displayStatus: overallStatusSingle,
+    status: overallStatusSingle,
   };
 
   return c.json(domainSubmission);
