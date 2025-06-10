@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
+import { near } from "../lib/near";
 import { useAuthStore } from "../store/auth-store";
 import { useFeedCreationStore } from "../store/feed-creation-store";
 import { AuthUserInfo } from "../types/web3auth";
+import { ImageUpload } from "./ImageUpload";
 import { Button } from "./ui/button";
 import {
   Form,
@@ -17,7 +19,6 @@ import {
 } from "./ui/form";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
-import { ImageUpload } from "./ImageUpload";
 
 const BasicInformationFormSchema = z.object({
   profileImage: z.string().optional(),
@@ -32,6 +33,8 @@ export default function BasicInformationForm() {
   const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
   const { isLoggedIn, getUserInfo } = useWeb3Auth();
   const { showLoginModal } = useAuthStore();
+  const isWallet = near.authStatus() === "SignedIn";
+
   const {
     profileImage: storedProfileImage,
     feedName,
@@ -77,7 +80,7 @@ export default function BasicInformationForm() {
 
   return (
     <div>
-      {isLoggedIn && userInfo ? (
+      {isWallet || (isLoggedIn && userInfo) ? (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             {/* Image Upload */}

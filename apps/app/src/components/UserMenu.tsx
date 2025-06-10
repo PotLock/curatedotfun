@@ -9,12 +9,12 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
-import { useWalletSelector } from "@near-wallet-selector/react-hook";
 import { useNavigate } from "@tanstack/react-router";
 import { ChevronDown, CircleUserRound, LogOut } from "lucide-react";
 import { useAuthStore } from "../store/auth-store";
 import { AuthUserInfo } from "../types/web3auth";
 import { AvatarProfile } from "./AvatarProfile";
+import { near } from "../lib/near";
 
 interface UserMenuProps {
   className?: string;
@@ -28,7 +28,7 @@ export default function UserMenu({ className }: UserMenuProps) {
   const { showLoginModal } = useAuthStore();
 
   const { isInitialized, isLoggedIn, logout, getUserInfo } = useWeb3Auth();
-  const { signedAccountId, signOut } = useWalletSelector();
+  const signedAccountId = near.accountId();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -89,7 +89,7 @@ export default function UserMenu({ className }: UserMenuProps) {
 
   const handleLogout = () => {
     if (signedAccountId) {
-      signOut();
+      near.signOut();
     } else {
       logout();
     }

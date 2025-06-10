@@ -1,5 +1,6 @@
 import { Context, Next } from "hono";
 import * as jose from "jose";
+import { verify as nearVerify } from "near-sign-verify";
 import { Env } from "../types/app";
 
 export class JwtTokenInvalid extends Error {
@@ -121,8 +122,14 @@ export async function web3AuthJwtMiddleware(c: Context<Env>, next: Next) {
       loginType = "social";
     } catch (socialError) {
       // If social login verification fails, try external wallet verification
-      payload = await verify(token, "wallet");
-      loginType = "wallet";
+      // payload = await verify(token, "wallet");
+      try {
+        payload = await nearVerify(token);
+        console.log("payload", payload);
+        loginType = "wallet";
+      } catch (e) {
+        console.log(e);
+      }
     }
 
     c.set("jwtPayload", {
