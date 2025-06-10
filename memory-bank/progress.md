@@ -3,6 +3,7 @@
 ## Current Status
 
 ### Working
+
 - Frontend application with React and TanStack Router
 - Backend with Node.js/Hono
 - Plugin system with module federation
@@ -15,6 +16,7 @@
 ### Platform Features
 
 #### Core System ✓
+
 - [x] Content submission via Twitter
 - [x] Trusted curator moderation
 - [x] Content processing pipeline
@@ -24,6 +26,7 @@
 - [x] Database storage and retrieval
 
 #### Distribution ✓
+
 - [x] Telegram channel distribution
 - [x] RSS feed generation
 - [x] Notion database integration
@@ -31,6 +34,7 @@
 - [x] Custom formatting per feed
 
 #### Transformation ✓
+
 - [x] Simple text transformation
 - [x] Object mapping transformation
 - [x] AI-powered content enhancement
@@ -38,6 +42,7 @@
 - [x] JSON sanitization throughout pipeline
 
 #### Frontend ✓
+
 - [x] Feed management interface
 - [x] Submission viewing and filtering
 - [x] Moderation information display
@@ -45,19 +50,13 @@
 - [x] Responsive design
 
 #### Infrastructure ✓
+
 - [x] Turborepo conversion
   - [x] Workspace configuration
   - [x] Corepack integration
   - [x] Optimized task configuration
   - [x] Integration testing setup
   - [x] Docker optimization
-- [x] PostgreSQL migration from SQLite
-  - [x] Docker-based development environment
-  - [x] Migration scripts
-  - [x] Database service implementation
-  - [x] Repository pattern implementation
-  - [x] Modular database service architecture
-  - [x] Testing infrastructure with isolated test databases
 - [x] Docker containerization
   - [x] Multi-stage build process
   - [x] Optimized images
@@ -70,6 +69,18 @@
   - [x] Monitoring and logging
 
 ### In Progress
+
+- [ ] Backend service pattern migration
+  - [x] Users service implementation completed (reference pattern)
+  - [ ] Migrate Feeds service
+  - [ ] Migrate Submissions service
+  - [ ] Migrate Processor service
+  - [ ] Migrate Distribution service
+  - [ ] Migrate Transformation service
+  - [ ] Migrate Plugin service
+  - [ ] Migrate Config service
+  - [ ] Migrate Twitter service
+  - [ ] Delete unused code after migration
 - [ ] Comprehensive error handling solution
   - [x] Database repositories error handling implemented
   - [x] Transaction-based operations for data consistency
@@ -92,7 +103,20 @@
 - [ ] Additional distributor plugins
 
 ## Next Actions
-1. Complete comprehensive error handling solution
+
+1. Migrate backend services to follow the users service pattern
+
+   - [ ] Define Zod schemas for validation
+   - [ ] Create service interfaces
+   - [ ] Implement repositories with proper error handling
+   - [ ] Develop services with business logic
+   - [ ] Create controllers with route definitions
+   - [ ] Mount controllers in app.ts
+   - [ ] Add tests for new implementations
+   - [ ] Delete unused code after migration
+
+2. Complete comprehensive error handling solution
+
    - [x] Add error handling to database repositories
    - [x] Implement transaction-based operations
    - [x] Add default values for graceful degradation
@@ -101,21 +125,23 @@
    - [ ] Implement error recovery mechanisms for other services
    - [ ] Create user-friendly error messages
 
-2. Move configuration to database
+3. Move configuration to database
+
    - Design database schema for configuration
    - Create migration scripts
    - Implement configuration service
    - Add versioning support
    - Create admin interface
 
-3. Complete test coverage
+4. Complete test coverage
+
    - Expand component tests
    - Add integration tests
    - Implement E2E tests
    - Add performance tests
    - Improve test infrastructure
 
-4. Implement database protections for Web3Auth
+5. Implement database protections for Web3Auth
    - Integrate Web3Auth
    - Add database security measures
    - Implement access control
@@ -123,6 +149,7 @@
    - Ensure compliance with security best practices
 
 ## Known Issues
+
 - None critical - System is stable and operational
 - Configuration management needs to be moved to database for better versioning and security
 - Error handling needs to be more comprehensive
@@ -130,6 +157,7 @@
 - Database security needs to be enhanced for Web3Auth integration
 
 ## Feed Status
+
 - Active feeds: Multiple (Ethereum, NEAR, Solana, Grants, AI, etc.)
 - Curator networks: Established for all active feeds
 - Distribution channels: Operational for all active feeds

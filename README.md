@@ -74,7 +74,7 @@ graph TD
         Twitter["Twitter Source Plugin"]
         style Twitter color:black
     end
-    
+
     %% Submission Processing
     subgraph Submission["Submission Processing"]
         SubmissionService["Submission Service"]
@@ -82,7 +82,7 @@ graph TD
         style SubmissionService color:black
         style Moderation color:black
     end
-    
+
     %% Content Processing
     subgraph Processing["Content Processing"]
         ProcessorService["Processor Service"]
@@ -90,7 +90,7 @@ graph TD
         style ProcessorService color:black
         style GlobalTransform color:black
     end
-    
+
     %% Distribution
     subgraph Distribution["Distribution"]
         DistributionService["Distribution Service"]
@@ -98,7 +98,7 @@ graph TD
         style DistributionService color:black
         style DistTransform color:black
     end
-    
+
     %% Distributor Plugins
     subgraph Distributors["Distributor Plugins"]
         Telegram["Telegram"]
@@ -110,7 +110,7 @@ graph TD
         style Notion color:black
         style Supabase color:black
     end
-    
+
     %% Flow connections
     Sources --> SubmissionService
     SubmissionService --> Moderation
@@ -119,12 +119,12 @@ graph TD
     GlobalTransform --> DistributionService
     DistributionService --> DistTransform
     DistTransform --> Distributors
-    
+
     %% Styling
     classDef service fill:#f9f,stroke:#333,stroke-width:2px
     classDef plugin fill:#bbf,stroke:#333,stroke-width:1px
     classDef process fill:#bfb,stroke:#333,stroke-width:1px
-    
+
     class SubmissionService,ProcessorService,DistributionService service
     class Twitter,Telegram,RSS,Notion,Supabase plugin
     class Moderation,GlobalTransform,DistTransform process
@@ -132,19 +132,20 @@ graph TD
 
 ### Key Components
 
-- **[Frontend](./frontend/README.md)**
+- **[Frontend](./app/README.md)**
+
   - React-based web interface
   - Built with RSBuild and Tailwind CSS
   - Handles user interactions and submissions
-  - See [Frontend README](./frontend/README.md) for detailed documentation
+  - See [Frontend README](./app/README.md) for detailed documentation
 
-- **[Backend](./backend/README.md)**
+- **[Backend](./api/README.md)**
   - Node.js runtime with Hono.js framework
   - Plugin-based architecture with module federation
   - Service-oriented design with clear boundaries
   - Twitter bot functionality
   - API endpoints for frontend
-  - See [Backend README](./backend/README.md) for detailed documentation
+  - See [Backend README](./api/README.md) for detailed documentation
 
 ### Monorepo Overview
 

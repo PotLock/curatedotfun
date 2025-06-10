@@ -22,7 +22,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data # dev persists volumes, so you don't lose your setup
     profiles: ["dev"]
-    
+
   # Production-specific postgres config
   postgres_prod:
     extends: postgres
@@ -51,7 +51,7 @@ services:
     image: oven/bun:latest # we need bun to run the .ts scripts
     working_dir: /app
     volumes:
-      - ./backend:/app
+      - ./:/app
 
     # Development-specific initialization
   db-init-dev:
@@ -62,9 +62,9 @@ services:
       postgres_dev:
         condition: service_healthy
     volumes:
-      - ./backend:/app
-      - node_modules_cache:/app/node_modules  # Add persistent volume for node_modules, otherwise this messes with rspack bindings
-    command: sh -c "bun add -g pnpm && if [ ! -d /app/node_modules/.pnpm ]; then echo '📦 Installing dependencies...' && pnpm install; else echo '✅ Dependencies already installed, skipping'; fi && pnpm run db:migrate && pnpm run db:seed:dev"
+      - ./:/app # Mount the entire monorepo root
+      - node_modules_cache:/app/node_modules # Add persistent volume for node_modules, otherwise this messes with rspack bindings
+    command: sh -c "bun add -g pnpm && echo '📦 Ensuring dependencies are installed...' && pnpm install && pnpm run db:migrate && pnpm run db:seed:dev"
     profiles: ["dev"]
 
   # Test-specific initialization
@@ -77,7 +77,7 @@ services:
         condition: service_healthy
     command: sh -c "bun add -g pnpm && pnpm install && pnpm run db:migrate && pnpm run db:seed:test"
     profiles: ["test"]
-    
+
   # Production-specific initialization
   db-init-prod:
     extends: db-init
@@ -93,8 +93,8 @@ services:
   # Application service
   app:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: . 
+      dockerfile: apps/api/Dockerfile
     depends_on:
       postgres_prod:
         condition: service_healthy
@@ -102,7 +102,7 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@postgres_prod:5432/curatedotfun
       NODE_ENV: production
     env_file:
-      - ./backend/.env
+      - ./apps/api/.env
     ports:
       - "3000:3000"
     profiles: ["prod"] # we can run the app profile to test a production run
@@ -110,4 +110,4 @@ services:
 volumes:
   postgres_data:
   postgres_data_prod:
-  node_modules_cache:  # Add persistent volume for node_modules
+  node_modules_cache: # Add persistent volume for node_modules

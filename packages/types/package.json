@@ -1,0 +1,36 @@
+{
+  "name": "@curatedotfun/types",
+  "version": "0.0.6",
+  "description": "Type definitions for curatedotfun plugins",
+  "types": "./dist/index.d.ts",
+  "main": "./dist/index.js",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/potlock/curatedotfun-plugins.git",
+    "directory": "packages/types"
+  },
+  "keywords": [
+    "curatedotfun",
+    "types",
+    "typescript"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.25.28"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        platform: [ linux/amd64 ]
+        platform: [linux/amd64]
 
     steps:
       - name: Checkout code
@@ -43,4 +43,3 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           tags: ghcr.io/${{ env.REPO }}:${{ github.sha }}
-

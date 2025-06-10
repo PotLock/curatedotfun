@@ -7,21 +7,23 @@
     "prettier": "^3.3.3",
     "turbo": "latest"
   },
-  "packageManager": "pnpm@10.10.0",
+  "packageManager": "pnpm@10.11.0",
   "private": true,
   "scripts": {
     "dev": "./scripts/dev.sh",
     "dev:fresh": "./scripts/dev.sh --fresh",
     "build": "turbo run build",
     "start": "docker-compose --profile prod up -d --build postgres_prod && docker-compose --profile prod run --rm db-init-prod && docker-compose --profile prod up -d --build app",
-    "test": "docker-compose --profile test up -d postgres_test && docker-compose --profile test run --rm db-init-test && turbo run test --filter=@curatedotfun/backend || true && docker-compose --profile test down -v",
-    "test:ci": "turbo run test --filter=@curatedotfun/backend",
+    "test": "docker-compose --profile test up -d postgres_test && docker-compose --profile test run --rm db-init-test && turbo run test --filter=@curatedotfun/api || true && docker-compose --profile test down -v",
+    "test:ci": "turbo run test --filter=@curatedotfun/api",
     "lint": "turbo run lint",
     "clean": "turbo run clean",
     "fmt": "prettier --write '**/*.{js,jsx,ts,tsx,json}'",
     "fmt:check": "prettier --check '**/*.{js,jsx,ts,tsx,json}'",
-    "db:migrate": "cd backend && pnpm db:migrate",
-    "prepare": "corepack enable"
+    "db:generate": "pnpm --filter @curatedotfun/shared-db run db:generate",
+    "db:migrate": "pnpm --filter @curatedotfun/shared-db run db:migrate",
+    "db:studio": "pnpm --filter @curatedotfun/shared-db run db:studio",
+    "db:seed:dev": "pnpm --filter @curatedotfun/shared-db run seed:dev"
   },
   "type": "module"
 }

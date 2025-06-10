@@ -7,10 +7,6 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
-    "@curatedotfun/backend#build": {
-      "dependsOn": ["@curatedotfun/frontend#build", "^build"],
-      "outputs": ["dist/**"]
-    },
     "dev": {
       "cache": false,
       "persistent": true,
