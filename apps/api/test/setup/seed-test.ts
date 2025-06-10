@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import * as schema from "../../src/services/db/schema";
+import * as schema from "@curatedotfun/shared-db";
 
 // This seed file inserts seed data necessary for tests
 async function main() {
@@ -181,7 +181,6 @@ async function main() {
         submissionId: "tweet-1",
         feedId: "test-feed-1",
         status: "pending",
-        moderationResponseTweetId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -189,7 +188,6 @@ async function main() {
         submissionId: "tweet-2",
         feedId: "test-feed-1",
         status: "approved",
-        moderationResponseTweetId: "mod-tweet-1",
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -197,7 +195,6 @@ async function main() {
         submissionId: "tweet-2",
         feedId: "test-feed-2",
         status: "pending",
-        moderationResponseTweetId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -205,7 +202,6 @@ async function main() {
         submissionId: "tweet-3",
         feedId: "test-feed-3",
         status: "rejected",
-        moderationResponseTweetId: "mod-tweet-2",
         createdAt: new Date(),
         updatedAt: new Date(),
       },
