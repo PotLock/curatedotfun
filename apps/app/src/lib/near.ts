@@ -4,4 +4,4 @@ if (typeof window.near === "undefined") {
 
 export const near = window.near;
 
-near.config({ networkId: "mainnet" });
+near.config({ networkId: "testnet" });

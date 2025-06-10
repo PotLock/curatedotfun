@@ -4,10 +4,8 @@ import type {
   SubmissionStatus,
 } from "@curatedotfun/types";
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
-import { sign } from "near-sign-verify";
 import { z } from "zod";
-import { useWeb3Auth } from "../hooks/use-web3-auth";
-import { near } from "./near";
+import { useAuth } from "../contexts/AuthContext";
 import { usernameSchema, UserProfile } from "./validation/user";
 
 export type SortOrderType = "newest" | "oldest";
@@ -112,23 +110,13 @@ export async function updateFeed(
 }
 
 export function useUpdateFeed(feedId: string) {
-  const { web3auth } = useWeb3Auth();
-  const isSignedIn = near.authStatus() === "SignedIn";
+  const { getIdToken, isLoggedIn } = useAuth();
 
   return useMutation({
     mutationFn: async (payload: { config: FeedConfig }) => {
-      if (!web3auth && !isSignedIn) throw new Error("Auth not initialized");
-      let idToken;
-      if (web3auth) {
-        const authResult = await web3auth.authenticateUser();
-        idToken = authResult.idToken;
-      } else {
-        idToken = await sign({
-          signer: near,
-          recipient: "curatefun.near",
-          message: "update feed",
-        });
-      }
+      if (!isLoggedIn) throw new Error("User not authenticated");
+      const idToken = await getIdToken("update feed");
+      if (!idToken) throw new Error("Failed to obtain auth token for updating feed");
       return updateFeed(feedId, payload, idToken);
     },
   });
@@ -164,23 +152,13 @@ export function useDeleteFeed(feedId: string) {
 }
 
 export function useCreateFeed() {
-  const { web3auth } = useWeb3Auth();
-  const isSignedIn = near.authStatus() === "SignedIn";
+  const { getIdToken, isLoggedIn } = useAuth();
 
   return useMutation({
     mutationFn: async (feed: Omit<FeedConfig, "id"> & { id: string }) => {
-      if (!web3auth && !isSignedIn) throw new Error("Auth not initialized");
-      let idToken;
-      if (web3auth) {
-        const authResult = await web3auth.authenticateUser();
-        idToken = authResult.idToken;
-      } else {
-        idToken = await sign({
-          signer: near,
-          recipient: "curatefun.near",
-          message: "update feed",
-        });
-      }
+      if (!isLoggedIn) throw new Error("User not authenticated");
+      const idToken = await getIdToken("create feed");
+      if (!idToken) throw new Error("Failed to obtain auth token for creating feed");
       return createFeed(feed, idToken);
     },
   });
@@ -376,12 +354,31 @@ export function createUserProfile(payload: CreateUserProfilePayload) {
 }
 
 export function useCreateUserProfile() {
-  const { web3auth } = useWeb3Auth();
+  const { getIdToken, isLoggedIn, nearAccountDetails, getWeb3AuthNearCredentials, authMethod } = useAuth();
+
   return useMutation({
-    mutationFn: async (payload: Omit<CreateUserProfilePayload, "idToken">) => {
-      if (!web3auth) throw new Error("Web3Auth not initialized");
-      const authResult = await web3auth.authenticateUser();
-      return createUserProfile({ ...payload, idToken: authResult.idToken });
+    mutationFn: async (profileData: Omit<CreateUserProfilePayload, "idToken" | "near_public_key"> & { username: string, name?: string | null, email?: string | null }) => {
+      if (!isLoggedIn) throw new Error("User not authenticated for profile creation");
+      const idToken = await getIdToken("create user profile");
+      if (!idToken) throw new Error("Failed to get auth token for profile creation");
+
+      let publicKeyToUse: string | undefined = nearAccountDetails?.publicKey;
+
+      if (authMethod === 'web3auth') {
+        const w3aCredentials = await getWeb3AuthNearCredentials();
+        if (w3aCredentials?.publicKey) {
+          publicKeyToUse = w3aCredentials.publicKey;
+        }
+      }
+      
+      if (!publicKeyToUse) throw new Error("NEAR public key not available for profile creation");
+
+      const payload: CreateUserProfilePayload = {
+        ...profileData,
+        idToken,
+        near_public_key: publicKeyToUse,
+      };
+      return createUserProfile(payload);
     },
   });
 }
@@ -405,16 +402,19 @@ export function getCurrentUserProfile(idToken: string) {
 }
 
 export function useCurrentUserProfile(enabled = true) {
-  const { web3auth } = useWeb3Auth();
+  const { getIdToken, isLoggedIn, userProfile } = useAuth();
 
-  return useQuery<UserProfile>({
-    queryKey: ["currentUserProfile"],
+  return useQuery<UserProfile | null>({
+    queryKey: ["currentUserProfile", userProfile?.id], 
     queryFn: async () => {
-      if (!web3auth) throw new Error("Web3Auth not initialized");
-      const authResult = await web3auth.authenticateUser();
-      return getCurrentUserProfile(authResult.idToken);
+      if (!isLoggedIn) return null; 
+      const idToken = await getIdToken("fetch current user profile");
+      if (!idToken) {
+        throw new Error("Auth token not available for fetching user profile");
+      }
+      return getCurrentUserProfile(idToken);
     },
-    enabled: enabled,
+    enabled: enabled && isLoggedIn, 
   });
 }
 
@@ -556,17 +556,18 @@ export interface AggregatedActivityStats {
 }
 
 export function useMyActivity() {
-  const { web3auth } = useWeb3Auth();
+  const { getIdToken, isLoggedIn } = useAuth();
 
   return useQuery<AggregatedActivityStats>({
     queryKey: ["my-activity"],
     queryFn: async () => {
-      if (!web3auth) throw new Error("Web3Auth not initialized");
-      const authResult = await web3auth.authenticateUser();
+      if (!isLoggedIn) throw new Error("User not authenticated to fetch activity");
+      const idToken = await getIdToken("fetch my activity");
+      if (!idToken) throw new Error("Auth token not available for fetching activity");
 
       const response = await fetch(`/api/activity/user/me`, {
         headers: {
-          Authorization: `Bearer ${authResult.idToken}`,
+          Authorization: `Bearer ${idToken}`,
         },
       });
 
@@ -576,7 +577,6 @@ export function useMyActivity() {
 
       const data: ListOfUserActivityStats = await response.json();
 
-      // Calculate statistics from activities
       const stats = data.activities.reduce(
         (acc, activity) => {
           if (activity.type === ActivityType.CONTENT_SUBMISSION) {
@@ -589,10 +589,7 @@ export function useMyActivity() {
         { totalSubmissions: 0, totalApprovals: 0 },
       );
 
-      // Calculate rejections (submissions - approvals)
       const totalRejections = stats.totalSubmissions - stats.totalApprovals;
-
-      // Calculate approval rate
       const approvalRate =
         stats.totalApprovals + totalRejections > 0
           ? stats.totalApprovals / (stats.totalApprovals + totalRejections)
@@ -605,7 +602,7 @@ export function useMyActivity() {
         approvalRate,
       };
     },
-    enabled: !!web3auth,
+    enabled: isLoggedIn,
   });
 }
 
@@ -637,80 +634,78 @@ export function useUserActivity(
 }
 
 export function useMyCuratedFeeds() {
-  const { web3auth } = useWeb3Auth();
+  const { getIdToken, isLoggedIn } = useAuth();
 
   return useQuery<CuratedFeed[]>({
     queryKey: ["my-curated-feeds"],
     queryFn: async () => {
-      if (!web3auth) throw new Error("Web3Auth not initialized");
-      const authResult = await web3auth.authenticateUser();
+      if (!isLoggedIn) throw new Error("User not authenticated");
+      const idToken = await getIdToken("fetch my curated feeds");
+      if (!idToken) throw new Error("Auth token not available");
 
       const response = await fetch(`/api/activity/feeds/curated-by/me`, {
         headers: {
-          Authorization: `Bearer ${authResult.idToken}`,
+          Authorization: `Bearer ${idToken}`,
         },
       });
 
       if (!response.ok) {
         throw new Error("Failed to fetch curated feeds");
       }
-
       const data = await response.json();
-
       return data.feeds;
     },
-    enabled: !!web3auth,
+    enabled: isLoggedIn,
   });
 }
 
 export function useMyApprovedFeeds() {
-  const { web3auth } = useWeb3Auth();
+  const { getIdToken, isLoggedIn } = useAuth();
 
   return useQuery<CuratedFeed[]>({
     queryKey: ["my-approved-feeds"],
     queryFn: async () => {
-      if (!web3auth) throw new Error("Web3Auth not initialized");
-      const authResult = await web3auth.authenticateUser();
+      if (!isLoggedIn) throw new Error("User not authenticated");
+      const idToken = await getIdToken("fetch my approved feeds");
+      if (!idToken) throw new Error("Auth token not available");
 
       const response = await fetch(`/api/activity/feeds/approved-by/me`, {
         headers: {
-          Authorization: `Bearer ${authResult.idToken}`,
+          Authorization: `Bearer ${idToken}`,
         },
       });
 
       if (!response.ok) {
         throw new Error("Failed to fetch approved feeds");
       }
-
       const data = await response.json();
-
       return data.feeds;
     },
-    enabled: !!web3auth,
+    enabled: isLoggedIn,
   });
 }
 
 export function useMyFeedRank(feedId: string) {
-  const { web3auth } = useWeb3Auth();
+  const { getIdToken, isLoggedIn } = useAuth();
 
   return useQuery<FeedRank>({
     queryKey: ["my-feed-rank", feedId],
     queryFn: async () => {
-      if (!web3auth) throw new Error("Web3Auth not initialized");
-      const authResult = await web3auth.authenticateUser();
+      if (!isLoggedIn) throw new Error("User not authenticated");
+      const idToken = await getIdToken(`fetch my rank for feed ${feedId}`);
+      if (!idToken) throw new Error("Auth token not available");
 
       const response = await fetch(`/api/activity/feeds/${feedId}/my-rank`, {
         headers: {
-          Authorization: `Bearer ${authResult.idToken}`,
+          Authorization: `Bearer ${idToken}`,
         },
       });
 
       if (!response.ok) {
         throw new Error("Failed to fetch feed rank");
       }
-
       return response.json();
     },
-    enabled: !!web3auth,
+    enabled: isLoggedIn && !!feedId,
   });
 }

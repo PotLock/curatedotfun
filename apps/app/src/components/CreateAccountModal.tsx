@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useWeb3Auth } from "../hooks/use-web3-auth";
+import { useAuth } from "../contexts/AuthContext"; // Import useAuth
+import { useWeb3Auth } from "../hooks/use-web3-auth"; // Still needed for getUserInfo if specific to Web3Auth
 import { useCreateUserProfile } from "../lib/api";
 import { usernameSchema } from "../lib/validation/user";
 import { Modal } from "./Modal";
@@ -17,14 +18,14 @@ export const CreateAccountModal = ({
   onClose,
 }: CreateAccountModalProps) => {
   const {
-    nearPublicKey,
-    getUserInfo,
-    web3auth, // Needed for authenticateUser to get ID token
-    setCurrentUserProfile, // To update profile state on success
-    logout,
-    provider,
-    getNearCredentials,
-  } = useWeb3Auth();
+    logout, 
+    nearAccountDetails,    
+    fetchUserProfile,      
+    authMethod,            
+  } = useAuth();
+  
+  const { getUserInfo: getW3AUserInfo } = useWeb3Auth(); 
+
   const [chosenUsername, setChosenUsername] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -32,7 +33,6 @@ export const CreateAccountModal = ({
 
   const nearAccountSuffix = ".users.curatedotfun.near"; // TODO: Make this configurable (app config)
 
-  // Reset state when modal opens/closes or relevant context changes
   useEffect(() => {
     if (isOpen) {
       setChosenUsername("");
@@ -41,13 +41,16 @@ export const CreateAccountModal = ({
   }, [isOpen]);
 
   const handleClose = () => {
-    logout();
+    logout(); 
     onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chosenUsername || !web3auth) return;
+    if (!chosenUsername || !nearAccountDetails?.publicKey) {
+      setValidationError("Username and authenticated session (with public key) are required.");
+      return;
+    }
 
     const validationResult = usernameSchema.safeParse(chosenUsername);
     if (!validationResult.success) {
@@ -61,44 +64,36 @@ export const CreateAccountModal = ({
     setValidationError(null);
 
     try {
-      // Get user info again to ensure we have fresh data if needed
-      const userInfo = await getUserInfo();
-      // If nearPublicKey is not available (not a login with wallet), try to get it directly
-      let publicKey = nearPublicKey;
-      if (!publicKey && provider) {
-        try {
-          // Get credentials directly from the provider
-          const credentials = await getNearCredentials(provider);
-          publicKey = credentials.publicKey;
-          console.log("Generated public key:", publicKey);
-        } catch (keyError) {
-          console.error("Failed to generate NEAR public key:", keyError);
-          setValidationError(
-            "Failed to generate NEAR public key. Please try again.",
-          );
-          return;
-        }
-      }
+      let nameFromAuth: string | undefined = undefined;
+      let emailFromAuth: string | undefined = undefined;
 
-      if (!publicKey) {
-        setValidationError(
-          "NEAR public key is required but not available. Please try logging in again.",
-        );
-        return;
+      if (authMethod === 'web3auth') {
+        // Get user info from Web3Auth if that's the method
+        const w3aUserInfo = await getW3AUserInfo();
+        nameFromAuth = w3aUserInfo.name;
+        emailFromAuth = w3aUserInfo.email;
       }
+      // For 'near' direct login, name/email might not be available from auth provider
+      // and would be entered manually or be optional. The form currently only asks for username.
 
-      console.log("Creating user profile with public key:", publicKey);
+      // nearAccountDetails.publicKey should be populated by AuthContext
+      if (!nearAccountDetails?.publicKey) {
+         setValidationError("NEAR public key is not available. Please try logging in again.");
+         return;
+      }
+      
+      console.log("Creating user profile with public key:", nearAccountDetails.publicKey);
       const profile = await createUserMutation.mutateAsync({
         username: chosenUsername.toLowerCase(),
-        near_public_key: publicKey,
-        name: userInfo.name,
-        email: userInfo.email,
+        // near_public_key is now handled by useCreateUserProfile hook
+        name: nameFromAuth, // Pass name if available
+        email: emailFromAuth, // Pass email if available
       });
 
-      // Update the profile state in the context
-      setCurrentUserProfile(profile);
+      // Update the main AuthContext by re-fetching the profile
+      await fetchUserProfile(); 
       console.log("Account and profile created successfully:", profile);
-      onClose();
+      onClose(); // Close modal
     } catch (err) {
       console.error("Error creating account:", err);
 
