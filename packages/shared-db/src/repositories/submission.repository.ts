@@ -51,7 +51,6 @@ export class SubmissionRepository {
             curatorId: submission.curatorId,
             curatorUsername: submission.curatorUsername,
             curatorTweetId: submission.curatorTweetId,
-            createdAt: submission.createdAt,
             submittedAt: submission.submittedAt,
           })
           .returning();
@@ -429,8 +428,6 @@ export class SubmissionRepository {
             userId,
             count: 1,
             lastResetDate: sql`CURRENT_DATE`,
-            createdAt: new Date(),
-            updatedAt: new Date(),
           })
           .onConflictDoUpdate({
             target: schema.submissionCounts.userId,

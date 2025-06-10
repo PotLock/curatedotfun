@@ -64,6 +64,13 @@
       "when": 1749500543090,
       "tag": "0008_flat_black_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1749576099861,
+      "tag": "0009_secret_juggernaut",
+      "breakpoints": true
     }
   ]
 }

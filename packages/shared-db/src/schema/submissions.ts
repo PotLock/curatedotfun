@@ -38,7 +38,10 @@ export const submissions = table(
     curatorTweetId: text("curator_tweet_id").notNull(), // The tweet where they submitted it
     content: text("content").notNull(), // Original tweet content
     curatorNotes: text("curator_notes"),
-    submittedAt: timestamp("submitted_at"),
+    submittedAt: timestamp("submitted_at", {
+      mode: "date",
+      withTimezone: true,
+    }),
     ...timestamps,
   },
   (submissions) => [
