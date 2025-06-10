@@ -56,7 +56,7 @@ export interface FeedContextSubmission {
   submittedAt: Date | null;
   updatedAt?: Date | null;
 
-  status: SubmissionStatus;
+  displayStatus: SubmissionStatus;
 
   moderationHistory: Moderation[];
 }

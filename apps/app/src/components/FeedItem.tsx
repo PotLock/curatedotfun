@@ -162,7 +162,9 @@ export const FeedItem = ({ submission, feedId }: FeedItemProps) => {
             </div>
           </div>
           <div>
-            <Badge variant={submission.status}>{submission.status}</Badge>
+            <Badge variant={submission.displayStatus}>
+              {submission.displayStatus}
+            </Badge>
           </div>
         </div>
       </div>
@@ -178,8 +180,8 @@ export const FeedItem = ({ submission, feedId }: FeedItemProps) => {
       {/* Notes Section */}
       <div className="mt-6 w-full">
         {/* Moderation Notes */}
-        {(submission.status === "approved" ||
-          submission.status === "rejected") &&
+        {(submission.displayStatus === "approved" ||
+          submission.displayStatus === "rejected") &&
           lastModeration && (
             <div className="flex">
               <div className="flex-col flex-grow">
@@ -194,7 +196,7 @@ export const FeedItem = ({ submission, feedId }: FeedItemProps) => {
           )}
 
         {/* Curator Notes and Moderation Actions */}
-        {submission.status === "pending" && (
+        {submission.displayStatus === "pending" && (
           <div className="flex items-center gap-8">
             <div className="flex-col flex-grow">
               <NotesSection
