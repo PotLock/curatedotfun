@@ -9,6 +9,7 @@ import {
 } from "./ui/tooltip";
 
 import { Menu, X } from "lucide-react";
+import UserMenu from "./UserMenu";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -56,7 +57,7 @@ const Header = () => {
           </div>
         </div>{" "}
         <div className="flex items-center gap-2">
-          {/* <UserMenu /> */}
+          <UserMenu />
 
           {/* Mobile menu button */}
           <Button
@@ -139,9 +140,9 @@ const Header = () => {
               </TooltipProvider>
             </div>
 
-            {/* <div className="w-full flex justify-center mt-4">
+            <div className="w-full flex justify-center mt-4">
               <UserMenu className="flex w-full" />
-            </div> */}
+            </div>
           </div>
         </div>
       )}

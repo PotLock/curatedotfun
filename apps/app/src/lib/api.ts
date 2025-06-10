@@ -4,8 +4,10 @@ import type {
   SubmissionStatus,
 } from "@curatedotfun/types";
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { sign } from "near-sign-verify";
 import { z } from "zod";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
+import { near } from "./near";
 import { usernameSchema, UserProfile } from "./validation/user";
 
 export type SortOrderType = "newest" | "oldest";
@@ -89,13 +91,13 @@ export async function updateFeed(
   // The backend's updateFeedSchema will validate this.
   // We send the whole config, not just partial updates to config.
   payload: { config: FeedConfig },
-  // idToken: string,
+  idToken: string,
 ) {
   return fetch(`/api/feeds/${feedId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      // Authorization: `Bearer ${idToken}`,
+      Authorization: `Bearer ${idToken}`,
     },
     body: JSON.stringify(payload), // Send { config: { ... } }
   }).then(async (response) => {
@@ -110,12 +112,24 @@ export async function updateFeed(
 }
 
 export function useUpdateFeed(feedId: string) {
-  // const { web3auth } = useWeb3Auth();
+  const { web3auth } = useWeb3Auth();
+  const isSignedIn = near.authStatus() === "SignedIn";
+
   return useMutation({
     mutationFn: async (payload: { config: FeedConfig }) => {
-      // if (!web3auth) throw new Error("Web3Auth not initialized");
-      // const authResult = await web3auth.authenticateUser();
-      return updateFeed(feedId, payload);
+      if (!web3auth && !isSignedIn) throw new Error("Auth not initialized");
+      let idToken;
+      if (web3auth) {
+        const authResult = await web3auth.authenticateUser();
+        idToken = authResult.idToken;
+      } else {
+        idToken = await sign({
+          signer: near,
+          recipient: "curatefun.near",
+          message: "update feed",
+        });
+      }
+      return updateFeed(feedId, payload, idToken);
     },
   });
 }
@@ -151,12 +165,23 @@ export function useDeleteFeed(feedId: string) {
 
 export function useCreateFeed() {
   const { web3auth } = useWeb3Auth();
+  const isSignedIn = near.authStatus() === "SignedIn";
 
   return useMutation({
     mutationFn: async (feed: Omit<FeedConfig, "id"> & { id: string }) => {
-      if (!web3auth) throw new Error("Web3Auth not initialized");
-      const authResult = await web3auth.authenticateUser();
-      return createFeed(feed, authResult.idToken);
+      if (!web3auth && !isSignedIn) throw new Error("Auth not initialized");
+      let idToken;
+      if (web3auth) {
+        const authResult = await web3auth.authenticateUser();
+        idToken = authResult.idToken;
+      } else {
+        idToken = await sign({
+          signer: near,
+          recipient: "curatefun.near",
+          message: "update feed",
+        });
+      }
+      return createFeed(feed, idToken);
     },
   });
 }

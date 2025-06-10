@@ -8,6 +8,7 @@ import { web3AuthJwtMiddleware } from "./utils/auth";
 import { getAllowedOrigins } from "./utils/config";
 import { errorHandler } from "./utils/error";
 import { ServiceProvider } from "./utils/service-provider";
+import { logger } from "utils/logger";
 
 const ALLOWED_ORIGINS = getAllowedOrigins();
 
@@ -18,7 +19,7 @@ export async function createApp(): Promise<AppInstance> {
   const app = new Hono<Env>();
 
   app.onError((err, c) => {
-    return errorHandler(err, c);
+    return errorHandler(err, c, logger);
   });
 
   app.use(

@@ -187,7 +187,7 @@ export default function CurationFormSteps() {
                   setIsSubmitting(false);
                 }
               }}
-              disabled={!isLoggedIn || isSubmitting}
+              // disabled={!isLoggedIn || isSubmitting}
               className="text-sm md:text-base "
             >
               {isSubmitting ? "Submitting..." : "Create Feed"}
@@ -195,7 +195,7 @@ export default function CurationFormSteps() {
           ) : (
             <Button
               onClick={handleNext}
-              disabled={!isLoggedIn}
+              // disabled={!isLoggedIn}
               className="text-sm md:text-base"
             >
               Next
