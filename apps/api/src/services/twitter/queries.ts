@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { twitterCache, twitterCookies } from "../db/schema";
+import { twitterCache, twitterCookies } from "@curatedotfun/shared-db";
 
 // Twitter Cookie Management
 export async function getTwitterCookies(

@@ -1,5 +1,5 @@
 {
-  "id": "a206b0bf-7139-4228-9aa7-5ecbbc9b3240",
+  "id": "114bad57-b76c-4dff-9a6e-f25543cacfb3",
   "prevId": "78a5878f-5465-4a52-83da-560684c9dc79",
   "version": "7",
   "dialect": "postgresql",
@@ -29,7 +29,7 @@
         },
         "timestamp": {
           "name": "timestamp",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -570,7 +570,7 @@
         },
         "last_successful_completion": {
           "name": "last_successful_completion",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
@@ -973,7 +973,7 @@
         },
         "submitted_at": {
           "name": "submitted_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },

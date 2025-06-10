@@ -137,7 +137,10 @@ export const feedRecapsState = table(
     // Unique ID provided by the external scheduler service for this specific job
     externalJobId: text("external_job_id").unique(),
     // Last time the curate backend successfully processed this recap
-    lastSuccessfulCompletion: timestamp("last_successful_completion"),
+    lastSuccessfulCompletion: timestamp("last_successful_completion", {
+      mode: "date",
+      withTimezone: true,
+    }),
     // Error message if the last run failed in the curate backend
     lastRunError: text("last_run_error"),
     ...timestamps,

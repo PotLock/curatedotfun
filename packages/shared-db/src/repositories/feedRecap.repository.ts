@@ -99,8 +99,6 @@ export class FeedRecapRepository {
               externalJobId: data.externalJobId,
               lastSuccessfulCompletion: data.lastSuccessfulCompletion,
               lastRunError: data.lastRunError,
-              createdAt: now,
-              updatedAt: now,
             })
             .returning();
           return inserted[0];

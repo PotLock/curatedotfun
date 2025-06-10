@@ -36,7 +36,11 @@ export type UpdateUser = z.infer<typeof updateUserSchema>;
 export type SelectUser = z.infer<typeof selectUserSchema>;
 
 // Activity Schemas and Types
-export const insertActivitySchema = createInsertSchema(activities);
+export const insertActivitySchema = createInsertSchema(activities, {
+  id: z.undefined(),
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
 export const updateActivitySchema = createUpdateSchema(activities);
 export const selectActivitySchema = createSelectSchema(activities);
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
@@ -44,7 +48,10 @@ export type UpdateActivity = z.infer<typeof updateActivitySchema>;
 export type SelectActivity = z.infer<typeof selectActivitySchema>;
 
 // UserStats Schemas and Types
-export const insertUserStatsSchema = createInsertSchema(userStats);
+export const insertUserStatsSchema = createInsertSchema(userStats, {
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
 export const updateUserStatsSchema = createUpdateSchema(userStats);
 export const selectUserStatsSchema = createSelectSchema(userStats);
 export type InsertUserStats = z.infer<typeof insertUserStatsSchema>;
@@ -52,7 +59,11 @@ export type UpdateUserStats = z.infer<typeof updateUserStatsSchema>;
 export type SelectUserStats = z.infer<typeof selectUserStatsSchema>;
 
 // FeedUserStats Schemas and Types
-export const insertFeedUserStatsSchema = createInsertSchema(feedUserStats);
+export const insertFeedUserStatsSchema = createInsertSchema(feedUserStats, {
+  id: z.undefined(),
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
 export const updateFeedUserStatsSchema = createUpdateSchema(feedUserStats);
 export const selectFeedUserStatsSchema = createSelectSchema(feedUserStats);
 export type InsertFeedUserStats = z.infer<typeof insertFeedUserStatsSchema>;
@@ -60,7 +71,10 @@ export type UpdateFeedUserStats = z.infer<typeof updateFeedUserStatsSchema>;
 export type SelectFeedUserStats = z.infer<typeof selectFeedUserStatsSchema>;
 
 // Feed Schemas and Types
-export const insertFeedSchema = createInsertSchema(feeds);
+export const insertFeedSchema = createInsertSchema(feeds, {
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
 export const updateFeedSchema = createUpdateSchema(feeds);
 export const selectFeedSchema = createSelectSchema(feeds);
 export type InsertFeed = z.infer<typeof insertFeedSchema>;
@@ -68,7 +82,11 @@ export type UpdateFeed = z.infer<typeof updateFeedSchema>;
 export type SelectFeed = z.infer<typeof selectFeedSchema>;
 
 // FeedRecapsState Schemas and Types
-export const insertFeedRecapStateSchema = createInsertSchema(feedRecapsState);
+export const insertFeedRecapStateSchema = createInsertSchema(feedRecapsState, {
+  id: z.undefined(),
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
 export const updateFeedRecapStateSchema = createUpdateSchema(feedRecapsState);
 export const selectFeedRecapStateSchema = createSelectSchema(feedRecapsState);
 export type InsertFeedRecapState = z.infer<typeof insertFeedRecapStateSchema>;
@@ -76,7 +94,10 @@ export type UpdateFeedRecapState = z.infer<typeof updateFeedRecapStateSchema>;
 export type SelectFeedRecapState = z.infer<typeof selectFeedRecapStateSchema>;
 
 // FeedPlugins Schemas and Types
-export const insertFeedPluginSchema = createInsertSchema(feedPlugins);
+export const insertFeedPluginSchema = createInsertSchema(feedPlugins, {
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
 export const updateFeedPluginSchema = createUpdateSchema(feedPlugins);
 export const selectFeedPluginSchema = createSelectSchema(feedPlugins);
 export type InsertFeedPlugin = z.infer<typeof insertFeedPluginSchema>;
@@ -84,7 +105,10 @@ export type UpdateFeedPlugin = z.infer<typeof updateFeedPluginSchema>;
 export type SelectFeedPlugin = z.infer<typeof selectFeedPluginSchema>;
 
 // Submission Schemas and Types
-export const insertSubmissionSchema = createInsertSchema(submissions);
+export const insertSubmissionSchema = createInsertSchema(submissions, {
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
 export const updateSubmissionSchema = createUpdateSchema(submissions);
 export const selectSubmissionSchema = createSelectSchema(submissions, {
   createdAt: z.date(),
@@ -100,7 +124,10 @@ export type RichSubmission = SelectSubmission & {
 };
 
 // SubmissionFeed Schemas and Types
-export const insertSubmissionFeedSchema = createInsertSchema(submissionFeeds);
+export const insertSubmissionFeedSchema = createInsertSchema(submissionFeeds, {
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
 export const updateSubmissionFeedSchema = createUpdateSchema(submissionFeeds);
 export const selectSubmissionFeedSchema = createSelectSchema(submissionFeeds);
 export type InsertSubmissionFeed = z.infer<typeof insertSubmissionFeedSchema>;
@@ -108,8 +135,14 @@ export type UpdateSubmissionFeed = z.infer<typeof updateSubmissionFeedSchema>;
 export type SelectSubmissionFeed = z.infer<typeof selectSubmissionFeedSchema>;
 
 // ModerationHistory Schemas and Types
-export const insertModerationHistorySchema =
-  createInsertSchema(moderationHistory);
+export const insertModerationHistorySchema = createInsertSchema(
+  moderationHistory,
+  {
+    id: z.undefined(),
+    createdAt: z.undefined(),
+    updatedAt: z.undefined(),
+  },
+);
 export const updateModerationHistorySchema =
   createUpdateSchema(moderationHistory);
 export const selectModerationHistorySchema = createSelectSchema(
@@ -130,7 +163,13 @@ export type SelectModerationHistory = z.infer<
 >;
 
 // SubmissionCounts Schemas and Types
-export const insertSubmissionCountSchema = createInsertSchema(submissionCounts);
+export const insertSubmissionCountSchema = createInsertSchema(
+  submissionCounts,
+  {
+    createdAt: z.undefined(),
+    updatedAt: z.undefined(),
+  },
+);
 export const updateSubmissionCountSchema = createUpdateSchema(submissionCounts);
 export const selectSubmissionCountSchema = createSelectSchema(submissionCounts);
 export type InsertSubmissionCount = z.infer<typeof insertSubmissionCountSchema>;

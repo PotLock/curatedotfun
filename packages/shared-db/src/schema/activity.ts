@@ -36,7 +36,9 @@ export const activities = table(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     type: activityTypeEnum("type").notNull(),
-    timestamp: timestamp("timestamp").notNull().defaultNow(),
+    timestamp: timestamp("timestamp", { mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
     feed_id: text("feed_id").references(() => feeds.id, {
       onDelete: "set null",
     }),
