@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
-import { AuthProvider } from "./contexts/AuthContext"; 
-import { Web3AuthProvider } from "./contexts/web3auth"; 
+import { AuthProvider } from "./contexts/AuthContext";
+import { Web3AuthProvider } from "./contexts/web3auth";
 import { routeTree } from "./routeTree.gen";
 
 import "./index.css";

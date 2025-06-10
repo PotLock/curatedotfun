@@ -9,7 +9,10 @@ import React, {
   useState,
 } from "react";
 import { useWeb3Auth } from "../hooks/use-web3-auth";
-import { getCurrentUserProfile, createUserProfile as rawCreateUserProfile } from "../lib/api";
+import {
+  getCurrentUserProfile,
+  createUserProfile as rawCreateUserProfile,
+} from "../lib/api";
 import { near } from "../lib/near";
 import { useAuthStore } from "../store/auth-store";
 import {
@@ -339,14 +342,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     getWeb3AuthNearCredentialsInternal,
   ]);
 
-
   useEffect(() => {
     if (isLoading || !isLoggedIn || userProfile) return;
 
     const autoCreateNearProfile = async () => {
       if (!nearAccountDetails?.accountId || !nearAccountDetails?.publicKey) {
         console.error("NEAR details not available for auto profile creation.");
-        setError(new Error("NEAR details not available for auto profile creation."));
+        setError(
+          new Error("NEAR details not available for auto profile creation."),
+        );
         return;
       }
       try {
@@ -363,7 +367,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           near_public_key: nearAccountDetails.publicKey,
           idToken: token,
         });
-        
+
         // Profile creation success, now fetch the newly created profile
         await fetchUserProfile();
       } catch (e) {
@@ -373,21 +377,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       // No finally block needed to set isLoading, fetchUserProfile handles it.
     };
 
-    if (authMethod === "near" && nearAccountDetails?.accountId && nearAccountDetails?.publicKey) {
+    if (
+      authMethod === "near" &&
+      nearAccountDetails?.accountId &&
+      nearAccountDetails?.publicKey
+    ) {
       // For NEAR, attempt auto-creation if no profile exists (checked by the useEffect's initial guard)
       autoCreateNearProfile();
-    } else if (authMethod === "web3auth" && nearAccountDetails?.accountId && nearAccountDetails?.publicKey) {
+    } else if (
+      authMethod === "web3auth" &&
+      nearAccountDetails?.accountId &&
+      nearAccountDetails?.publicKey
+    ) {
       // For Web3Auth, show modal if not already shown
       if (currentModal !== "create-account") {
         showCreateAccountModal();
       }
     }
-    
+
     // If modal is open but conditions no longer met (e.g., profile created, user logged out)
     if (currentModal === "create-account" && (userProfile || !isLoggedIn)) {
       closeModal();
     }
-
   }, [
     isLoggedIn,
     userProfile,

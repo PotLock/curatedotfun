@@ -116,7 +116,8 @@ export function useUpdateFeed(feedId: string) {
     mutationFn: async (payload: { config: FeedConfig }) => {
       if (!isLoggedIn) throw new Error("User not authenticated");
       const idToken = await getIdToken("update feed");
-      if (!idToken) throw new Error("Failed to obtain auth token for updating feed");
+      if (!idToken)
+        throw new Error("Failed to obtain auth token for updating feed");
       return updateFeed(feedId, payload, idToken);
     },
   });
@@ -158,7 +159,8 @@ export function useCreateFeed() {
     mutationFn: async (feed: Omit<FeedConfig, "id"> & { id: string }) => {
       if (!isLoggedIn) throw new Error("User not authenticated");
       const idToken = await getIdToken("create feed");
-      if (!idToken) throw new Error("Failed to obtain auth token for creating feed");
+      if (!idToken)
+        throw new Error("Failed to obtain auth token for creating feed");
       return createFeed(feed, idToken);
     },
   });
@@ -354,24 +356,38 @@ export function createUserProfile(payload: CreateUserProfilePayload) {
 }
 
 export function useCreateUserProfile() {
-  const { getIdToken, isLoggedIn, nearAccountDetails, getWeb3AuthNearCredentials, authMethod } = useAuth();
+  const {
+    getIdToken,
+    isLoggedIn,
+    nearAccountDetails,
+    getWeb3AuthNearCredentials,
+    authMethod,
+  } = useAuth();
 
   return useMutation({
-    mutationFn: async (profileData: Omit<CreateUserProfilePayload, "idToken" | "near_public_key"> & { username: string, name?: string | null, email?: string | null }) => {
-      if (!isLoggedIn) throw new Error("User not authenticated for profile creation");
+    mutationFn: async (
+      profileData: Omit<
+        CreateUserProfilePayload,
+        "idToken" | "near_public_key"
+      > & { username: string; name?: string | null; email?: string | null },
+    ) => {
+      if (!isLoggedIn)
+        throw new Error("User not authenticated for profile creation");
       const idToken = await getIdToken("create user profile");
-      if (!idToken) throw new Error("Failed to get auth token for profile creation");
+      if (!idToken)
+        throw new Error("Failed to get auth token for profile creation");
 
       let publicKeyToUse: string | undefined = nearAccountDetails?.publicKey;
 
-      if (authMethod === 'web3auth') {
+      if (authMethod === "web3auth") {
         const w3aCredentials = await getWeb3AuthNearCredentials();
         if (w3aCredentials?.publicKey) {
           publicKeyToUse = w3aCredentials.publicKey;
         }
       }
-      
-      if (!publicKeyToUse) throw new Error("NEAR public key not available for profile creation");
+
+      if (!publicKeyToUse)
+        throw new Error("NEAR public key not available for profile creation");
 
       const payload: CreateUserProfilePayload = {
         ...profileData,
@@ -405,16 +421,16 @@ export function useCurrentUserProfile(enabled = true) {
   const { getIdToken, isLoggedIn, userProfile } = useAuth();
 
   return useQuery<UserProfile | null>({
-    queryKey: ["currentUserProfile", userProfile?.id], 
+    queryKey: ["currentUserProfile", userProfile?.id],
     queryFn: async () => {
-      if (!isLoggedIn) return null; 
+      if (!isLoggedIn) return null;
       const idToken = await getIdToken("fetch current user profile");
       if (!idToken) {
         throw new Error("Auth token not available for fetching user profile");
       }
       return getCurrentUserProfile(idToken);
     },
-    enabled: enabled && isLoggedIn, 
+    enabled: enabled && isLoggedIn,
   });
 }
 
@@ -561,9 +577,11 @@ export function useMyActivity() {
   return useQuery<AggregatedActivityStats>({
     queryKey: ["my-activity"],
     queryFn: async () => {
-      if (!isLoggedIn) throw new Error("User not authenticated to fetch activity");
+      if (!isLoggedIn)
+        throw new Error("User not authenticated to fetch activity");
       const idToken = await getIdToken("fetch my activity");
-      if (!idToken) throw new Error("Auth token not available for fetching activity");
+      if (!idToken)
+        throw new Error("Auth token not available for fetching activity");
 
       const response = await fetch(`/api/activity/user/me`, {
         headers: {
