@@ -95,7 +95,6 @@ submissionRoutes.get(
               tweetId: mh.tweetId,
               feedId: mh.feedId,
               note: mh.note,
-              moderationTweetId: mh.moderationTweetId!,
             }) as DomainModeration,
         ),
         feeds: rs.feeds.map(
@@ -104,7 +103,6 @@ submissionRoutes.get(
               submissionId: sf.submissionId,
               feedId: sf.feedId,
               status: sf.status as DomainSubmissionStatus,
-              moderationResponseTweetId: sf.moderationResponseTweetId,
               createdAt: sf.createdAt,
               updatedAt: sf.updatedAt,
             }) as DomainSubmissionFeed,
@@ -181,7 +179,6 @@ submissionRoutes.get("/single/:submissionId", async (c) => {
           tweetId: mh.tweetId,
           feedId: mh.feedId,
           note: mh.note,
-          moderationTweetId: mh.moderationTweetId!,
         }) as DomainModeration,
     ),
     feeds: richSubmission.feeds.map(
@@ -190,7 +187,6 @@ submissionRoutes.get("/single/:submissionId", async (c) => {
           submissionId: sf.submissionId,
           feedId: sf.feedId,
           status: sf.status as DomainSubmissionStatus,
-          moderationResponseTweetId: sf.moderationResponseTweetId,
           createdAt: sf.createdAt,
           updatedAt: sf.updatedAt,
         }) as DomainSubmissionFeed,
@@ -261,7 +257,6 @@ submissionRoutes.get(
               tweetId: mh.tweetId,
               feedId: mh.feedId,
               note: mh.note,
-              moderationTweetId: mh.moderationTweetId!,
             }) as DomainModeration,
         ),
       };

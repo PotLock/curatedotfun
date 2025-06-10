@@ -11,7 +11,6 @@ export interface SubmissionFeed {
   submissionId: string;
   feedId: string;
   status: SubmissionStatus;
-  moderationResponseTweetId?: string | null;
   createdAt?: Date;
   updatedAt?: Date | null;
 }
