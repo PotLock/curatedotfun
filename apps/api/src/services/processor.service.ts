@@ -9,9 +9,9 @@ import { logger } from "../utils/logger";
 import { sanitizeJson } from "../utils/sanitize";
 import { DistributionService } from "./distribution.service";
 import { IBaseService } from "./interfaces/base-service.interface";
-import { TransformationService } from "./transformation.service";
+import { TransformationService } from "./transformation.service.js";
 
-interface ProcessConfig {
+export interface ProcessConfig {
   enabled?: boolean;
   transform?: TransformConfig[];
   distribute?: DistributorConfig[];
@@ -30,9 +30,12 @@ export class ProcessorService implements IBaseService {
 
   /**
    * Process content through transformation pipeline and distribute
-   * Can be used for both individual submissions and bulk content (like recaps)
    */
-  async process(content: RichSubmission, config: ProcessConfig) {
+  async process(
+    content: RichSubmission,
+    config: ProcessConfig,
+    feedId: string,
+  ) {
     try {
       // Apply global transforms if any
       let processed = content;
@@ -42,6 +45,7 @@ export class ProcessorService implements IBaseService {
             processed,
             config.transform,
             "global",
+            feedId,
           );
 
           processed = sanitizeJson(processed);
@@ -75,6 +79,7 @@ export class ProcessorService implements IBaseService {
                   distributorContent,
                   distributor.transform,
                   "distributor",
+                  feedId,
                 );
               distributorContent = sanitizeJson(distributorContent);
             } catch (error) {
@@ -95,6 +100,7 @@ export class ProcessorService implements IBaseService {
           await this.distributionService.distributeContent(
             distributor,
             distributorContent,
+            feedId,
           );
         } catch (error) {
           // Collect errors but continue with other distributors
@@ -132,8 +138,9 @@ export class ProcessorService implements IBaseService {
   async processBatch(
     items: any[],
     config: ProcessConfig & {
-      batchTransform?: TransformConfig[]; // Optional transforms to apply to collected results
+      batchTransform?: TransformConfig[];
     },
+    feedId: string,
   ) {
     try {
       // Process each item through global and distributor transforms
@@ -147,6 +154,7 @@ export class ProcessorService implements IBaseService {
                 processed,
                 config.transform,
                 "global",
+                feedId,
               );
 
               processed = sanitizeJson(processed);
@@ -168,6 +176,7 @@ export class ProcessorService implements IBaseService {
             results,
             config.batchTransform,
             "batch",
+            feedId,
           );
 
           batchResult = sanitizeJson(batchResult);
@@ -197,6 +206,7 @@ export class ProcessorService implements IBaseService {
                 distributorContent,
                 distributor.transform,
                 "distributor",
+                feedId,
               );
 
             distributorContent = sanitizeJson(distributorContent);
@@ -206,6 +216,7 @@ export class ProcessorService implements IBaseService {
           await this.distributionService.distributeContent(
             distributor,
             distributorContent,
+            feedId,
           );
         } catch (error) {
           errors.push(

@@ -21,6 +21,7 @@ const {
   submissionFeeds,
   moderationHistory,
   submissionCounts,
+  secrets
 } = schema;
 
 // User Schemas and Types
@@ -175,3 +176,16 @@ export const selectSubmissionCountSchema = createSelectSchema(submissionCounts);
 export type InsertSubmissionCount = z.infer<typeof insertSubmissionCountSchema>;
 export type UpdateSubmissionCount = z.infer<typeof updateSubmissionCountSchema>;
 export type SelectSubmissionCount = z.infer<typeof selectSubmissionCountSchema>;
+
+export const insertSecretSchema = createInsertSchema(
+  secrets,
+  {
+    createdAt: z.undefined(),
+    updatedAt: z.undefined(),
+  },
+);
+export const updateSecretSchema = createUpdateSchema(secrets);
+export const selectSecretSchema = createSelectSchema(secrets);
+export type InsertSecret = z.infer<typeof insertSecretSchema>;
+export type UpdateSecret = z.infer<typeof updateSecretSchema>;
+export type SelectSecret = z.infer<typeof selectSecretSchema>;

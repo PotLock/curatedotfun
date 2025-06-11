@@ -1,0 +1,41 @@
+# .dockerignore for secret-service
+
+# Ignore Git files
+.git
+.gitignore
+
+# Ignore Node.js modules (these will be installed in the Docker image)
+node_modules
+
+# Ignore build output directory (this will be created during the Docker build)
+dist
+
+# Ignore local development environment files
+.env*
+*.env
+!.env.example
+
+# Ignore Docker files themselves if they are in the context
+Dockerfile
+.dockerignore
+
+# Ignore TypeScript cache files
+*.tsbuildinfo
+
+# Ignore test files if not needed in production image (though build might need them)
+# src/**/*.test.ts
+# src/**/*.spec.ts
+
+# Ignore local logs or temporary files
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor/IDE specific files
+.vscode
+.idea
+*.sublime-project
+*.sublime-workspace

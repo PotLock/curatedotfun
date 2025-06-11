@@ -19,6 +19,8 @@ import { TransformationService } from "../services/transformation.service";
 import { TwitterService } from "../services/twitter/client";
 import { UserService } from "../services/users.service";
 import { logger } from "./logger";
+import { SecretServiceApiClient } from "../services/secret-service-client";
+import { env } from "../env";
 
 export class ServiceProvider {
   private static instance: ServiceProvider;
@@ -31,6 +33,18 @@ export class ServiceProvider {
     const submissionRepository = new SubmissionRepository(db);
 
     const configService = new ConfigService();
+
+    if (!env.SECRET_SERVICE_URL || !env.SECRET_SERVICE_INTERNAL_API_KEY) {
+      logger.error(
+        "ServiceProvider: SECRET_SERVICE_URL or SECRET_SERVICE_INTERNAL_API_KEY is not defined. SecretServiceApiClient may not function correctly.",
+      );
+    }
+    const secretServiceApiClient = new SecretServiceApiClient(
+      env.SECRET_SERVICE_URL!, 
+      env.SECRET_SERVICE_INTERNAL_API_KEY!,
+      logger,
+    );
+    this.services.set("secretServiceApiClient", secretServiceApiClient);
 
     let twitterService: TwitterService | null = null;
     if (isProduction) {
@@ -49,7 +63,7 @@ export class ServiceProvider {
       twitterService = new MockTwitterService();
     }
 
-    const pluginService = new PluginService(logger);
+    const pluginService = new PluginService(logger, secretServiceApiClient);
     const transformationService = new TransformationService(
       pluginService,
       logger,
@@ -199,6 +213,10 @@ export class ServiceProvider {
 
   public getFeedService(): FeedService {
     return this.getService<FeedService>("feedService");
+  }
+
+  public getSecretServiceApiClient(): SecretServiceApiClient {
+    return this.getService<SecretServiceApiClient>("secretServiceApiClient");
   }
 
   /**

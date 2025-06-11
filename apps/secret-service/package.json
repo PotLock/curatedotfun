@@ -1,0 +1,31 @@
+{
+  "name": "@curatedotfun/secret-service",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "@curatedotfun/shared-db": "workspace:*",
+    "@hono/node-server": "^1.14.4",
+    "drizzle-orm": "^0.43.1",
+    "hono": "^4.7.11",
+    "near-api-js": "^4.0.3",
+    "pg": "^8.15.6"
+  },
+  "devDependencies": {
+    "@types/eslint": "^9",
+    "@types/pg": "^8.11.11",
+    "eslint": "^9.8.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "prettier": "^3.3.3",
+    "@types/node": "^20.11.17",
+    "tsx": "^4.7.1",
+    "typescript": "^5.8.3"
+  }
+}

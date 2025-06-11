@@ -6,3 +6,4 @@ export * from "./submissions";
 export * from "./users";
 export * from "./plugins";
 export * from "./moderation";
+export * from "./secrets";

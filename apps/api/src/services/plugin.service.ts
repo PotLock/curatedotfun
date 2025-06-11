@@ -12,15 +12,14 @@ import { PluginError, PluginErrorCode } from "@curatedotfun/utils";
 import { performReload } from "@module-federation/node/utils";
 import { init, loadRemote } from "@module-federation/runtime";
 import type { Logger } from "pino";
-import Mustache from "mustache";
 import { PluginConfig } from "types/config";
-import { env } from "../env";
 import { db } from "../db";
 import { logPluginError } from "../utils/error";
 import { logger } from "../utils/logger";
 import { createPluginInstanceKey } from "../utils/plugin";
 import { isProduction } from "./config.service";
 import { IBaseService } from "./interfaces/base-service.interface";
+import { SecretServiceApiClient } from "./secret-service-client";
 
 /**
  * Cache entry for a loaded plugin
@@ -64,8 +63,8 @@ type PluginContainer<
   TConfig extends Record<string, unknown> = Record<string, unknown>,
 > =
   | {
-      default?: new () => PluginTypeMap<TInput, TOutput, TConfig>[T];
-    }
+    default?: new () => PluginTypeMap<TInput, TOutput, TConfig>[T];
+  }
   | (new () => PluginTypeMap<TInput, TOutput, TConfig>[T]);
 
 /**
@@ -76,6 +75,7 @@ export class PluginService implements IBaseService {
   private remotes: Map<string, RemoteState> = new Map();
   private instances: Map<string, InstanceState<PluginType>> = new Map();
   private pluginRepository: PluginRepository;
+  private secretServiceApiClient: SecretServiceApiClient;
 
   // Time in milliseconds before cached items are considered stale
   private readonly instanceCacheTimeout: number = 7 * 24 * 60 * 60 * 1000; // 7 days (instance of a plugin with config)
@@ -86,9 +86,10 @@ export class PluginService implements IBaseService {
   private readonly retryDelays: number[] = [1000, 5000]; // Delays between retries in ms
 
   public readonly logger: Logger;
-  constructor(logger: Logger) {
+  constructor(logger: Logger, secretServiceApiClient: SecretServiceApiClient) {
     this.logger = logger;
     this.pluginRepository = new PluginRepository(db);
+    this.secretServiceApiClient = secretServiceApiClient;
   }
 
   /**
@@ -102,9 +103,9 @@ export class PluginService implements IBaseService {
   >(
     name: string,
     pluginConfig: { type: T; config: TConfig },
+    feedId: string,
   ): Promise<PluginTypeMap<TInput, TOutput, TConfig>[T]> {
     try {
-      // Get plugin metadata from database
       const registeredPlugin =
         await this.pluginRepository.getPluginByName(name);
 
@@ -144,7 +145,6 @@ export class PluginService implements IBaseService {
         throw error;
       }
 
-      // Create full config with URL from database
       const config: PluginConfig<T> = {
         type: pluginConfig.type,
         url: registeredPlugin.entryPoint,
@@ -190,7 +190,6 @@ export class PluginService implements IBaseService {
         this.remotes.set(normalizedName, remote);
       }
 
-      // Create and initialize instance with retries
       let lastError: Error | null = null;
       for (let attempt = 0; attempt <= this.retryDelays.length; attempt++) {
         try {
@@ -215,24 +214,62 @@ export class PluginService implements IBaseService {
             TConfig
           >[T];
 
-          // Hydrate config with environment variables
-          const stringifiedConfig = JSON.stringify(config.config);
-          const populatedConfigString = Mustache.render(stringifiedConfig, env); // TODO: Whitelist values
-          const hydratedConfig = JSON.parse(populatedConfigString) as TConfig;
+          this.logger.debug(
+            `PluginService: Preparing to hydrate config for plugin '${name}', feedId '${feedId}'.`,
+          );
 
-          await newInstance.initialize(hydratedConfig);
+          let processedConfig: TConfig = JSON.parse(
+            JSON.stringify(config.config),
+          );
 
-          // // Validate instance implements required interface
-          // if (!this.validatePluginInterface<T, TInput, TOutput, TConfig>(newInstance, config.type)) {
-          //   throw new PluginInitError(
-          //     name,
-          //     new Error(
-          //       `Plugin does not implement required ${config.type} interface`,
-          //     ),
-          //   );
-          // }
+          // --- Secret Hydration Logic ---
+          for (const key in processedConfig) {
+            if (Object.prototype.hasOwnProperty.call(processedConfig, key)) {
+              const value = processedConfig[key];
 
-          // Cache successful instance
+              if (
+                typeof value === "string" &&
+                value.startsWith("{{") &&
+                value.endsWith("}}")
+              ) {
+                const varName = value.substring(2, value.length - 2).trim(); // e.g., "OPENROUTER_API_KEY"
+
+                this.logger.debug(
+                  `PluginService: Found placeholder '${value}' for key '${key}' in plugin '${name}', feedId '${feedId}'. Attempting to resolve.`,
+                );
+
+                const secret =
+                  await this.secretServiceApiClient.getPlaintextSecret(
+                    feedId,
+                    varName,
+                  );
+
+                if (secret !== null) {
+                  (processedConfig as any)[key] = secret;
+                  this.logger.info(
+                    `PluginService: Hydrated config key '${key}' for plugin '${name}' (feedId '${feedId}') from secret-service for varName '${varName}'.`,
+                  );
+                } else {
+                  this.logger.warn(
+                    `PluginService: Config key '${key}' for plugin '${name}' (feedId '${feedId}') references unknown secret/env var '${varName}'. Placeholder '${value}' remains.`,
+                  );
+                  // Optionally, throw an error if a required secret is missing:
+                  throw new PluginError(`Required secret '${varName}' not found for plugin '${name}'`,
+                    {
+                      pluginName: name, operation: "hydrate"
+                    }, PluginErrorCode.PLUGIN_INITIALIZATION_FAILED
+                  );
+                }
+              }
+            }
+          }
+
+          this.logger.debug(
+            `PluginService: Config hydration complete for plugin '${name}', feedId '${feedId}'.`,
+          );
+
+          await newInstance.initialize(processedConfig);
+
           const instanceState: InstanceState<T> = {
             instance: newInstance as PluginTypeMap<
               unknown,
@@ -302,17 +339,17 @@ export class PluginService implements IBaseService {
       throw error instanceof PluginError
         ? error
         : new PluginError(
-            `Unexpected error with plugin ${name}`,
-            {
-              pluginName: name,
-              operation: "unknown",
-            },
-            PluginErrorCode.UNKNOWN_PLUGIN_ERROR,
-            false,
-            {
-              cause: error instanceof Error ? error : undefined,
-            },
-          );
+          `Unexpected error with plugin ${name}`,
+          {
+            pluginName: name,
+            operation: "unknown",
+          },
+          PluginErrorCode.UNKNOWN_PLUGIN_ERROR,
+          false,
+          {
+            cause: error instanceof Error ? error : undefined,
+          },
+        );
     }
   }
 

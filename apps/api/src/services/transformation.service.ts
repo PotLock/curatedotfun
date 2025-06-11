@@ -7,7 +7,7 @@ import { logPluginError } from "../utils/error";
 import { logger } from "../utils/logger";
 import { sanitizeJson } from "../utils/sanitize";
 import { IBaseService } from "./interfaces/base-service.interface";
-import { PluginService } from "./plugin.service";
+import { PluginService } from "./plugin.service.js";
 
 export type TransformStage = "global" | "distributor" | "batch";
 
@@ -47,16 +47,21 @@ export class TransformationService implements IBaseService {
     content: any,
     transforms: TransformConfig[] = [],
     stage: TransformStage = "global",
+    feedId: string,
   ) {
     let result = content;
 
     for (let i = 0; i < transforms.length; i++) {
       const transform = transforms[i];
       try {
-        const plugin = await this.pluginService.getPlugin(transform.plugin, {
-          type: "transformer",
-          config: transform.config,
-        });
+        const plugin = await this.pluginService.getPlugin(
+          transform.plugin,
+          {
+            type: "transformer",
+            config: transform.config,
+          },
+          feedId,
+        );
 
         const args: ActionArgs<any, Record<string, unknown>> = {
           input: result,
