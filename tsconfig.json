@@ -3,6 +3,7 @@
   "references": [
     { "path": "./apps/api" },
     { "path": "./apps/app" },
+    { "path": "./apps/secret-service" },
     // SHARED PACKAGES
     { "path": "./packages/types" },
     { "path": "./packages/shared-db" },

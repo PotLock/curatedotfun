@@ -2,9 +2,9 @@ import { DistributorConfig, RichSubmission } from "@curatedotfun/shared-db";
 import type { ActionArgs } from "@curatedotfun/types";
 import { PluginError, PluginErrorCode } from "@curatedotfun/utils";
 import type { Logger } from "pino";
-import { isStaging } from "./config.service";
 import { logPluginError } from "../utils/error";
 import { sanitizeJson } from "../utils/sanitize";
+import { isStaging } from "./config.service";
 import type { IBaseService } from "./interfaces/base-service.interface";
 import { PluginService } from "./plugin.service";
 
@@ -21,6 +21,7 @@ export class DistributionService implements IBaseService {
   async distributeContent<T = RichSubmission>(
     distributor: DistributorConfig,
     input: T,
+    feedId: string,
   ): Promise<void> {
     const sanitizedInput = sanitizeJson(input) as T;
 
@@ -32,6 +33,7 @@ export class DistributionService implements IBaseService {
           type: "distributor",
           config: pluginConfig || {},
         },
+        feedId,
       );
 
       try {

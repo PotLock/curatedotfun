@@ -68,10 +68,10 @@ export class FeedService implements IBaseService {
         { feedId },
         "FeedService: processFeed - Feed not found",
       );
-      throw new Error(`Feed not found: ${feedId}`); // Or a custom NotFoundError
+      throw new Error(`Feed not found: ${feedId}`);
     }
 
-    const feedConfig = await this.feedRepository.getFeedConfig(feedId); // Get config from DB
+    const feedConfig = await this.feedRepository.getFeedConfig(feedId);
     if (!feedConfig) {
       this.logger.error(
         { feedId },
@@ -154,14 +154,13 @@ export class FeedService implements IBaseService {
           }
         }
 
-        await this.processorService.process(submission, streamConfig);
+        await this.processorService.process(submission, streamConfig, feedId);
         processedCount++;
       } catch (error) {
         this.logger.error(
           { error, submissionId: submission.tweetId, feedId },
           `Error processing submission ${submission.tweetId} for feed ${feedId}`,
         );
-        // Decide if one error should stop all processing or just skip this one
       }
     }
 
