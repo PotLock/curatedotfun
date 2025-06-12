@@ -59,7 +59,7 @@
     "lodash": "^4.17.21",
     "mustache": "^4.2.0",
     "near-api-js": "^5.1.1",
-    "near-sign-verify": "^0.3.5",
+    "near-sign-verify": "^0.3.6",
     "ora": "^8.1.1",
     "pg": "^8.15.6",
     "pinata-web3": "^0.5.4",

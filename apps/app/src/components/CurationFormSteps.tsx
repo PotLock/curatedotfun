@@ -1,15 +1,13 @@
-import { useEffect, useState } from "react";
-import { Progress } from "./ui/progress";
-import { Button } from "./ui/button";
+import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { toast } from "../hooks/use-toast";
+import { useCreateFeed } from "../lib/api";
+import { useFeedCreationStore } from "../store/feed-creation-store";
 import BasicInformationForm from "./BasicInformationForm";
 import CurationSettingsForm from "./CurationSettingsForm";
-import { AuthUserInfo } from "../types/web3auth";
-import { useWeb3Auth } from "../hooks/use-web3-auth";
 import FeedReviewForm from "./FeedReviewForm";
-import { useFeedCreationStore } from "../store/feed-creation-store";
-import { toast } from "../hooks/use-toast";
-import { useNavigate } from "@tanstack/react-router";
-import { useCreateFeed } from "../lib/api";
+import { Button } from "./ui/button";
+import { Progress } from "./ui/progress";
 
 // Define step content types
 type Step = {
@@ -68,28 +66,6 @@ export default function CurationFormSteps() {
       setCurrentStep(currentStep - 1);
     }
   };
-
-  const [, setUserInfo] = useState<Partial<AuthUserInfo>>();
-
-  const { isLoggedIn, getUserInfo } = useWeb3Auth();
-
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const info = await getUserInfo();
-        setUserInfo(info);
-        console.log("User Info:", info);
-      } catch (error) {
-        console.error("Error fetching user info:", error);
-      }
-    };
-
-    if (isLoggedIn) {
-      fetchUserInfo();
-    } else {
-      setUserInfo({});
-    }
-  }, [isLoggedIn, getUserInfo]);
 
   return (
     <div className="w-full md:max-w-4xl mx-auto py-4 md:py-8 px-4 md:px-0">
@@ -187,17 +163,13 @@ export default function CurationFormSteps() {
                   setIsSubmitting(false);
                 }
               }}
-              // disabled={!isLoggedIn || isSubmitting}
+              disabled={isSubmitting}
               className="text-sm md:text-base "
             >
               {isSubmitting ? "Submitting..." : "Create Feed"}
             </Button>
           ) : (
-            <Button
-              onClick={handleNext}
-              // disabled={!isLoggedIn}
-              className="text-sm md:text-base"
-            >
+            <Button onClick={handleNext} className="text-sm md:text-base">
               Next
             </Button>
           )}

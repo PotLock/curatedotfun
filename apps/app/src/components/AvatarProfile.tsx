@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
-import { NetworkIDEnum, Social } from "@builddao/near-social-js";
-import { ViewMethod } from "../hooks/near-method";
+import { near } from "../lib/near";
+import { getProfile } from "../lib/near-social";
+import { useCallback, useEffect, useState } from "react";
 import { replaceIpfsUrl } from "../utils/ipfs";
 
 // Constants
@@ -9,7 +9,7 @@ const DEFAULT_AVATAR =
 
 interface NFTMetadata {
   base_uri?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface NFTToken {
@@ -18,7 +18,7 @@ interface NFTToken {
   metadata?: {
     media?: string;
   };
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 type AvatarSize = "small" | "medium" | "large";
@@ -75,18 +75,21 @@ export const AvatarProfile: React.FC<AvatarProfileProps> = ({
   const fetchNFTMetadata = useCallback(
     async (contractId: string, tokenId: string) => {
       try {
-        const nftMetadata = (await ViewMethod(
+        const nftMetadata: NFTMetadata = await near.view({
           contractId,
-          "nft_metadata",
-          {},
-        )) as NFTMetadata;
-        const tokenMetadata = (await ViewMethod(contractId, "nft_token", {
-          token_id: tokenId,
-        })) as NFTToken;
+          methodName: "nft_metadata",
+        });
+        const tokenMetadata: NFTToken = await near.view({
+          contractId,
+          methodName: "nft_token",
+          args: {
+            token_id: tokenId,
+          },
+        });
 
         if (!nftMetadata || !tokenMetadata) return null;
 
-        let imageUrl = tokenMetadata.media || "";
+        const imageUrl = tokenMetadata.media || "";
 
         if (imageUrl) {
           if (
@@ -158,26 +161,11 @@ export const AvatarProfile: React.FC<AvatarProfileProps> = ({
     const fetchAvatar = async () => {
       if (!accountId) return;
 
-      const social = new Social({
-        contractId:
-          process.env.PUBLIC_NETWORK === "mainnet"
-            ? "social.near"
-            : "v1.social08.testnet",
-        network:
-          process.env.PUBLIC_NETWORK === "mainnet"
-            ? NetworkIDEnum.Mainnet
-            : NetworkIDEnum.Testnet,
-      });
-
       try {
-        const result: any = await social.get({
-          keys: [`${accountId}/profile/**`],
-          useApiServer: process.env.PUBLIC_NETWORK === "mainnet",
-        });
+        const profile = await getProfile(accountId);
 
-        const profileData = result?.[accountId]?.profile;
-        const avatarUrl = profileData?.image?.ipfs_cid;
-        const nftData = profileData?.image?.nft;
+        const avatarUrl = profile?.image?.ipfs_cid;
+        const nftData = profile?.image?.nft;
 
         if (nftData) {
           const { contractId, tokenId } = nftData;

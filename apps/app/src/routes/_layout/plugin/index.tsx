@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useAllPlugins } from "../../../lib/api/plugin";
+import { useAllPlugins } from "../../../lib/api";
 import { Button } from "../../../components/ui/button";
 import {
   Table,
