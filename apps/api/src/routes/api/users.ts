@@ -1,7 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { ContentfulStatusCode } from "hono/utils/http-status";
-import { InsertUserData } from "../../services/users.service";
 import { Env } from "../../types/app";
 import {
   NearAccountError,
@@ -12,28 +11,27 @@ import { ServiceProvider } from "../../utils/service-provider";
 import {
   insertUserSchema,
   updateUserSchema,
-} from "../../validation/users.validation";
+} from "@curatedotfun/shared-db";
 
 const usersRoutes = new Hono<Env>();
 
 // --- GET /api/users/me ---
 usersRoutes.get("/me", async (c) => {
-  const jwtPayload = c.get("jwtPayload");
-  const authProviderId = jwtPayload?.authProviderId;
+  const accountId = c.get("accountId");
 
-  if (!authProviderId) {
+  if (!accountId) {
     return c.json(
-      { error: "Unauthorized: Missing or invalid authentication token" },
+      { error: "Unauthorized: User not authenticated." },
       401,
     );
   }
 
   try {
     const userService = ServiceProvider.getInstance().getUserService();
-    const user = await userService.findUserByAuthProviderId(authProviderId);
+    const user = await userService.findUserByNearAccountId(accountId); 
 
     if (!user) {
-      return c.json({ error: "User profile not found" }, 404);
+      return c.json({ error: "User profile not found for the given NEAR account ID." }, 404);
     }
 
     return c.json({ profile: user });
@@ -46,23 +44,11 @@ usersRoutes.get("/me", async (c) => {
 // --- POST /api/users ---
 usersRoutes.post("/", zValidator("json", insertUserSchema), async (c) => {
   const createUserData = c.req.valid("json");
-  const jwtPayload = c.get("jwtPayload");
-  const authProviderId = jwtPayload?.authProviderId;
-
-  if (!authProviderId) {
-    return c.json(
-      { error: "Unauthorized: Missing or invalid authentication token" },
-      401,
-    );
-  }
 
   try {
     const userService = ServiceProvider.getInstance().getUserService();
 
-    const newUser = await userService.createUser({
-      auth_provider_id: authProviderId,
-      ...createUserData,
-    } as InsertUserData);
+    const newUser = await userService.createUser(createUserData);
 
     return c.json({ profile: newUser }, 201);
   } catch (error: any) {
@@ -89,20 +75,19 @@ usersRoutes.post("/", zValidator("json", insertUserSchema), async (c) => {
 // --- PUT /api/users/me ---
 usersRoutes.put("/me", zValidator("json", updateUserSchema), async (c) => {
   const updateData = c.req.valid("json");
-  const jwtPayload = c.get("jwtPayload");
-  const authProviderId = jwtPayload?.authProviderId;
+  const accountId = c.get("accountId");
 
-  if (!authProviderId) {
+  if (!accountId) {
     return c.json(
-      { error: "Unauthorized: Missing or invalid authentication token" },
+      { error: "Unauthorized: User not authenticated." },
       401,
     );
   }
 
   try {
     const userService = ServiceProvider.getInstance().getUserService();
-    const updatedUser = await userService.updateUser(
-      authProviderId,
+    const updatedUser = await userService.updateUserByNearAccountId( 
+      accountId,
       updateData,
     );
 
@@ -134,24 +119,22 @@ usersRoutes.put("/me", zValidator("json", updateUserSchema), async (c) => {
 
 // --- DELETE /api/users/me ---
 usersRoutes.delete("/me", async (c) => {
-  const jwtPayload = c.get("jwtPayload");
-  const authProviderId = jwtPayload?.authProviderId;
+  const accountId = c.get("accountId");
 
-  if (!authProviderId) {
+  if (!accountId) {
     return c.json(
-      { error: "Unauthorized: Missing or invalid authentication token" },
+      { error: "Unauthorized: User not authenticated." },
       401,
     );
   }
 
   try {
     const userService = ServiceProvider.getInstance().getUserService();
-    const success = await userService.deleteUser(authProviderId);
+    const success = await userService.deleteUserByNearAccountId(accountId);
 
     if (success) {
       return c.json({ message: "User profile deleted successfully" }, 200);
     } else {
-      // This case should ideally be handled by NotFoundError thrown from the service
       return c.json({ error: "Failed to delete user profile" }, 500);
     }
   } catch (error: any) {

@@ -6,7 +6,7 @@ export type Env = {
   Variables: {
     db: typeof db;
     sp: ServiceProvider;
-    accountId?: string;
+    accountId?: string | null;
   };
 };
 

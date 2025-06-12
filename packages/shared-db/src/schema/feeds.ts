@@ -8,11 +8,12 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { timestamps } from "./common";
 import { z } from "zod";
 import { submissionFeeds } from "./submissions";
 import { moderationHistory } from "./moderation";
+import { users } from "./users";
 
 // Schema for ModerationConfig
 export const ModerationConfigSchema = z.object({
@@ -120,8 +121,29 @@ export const feeds = table("feeds", {
   // Keep these fields for backward compatibility and quick lookups
   name: text("name").notNull(),
   description: text("description"),
+  created_by: text("created_by")
+    .notNull()
+    .references(() => users.near_account_id, { onDelete: "cascade" }),
+  admins: jsonb("admins")
+    .$type<string[]>()
+    .default(sql`'[]'::jsonb`),
   ...timestamps,
 });
+
+// RELATIONS for feeds table
+export const feedsRelations = relations(feeds, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [feeds.created_by],
+    references: [users.near_account_id],
+    relationName: "FeedCreator",
+  }),
+  submissionLinks: many(submissionFeeds, {
+    relationName: "FeedSubmissionLinks",
+  }),
+  moderationHistoryEntries: many(moderationHistory, {
+    relationName: "ModerationHistoryFeedReference",
+  }),
+}));
 
 // Feed Recaps State Table
 // Tracks the state of each recap job
@@ -168,13 +190,3 @@ export const feedPlugins = table(
   ],
 );
 
-// RELATIONS for feeds table
-
-export const feedsRelations = relations(feeds, ({ many }) => ({
-  submissionLinks: many(submissionFeeds, {
-    relationName: "FeedSubmissionLinks",
-  }),
-  moderationHistoryEntries: many(moderationHistory, {
-    relationName: "ModerationHistoryFeedReference",
-  }),
-}));

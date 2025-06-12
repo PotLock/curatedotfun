@@ -39,6 +39,14 @@ export class UserService implements IBaseService {
     return selectUserSchema.parse(user);
   }
 
+  async findUserByNearAccountId(nearAccountId: string) {
+    const user = await this.userRepository.findByNearAccountId(nearAccountId);
+    if (!user) {
+      return null;
+    }
+    return selectUserSchema.parse(user);
+  }
+
   async createUser(data: InsertUser) {
     const { auth_provider_id, username, near_public_key, email } = data;
     const parentAccountId = this.nearConfig.parentAccountId;
@@ -150,6 +158,32 @@ export class UserService implements IBaseService {
     }
   }
 
+  async updateUserByNearAccountId(nearAccountId: string, data: UpdateUser) {
+    try {
+      const updatedUser = await this.db.transaction(async (tx) => {
+        return this.userRepository.updateByNearAccountId(nearAccountId, data, tx);
+      });
+
+      if (!updatedUser) {
+        return null;
+      }
+      return selectUserSchema.parse(updatedUser);
+    } catch (error: any) {
+      if (error instanceof UserServiceError || error instanceof NotFoundError) {
+        throw error;
+      }
+      if (error.message?.startsWith("User not found with NEAR account ID:")) {
+        throw new NotFoundError("User", nearAccountId);
+      }
+      console.error(`Error updating user by NEAR account ID ${nearAccountId}:`, error);
+      throw new UserServiceError(
+        error.message || "Failed to update user profile",
+        error.statusCode || 500,
+        error,
+      );
+    }
+  }
+
   async updateUser(auth_provider_id: string, data: UpdateUser) {
     try {
       const updatedUser = await this.db.transaction(async (tx) => {
@@ -157,9 +191,6 @@ export class UserService implements IBaseService {
       });
 
       if (!updatedUser) {
-        // If updateUser can return null for "not found", this is fine.
-        // Otherwise, if it should always return a user or throw, this might indicate an issue.
-        // Assuming repository.updateUser handles "not found" by returning null.
         return null;
       }
 
@@ -171,6 +202,109 @@ export class UserService implements IBaseService {
       console.error("Error updating user:", error);
       throw new UserServiceError(
         error.message || "Failed to update user profile",
+        error.statusCode || 500,
+        error,
+      );
+    }
+  }
+
+  async deleteUserByNearAccountId(nearAccountIdToDelete: string): Promise<boolean> {
+    // First, ensure the user exists to get their full details for NEAR account deletion part.
+    const user = await this.userRepository.findByNearAccountId(nearAccountIdToDelete);
+
+    if (!user || !user.near_account_id) {
+      throw new NotFoundError("User", nearAccountIdToDelete);
+    }
+
+    const { near_account_id } = user;
+    const parentAccountId = this.nearConfig.parentAccountId;
+
+    try {
+      const parentPrivateKey = this.nearConfig.parentKeyPair;
+      if (!parentPrivateKey) {
+        throw new NearAccountError(
+          "Missing parentKeyPair in NEAR integration config for account deletion",
+        );
+      }
+
+      const networkId = this.nearConfig.networkId;
+      const keyStore = new keyStores.InMemoryKeyStore();
+      const parentKeyPair = KeyPair.fromString(
+        parentPrivateKey as KeyPairString,
+      );
+      await keyStore.setKey(networkId, parentAccountId, parentKeyPair);
+
+      const connectionConfig = {
+        networkId,
+        keyStore,
+        nodeUrl: this.nearConfig.rpcUrl || `https://rpc.${networkId}.near.org`,
+      };
+
+      const nearConnection = await connect(connectionConfig);
+      const parentAccount = await nearConnection.account(parentAccountId);
+
+      console.log(
+        `Attempting to delete NEAR account: ${near_account_id} with beneficiary ${parentAccountId}`,
+      );
+
+      const actions = [transactions.deleteAccount(parentAccountId)];
+
+      await parentAccount.signAndSendTransaction({
+        receiverId: near_account_id,
+        actions,
+      });
+
+      console.log(`Successfully deleted NEAR account: ${near_account_id}`);
+    } catch (nearError: any) {
+      console.error(
+        `Error deleting NEAR account ${near_account_id}:`,
+        nearError,
+      );
+      if (
+        nearError.message?.includes("Account ID #") &&
+        nearError.message?.includes("doesn't exist")
+      ) {
+        console.warn(
+          `NEAR account ${near_account_id} might have been already deleted or never existed. Proceeding with DB deletion.`,
+        );
+      } else {
+        throw new NearAccountError(
+          `Failed to delete NEAR account ${near_account_id}`,
+          500,
+          nearError,
+        );
+      }
+    }
+
+    try {
+      const dbDeletionResult = await this.db.transaction(async (tx) => {
+        return this.userRepository.deleteByNearAccountId(nearAccountIdToDelete, tx);
+      });
+
+      if (dbDeletionResult) {
+        console.log(
+          `Successfully deleted user from database (near_account_id: ${nearAccountIdToDelete})`,
+        );
+      } else {
+        console.warn(
+          `User (near_account_id: ${nearAccountIdToDelete}) was not found in the database for deletion, or was already deleted.`,
+        );
+      }
+      return true;
+    } catch (error: any) {
+      if (
+        error instanceof UserServiceError ||
+        error instanceof NotFoundError ||
+        error instanceof NearAccountError
+      ) {
+        throw error;
+      }
+      console.error(
+        `Error deleting user (near_account_id: ${nearAccountIdToDelete}) from database:`,
+        error,
+      );
+      throw new UserServiceError(
+        error.message || "Failed to delete user from database",
         error.statusCode || 500,
         error,
       );
@@ -255,13 +389,10 @@ export class UserService implements IBaseService {
           `Successfully deleted user from database: ${auth_provider_id}`,
         );
       } else {
-        // This case implies the repository's deleteUser might return false if user not found.
         console.warn(
           `User ${auth_provider_id} was not found in the database for deletion, or was already deleted during the transaction.`,
         );
       }
-      // The overall deleteUser operation is considered successful if NEAR deletion passed (or was skipped)
-      // and the DB deletion attempt concluded, even if the user was already gone from DB.
       return true;
     } catch (error: any) {
       if (

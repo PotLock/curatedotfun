@@ -6,9 +6,10 @@ import {
   text,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import { sql, relations } from "drizzle-orm";
 import { z } from "zod";
 import { timestamps, Metadata } from "./common";
+import { feeds } from "./feeds";
 
 export const socialImageSchema = z
   .object({
@@ -29,6 +30,15 @@ export const profileSchema = z
 export type Profile = z.infer<typeof profileSchema>;
 export type SocialImage = z.infer<typeof socialImageSchema>;
 
+export const platformIdentitySchema = z.object({
+  platform: z.string(),
+  id: z.string(),
+  username: z.string(),
+  profileImage: z.string().url().optional(),
+});
+
+export type PlatformIdentity = z.infer<typeof platformIdentitySchema>;
+
 // Users Table
 export const users = table(
   "users",
@@ -42,15 +52,24 @@ export const users = table(
 
     // Dynamic app-specific JSON data and its metadata
     metadata: jsonb("metadata").$type<Metadata>(), // Holds type (schema URL) and other meta info
-    data: jsonb("data").$type<Profile>(), // Holds the actual user profile data
+    data: jsonb("data").$type<Profile>(),
+    platform_identities: jsonb("platform_identities")
+      .$type<PlatformIdentity[]>()
+      .default(sql`'[]'::jsonb`),
 
-    ...timestamps, // createdAt, updatedAt
+    ...timestamps,
   },
   (users) => [
     uniqueIndex("users_auth_provider_id_idx").on(users.auth_provider_id),
     uniqueIndex("users_near_account_id_idx").on(users.near_account_id),
     uniqueIndex("users_near_public_key_idx").on(users.near_public_key),
-    // Index on metadata type for efficient queries
     index("metadata_type_idx").on(sql`(${users.metadata} ->> 'type')`),
+    index("platform_identities_idx").on(users.platform_identities), // Index for platform_identities
   ],
 );
+
+export const usersRelations = relations(users, ({ many }) => ({
+  createdFeeds: many(feeds, {
+    relationName: "FeedCreator",
+  }),
+}));

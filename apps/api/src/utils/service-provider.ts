@@ -19,6 +19,7 @@ import { TransformationService } from "../services/transformation.service";
 import { TwitterService } from "../services/twitter/client";
 import { UserService } from "../services/users.service";
 import { logger } from "./logger";
+import { getSuperAdminAccounts } from "./auth.utils";
 
 export class ServiceProvider {
   private static instance: ServiceProvider;
@@ -61,11 +62,13 @@ export class ServiceProvider {
       logger,
     );
 
+    const superAdminAccountsList = getSuperAdminAccounts(process.env.SUPER_ADMIN_ACCOUNTS);
     const feedService = new FeedService(
       feedRepository,
       processorService,
       db,
       logger,
+      superAdminAccountsList,
     );
 
     this.services.set("configService", configService);
