@@ -128,6 +128,7 @@ export default function CurationFormSteps() {
                   id: feedData.hashtags.replace(/^#/, ""), // Remove # if present
                   name: feedData.feedName,
                   description: feedData.description,
+                  enabled: true,
                   moderation: {
                     approvers: {
                       twitter: twitterHandles,
@@ -150,7 +151,7 @@ export default function CurationFormSteps() {
                     description: `Your feed "${feedData.feedName}" has been created.`,
                     variant: "default",
                   });
-                  navigate({ to: "/submissions" });
+                  navigate({ to: "/" });
                 } catch (error) {
                   console.error("Error creating feed:", error);
                   toast({

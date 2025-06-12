@@ -48,7 +48,7 @@ export default function PublishingIntegrations() {
               </p>
             </div>
           </div>
-          <div className="px-3 py-2 flex gap-[4px] bg-white border font-sans border-neutral-600 rounded-md text-sm font-medium self-start md:self-auto">
+          {/* <div className="px-3 py-2 flex gap-[4px] bg-white border font-sans border-neutral-600 rounded-md text-sm font-medium self-start md:self-auto">
             <div>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -73,7 +73,7 @@ export default function PublishingIntegrations() {
               </svg>
             </div>
             150 $CURATE
-          </div>
+          </div> */}
         </div>
         <div className="flex items-center gap-4 self-end md:self-auto">
           <Switch
@@ -85,7 +85,7 @@ export default function PublishingIntegrations() {
       <div className=" ">
         {telegramEnabled && (
           <div className="space-y-4 md:space-y-6 border-t pt-4 md:pt-6 p-4 bg-white">
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <label className="text-sm font-medium">Bot Token</label>
               <input
                 type="text"
@@ -95,7 +95,7 @@ export default function PublishingIntegrations() {
               <p className="text-xs text-gray-500">
                 Your Telegram bot token from @BotFather
               </p>
-            </div>
+            </div> */}
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Channel ID</label>
