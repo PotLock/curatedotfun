@@ -26,10 +26,22 @@ const {
 // User Schemas and Types
 export const insertUserSchema = createInsertSchema(users, {
   id: z.undefined(),
+  auth_provider_id: z.string().optional(),
   createdAt: z.undefined(),
   updatedAt: z.undefined(),
 });
-export const updateUserSchema = createUpdateSchema(users);
+
+export const updateUserSchema = createUpdateSchema(users, {
+  id: z.undefined(),
+  auth_provider_id: z.undefined(),
+  near_account_id: z.undefined(),
+  near_public_key: z.undefined(),
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+}).extend({
+  email: z.string().email().optional().nullable(),
+});
+
 export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpdateUser = z.infer<typeof updateUserSchema>;
@@ -72,10 +84,16 @@ export type SelectFeedUserStats = z.infer<typeof selectFeedUserStatsSchema>;
 
 // Feed Schemas and Types
 export const insertFeedSchema = createInsertSchema(feeds, {
+  created_by: z.string().min(1),
+  admins: z.array(z.string()).optional(),
   createdAt: z.undefined(),
   updatedAt: z.undefined(),
 });
-export const updateFeedSchema = createUpdateSchema(feeds);
+
+export const updateFeedSchema = createUpdateSchema(feeds).extend({
+  admins: z.array(z.string()).optional(),
+});
+
 export const selectFeedSchema = createSelectSchema(feeds);
 export type InsertFeed = z.infer<typeof insertFeedSchema>;
 export type UpdateFeed = z.infer<typeof updateFeedSchema>;

@@ -71,6 +71,13 @@
       "when": 1749576099861,
       "tag": "0009_secret_juggernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1749720881561,
+      "tag": "0010_pale_vertigo",
+      "breakpoints": true
     }
   ]
 }

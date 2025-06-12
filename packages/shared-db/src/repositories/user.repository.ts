@@ -101,7 +101,7 @@ export class UserRepository {
           const insertResult = await txDb
             .insert(schema.users)
             .values({
-              auth_provider_id: userData.auth_provider_id,
+              auth_provider_id: userData.auth_provider_id as string,
               near_account_id: userData.near_account_id,
               near_public_key: userData.near_public_key,
               username: userData.username || null,
@@ -138,6 +138,45 @@ export class UserRepository {
   }
 
   /**
+   * Update a user by their NEAR account ID
+   * @param near_account_id The NEAR account ID of the user to update
+   * @param userData The user data to update
+   * @returns The updated user
+   * @throws NotFoundError if the user does not exist
+   */
+  async updateByNearAccountId(
+    near_account_id: string,
+    userData: UpdateUser,
+    txDb: DB,
+  ) {
+    return withErrorHandling(
+      async () => {
+        const updateResult = await txDb
+          .update(schema.users)
+          .set({
+            ...userData,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.users.near_account_id, near_account_id))
+          .returning();
+
+        const updatedUser = updateResult[0];
+        if (!updatedUser) {
+          throw new Error(
+            `User not found with NEAR account ID: ${near_account_id}`,
+          );
+        }
+
+        return updatedUser;
+      },
+      {
+        operationName: "update user by NEAR account ID",
+        additionalContext: { near_account_id, userData },
+      },
+    );
+  }
+
+  /**
    * Update a user
    * @param auth_provider_id The provider ID of the user to update
    * @param userData The user data to update
@@ -167,6 +206,32 @@ export class UserRepository {
         operationName: "update user",
         additionalContext: { auth_provider_id, userData },
       },
+    );
+  }
+
+  /**
+   * Delete a user by their NEAR account ID
+   * @param near_account_id The NEAR account ID of the user to delete
+   * @returns True if the user was deleted, false otherwise
+   */
+  async deleteByNearAccountId(
+    near_account_id: string,
+    txDb: DB,
+  ): Promise<boolean> {
+    return withErrorHandling(
+      async () => {
+        const deleteResult = await txDb
+          .delete(schema.users)
+          .where(eq(schema.users.near_account_id, near_account_id))
+          .returning();
+
+        return deleteResult.length > 0;
+      },
+      {
+        operationName: "delete user by NEAR account ID",
+        additionalContext: { near_account_id },
+      },
+      false,
     );
   }
 

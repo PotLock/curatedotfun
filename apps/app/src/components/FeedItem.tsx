@@ -1,8 +1,5 @@
 import type { FeedContextSubmission } from "@curatedotfun/types";
-import {
-  useApproveSubmission,
-  useRejectSubmission,
-} from "../lib/api/moderation";
+import { useApproveSubmission, useRejectSubmission } from "../lib/api";
 import { formatDate } from "../utils/datetime";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -203,11 +200,11 @@ export const FeedItem = ({ submission, feedId }: FeedItemProps) => {
                 note={submission.curatorNotes}
               />
             </div>
-            {/* <div className="flex-col">
+            <div className="flex-col">
               <div className="flex">
                 <ModerationActions submission={submission} feedId={feedId} />
               </div>
-            </div> */}
+            </div>
           </div>
         )}
       </div>

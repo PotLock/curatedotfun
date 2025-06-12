@@ -1,9 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+// import { ConnectPlatformDialog } from "../../../../../components/feed/settings/connected/ConnectPlatformDialog";
 import { Button } from "../../../../../components/ui/button";
-import { ConnectPlatformDialog } from "../../../../../components/feed/settings/connected/ConnectPlatformDialog";
-import { useConnectedAccounts } from "../../../../../store/platformAccountsStore";
-import { PlatformAccountItem } from "../../../../../components/feed/settings/connected/PlatformAccount";
-import { SUPPORTED_PLATFORMS } from "@crosspost/types";
 
 export const Route = createFileRoute(
   "/_layout/feed/$feedId/settings/connected",
@@ -12,19 +9,19 @@ export const Route = createFileRoute(
 });
 
 function ConnectedAccounts() {
-  const { data: connectedAccounts } = useConnectedAccounts();
+  // const { data: connectedAccounts } = useConnectedAccounts();
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center w-full">
         <h3 className="text-2xl font-light">Connected Accounts</h3>
-        <ConnectPlatformDialog>
-          <Button>Connect Account</Button>
-        </ConnectPlatformDialog>
+        {/* <ConnectPlatformDialog> */}
+        <Button>Connect Account</Button>
+        {/* </ConnectPlatformDialog> */}
       </div>
 
       <div className="space-y-4">
-        {SUPPORTED_PLATFORMS.map((platform) => {
+        {/* {SUPPORTED_PLATFORMS.map((platform) => {
           const platformAccounts =
             connectedAccounts?.filter(
               (account) => account.platform === platform,
@@ -49,7 +46,7 @@ function ConnectedAccounts() {
               )}
             </div>
           );
-        })}
+        })} */}
       </div>
     </div>
   );

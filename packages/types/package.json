@@ -24,7 +24,6 @@
   ],
   "scripts": {
     "build": "tsc -b",
-    "dev": "tsc --watch",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

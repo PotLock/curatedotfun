@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { useWeb3Auth } from "../hooks/use-web3-auth";
+import { useState } from "react";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -9,11 +8,10 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
-import { useWalletSelector } from "@near-wallet-selector/react-hook";
 import { useNavigate } from "@tanstack/react-router";
 import { ChevronDown, CircleUserRound, LogOut } from "lucide-react";
-import { useAuthStore } from "../store/auth-store";
-import { AuthUserInfo } from "../types/web3auth";
+import { useAuth } from "../contexts/auth-context";
+import { useNearSocialProfile } from "../hooks/near-social";
 import { AvatarProfile } from "./AvatarProfile";
 
 interface UserMenuProps {
@@ -22,88 +20,36 @@ interface UserMenuProps {
 
 export default function UserMenu({ className }: UserMenuProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
-  const [imageError, setImageError] = useState(false);
   const navigate = useNavigate();
-  const { showLoginModal } = useAuthStore();
+  const { currentAccountId, handleSignIn, isSignedIn, handleSignOut } =
+    useAuth();
+  const { data: userProfile } = useNearSocialProfile(currentAccountId || "");
 
-  const { isInitialized, isLoggedIn, logout, getUserInfo } = useWeb3Auth();
-  const { signedAccountId, signOut } = useWalletSelector();
-
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const info = await getUserInfo();
-        setUserInfo(info);
-        setImageError(false);
-      } catch (error) {
-        console.error("Error fetching user info:", error);
-      }
-    };
-
-    if (isLoggedIn) {
-      fetchUserInfo();
-    } else {
-      setUserInfo({});
-    }
-  }, [isLoggedIn, getUserInfo]);
-
-  // Profile image component with error handling
-  const ProfileImage = ({ size = "small" }) => {
-    const handleImageError = () => {
-      setImageError(true);
-    };
-
-    if (imageError || !userInfo?.profileImage) {
-      return (
-        <CircleUserRound className={size === "small" ? "h-7 w-7" : "h-6 w-6"} />
-      );
-    }
-
+  const ProfileImage = ({ size = "small" }: { size?: "small" | "medium" }) => {
     return (
-      <img
-        className="rounded-full"
-        style={{
-          height: size === "small" ? "28px" : "24px",
-          width: size === "small" ? "28px" : "24px",
-          objectFit: "cover",
-        }}
-        alt="Profile Image"
-        src={userInfo.profileImage}
-        onError={handleImageError}
-        loading="eager"
-        referrerPolicy="no-referrer"
-      />
+      <CircleUserRound className={size === "small" ? "h-7 w-7" : "h-6 w-6"} />
     );
   };
 
   const getUserDisplayName = () => {
-    if (signedAccountId) {
-      return signedAccountId;
+    if (userProfile?.name) {
+      return userProfile.name;
     }
-    return (
-      (userInfo as { name?: string }).name ||
-      (userInfo as { email?: string }).email
-    );
-  };
-
-  const handleLogout = () => {
-    if (signedAccountId) {
-      signOut();
-    } else {
-      logout();
+    if (currentAccountId) {
+      return currentAccountId;
     }
+    return "User";
   };
 
   return (
     <>
-      {(isInitialized && isLoggedIn && userInfo) || signedAccountId ? (
+      {isSignedIn ? (
         <DropdownMenu onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className={className || "hidden md:flex"}>
               <div className="flex gap-1 items-center justify-center">
-                {signedAccountId ? (
-                  <AvatarProfile accountId={signedAccountId} size="small" />
+                {currentAccountId ? (
+                  <AvatarProfile accountId={currentAccountId} size="small" />
                 ) : (
                   <ProfileImage size="small" />
                 )}
@@ -121,20 +67,15 @@ export default function UserMenu({ className }: UserMenuProps) {
           <DropdownMenuContent className="w-56 mt-4">
             <DropdownMenuItem>
               <div className="flex gap-2 w-full items-start">
-                {signedAccountId ? (
-                  <AvatarProfile accountId={signedAccountId} size="medium" />
+                {currentAccountId ? (
+                  <AvatarProfile accountId={currentAccountId} size="medium" />
                 ) : (
                   <ProfileImage />
                 )}
                 <div>
                   <p className="text-sm font-semibold leading-5">
-                    {signedAccountId || (userInfo as { name?: string }).name}
+                    {currentAccountId}
                   </p>
-                  {!signedAccountId && (
-                    <p className="text-xs leading-5 text-gray-500">
-                      {(userInfo as { email?: string }).email}
-                    </p>
-                  )}
                 </div>
               </div>
             </DropdownMenuItem>
@@ -149,7 +90,7 @@ export default function UserMenu({ className }: UserMenuProps) {
               <span>Profile</span>
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={handleLogout}
+              onClick={handleSignOut}
               className="cursor-pointer hover:bg-gray-100"
             >
               <LogOut />
@@ -160,7 +101,7 @@ export default function UserMenu({ className }: UserMenuProps) {
       ) : (
         <Button
           className={className || "hidden md:flex"}
-          onClick={showLoginModal}
+          onClick={handleSignIn}
         >
           Login
         </Button>

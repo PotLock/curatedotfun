@@ -1,11 +1,9 @@
+import { useAuth } from "../contexts/auth-context";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useWeb3Auth } from "../hooks/use-web3-auth";
-import { useAuthStore } from "../store/auth-store";
 import { useFeedCreationStore } from "../store/feed-creation-store";
-import { AuthUserInfo } from "../types/web3auth";
+import { ImageUpload } from "./ImageUpload";
 import { Button } from "./ui/button";
 import {
   Form,
@@ -17,7 +15,6 @@ import {
 } from "./ui/form";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
-import { ImageUpload } from "./ImageUpload";
 
 const BasicInformationFormSchema = z.object({
   profileImage: z.string().optional(),
@@ -29,9 +26,8 @@ const BasicInformationFormSchema = z.object({
 type FormValues = z.infer<typeof BasicInformationFormSchema>;
 
 export default function BasicInformationForm() {
-  const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
-  const { isLoggedIn, getUserInfo } = useWeb3Auth();
-  const { showLoginModal } = useAuthStore();
+  const { isSignedIn, handleSignIn } = useAuth();
+
   const {
     profileImage: storedProfileImage,
     feedName,
@@ -50,23 +46,6 @@ export default function BasicInformationForm() {
     },
   });
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const info = await getUserInfo();
-        setUserInfo(info);
-      } catch (error) {
-        console.error("Error fetching user info:", error);
-      }
-    };
-
-    if (isLoggedIn) {
-      fetchUserInfo();
-    } else {
-      setUserInfo({});
-    }
-  }, [isLoggedIn, getUserInfo]);
-
   const onSubmit = (data: FormValues) => {
     console.log("Form submitted:", data);
     setBasicInfo({
@@ -77,7 +56,7 @@ export default function BasicInformationForm() {
 
   return (
     <div>
-      {isLoggedIn && userInfo ? (
+      {isSignedIn ? (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             {/* Image Upload */}
@@ -89,9 +68,7 @@ export default function BasicInformationForm() {
                   <FormControl>
                     <ImageUpload
                       label="Profile Image"
-                      initialImageUrl={
-                        field.value || userInfo?.profileImage || null
-                      }
+                      initialImageUrl={field.value || null}
                       onUploadSuccess={(_ipfsHash, ipfsUrl) => {
                         field.onChange(ipfsUrl);
                         setBasicInfo({ profileImage: ipfsUrl });
@@ -181,7 +158,7 @@ export default function BasicInformationForm() {
       ) : (
         <div className="flex flex-col items-center justify-center py-10">
           <p className="mb-4 text-gray-600">Please login to create a feed</p>
-          <Button onClick={showLoginModal}>Login</Button>
+          <Button onClick={handleSignIn}>Login</Button>
         </div>
       )}
     </div>

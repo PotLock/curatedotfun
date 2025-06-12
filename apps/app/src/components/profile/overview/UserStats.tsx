@@ -1,4 +1,4 @@
-import { useWeb3Auth } from "../../../hooks/use-web3-auth";
+import { useAuth } from "../../../contexts/auth-context";
 import { useMyActivity } from "../../../lib/api";
 
 interface StatCardProps {
@@ -20,8 +20,8 @@ function StatCard({ title, value }: StatCardProps) {
 }
 
 export function UserStats() {
-  const { currentUserProfile } = useWeb3Auth();
   const { data: userActivityStats, isLoading } = useMyActivity();
+  const { currentAccountId } = useAuth();
 
   return (
     <div className="border rounded-lg py-3 sm:py-5 px-2 sm:px-[14px] border-neutral-300 gap-4 sm:gap-6 flex flex-col">
@@ -29,7 +29,7 @@ export function UserStats() {
         <p className="font-semibold text-black text-lg sm:text-[22px] leading-6 z-10 relative">
           Welcome,
           <br />
-          {currentUserProfile?.near_account_id}
+          {currentAccountId}
         </p>
         <div className="absolute top-0 left-0 w-full h-full z-0">
           <div className="absolute inset-0 bg-gradient-to-l from-white/60 to-white/70 z-10"></div>
