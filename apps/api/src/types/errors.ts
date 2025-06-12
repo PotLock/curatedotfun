@@ -86,6 +86,15 @@ export class DatabaseError extends AppError {
 }
 
 /**
+ * Authorization errors (e.g., insufficient permissions)
+ */
+export class AuthorizationError extends AppError {
+  constructor(message: string, statusCode: number = 403, cause?: Error) {
+    super(message, statusCode, cause);
+  }
+}
+
+/**
  * Not found errors
  */
 export class NotFoundError extends AppError {

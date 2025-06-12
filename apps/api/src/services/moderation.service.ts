@@ -8,11 +8,16 @@ import {
   SubmissionRepository,
   SubmissionStatus,
   submissionStatusZodEnum,
+  PlatformIdentity,
 } from "@curatedotfun/shared-db";
 import { Logger } from "pino";
 import { FeedService } from "./feed.service";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { ProcessorService } from "./processor.service";
+import { UserService } from "./users.service";
+import { isSuperAdmin } from "../utils/auth.utils";
+import { FeedConfig } from "@curatedotfun/shared-db";
+import { AuthorizationError } from "../types/errors";
 
 export interface CreateModerationApiPayload {
   submissionId: string;
@@ -32,10 +37,68 @@ export class ModerationService implements IBaseService {
     private readonly submissionRepository: SubmissionRepository,
     private readonly processorService: ProcessorService,
     private readonly feedService: FeedService,
+    private readonly userService: UserService, // Correctly added UserService
+    private readonly superAdminAccounts: string[], // Correctly added superAdminAccounts
     private readonly db: DB,
     logger: Logger,
   ) {
     this.logger = logger.child({ service: ModerationService.name });
+  }
+
+  /**
+   * Checks if a user can moderate a submission for a specific feed and platform identity.
+   * @param actingAccountId The NEAR account ID of the user performing the action.
+   * @param platform The platform of the submission (e.g., "twitter").
+   * @param platformSpecificUserIdFromApproverList The platform-specific user ID from the feed's approver list.
+   * @returns True if the user is authorized, false otherwise.
+   */
+  public async canModerateSubmission(
+    actingAccountId: string | null,
+    platform: string,
+    platformSpecificUserIdFromApproverList: string,
+  ): Promise<boolean> {
+    if (!actingAccountId) {
+      return false;
+    }
+
+    // 1. Check if the actingAccountId is a Super Admin.
+    if (isSuperAdmin(actingAccountId, this.superAdminAccounts)) {
+      return true;
+    }
+
+    // 2. Fetch the user's profile to get their platform_identities.
+    const userProfile =
+      await this.userService.findUserByNearAccountId(actingAccountId);
+    if (!userProfile || !userProfile.platform_identities) {
+      this.logger.warn(
+        { actingAccountId },
+        "User profile not found or no platform identities for moderation check.",
+      );
+      return false;
+    }
+
+    // 3. Check if any of the user's platform_identities match the given platform and platformSpecificUserIdFromApproverList.
+    const platformIdentities =
+      userProfile.platform_identities as PlatformIdentity[];
+    for (const identity of platformIdentities) {
+      if (
+        identity.platform === platform &&
+        identity.username === platformSpecificUserIdFromApproverList
+      ) {
+        return true; // User is linked to the specified approver ID on the correct platform.
+      }
+    }
+
+    this.logger.debug(
+      {
+        actingAccountId,
+        platform,
+        platformSpecificUserIdFromApproverList,
+        userPlatformIdentities: platformIdentities,
+      },
+      "User does not have matching platform identity for moderation.",
+    );
+    return false;
   }
 
   /**
@@ -67,6 +130,85 @@ export class ModerationService implements IBaseService {
       );
     }
 
+    // --- Permission Check ---
+    const actingAccountId = payload.adminId; // This is the NEAR account ID
+    const feedId = payload.feedId;
+
+    const submissionPlatform = "twitter";
+
+    const feedConfig: FeedConfig | null =
+      await this.feedRepository.getFeedConfig(feedId);
+
+    if (
+      !feedConfig ||
+      !feedConfig.moderation ||
+      !feedConfig.moderation.approvers
+    ) {
+      this.logger.warn(
+        { feedId },
+        "Feed config, moderation settings, or approvers not found for permission check.",
+      );
+      throw new AuthorizationError(
+        "Moderation not configured for this feed.",
+        403,
+      );
+    }
+
+    const configuredApproverPlatformIds =
+      feedConfig.moderation.approvers[submissionPlatform];
+
+    if (
+      !configuredApproverPlatformIds ||
+      configuredApproverPlatformIds.length === 0
+    ) {
+      this.logger.warn(
+        { feedId, platform: submissionPlatform },
+        "No approvers configured for this platform on the feed.",
+      );
+      throw new AuthorizationError(
+        `No approvers configured for platform '${submissionPlatform}' on this feed.`,
+        403,
+      );
+    }
+
+    let isAuthorized = false;
+    let adminIdForHistory = actingAccountId; // Default to NEAR ID (for super admins or if no specific platform match is made but still authorized)
+
+    // Check if super admin first
+    if (isSuperAdmin(actingAccountId, this.superAdminAccounts)) {
+      isAuthorized = true;
+      // adminIdForHistory remains actingAccountId (NEAR ID) for super admin actions
+    } else {
+      // If not super admin, check against configured platform-specific approvers
+      for (const configuredApproverId of configuredApproverPlatformIds) {
+        // configuredApproverId is a platform username like "twitterUser123"
+        // canModerateSubmission checks if actingAccountId (NEAR) is linked to this configuredApproverId (platform username)
+        if (
+          await this.canModerateSubmission(
+            actingAccountId,
+            submissionPlatform,
+            configuredApproverId,
+          )
+        ) {
+          isAuthorized = true;
+          adminIdForHistory = configuredApproverId; // Log the platform-specific ID that granted permission
+          break;
+        }
+      }
+    }
+
+    if (!isAuthorized) {
+      this.logger.warn(
+        { actingAccountId, feedId, platform: submissionPlatform },
+        "User not authorized to moderate this submission.",
+      );
+      throw new AuthorizationError(
+        "You are not authorized to moderate this submission.",
+        403,
+      );
+    }
+    // --- End Permission Check ---
+
     // Prevent re-moderating if not pending (optional, based on desired logic)
     // if (feedEntry.status !== submissionStatusZodEnum.Enum.pending) {
     //   this.logger.warn({ submissionId: payload.submissionId, feedId: payload.feedId, currentStatus: feedEntry.status }, "Submission feed entry is not pending, skipping moderation.");
@@ -77,10 +219,9 @@ export class ModerationService implements IBaseService {
     const moderationActionData: InsertModerationHistory = {
       tweetId: payload.submissionId,
       feedId: payload.feedId,
-      adminId: payload.adminId,
+      adminId: adminIdForHistory,
       action: payload.action,
       note: payload.note || null,
-      createdAt: payload.timestamp || new Date(),
     };
 
     await this.db.transaction(async (tx) => {
