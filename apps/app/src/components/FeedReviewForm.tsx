@@ -1,13 +1,6 @@
-import { useFeedCreationStore } from "../store/feed-creation-store";
 import { format } from "date-fns";
+import { useFeedCreationStore } from "../store/feed-creation-store";
 import { Badge } from "./ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./ui/tooltip";
-import { Info } from "lucide-react";
 
 export default function FeedReviewForm() {
   const {
@@ -153,7 +146,7 @@ export default function FeedReviewForm() {
           )}
         </div> */}
         <div className="p-4 border rounded-md flex justify-start items-start gap-3 border-neutral-400 bg-neutral-50">
-          <div>
+          {/* <div>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
@@ -164,7 +157,7 @@ export default function FeedReviewForm() {
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          </div>
+          </div> */}
           <div className="text-base text-[#020617]">
             <p className="font-semibold">What Happens Next?</p>
             <div className="text-sm">

@@ -96,22 +96,20 @@ function FeedPageLayout() {
             </div>
             <div className="flex  sm:flex-row items-center gap-2 justify-end sm:gap-3 w-full sm:w-full">
               <p className="flex">Posting to:</p>
-              <Badge className="flex gap-1 text-black border border-stone-500 rounded-md bg-stone-50 shadow-none">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                >
-                  <path
-                    d="M5.47681 2.1748L8.34204 5.96094L8.4729 6.13379L8.6145 5.9707L11.9094 2.1748H13.4788L9.28638 6.99902L9.1936 7.10645L9.27954 7.21973L14.3137 13.873H10.6301L7.46997 9.73828L7.34009 9.56836L7.19849 9.72949L3.55688 13.873H1.9856L6.49829 8.70117L6.59302 8.59375L6.5061 8.47949L1.68774 2.1748H5.47681ZM3.57642 3.25781L10.9661 12.9229L11.0188 12.9922H12.5813L12.3704 12.7109L5.08813 3.0459L5.0354 2.97559H3.36157L3.57642 3.25781Z"
-                    stroke="#57534E"
-                    strokeWidth="0.350493"
-                  />
-                </svg>
-                Twitter
-              </Badge>
+              {feed?.config?.outputs?.stream?.distribute?.map((distributor) => {
+                const pluginName = distributor.plugin.replace(
+                  "@curatedotfun/",
+                  "",
+                );
+                return (
+                  <Badge
+                    key={distributor.plugin}
+                    className="text-black border border-stone-500 rounded-md bg-stone-50 shadow-none capitalize px-2 py-0.5"
+                  >
+                    {pluginName}
+                  </Badge>
+                );
+              })}
             </div>
           </div>
         </div>

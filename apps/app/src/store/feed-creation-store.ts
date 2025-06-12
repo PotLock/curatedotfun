@@ -25,6 +25,11 @@ export interface FeedCreationState {
     cryptoSettingsEnabled: boolean;
   };
 
+  // Telegram Configuration
+  telegramEnabled: boolean;
+  telegramChannelId: string;
+  telegramThreadId: string;
+
   // Actions
   setBasicInfo: (data: {
     profileImage?: string;
@@ -50,6 +55,12 @@ export interface FeedCreationState {
     blueTickVerified?: boolean;
     cryptoSettingsEnabled?: boolean;
   }) => void;
+
+  setTelegramConfig: (data: {
+    telegramEnabled?: boolean;
+    telegramChannelId?: string;
+    telegramThreadId?: string;
+  }) => void;
 }
 
 export const useFeedCreationStore = create<FeedCreationState>((set) => ({
@@ -73,6 +84,11 @@ export const useFeedCreationStore = create<FeedCreationState>((set) => ({
     cryptoSettingsEnabled: false,
   },
 
+  // Telegram Configuration
+  telegramEnabled: false,
+  telegramChannelId: "",
+  telegramThreadId: "",
+
   // Actions
   setBasicInfo: (data) =>
     set((state) => ({
@@ -93,5 +109,11 @@ export const useFeedCreationStore = create<FeedCreationState>((set) => ({
         ...state.submissionRules,
         ...rules,
       },
+    })),
+
+  setTelegramConfig: (data) =>
+    set((state) => ({
+      ...state,
+      ...data,
     })),
 }));

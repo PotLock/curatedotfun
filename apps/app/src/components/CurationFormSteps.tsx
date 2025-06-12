@@ -16,6 +16,34 @@ type Step = {
   component: React.ReactNode;
 };
 
+// Types for feedConfig outputs
+interface OutputTransformConfig {
+  mappings?: { [key: string]: string };
+  apiKey?: string;
+  prompt?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  schema?: { [key: string]: any }; // Consider making this more specific if possible
+  template?: string;
+  botToken?: string;
+  channelId?: string;
+  threadId?: string;
+  // Add other potential config fields here
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any; // Add index signature to allow any string keys
+}
+
+interface OutputPluginAction {
+  config: OutputTransformConfig;
+  plugin: string;
+  transform?: OutputPluginAction[];
+}
+
+interface OutputsStream {
+  enabled: boolean;
+  transform: OutputPluginAction[];
+  distribute: OutputPluginAction[];
+}
+
 export default function CurationFormSteps() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -124,21 +152,91 @@ export default function CurationFormSteps() {
                 );
 
                 // Create the feed config object
+                const outputsStream: OutputsStream = {
+                  enabled: true,
+                  transform: [
+                    {
+                      config: {
+                        mappings: {
+                          notes: "{{curator.notes}}",
+                          author: "{{username}}",
+                          source:
+                            "https://x.com/{{username}}/status/{{tweetId}}",
+                          content: "{{content}}",
+                          submittedAt: "{{submittedAt}}",
+                        },
+                      },
+                      plugin: "@curatedotfun/object-transform",
+                    },
+                    {
+                      config: {
+                        apiKey: "{{OPENROUTER_API_KEY}}",
+                        prompt:
+                          "Summarize the content into a concise news flash, incorporating relevant details from the curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information. When processing social media-style content, convert @mentions into markdown links in the format: [@username](https://x.com/username). Ensure all mentions are accurately linked and preserve their original intent.",
+                        schema: {
+                          tags: {
+                            type: "array",
+                            items: {
+                              type: "string",
+                            },
+                            description: "Relevant tags for the content",
+                          },
+                          title: {
+                            type: "string",
+                            description:
+                              "Title derived from summary of content",
+                          },
+                          summary: {
+                            type: "string",
+                            description:
+                              "Summary of content influenced by curator notes",
+                          },
+                        },
+                      },
+                      plugin: "@curatedotfun/ai-transform",
+                    },
+                  ],
+                  distribute: [],
+                };
+
+                if (feedData.telegramEnabled && feedData.telegramChannelId) {
+                  const telegramDistributor: OutputPluginAction = {
+                    config: {
+                      botToken: "{{TELEGRAM_BOT_TOKEN}}",
+                      channelId: feedData.telegramChannelId,
+                    },
+                    plugin: "@curatedotfun/telegram",
+                    transform: [
+                      {
+                        config: {
+                          template:
+                            "🇻🇳: *[{{title}}](<{{source}}>)*\n\n{{summary}}\n\n👤 Source [@{{author}}](https://x.com/{{author}})",
+                        },
+                        plugin: "@curatedotfun/simple-transform",
+                      },
+                    ],
+                  };
+                  if (feedData.telegramThreadId) {
+                    telegramDistributor.config.threadId =
+                      feedData.telegramThreadId;
+                  }
+                  outputsStream.distribute.push(telegramDistributor);
+                }
+
                 const feedConfig = {
                   id: feedData.hashtags.replace(/^#/, ""), // Remove # if present
                   name: feedData.feedName,
                   description: feedData.description,
-                  enabled: true,
+                  enabled: true, // Assuming true, adjust as needed
                   moderation: {
                     approvers: {
                       twitter: twitterHandles,
                     },
                   },
                   outputs: {
-                    stream: {
-                      enabled: true,
-                    },
+                    stream: outputsStream,
                   },
+                  // sources: [] // Add if needed, based on your example
                 };
 
                 console.log("Feed config to submit:", feedConfig);
