@@ -19,10 +19,7 @@ export function useAllPlugins(
   if (filters.name) params.append("name", filters.name);
   const path = `/plugins?${params.toString()}`;
 
-  return useApiQuery<FrontendPlugin[]>(
-    ["plugins", filters],
-    path,
-  );
+  return useApiQuery<FrontendPlugin[]>(["plugins", filters], path);
 }
 
 // --- Get a single plugin by ID ---
@@ -39,15 +36,15 @@ export function useCreatePlugin() {
   const queryClient = useQueryClient();
   return useApiMutation<FrontendPlugin, Error, CreateFrontendPlugin>(
     {
-      method: 'POST',
-      path: '/plugins',
-      message: 'createPlugin',
+      method: "POST",
+      path: "/plugins",
+      message: "createPlugin",
     },
     {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["plugins"] });
       },
-    }
+    },
   );
 }
 
@@ -56,16 +53,17 @@ export function useUpdatePlugin(pluginId: string) {
   const queryClient = useQueryClient();
   return useApiMutation<FrontendPlugin, Error, UpdateFrontendPlugin>(
     {
-      method: 'PATCH',
+      method: "PATCH",
       path: `/plugins/${pluginId}`, // pluginId is part of the path
-      message: 'updatePlugin',
+      message: "updatePlugin",
     },
     {
-      onSuccess: (data) => { // data is FrontendPlugin
+      onSuccess: (data) => {
+        // data is FrontendPlugin
         queryClient.invalidateQueries({ queryKey: ["plugins"] });
         queryClient.setQueryData(["plugin", pluginId], data);
       },
-    }
+    },
   );
 }
 
@@ -80,9 +78,9 @@ export function useDeletePlugin(pluginId: string) {
     void // TVariables is void as pluginId is in the path
   >(
     {
-      method: 'DELETE',
+      method: "DELETE",
       path: `/plugins/${pluginId}`, // pluginId from the hook's argument
-      message: 'deletePlugin',
+      message: "deletePlugin",
     },
     {
       onSuccess: () => {
@@ -90,6 +88,6 @@ export function useDeletePlugin(pluginId: string) {
         queryClient.invalidateQueries({ queryKey: ["plugins"] });
         queryClient.removeQueries({ queryKey: ["plugin", pluginId] });
       },
-    }
+    },
   );
 }

@@ -9,7 +9,7 @@ export interface ModerationActionPayload {
 
 interface InternalModerationPayload extends ModerationActionPayload {
   action: "approve" | "reject";
-  adminId: string; 
+  adminId: string;
   timestamp: string; // ISO string
 }
 
@@ -23,28 +23,35 @@ export const useApproveSubmission = () => {
   // const { currentAccountId } = useAuth(); // TODO: Use currentAccountId for adminId
 
   const { mutate: actualMutate, ...rest } = useApiMutation<
-    ModerationResponse, 
-    Error, 
+    ModerationResponse,
+    Error,
     InternalModerationPayload // TVariables for useApiMutation is the actual request body
   >(
     {
-      method: 'POST',
+      method: "POST",
       path: `/moderate`, // API endpoint for moderation
-      message: 'approveSubmission', // For signing
+      message: "approveSubmission", // For signing
     },
     {
-      onSuccess: (_data, variables) => { // variables is InternalModerationPayload
+      onSuccess: (_data, variables) => {
+        // variables is InternalModerationPayload
         queryClient.invalidateQueries({ queryKey: ["submissions"] }); // Generic key
-        queryClient.invalidateQueries({ queryKey: ["feed-submissions-paginated", variables.feedId] });
-        queryClient.invalidateQueries({ queryKey: ["all-submissions-paginated"] });
+        queryClient.invalidateQueries({
+          queryKey: ["feed-submissions-paginated", variables.feedId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["all-submissions-paginated"],
+        });
         // If feed details show submission counts/status, invalidate them too
         // queryClient.invalidateQueries({ queryKey: ["feed-details", variables.feedId] });
-        console.log("Successfully approved submission, invalidated relevant queries.");
+        console.log(
+          "Successfully approved submission, invalidated relevant queries.",
+        );
       },
       onError: (error) => {
         console.error("Error approving submission:", error);
       },
-    }
+    },
   );
 
   const mutate = (payload: ModerationActionPayload) => {
@@ -71,22 +78,29 @@ export const useRejectSubmission = () => {
     InternalModerationPayload // TVariables for useApiMutation
   >(
     {
-      method: 'POST',
+      method: "POST",
       path: `/moderate`,
-      message: 'rejectSubmission',
+      message: "rejectSubmission",
     },
     {
-      onSuccess: (_data, variables) => { // variables is InternalModerationPayload
+      onSuccess: (_data, variables) => {
+        // variables is InternalModerationPayload
         queryClient.invalidateQueries({ queryKey: ["submissions"] });
-        queryClient.invalidateQueries({ queryKey: ["feed-submissions-paginated", variables.feedId] });
-        queryClient.invalidateQueries({ queryKey: ["all-submissions-paginated"] });
+        queryClient.invalidateQueries({
+          queryKey: ["feed-submissions-paginated", variables.feedId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["all-submissions-paginated"],
+        });
         // queryClient.invalidateQueries({ queryKey: ["feed-details", variables.feedId] });
-        console.log("Successfully rejected submission, invalidated relevant queries.");
+        console.log(
+          "Successfully rejected submission, invalidated relevant queries.",
+        );
       },
       onError: (error) => {
         console.error("Error rejecting submission:", error);
       },
-    }
+    },
   );
 
   const mutate = (payload: ModerationActionPayload) => {

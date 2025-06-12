@@ -6,9 +6,7 @@ import { getProfile, Profile } from "src/lib/near-social";
  * @param accountId The NEAR account ID (e.g., "example.near")
  * @param options Optional Tanstack Query options.
  */
-export function useNearSocialProfile(
-  accountId: string,
-) {
+export function useNearSocialProfile(accountId: string) {
   return useQuery<Profile | null, Error>({
     queryKey: ["nearSocialProfile", accountId],
     queryFn: async () => {

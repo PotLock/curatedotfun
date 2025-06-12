@@ -1,9 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-  usePlugin,
-  useUpdatePlugin,
-  useDeletePlugin,
-} from "../../../lib/api";
+import { usePlugin, useUpdatePlugin, useDeletePlugin } from "../../../lib/api";
 import { Button } from "../../../components/ui/button";
 import { Label } from "../../../components/ui/label";
 import { Textarea } from "../../../components/ui/textarea";
@@ -152,11 +148,12 @@ function PluginPage() {
             placeholder='{ "type": "object", "properties": { ... } }'
           />
           {form.formState.errors.schemaDefinition &&
-            typeof form.formState.errors.schemaDefinition.message === "string" && (
-            <p className="text-red-500 text-sm mt-1">
-              {form.formState.errors.schemaDefinition.message}
-            </p>
-          )}
+            typeof form.formState.errors.schemaDefinition.message ===
+              "string" && (
+              <p className="text-red-500 text-sm mt-1">
+                {form.formState.errors.schemaDefinition.message}
+              </p>
+            )}
         </div>
 
         <div className="flex justify-between items-center pt-4">

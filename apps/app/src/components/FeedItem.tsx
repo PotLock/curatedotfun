@@ -1,8 +1,5 @@
 import type { FeedContextSubmission } from "@curatedotfun/types";
-import {
-  useApproveSubmission,
-  useRejectSubmission,
-} from "../lib/api";
+import { useApproveSubmission, useRejectSubmission } from "../lib/api";
 import { formatDate } from "../utils/datetime";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";

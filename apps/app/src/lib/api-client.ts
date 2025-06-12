@@ -1,5 +1,5 @@
-import { near } from './near';
-import { sign } from 'near-sign-verify';
+import { near } from "./near";
+import { sign } from "near-sign-verify";
 
 export class ApiError extends Error {
   constructor(
@@ -8,7 +8,7 @@ export class ApiError extends Error {
     public data?: unknown,
   ) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 
@@ -27,34 +27,40 @@ class ApiClient {
     message?: string, // Descriptive message for signing non-GET requests
   ): Promise<TResponse> {
     const fullUrl = new URL(this.baseUrl + path, window.location.origin);
-    const bodyString = (method !== 'GET' && method !== 'DELETE' && requestData) ? JSON.stringify(requestData) : undefined;
+    const bodyString =
+      method !== "GET" && method !== "DELETE" && requestData
+        ? JSON.stringify(requestData)
+        : undefined;
 
     const headers: Record<string, string> = {
-      'Accept': 'application/json',
+      Accept: "application/json",
     };
-    if (method !== 'GET' && method !== 'DELETE' && requestData) {
-      headers['Content-Type'] = 'application/json';
+    if (method !== "GET" && method !== "DELETE" && requestData) {
+      headers["Content-Type"] = "application/json";
     }
 
-
-    if (method === 'GET') {
+    if (method === "GET") {
       if (auth.currentAccountId) {
-        headers['X-Near-Account'] = auth.currentAccountId;
+        headers["X-Near-Account"] = auth.currentAccountId || "anonymous";
       }
-    } else { // Non-GET requests (POST, PUT, DELETE, PATCH)
+    } else {
+      // Non-GET requests (POST, PUT, DELETE, PATCH)
       if (!auth.currentAccountId) {
-          throw new ApiError('Account ID missing for authenticated request.', 400);
+        throw new ApiError(
+          "Account ID missing for authenticated request.",
+          400,
+        );
       }
 
       const messageForSigning = message || `${method} request to ${path}`;
-      
+
       const authToken = await sign({
         signer: near,
-        recipient: 'curatefun.near',
+        recipient: "curatefun.near",
         message: messageForSigning,
       });
 
-      headers['Authorization'] = `Bearer ${authToken}`;
+      headers["Authorization"] = `Bearer ${authToken}`;
     }
 
     const requestOptions: RequestInit = {
@@ -65,7 +71,7 @@ class ApiClient {
     if (bodyString) {
       requestOptions.body = bodyString;
     }
-    
+
     const response = await fetch(fullUrl.toString(), requestOptions);
 
     if (!response.ok) {
@@ -74,17 +80,20 @@ class ApiClient {
         errorData = await response.json();
       } catch {
         // If response is not JSON, try to get text, otherwise use statusText
-        const responseText = await response.text().catch(() => response.statusText);
+        const responseText = await response
+          .text()
+          .catch(() => response.statusText);
         errorData = { message: responseText };
       }
       throw new ApiError(
         `API request failed: ${response.status} ${errorData.message || response.statusText}`,
         response.status,
-        errorData
+        errorData,
       );
     }
 
-    if (response.status === 204) { // No Content
+    if (response.status === 204) {
+      // No Content
       return undefined as unknown as TResponse;
     }
 
@@ -100,4 +109,4 @@ class ApiClient {
   }
 }
 
-export const apiClient = new ApiClient('/api');
+export const apiClient = new ApiClient("/api");

@@ -7,17 +7,20 @@ export function useGetLastTweetId() {
   );
 }
 
-interface UpdateTweetIdResponse { success: boolean; tweetId?: string; error?: string }
+interface UpdateTweetIdResponse {
+  success: boolean;
+  tweetId?: string;
+  error?: string;
+}
 type UpdateTweetIdVariables = { tweetId: string };
 
 export function useUpdateLastTweetId() {
   return useApiMutation<UpdateTweetIdResponse, Error, UpdateTweetIdVariables>(
     {
-      method: 'POST',
+      method: "POST",
       path: `/twitter/last-tweet-id`,
       message: "updateLastTweetId",
     },
-    {
-    }
+    {},
   );
 }

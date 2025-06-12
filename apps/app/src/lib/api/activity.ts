@@ -72,14 +72,14 @@ export function useGlobalActivityStats() {
       refetchInterval: 30000,
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,
-    }
+    },
   );
 }
 
 export function useMyActivity() {
   return useApiQuery<AggregatedActivityStats>(
     ["my-activity"],
-    `/activity/user/me`
+    `/activity/user/me`,
     // { enabled: isLoggedIn } // This would require useAuth here or passing enabled status
   );
 }
@@ -96,20 +96,20 @@ export function useUserActivity(
 
   // Assuming the API returns an object like { activities: UserActivityStats[] }
   // and we want to extract the 'activities' array.
-  return useApiQuery<{ activities: UserActivityStats[] }, Error, UserActivityStats[]>(
-    ["user-activity", userId, options],
-    path,
-    {
-      select: (data) => data.activities,
-      // enabled: !!userId // Or other conditions
-    }
-  );
+  return useApiQuery<
+    { activities: UserActivityStats[] },
+    Error,
+    UserActivityStats[]
+  >(["user-activity", userId, options], path, {
+    select: (data) => data.activities,
+    // enabled: !!userId // Or other conditions
+  });
 }
 
 export function useMyCuratedFeeds() {
   return useApiQuery<CuratedFeed[]>(
     ["my-curated-feeds"],
-    `/activity/feeds/curated-by/me`
+    `/activity/feeds/curated-by/me`,
     // { enabled: isLoggedIn }
   );
 }
@@ -117,7 +117,7 @@ export function useMyCuratedFeeds() {
 export function useMyApprovedFeeds() {
   return useApiQuery<CuratedFeed[]>(
     ["my-approved-feeds"],
-    `/activity/feeds/approved-by/me`
+    `/activity/feeds/approved-by/me`,
     // { enabled: isLoggedIn }
   );
 }
@@ -126,6 +126,6 @@ export function useMyFeedRank(feedId: string) {
   return useApiQuery<FeedRank>(
     ["my-feed-rank", feedId],
     `/activity/feeds/${feedId}/my-rank`,
-    { enabled: !!feedId }
+    { enabled: !!feedId },
   );
 }

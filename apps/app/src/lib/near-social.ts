@@ -12,8 +12,8 @@ export type SocialImage = {
   url?: string;
   ipfs_cid?: string;
   nft?: {
-    contractId: string,
-    tokenId: string
+    contractId: string;
+    tokenId: string;
   };
 };
 

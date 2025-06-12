@@ -23,31 +23,32 @@ export function useAllSubmissions(filters: SubmissionFilters = {}) {
 
   return useApiInfiniteQuery<
     PaginatedResponse<Submission>, // TQueryFnData
-    Error,                         // TError
+    Error, // TError
     TransformedInfiniteData<Submission>, // TData
-    [string, StatusFilterType | undefined, SortOrderType | undefined, string | undefined], // TQueryKey
-    number                         // TPageParam
-  >(
-    ["all-submissions-paginated", status, sortOrder, q],
-    pathFn,
-    {
-      initialPageParam: 0,
-      getNextPageParam: (lastPage) => {
-        if (!lastPage || !lastPage.pagination) return undefined;
-        return lastPage.pagination.hasNextPage
-          ? lastPage.pagination.page + 1
-          : undefined;
-      },
-      select: (data) => ({
-        pages: data.pages,
-        pageParams: data.pageParams as number[],
-        items: data.pages.flatMap((page) =>
-          Array.isArray(page.items) ? page.items : [],
-        ),
-      }),
-      refetchInterval: 10000,
-      refetchOnWindowFocus: true,
-      refetchOnReconnect: true,
-    }
-  );
+    [
+      string,
+      StatusFilterType | undefined,
+      SortOrderType | undefined,
+      string | undefined,
+    ], // TQueryKey
+    number // TPageParam
+  >(["all-submissions-paginated", status, sortOrder, q], pathFn, {
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage || !lastPage.pagination) return undefined;
+      return lastPage.pagination.hasNextPage
+        ? lastPage.pagination.page + 1
+        : undefined;
+    },
+    select: (data) => ({
+      pages: data.pages,
+      pageParams: data.pageParams as number[],
+      items: data.pages.flatMap((page) =>
+        Array.isArray(page.items) ? page.items : [],
+      ),
+    }),
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
 }

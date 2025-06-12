@@ -77,8 +77,7 @@ export function AuthProvider({
     } else if (!currentAccountId && previousAccountIdRef.current !== null) {
       toast({
         title: "Signed out",
-        description:
-          "You have been signed out successfully.",
+        description: "You have been signed out successfully.",
         variant: "success",
       });
       if (isSigningInRef.current) {

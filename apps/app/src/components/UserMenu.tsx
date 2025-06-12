@@ -21,8 +21,9 @@ interface UserMenuProps {
 export default function UserMenu({ className }: UserMenuProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
-  const { currentAccountId, handleSignIn, isSignedIn, handleSignOut } = useAuth();
-  const { data: userProfile } = useNearSocialProfile(currentAccountId || '');
+  const { currentAccountId, handleSignIn, isSignedIn, handleSignOut } =
+    useAuth();
+  const { data: userProfile } = useNearSocialProfile(currentAccountId || "");
 
   const ProfileImage = ({ size = "small" }: { size?: "small" | "medium" }) => {
     return (
@@ -40,10 +41,9 @@ export default function UserMenu({ className }: UserMenuProps) {
     return "User";
   };
 
-
   return (
     <>
-      {isSignedIn? (
+      {isSignedIn ? (
         <DropdownMenu onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className={className || "hidden md:flex"}>

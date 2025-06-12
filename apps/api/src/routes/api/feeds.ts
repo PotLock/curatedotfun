@@ -25,6 +25,14 @@ feedsRoutes.get("/", async (c) => {
  * Create a new feed
  */
 feedsRoutes.post("/", async (c) => {
+  const accountId = c.get("accountId");
+  if (!accountId) {
+    return c.json(
+      { error: "Unauthorized. User must be logged in to create a feed." },
+      401,
+    );
+  }
+
   const body = await c.req.json();
   const validationResult = insertFeedSchema.safeParse(body);
 
@@ -66,6 +74,14 @@ feedsRoutes.get("/:feedId", async (c) => {
  * Update an existing feed
  */
 feedsRoutes.put("/:feedId", async (c) => {
+  const accountId = c.get("accountId");
+  if (!accountId) {
+    return c.json(
+      { error: "Unauthorized. User must be logged in to update a feed." },
+      401,
+    );
+  }
+
   const feedId = c.req.param("feedId");
   const body = await c.req.json();
   const validationResult = updateFeedSchema.safeParse(body);
@@ -97,6 +113,14 @@ feedsRoutes.put("/:feedId", async (c) => {
  * Example: /api/feeds/solana/process?distributors=@curatedotfun/rss
  */
 feedsRoutes.post("/:feedId/process", async (c) => {
+  const accountId = c.get("accountId");
+  if (!accountId) {
+    return c.json(
+      { error: "Unauthorized. User must be logged in to process a feed." },
+      401,
+    );
+  }
+
   const sp = c.get("sp");
   const feedService = sp.getFeedService();
 
@@ -127,6 +151,14 @@ feedsRoutes.post("/:feedId/process", async (c) => {
  * Delete a specific feed by its ID
  */
 feedsRoutes.delete("/:feedId", async (c) => {
+  const accountId = c.get("accountId");
+  if (!accountId) {
+    return c.json(
+      { error: "Unauthorized. User must be logged in to delete a feed." },
+      401,
+    );
+  }
+
   const feedId = c.req.param("feedId");
   const sp = c.get("sp");
   const feedService = sp.getFeedService();

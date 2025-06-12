@@ -14,23 +14,21 @@ export function useCreateUserProfile() {
 
   return useApiMutation<UserProfile, Error, CreateUserProfileVariables>(
     {
-      method: 'POST',
-      path: '/users',
-      message: 'createUserProfile',
+      method: "POST",
+      path: "/users",
+      message: "createUserProfile",
     },
     {
       // onSuccess: (data, variables, context) => {
       //   const queryClient = useQueryClient();
       //   queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
       // },
-    }
+    },
   );
 }
 
 export function useCurrentUserProfile(enabled = true) {
-  return useApiQuery<UserProfile | null>(
-    ["currentUserProfile"],
-    `/users/me`,
-    { enabled },
-  );
+  return useApiQuery<UserProfile | null>(["currentUserProfile"], `/users/me`, {
+    enabled,
+  });
 }
