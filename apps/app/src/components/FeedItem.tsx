@@ -1,7 +1,7 @@
 import type { FeedContextSubmission } from "@curatedotfun/types";
 import { useAuth } from "../contexts/auth-context";
 import { useApproveSubmission, useRejectSubmission } from "../lib/api";
-import { useCanModerateFeed } from "../lib/api/feed"; // Import useCanModerateFeed
+import { useCanModerateFeed } from "../lib/api/feed";
 import { formatDate } from "../utils/datetime";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -110,8 +110,8 @@ const ModerationActions = ({
 
 interface FeedItemProps {
   submission: FeedContextSubmission;
-  feedId?: string; // Make feedId optional
-  allowModerationControls?: boolean; // Add allowModerationControls
+  feedId?: string;
+  allowModerationControls?: boolean;
 }
 
 // Function to truncate text to a specific character count without breaking words
@@ -134,7 +134,7 @@ export const FeedItem = ({
   allowModerationControls,
 }: FeedItemProps) => {
   const auth = useAuth();
-  const canModerateQuery = useCanModerateFeed(feedId); // Use the hook
+  const canModerateQuery = useCanModerateFeed(feedId);
   const lastModeration =
     submission.moderationHistory?.[submission.moderationHistory.length - 1];
 
@@ -172,7 +172,6 @@ export const FeedItem = ({
           </div>
         </div>
       </div>
-      {/* Title Section */}
 
       {/* Content Section */}
       <div className="w-full overflow-hidden">
@@ -199,56 +198,29 @@ export const FeedItem = ({
             </div>
           )}
 
-        {/* Curator Notes and Moderation Actions */}
-        {submission.status === "pending" &&
-          allowModerationControls &&
-          auth.isSignedIn &&
-          feedId &&
-          canModerateQuery.data?.canModerate && ( // Add canModerateQuery check
-            <div className="flex items-center gap-8">
-              <div className="flex-col flex-grow">
-                <NotesSection
-                  title="Curator's Notes"
-                  username={submission.curatorUsername}
-                  note={submission.curatorNotes}
-                />
-              </div>
-              <div className="flex-col">
-                {canModerateQuery.isLoading ? (
-                  <p className="text-sm text-gray-500">Checking auth...</p> // Loading state
-                ) : (
-                  <div className="flex">
-                    <ModerationActions
-                      submission={submission}
-                      feedId={feedId}
-                    />
-                  </div>
-                )}
-              </div>
+        {/* Curator Notes and Moderation Actions for Pending Submissions */}
+        {submission.status === "pending" && (
+          <div className="flex items-center gap-8">
+            {/* Curator's Notes */}
+            <div className="flex-col flex-grow">
+              <NotesSection
+                title="Curator's Notes"
+                username={submission.curatorUsername}
+                note={submission.curatorNotes}
+              />
             </div>
-          )}
-        {/* Optional: Show a message if user is signed in but not authorized for this specific feed */}
-        {submission.status === "pending" &&
-          allowModerationControls &&
-          auth.isSignedIn &&
-          feedId &&
-          canModerateQuery.isSuccess && // ensure query has run
-          !canModerateQuery.data?.canModerate && (
-            <div className="flex items-center gap-8">
-              <div className="flex-col flex-grow">
-                <NotesSection
-                  title="Curator's Notes"
-                  username={submission.curatorUsername}
-                  note={submission.curatorNotes}
-                />
-              </div>
-              <div className="flex-col">
-                <p className="text-sm text-gray-500 italic">
-                  You do not have permission to moderate this feed.
-                </p>
-              </div>
+
+            {/* Moderation Actions Column */}
+            <div className="flex-col">
+              {allowModerationControls &&
+              auth.isSignedIn &&
+              feedId &&
+              canModerateQuery.data?.canModerate ? (
+                <ModerationActions submission={submission} feedId={feedId} />
+              ) : null}
             </div>
-          )}
+          </div>
+        )}
       </div>
     </div>
   );
