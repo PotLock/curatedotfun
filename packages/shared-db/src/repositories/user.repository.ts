@@ -144,7 +144,11 @@ export class UserRepository {
    * @returns The updated user
    * @throws NotFoundError if the user does not exist
    */
-  async updateByNearAccountId(near_account_id: string, userData: UpdateUser, txDb: DB) {
+  async updateByNearAccountId(
+    near_account_id: string,
+    userData: UpdateUser,
+    txDb: DB,
+  ) {
     return withErrorHandling(
       async () => {
         const updateResult = await txDb
@@ -158,7 +162,9 @@ export class UserRepository {
 
         const updatedUser = updateResult[0];
         if (!updatedUser) {
-          throw new Error(`User not found with NEAR account ID: ${near_account_id}`);
+          throw new Error(
+            `User not found with NEAR account ID: ${near_account_id}`,
+          );
         }
 
         return updatedUser;
@@ -208,7 +214,10 @@ export class UserRepository {
    * @param near_account_id The NEAR account ID of the user to delete
    * @returns True if the user was deleted, false otherwise
    */
-  async deleteByNearAccountId(near_account_id: string, txDb: DB): Promise<boolean> {
+  async deleteByNearAccountId(
+    near_account_id: string,
+    txDb: DB,
+  ): Promise<boolean> {
     return withErrorHandling(
       async () => {
         const deleteResult = await txDb

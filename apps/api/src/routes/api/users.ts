@@ -8,10 +8,7 @@ import {
   UserServiceError,
 } from "../../types/errors";
 import { ServiceProvider } from "../../utils/service-provider";
-import {
-  insertUserSchema,
-  updateUserSchema,
-} from "@curatedotfun/shared-db";
+import { insertUserSchema, updateUserSchema } from "@curatedotfun/shared-db";
 
 const usersRoutes = new Hono<Env>();
 
@@ -20,18 +17,18 @@ usersRoutes.get("/me", async (c) => {
   const accountId = c.get("accountId");
 
   if (!accountId) {
-    return c.json(
-      { error: "Unauthorized: User not authenticated." },
-      401,
-    );
+    return c.json({ error: "Unauthorized: User not authenticated." }, 401);
   }
 
   try {
     const userService = ServiceProvider.getInstance().getUserService();
-    const user = await userService.findUserByNearAccountId(accountId); 
+    const user = await userService.findUserByNearAccountId(accountId);
 
     if (!user) {
-      return c.json({ error: "User profile not found for the given NEAR account ID." }, 404);
+      return c.json(
+        { error: "User profile not found for the given NEAR account ID." },
+        404,
+      );
     }
 
     return c.json({ profile: user });
@@ -78,15 +75,12 @@ usersRoutes.put("/me", zValidator("json", updateUserSchema), async (c) => {
   const accountId = c.get("accountId");
 
   if (!accountId) {
-    return c.json(
-      { error: "Unauthorized: User not authenticated." },
-      401,
-    );
+    return c.json({ error: "Unauthorized: User not authenticated." }, 401);
   }
 
   try {
     const userService = ServiceProvider.getInstance().getUserService();
-    const updatedUser = await userService.updateUserByNearAccountId( 
+    const updatedUser = await userService.updateUserByNearAccountId(
       accountId,
       updateData,
     );
@@ -122,10 +116,7 @@ usersRoutes.delete("/me", async (c) => {
   const accountId = c.get("accountId");
 
   if (!accountId) {
-    return c.json(
-      { error: "Unauthorized: User not authenticated." },
-      401,
-    );
+    return c.json({ error: "Unauthorized: User not authenticated." }, 401);
   }
 
   try {

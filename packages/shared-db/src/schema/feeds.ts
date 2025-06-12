@@ -189,4 +189,3 @@ export const feedPlugins = table(
     primaryKey({ columns: [table.feedId, table.pluginId] }), // Ensure one config per plugin per feed
   ],
 );
-

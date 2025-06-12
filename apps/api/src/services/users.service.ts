@@ -161,7 +161,11 @@ export class UserService implements IBaseService {
   async updateUserByNearAccountId(nearAccountId: string, data: UpdateUser) {
     try {
       const updatedUser = await this.db.transaction(async (tx) => {
-        return this.userRepository.updateByNearAccountId(nearAccountId, data, tx);
+        return this.userRepository.updateByNearAccountId(
+          nearAccountId,
+          data,
+          tx,
+        );
       });
 
       if (!updatedUser) {
@@ -175,7 +179,10 @@ export class UserService implements IBaseService {
       if (error.message?.startsWith("User not found with NEAR account ID:")) {
         throw new NotFoundError("User", nearAccountId);
       }
-      console.error(`Error updating user by NEAR account ID ${nearAccountId}:`, error);
+      console.error(
+        `Error updating user by NEAR account ID ${nearAccountId}:`,
+        error,
+      );
       throw new UserServiceError(
         error.message || "Failed to update user profile",
         error.statusCode || 500,
@@ -208,9 +215,13 @@ export class UserService implements IBaseService {
     }
   }
 
-  async deleteUserByNearAccountId(nearAccountIdToDelete: string): Promise<boolean> {
+  async deleteUserByNearAccountId(
+    nearAccountIdToDelete: string,
+  ): Promise<boolean> {
     // First, ensure the user exists to get their full details for NEAR account deletion part.
-    const user = await this.userRepository.findByNearAccountId(nearAccountIdToDelete);
+    const user = await this.userRepository.findByNearAccountId(
+      nearAccountIdToDelete,
+    );
 
     if (!user || !user.near_account_id) {
       throw new NotFoundError("User", nearAccountIdToDelete);
@@ -278,7 +289,10 @@ export class UserService implements IBaseService {
 
     try {
       const dbDeletionResult = await this.db.transaction(async (tx) => {
-        return this.userRepository.deleteByNearAccountId(nearAccountIdToDelete, tx);
+        return this.userRepository.deleteByNearAccountId(
+          nearAccountIdToDelete,
+          tx,
+        );
       });
 
       if (dbDeletionResult) {

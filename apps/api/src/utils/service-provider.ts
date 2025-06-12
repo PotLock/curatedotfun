@@ -62,7 +62,9 @@ export class ServiceProvider {
       logger,
     );
 
-    const superAdminAccountsList = getSuperAdminAccounts(process.env.SUPER_ADMIN_ACCOUNTS);
+    const superAdminAccountsList = getSuperAdminAccounts(
+      process.env.SUPER_ADMIN_ACCOUNTS,
+    );
     const feedService = new FeedService(
       feedRepository,
       processorService,

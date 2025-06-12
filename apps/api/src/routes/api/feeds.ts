@@ -34,21 +34,34 @@ feedsRoutes.post("/", async (c) => {
   }
 
   const body = await c.req.json();
-  const partialValidationResult = insertFeedSchema.omit({ created_by: true }).safeParse(body);
+  const partialValidationResult = insertFeedSchema
+    .omit({ created_by: true })
+    .safeParse(body);
 
   if (!partialValidationResult.success) {
-    return badRequest(c, "Invalid feed data", partialValidationResult.error.flatten());
+    return badRequest(
+      c,
+      "Invalid feed data",
+      partialValidationResult.error.flatten(),
+    );
   }
 
   const feedDataWithCreator = {
     ...partialValidationResult.data,
     created_by: accountId,
   };
-  
+
   const finalValidationResult = insertFeedSchema.safeParse(feedDataWithCreator);
   if (!finalValidationResult.success) {
-    logger.error("Error in final validation after adding created_by", finalValidationResult.error);
-    return badRequest(c, "Internal validation error", finalValidationResult.error.flatten());
+    logger.error(
+      "Error in final validation after adding created_by",
+      finalValidationResult.error,
+    );
+    return badRequest(
+      c,
+      "Internal validation error",
+      finalValidationResult.error.flatten(),
+    );
   }
 
   const sp = c.get("sp");
@@ -97,9 +110,16 @@ feedsRoutes.put("/:feedId", async (c) => {
   const sp = c.get("sp");
   const feedService = sp.getFeedService();
 
-  const canUpdate = await feedService.hasPermission(accountId, feedId, "update");
+  const canUpdate = await feedService.hasPermission(
+    accountId,
+    feedId,
+    "update",
+  );
   if (!canUpdate) {
-    return c.json({ error: "Forbidden. You do not have permission to update this feed." }, 403);
+    return c.json(
+      { error: "Forbidden. You do not have permission to update this feed." },
+      403,
+    );
   }
 
   const body = await c.req.json();
@@ -180,9 +200,16 @@ feedsRoutes.delete("/:feedId", async (c) => {
   const sp = c.get("sp");
   const feedService = sp.getFeedService();
 
-  const canDelete = await feedService.hasPermission(accountId, feedId, "delete");
+  const canDelete = await feedService.hasPermission(
+    accountId,
+    feedId,
+    "delete",
+  );
   if (!canDelete) {
-    return c.json({ error: "Forbidden. You do not have permission to delete this feed." }, 403);
+    return c.json(
+      { error: "Forbidden. You do not have permission to delete this feed." },
+      403,
+    );
   }
 
   try {

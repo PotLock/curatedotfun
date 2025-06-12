@@ -9,7 +9,10 @@ export function getSuperAdminAccounts(
   if (!superAdminEnvVar) {
     return [];
   }
-  return superAdminEnvVar.split(",").map((id) => id.trim()).filter(id => id.length > 0);
+  return superAdminEnvVar
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0);
 }
 
 /**

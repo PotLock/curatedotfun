@@ -52,7 +52,10 @@ export class FeedService implements IBaseService {
 
     const feed = await this.feedRepository.getFeedById(feedId);
     if (!feed) {
-      this.logger.warn({ accountId, feedId, action }, "hasPermission check: Feed not found.");
+      this.logger.warn(
+        { accountId, feedId, action },
+        "hasPermission check: Feed not found.",
+      );
       return false;
     }
 
@@ -68,7 +71,10 @@ export class FeedService implements IBaseService {
       case "manage_admins":
         return isCreator || isAdminOnFeed;
       default:
-        this.logger.warn({ accountId, feedId, action }, "Unknown feed action for permission check");
+        this.logger.warn(
+          { accountId, feedId, action },
+          "Unknown feed action for permission check",
+        );
         return false;
     }
   }
