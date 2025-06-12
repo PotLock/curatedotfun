@@ -3,6 +3,9 @@ import { Env } from "../../types/app";
 import { badRequest } from "../../utils/error";
 import { logger } from "../../utils/logger";
 import { insertFeedSchema, updateFeedSchema } from "@curatedotfun/shared-db";
+import { z } from "zod"; // Added import for z
+import { zValidator } from "@hono/zod-validator"; // Added import for zValidator
+import { ModerationService } from "../../services/moderation.service"; // Added import for ModerationService
 
 const feedsRoutes = new Hono<Env>();
 
@@ -223,5 +226,45 @@ feedsRoutes.delete("/:feedId", async (c) => {
     return c.json({ error: "Failed to delete feed" }, 500);
   }
 });
+
+const feedParamSchemaCanModerate = z.object({
+  // Renamed to avoid conflict if other schemas exist
+  feedId: z.string().min(1, "Feed ID is required"),
+});
+
+feedsRoutes.get(
+  "/:feedId/can-moderate",
+  zValidator("param", feedParamSchemaCanModerate),
+  async (c) => {
+    const { feedId } = c.req.valid("param");
+    const sp = c.get("sp");
+    const moderationService =
+      sp.getService<ModerationService>("moderationService");
+
+    const actingAccountId = c.get("accountId");
+
+    if (!actingAccountId) {
+      return c.json({ canModerate: false, reason: "User not authenticated" });
+    }
+
+    try {
+      const canModerate =
+        await moderationService.checkUserFeedModerationPermission(
+          feedId,
+          actingAccountId,
+        );
+      return c.json({ canModerate });
+    } catch (error: any) {
+      logger.error(
+        `Error in /:feedId/can-moderate for feed ${feedId}, user ${actingAccountId}:`,
+        error,
+      );
+      return c.json(
+        { canModerate: false, error: "Failed to check moderation permission" },
+        500,
+      );
+    }
+  },
+);
 
 export { feedsRoutes };

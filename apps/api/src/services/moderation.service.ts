@@ -323,6 +323,101 @@ export class ModerationService implements IBaseService {
     }
   }
 
+  /**
+   * Checks if a given user account ID has permission to moderate a specific feed.
+   * @param feedId The ID of the feed.
+   * @param actingAccountId The NEAR account ID of the user attempting to moderate.
+   * @returns True if the user is authorized, false otherwise.
+   */
+  public async checkUserFeedModerationPermission(
+    feedId: string,
+    actingAccountId: string | null,
+  ): Promise<boolean> {
+    if (!actingAccountId) {
+      this.logger.debug(
+        { feedId },
+        "Permission check failed: No acting account ID provided.",
+      );
+      return false;
+    }
+
+    // 1. Check if the actingAccountId is a Super Admin.
+    if (isSuperAdmin(actingAccountId, this.superAdminAccounts)) {
+      this.logger.debug(
+        { feedId, actingAccountId },
+        "Permission granted: User is a super admin.",
+      );
+      return true;
+    }
+
+    // 2. Fetch the feed configuration.
+    const feedConfig: FeedConfig | null =
+      await this.feedRepository.getFeedConfig(feedId);
+
+    if (
+      !feedConfig ||
+      !feedConfig.moderation ||
+      !feedConfig.moderation.approvers
+    ) {
+      this.logger.warn(
+        { feedId, actingAccountId },
+        "Permission check failed: Feed config, moderation settings, or approvers not found for this feed.",
+      );
+      return false;
+    }
+
+    const submissionPlatform = "twitter";
+
+    const configuredApproverPlatformIds =
+      feedConfig.moderation.approvers[submissionPlatform];
+
+    if (
+      !configuredApproverPlatformIds ||
+      configuredApproverPlatformIds.length === 0
+    ) {
+      this.logger.warn(
+        { feedId, actingAccountId, platform: submissionPlatform },
+        `Permission check failed: No approvers configured for platform '${submissionPlatform}' on this feed.`,
+      );
+      return false;
+    }
+
+    // 3. Check if the actingAccountId (NEAR ID) is linked to any of the configured platform-specific approver IDs.
+    for (const configuredApproverId of configuredApproverPlatformIds) {
+      // configuredApproverId is a platform username (e.g., "twitterUser123")
+      // this.canModerateSubmission checks if actingAccountId (NEAR) is linked to this configuredApproverId (platform username)
+      if (
+        await this.canModerateSubmission(
+          actingAccountId,
+          submissionPlatform,
+          configuredApproverId,
+        )
+      ) {
+        this.logger.debug(
+          {
+            feedId,
+            actingAccountId,
+            platform: submissionPlatform,
+            matchedApprover: configuredApproverId,
+          },
+          "Permission granted: User's NEAR account is linked to a configured approver for the platform.",
+        );
+        return true;
+      }
+    }
+
+    this.logger.warn(
+      {
+        feedId,
+        actingAccountId,
+        platform: submissionPlatform,
+        configuredApprovers: configuredApproverPlatformIds,
+      },
+      "Permission denied: User's NEAR account is not linked to any configured approvers for the platform on this feed.",
+    );
+    return false;
+  }
+
   // --- Methods for API routes to get moderation data ---
   public async getModerationById(id: number) {
     return this.moderationRepository.getModerationById(id);

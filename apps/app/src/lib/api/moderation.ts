@@ -1,5 +1,7 @@
 import { useApiMutation } from "../../hooks/api-client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "../../contexts/auth-context"; // Import useAuth
+import { toast } from "../../hooks/use-toast"; // For error notifications
 
 export interface ModerationActionPayload {
   submissionId: string;
@@ -20,7 +22,7 @@ interface ModerationResponse {
 
 export const useApproveSubmission = () => {
   const queryClient = useQueryClient();
-  // const { currentAccountId } = useAuth(); // TODO: Use currentAccountId for adminId
+  const auth = useAuth(); // Get auth context
 
   const { mutate: actualMutate, ...rest } = useApiMutation<
     ModerationResponse,
@@ -55,11 +57,21 @@ export const useApproveSubmission = () => {
   );
 
   const mutate = (payload: ModerationActionPayload) => {
+    if (!auth.isSignedIn || !auth.currentAccountId) {
+      console.error(
+        "User is not signed in or account ID is missing. Cannot approve submission.",
+      );
+      toast({
+        title: "Authentication Error",
+        description: "You must be signed in to approve submissions.",
+        variant: "destructive",
+      });
+      return;
+    }
     const internalPayload: InternalModerationPayload = {
       ...payload,
       action: "approve",
-      adminId: "temp-admin-id", // Placeholder, TODO: replace with actual user/admin ID from auth
-      // adminId: currentAccountId || "unknown-admin", // Example if using useAuth
+      adminId: auth.currentAccountId,
       timestamp: new Date().toISOString(),
     };
     actualMutate(internalPayload);
@@ -70,7 +82,7 @@ export const useApproveSubmission = () => {
 
 export const useRejectSubmission = () => {
   const queryClient = useQueryClient();
-  // const { currentAccountId } = useAuth(); // TODO: Use currentAccountId for adminId
+  const auth = useAuth(); // Get auth context
 
   const { mutate: actualMutate, ...rest } = useApiMutation<
     ModerationResponse,
@@ -104,11 +116,21 @@ export const useRejectSubmission = () => {
   );
 
   const mutate = (payload: ModerationActionPayload) => {
+    if (!auth.isSignedIn || !auth.currentAccountId) {
+      console.error(
+        "User is not signed in or account ID is missing. Cannot reject submission.",
+      );
+      toast({
+        title: "Authentication Error",
+        description: "You must be signed in to reject submissions.",
+        variant: "destructive",
+      });
+      return;
+    }
     const internalPayload: InternalModerationPayload = {
       ...payload,
       action: "reject",
-      adminId: "temp-admin-id", // Placeholder, TODO: replace
-      // adminId: currentAccountId || "unknown-admin",
+      adminId: auth.currentAccountId,
       timestamp: new Date().toISOString(),
     };
     actualMutate(internalPayload);
