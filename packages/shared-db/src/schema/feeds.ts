@@ -122,7 +122,7 @@ export const feeds = table("feeds", {
   name: text("name").notNull(),
   description: text("description"),
   created_by: text("created_by")
-    .notNull()
+    // .notNull() // for now
     .references(() => users.near_account_id, { onDelete: "cascade" }),
   admins: jsonb("admins")
     .$type<string[]>()
