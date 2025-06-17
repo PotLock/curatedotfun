@@ -156,6 +156,40 @@ usersRoutes.delete("/me", async (c) => {
   }
 });
 
+// --- GET /api/users/by-near/:nearAccountId ---
+usersRoutes.get("/by-near/:nearAccountId", async (c) => {
+  const { nearAccountId } = c.req.param();
+
+  if (!nearAccountId) {
+    return c.json({ error: "nearAccountId path parameter is required." }, 400);
+  }
+
+  try {
+    const userService = ServiceProvider.getInstance().getUserService();
+    const user = await userService.findUserByNearAccountId(nearAccountId);
+
+    if (!user) {
+      // Consistent with /me endpoint, return 404 if not found by service
+      return c.json(
+        { error: "User profile not found for the given NEAR account ID." },
+        404,
+      );
+    }
+
+    return c.json({ profile: user });
+  } catch (error) {
+    console.error(
+      `Error in usersRoutes.get('/by-near/${nearAccountId}'):`,
+      error,
+    );
+    if (error instanceof NotFoundError) {
+      return c.json({ error: error.message }, 404);
+    }
+    // Add other specific error checks if userService.findUserByNearAccountId can throw them
+    return c.json({ error: "Failed to fetch user profile" }, 500);
+  }
+});
+
 // --- POST /api/users/me/platform-identities ---
 
 export interface PlatformIdentityPayload {
