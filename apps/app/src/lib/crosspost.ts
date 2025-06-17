@@ -108,8 +108,6 @@ export const useConnectAccount = () => {
             platform.toLowerCase() as PlatformName,
           );
 
-        console.log("response", response);
-
         if (
           response &&
           response.status &&

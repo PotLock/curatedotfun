@@ -1,6 +1,8 @@
 import { z } from "zod";
-import { useApiQuery, useApiMutation } from "../../hooks/api-client"; // Adjusted path
-import { usernameSchema, UserProfile } from "../../lib/validation/user"; // Import from existing validation file
+import { useApiMutation, useApiQuery } from "../../hooks/api-client";
+import { usernameSchema, UserProfile } from "../../lib/validation/user";
+import { toast } from "../../hooks/use-toast";
+import { apiClient, ApiError } from "../api-client";
 
 export type CreateUserProfilePayload = {
   username: z.infer<typeof usernameSchema>;
@@ -50,4 +52,76 @@ export function useGetUserByNearAccountId(
       // The component using this hook can catch QueryError and check error.status.
     },
   );
+}
+
+/**
+ * Checks if a user profile exists for the given NEAR account ID.
+ * If not, it attempts to create one.
+ * Called imperatively after user signs in.
+ * @param accountId The NEAR account ID of the signed-in user.
+ * @returns The user profile (existing or newly created), or null if an error occurred.
+ */
+export async function ensureUserProfile(
+  accountId: string,
+): Promise<UserProfile | null> {
+  try {
+    const userProfile = await apiClient.makeRequest<UserProfile>(
+      "GET",
+      `/users/by-near/${accountId}`,
+      { currentAccountId: accountId, isSignedIn: true },
+    );
+    return userProfile;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      // User profile not found (404), proceed to create it.
+      try {
+        const newUserProfile = await apiClient.makeRequest<
+          UserProfile,
+          CreateUserProfilePayload
+        >(
+          "POST",
+          "/users",
+          { currentAccountId: accountId, isSignedIn: true },
+          {
+            username: accountId,
+            near_public_key: accountId, // Use accountId as public key
+          },
+          "createUserProfile", // Message for signing
+        );
+
+        toast({
+          title: "Account Created",
+          description: "Your profile has been successfully set up.",
+          variant: "success",
+        });
+        // Caller might want to invalidate queries like ['currentUserProfile'] and ['userByNearAccountId', accountId]
+        return newUserProfile;
+      } catch (creationError) {
+        console.error("Error creating user profile:", creationError);
+        const creationErrorMessage =
+          creationError instanceof Error
+            ? creationError.message
+            : "Could not create your user profile.";
+        toast({
+          title: "Account Creation Failed",
+          description: creationErrorMessage,
+          variant: "destructive",
+        });
+        return null; // Failed to create profile
+      }
+    } else {
+      // An error other than 404 occurred while fetching the profile.
+      console.error("Error fetching user profile:", error);
+      const fetchErrorMessage =
+        error instanceof Error
+          ? error.message
+          : "Could not verify your user profile.";
+      toast({
+        title: "Profile Check Failed",
+        description: fetchErrorMessage,
+        variant: "destructive",
+      });
+      return null; // Failed to fetch profile
+    }
+  }
 }
