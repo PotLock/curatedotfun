@@ -156,4 +156,39 @@ usersRoutes.delete("/me", async (c) => {
   }
 });
 
+// --- POST /api/users/me/platform-identities ---
+
+export interface PlatformIdentityPayload {
+  platformName: string;
+  platformUserId: string;
+  username: string;
+  profileImageUrl?: string;
+}
+
+usersRoutes.post("/me/platform-identities", async (c) => {
+  const accountId = c.get("accountId");
+
+  if (!accountId) {
+    return c.json({ error: "Unauthorized: User not authenticated." }, 401);
+  }
+
+  try {
+    const identities = await c.req.json<PlatformIdentityPayload[]>();
+
+    const userService = ServiceProvider.getInstance().getUserService();
+    await userService.updateUserPlatformIdentities(accountId, identities);
+
+    return c.body(null, 204);
+  } catch (error) {
+    console.error(
+      "Error in usersRoutes.post('/me/platform-identities'):",
+      error,
+    );
+    if (error instanceof SyntaxError) {
+      return c.json({ error: "Invalid JSON payload" }, 400);
+    }
+    return c.json({ error: "Failed to update platform identities" }, 500);
+  }
+});
+
 export { usersRoutes };

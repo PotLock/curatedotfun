@@ -1,9 +1,9 @@
 import { defineConfig } from "@rsbuild/core";
-import { pluginReact } from "@rsbuild/plugin-react";
-import { TanStackRouterRspack } from "@tanstack/router-plugin/rspack";
 import { pluginNodePolyfill } from "@rsbuild/plugin-node-polyfill";
-import path from "path";
+import { pluginReact } from "@rsbuild/plugin-react";
+import tanstackRouter from "@tanstack/router-plugin/rspack";
 import "dotenv/config";
+import path from "path";
 
 export default defineConfig({
   plugins: [
@@ -15,9 +15,9 @@ export default defineConfig({
       },
     }),
   ],
-  html: {
-    template: "./index.html",
-  },
+  // html: {
+  //   template: "./index.html",
+  // },
   source: {
     alias: {
       "@fonts": path.resolve(__dirname, "public/fonts"),
@@ -37,7 +37,12 @@ export default defineConfig({
   },
   tools: {
     rspack: {
-      plugins: [TanStackRouterRspack()],
+      plugins: [
+        tanstackRouter({
+          target: "react",
+          autoCodeSplitting: true,
+        }),
+      ],
       module: {
         rules: [
           {

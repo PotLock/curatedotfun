@@ -4,6 +4,7 @@ import {
   UpdateUser,
   UserRepository,
   type DB,
+  type PlatformIdentity,
 } from "@curatedotfun/shared-db";
 import { NearIntegrationConfig } from "@curatedotfun/types";
 import {
@@ -15,6 +16,7 @@ import { connect, KeyPair, keyStores, transactions, utils } from "near-api-js";
 import { KeyPairString } from "near-api-js/lib/utils";
 import { Logger } from "pino";
 import { IBaseService } from "./interfaces/base-service.interface";
+import { PlatformIdentityPayload } from "../routes/api/users";
 
 export class UserService implements IBaseService {
   public readonly logger: Logger;
@@ -320,6 +322,69 @@ export class UserService implements IBaseService {
       throw new UserServiceError(
         error.message || "Failed to delete user from database",
         error.statusCode || 500,
+        error,
+      );
+    }
+  }
+
+  async updateUserPlatformIdentities(
+    nearAccountId: string,
+    identities: PlatformIdentityPayload[],
+  ): Promise<void> {
+    this.logger.info(
+      { nearAccountId, identitiesCount: identities.length },
+      "Attempting to update user platform identities",
+    );
+
+    const user = await this.userRepository.findByNearAccountId(nearAccountId);
+    if (!user || !user.id) {
+      this.logger.warn(
+        { nearAccountId },
+        "User not found for updating platform identities",
+      );
+      throw new NotFoundError("User", nearAccountId);
+    }
+
+    // Map incoming payload to the DB schema's PlatformIdentity type
+    const dbPlatformIdentities: PlatformIdentity[] = identities.map(
+      (identity) => ({
+        platform: identity.platformName,
+        id: identity.platformUserId,
+        username: identity.username,
+        profileImage: identity.profileImageUrl,
+      }),
+    );
+
+    try {
+      const updatedUser = await this.db.transaction(async (tx) => {
+        return this.userRepository.updateByNearAccountId(
+          nearAccountId,
+          { platform_identities: dbPlatformIdentities },
+          tx, // Pass the transaction object
+        );
+      });
+
+      if (!updatedUser) {
+        // This case should ideally be handled by userRepository.updateByNearAccountId throwing an error if user not found
+        this.logger.error(
+          { nearAccountId },
+          "User update returned no result, implies user not found during update.",
+        );
+        throw new NotFoundError("User", nearAccountId);
+      }
+
+      this.logger.info(
+        { nearAccountId, userId: updatedUser.id },
+        "Successfully updated user platform identities.",
+      );
+    } catch (error: any) {
+      this.logger.error(
+        { nearAccountId, error: error.message, stack: error.stack },
+        "Error updating platform identities in transaction",
+      );
+      throw new UserServiceError(
+        `Failed to update platform identities for ${nearAccountId}: ${error.message}`,
+        500,
         error,
       );
     }

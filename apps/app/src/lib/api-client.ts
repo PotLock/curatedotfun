@@ -12,6 +12,14 @@ export class ApiError extends Error {
   }
 }
 
+export interface PlatformIdentityData {
+  // move to types
+  platformName: string;
+  platformUserId: string;
+  username: string;
+  profileImageUrl?: string;
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -106,6 +114,20 @@ class ApiClient {
       // For now, returning undefined if not JSON, adjust as needed
       return undefined as unknown as TResponse;
     }
+  }
+
+  async updateUserPlatformIdentities(
+    auth: { currentAccountId: string | null; isSignedIn: boolean },
+    identities: PlatformIdentityData[],
+  ): Promise<void> {
+    // Assuming 204 No Content or simple success
+    return this.makeRequest<void, PlatformIdentityData[]>(
+      "POST",
+      "/users/me/platform-identities", // Suggested endpoint
+      auth,
+      identities,
+      "Update user platform identities",
+    );
   }
 }
 
