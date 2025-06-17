@@ -12,11 +12,11 @@ import {
   NotFoundError,
   UserServiceError,
 } from "@curatedotfun/utils";
-import { connect, KeyPair, keyStores, transactions, utils } from "near-api-js";
+import { connect, KeyPair, keyStores, transactions } from "near-api-js";
 import { KeyPairString } from "near-api-js/lib/utils";
 import { Logger } from "pino";
-import { IBaseService } from "./interfaces/base-service.interface";
 import { PlatformIdentityPayload } from "../routes/api/users";
+import { IBaseService } from "./interfaces/base-service.interface";
 
 export class UserService implements IBaseService {
   public readonly logger: Logger;
@@ -50,77 +50,13 @@ export class UserService implements IBaseService {
   }
 
   async createUser(data: InsertUser) {
-    const { auth_provider_id, username, near_public_key, email } = data;
-    const parentAccountId = this.nearConfig.parentAccountId;
-    const new_near_account_id = `${username}.${parentAccountId}`;
-
-    try {
-      const parentPrivateKey = this.nearConfig.parentKeyPair;
-
-      if (!parentPrivateKey) {
-        throw new NearAccountError(
-          "Missing parentKeyPair in NEAR integration config",
-        );
-      }
-
-      const networkId = this.nearConfig.networkId;
-
-      const keyStore = new keyStores.InMemoryKeyStore();
-      const parentKeyPair = KeyPair.fromString(
-        parentPrivateKey as KeyPairString,
-      );
-      await keyStore.setKey(networkId, parentAccountId, parentKeyPair);
-
-      const connectionConfig = {
-        networkId,
-        keyStore,
-        nodeUrl: this.nearConfig.rpcUrl || `https://rpc.${networkId}.near.org`,
-      };
-
-      const nearConnection = await connect(connectionConfig);
-      const parentAccount = await nearConnection.account(parentAccountId);
-      const publicKey = utils.PublicKey.fromString(near_public_key);
-
-      const actions = [
-        transactions.createAccount(),
-        transactions.transfer(BigInt("100000000000000000000000")),
-        transactions.addKey(
-          publicKey,
-          transactions.functionCallAccessKey(
-            new_near_account_id,
-            [],
-            BigInt("1000000000000000000000000"),
-          ),
-        ),
-      ];
-
-      await parentAccount.signAndSendTransaction({
-        receiverId: new_near_account_id,
-        actions,
-      });
-
-      console.log(`Created NEAR account ${new_near_account_id}`);
-    } catch (nearError: any) {
-      console.error("Error creating NEAR account:", nearError);
-      if (nearError.message?.includes("already exists")) {
-        throw new NearAccountError(
-          "NEAR account name already taken",
-          409,
-          nearError,
-        );
-      } else if (nearError.message?.includes("invalid public key")) {
-        throw new NearAccountError(
-          "Invalid NEAR public key format",
-          400,
-          nearError,
-        );
-      }
-      throw new NearAccountError(
-        "Failed to create NEAR account",
-        500,
-        nearError,
-      );
-    }
+    const {
+      auth_provider_id,
+      username,
+      near_account_id,
+      near_public_key,
+      email,
+    } = data;
 
     try {
       // The actual database user creation is now wrapped in a transaction
@@ -128,12 +64,12 @@ export class UserService implements IBaseService {
         return this.userRepository.createUser(
           {
             auth_provider_id,
-            near_account_id: new_near_account_id,
+            near_account_id,
             near_public_key,
             username,
             email,
           },
-          tx, // Pass the transactional DB instance
+          tx,
         );
       });
 

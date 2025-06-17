@@ -6,7 +6,8 @@ import { apiClient, ApiError } from "../api-client";
 
 export type CreateUserProfilePayload = {
   username: z.infer<typeof usernameSchema>;
-  near_public_key: string;
+  near_public_key?: string;
+  near_account_id: string;
   name?: string | null;
   email?: string | null;
 };
@@ -83,8 +84,8 @@ export async function ensureUserProfile(
           "/users",
           { currentAccountId: accountId, isSignedIn: true },
           {
-            username: accountId,
-            near_public_key: accountId, // Use accountId as public key
+            username: accountId.split(".")[0],
+            near_account_id: accountId,
           },
           "createUserProfile", // Message for signing
         );

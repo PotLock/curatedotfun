@@ -103,7 +103,7 @@ export class UserRepository {
             .values({
               auth_provider_id: userData.auth_provider_id as string,
               near_account_id: userData.near_account_id,
-              near_public_key: userData.near_public_key,
+              near_public_key: userData.near_public_key || null,
               username: userData.username || null,
               email: userData.email || null,
             })

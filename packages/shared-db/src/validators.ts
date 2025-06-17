@@ -27,6 +27,7 @@ const {
 export const insertUserSchema = createInsertSchema(users, {
   id: z.undefined(),
   auth_provider_id: z.string().optional(),
+  near_public_key: z.string().optional(),
   createdAt: z.undefined(),
   updatedAt: z.undefined(),
 });

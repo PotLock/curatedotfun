@@ -45,8 +45,8 @@ export const users = table(
   {
     id: serial("id").primaryKey(),
     auth_provider_id: text("auth_provider_id").notNull().unique(), // Unique identifier from Web3Auth (previously sub_id)
-    near_account_id: text("near_account_id").unique(), // e.g., chosenname.users.curatedotfun.near
-    near_public_key: text("near_public_key").notNull().unique(), // ed25519 public key
+    near_account_id: text("near_account_id").notNull().unique(), // e.g., chosenname.users.curatedotfun.near
+    near_public_key: text("near_public_key").unique(), // ed25519 public key
     username: text("username"), // Optional: display name
     email: text("email"), // Optional: email from Web3Auth
 
