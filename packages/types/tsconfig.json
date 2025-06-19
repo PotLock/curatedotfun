@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist",
+    "outDir": "dist"
     // The rest are inherited from the root `tsconfig.json`
     // noEmit: false,
     // declaration: true,

@@ -1,28 +1,26 @@
-import { z } from "zod";
+import {
+  CreateUserProfileRequestDto as CreateUserProfilePayload,
+  UserProfileResponseDto as UserProfile,
+} from "@curatedotfun/types/src/dtos/users.dto";
 import { useApiMutation, useApiQuery } from "../../hooks/api-client";
-import { usernameSchema, UserProfile } from "../../lib/validation/user";
 import { toast } from "../../hooks/use-toast";
 import { apiClient, ApiError } from "../api-client";
-
-export type CreateUserProfilePayload = {
-  username: z.infer<typeof usernameSchema>;
-  near_public_key?: string;
-  near_account_id: string;
-  name?: string | null;
-  email?: string | null;
-};
 
 export function useCreateUserProfile() {
   type CreateUserProfileVariables = CreateUserProfilePayload;
 
-  return useApiMutation<UserProfile, Error, CreateUserProfileVariables>(
+  return useApiMutation<
+    { profile: UserProfile },
+    Error,
+    CreateUserProfileVariables
+  >(
     {
       method: "POST",
       path: "/users",
       message: "createUserProfile",
     },
     {
-      // onSuccess: (data, variables, context) => {
+      // onSuccess: (data) => {
       //   const queryClient = useQueryClient();
       //   queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
       // },
@@ -49,8 +47,6 @@ export function useGetUserByNearAccountId(
           ? options.enabled && !!nearAccountId
           : !!nearAccountId,
       retry: options?.retry === undefined ? 1 : options.retry, // Default to 1 retry, or allow disabling/customizing
-      // React Query will throw an error for 4xx/5xx responses by default.
-      // The component using this hook can catch QueryError and check error.status.
     },
   );
 }
@@ -66,18 +62,18 @@ export async function ensureUserProfile(
   accountId: string,
 ): Promise<UserProfile | null> {
   try {
-    const userProfile = await apiClient.makeRequest<UserProfile>(
+    const response = await apiClient.makeRequest<{ profile: UserProfile }>(
       "GET",
       `/users/by-near/${accountId}`,
       { currentAccountId: accountId, isSignedIn: true },
     );
-    return userProfile;
+    return response.profile;
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       // User profile not found (404), proceed to create it.
       try {
-        const newUserProfile = await apiClient.makeRequest<
-          UserProfile,
+        const response = await apiClient.makeRequest<
+          { profile: UserProfile },
           CreateUserProfilePayload
         >(
           "POST",
@@ -89,6 +85,7 @@ export async function ensureUserProfile(
           },
           "createUserProfile", // Message for signing
         );
+        const newUserProfile = response.profile;
 
         toast({
           title: "Account Created",

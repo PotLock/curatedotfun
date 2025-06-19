@@ -10,9 +10,7 @@ const isProduction = process.env.NODE_ENV === "production";
 const isStaging = process.env.NODE_ENV === "staging";
 
 export default defineConfig({
-  plugins: [
-    pluginReact(),
-  ],
+  plugins: [pluginReact()],
   html: {
     template: "./index.html",
     templateParameters: {
@@ -51,18 +49,18 @@ export default defineConfig({
         ...(isProduction || isStaging
           ? []
           : [
-            new rspack.CopyRspackPlugin({
-              patterns: [
-                {
-                  from: path.resolve(
-                    __dirname,
-                    "node_modules/fastintear/dist/umd/browser.global.js",
-                  ),
-                  to: "js/fastintear.js",
-                },
-              ],
-            }),
-          ]),
+              new rspack.CopyRspackPlugin({
+                patterns: [
+                  {
+                    from: path.resolve(
+                      __dirname,
+                      "node_modules/fastintear/dist/umd/browser.global.js",
+                    ),
+                    to: "js/fastintear.js",
+                  },
+                ],
+              }),
+            ]),
       ],
       module: {
         rules: [

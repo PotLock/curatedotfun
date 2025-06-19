@@ -11,7 +11,7 @@
   "compilerOptions": {
     "target": "es2022",
     "module": "ESNext",
-    "moduleResolution": "bundler", 
+    "moduleResolution": "bundler",
     "lib": ["es2022", "dom"], // Broad libs for general compatibility (DOM for frontend)
     "strict": true,
     "esModuleInterop": true,
@@ -20,6 +20,6 @@
     "noEmit": false,
     "declaration": true,
     "declarationMap": true,
-    "composite": true,
+    "composite": true
   }
 }
