@@ -12,7 +12,7 @@
     "package.json"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -b",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
   },

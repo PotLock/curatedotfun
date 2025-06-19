@@ -1,21 +1,25 @@
 {
   "files": [],
   "references": [
+    // Remember to add reference here when adding a new app or package
     { "path": "./apps/api" },
     { "path": "./apps/app" },
-    // SHARED PACKAGES
     { "path": "./packages/types" },
     { "path": "./packages/shared-db" },
     { "path": "./packages/utils" }
   ],
   "compilerOptions": {
     "target": "es2022",
-    "module": "es2022",
-    "moduleResolution": "bundler",
-    "lib": ["es2022", "dom"],
+    "module": "ESNext",
+    "moduleResolution": "bundler", 
+    "lib": ["es2022", "dom"], // Broad libs for general compatibility (DOM for frontend)
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true,
   }
 }
