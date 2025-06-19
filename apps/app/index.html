@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>curate.fun - crowdsource automated content</title>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta
       name="description"
       content="Save hours of content curation time with AI-powered tools that transform social media content into professional feeds, newsletters, and podcasts. Trusted by leading Web3 curators."
@@ -31,6 +31,8 @@
     <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
+
+    <script src="<%= fastintear %>"></script>
     <script>
       // Force light mode
       document.documentElement.classList.add("light");
@@ -39,5 +41,14 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      window.near && window.near.config({ networkId: "<%= networkId %>" });
+
+      if (typeof window.near !== "undefined") {
+        console.log("NEAR (via global object 'near') is ready!");
+      } else {
+        console.error("NEAR global object 'near' not found!");
+      }
+    </script>
   </body>
 </html>

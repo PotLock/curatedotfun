@@ -1,23 +1,29 @@
-import { defineConfig } from "@rsbuild/core";
-import { pluginNodePolyfill } from "@rsbuild/plugin-node-polyfill";
+import { defineConfig, rspack } from "@rsbuild/core";
 import { pluginReact } from "@rsbuild/plugin-react";
-import tanstackRouter from "@tanstack/router-plugin/rspack";
+import TanStackRouterRspack from "@tanstack/router-plugin/rspack";
 import "dotenv/config";
 import path from "path";
+
+const network = process.env.PUBLIC_NETWORK || "testnet";
+
+const isProduction = process.env.NODE_ENV === "production";
+const isStaging = process.env.NODE_ENV === "staging";
 
 export default defineConfig({
   plugins: [
     pluginReact(),
-    pluginNodePolyfill({
-      globals: {
-        Buffer: true,
-        process: true,
-      },
-    }),
   ],
-  // html: {
-  //   template: "./index.html",
-  // },
+  html: {
+    template: "./index.html",
+    templateParameters: {
+      // near
+      networkId: network,
+      fastintear:
+        isProduction || isStaging
+          ? "https://unpkg.com/fastintear@latest/dist/umd/browser.global.js"
+          : "/js/fastintear.js",
+    },
+  },
   source: {
     alias: {
       "@fonts": path.resolve(__dirname, "public/fonts"),
@@ -38,10 +44,25 @@ export default defineConfig({
   tools: {
     rspack: {
       plugins: [
-        tanstackRouter({
-          target: "react",
-          autoCodeSplitting: true,
+        TanStackRouterRspack({
+          routesDirectory: "./src/routes",
+          enableRouteGeneration: false,
         }),
+        ...(isProduction || isStaging
+          ? []
+          : [
+            new rspack.CopyRspackPlugin({
+              patterns: [
+                {
+                  from: path.resolve(
+                    __dirname,
+                    "node_modules/fastintear/dist/umd/browser.global.js",
+                  ),
+                  to: "js/fastintear.js",
+                },
+              ],
+            }),
+          ]),
       ],
       module: {
         rules: [
