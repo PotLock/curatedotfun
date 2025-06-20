@@ -65,24 +65,36 @@ export class ModerationService implements IBaseService {
       return true;
     }
 
-    const crosspost = new CrosspostClient();
-    crosspost.setAccountHeader(actingAccountId);
-    const response: ApiResponse<ConnectedAccountsResponse> =
-      await crosspost.auth.getConnectedAccounts(); // would be nice to be PlatformAccount[] or empty array, or maybe an object map
+    try {
+      const crosspost = new CrosspostClient();
+      crosspost.setAccountHeader(actingAccountId);
+      const response: ApiResponse<ConnectedAccountsResponse> =
+        await crosspost.auth.getConnectedAccounts();
 
-    // TODO: need username and profileImage in connected accounts
-    if (response.success) {
-      const connectedAccounts = response.data;
-      if (connectedAccounts?.accounts && connectedAccounts.accounts.length > 0)
-        for (const identity of connectedAccounts.accounts) {
-          if (
-            identity.platform === platform &&
-            identity.profile?.username ===
-              platformSpecificUserIdFromApproverList
-          ) {
-            return true; // User is linked to the specified approver ID on the correct platform.
+      if (response.success) {
+        const connectedAccounts = response.data;
+        if (connectedAccounts?.accounts?.length > 0) {
+          for (const identity of connectedAccounts.accounts) {
+            if (
+              identity.platform === platform &&
+              identity.profile?.username === platformSpecificUserIdFromApproverList
+            ) {
+              return true; // User is linked to the specified approver ID on the correct platform.
+            }
           }
         }
+      } else {
+        this.logger.warn(
+          { actingAccountId, platform, error: response.error },
+          "Failed to fetch connected accounts from Crosspost API"
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        { actingAccountId, platform, error },
+        "Error calling Crosspost API for connected accounts"
+      );
+      return false;
     }
 
     this.logger.debug(
