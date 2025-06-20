@@ -27,13 +27,16 @@ export default defineConfig({
       "@fonts": path.resolve(__dirname, "public/fonts"),
     },
     define: {
-      ...Object.keys(process.env)
-        .filter((key) => key.startsWith("PUBLIC_"))
-        .reduce((acc, key) => {
-          // @ts-expect-error whatever
-          acc[`process.env.${key}`] = JSON.stringify(process.env[key]);
-          return acc;
-        }, {}),
+      "process.env": {
+        ...Object.keys(process.env)
+          .filter((key) => key.startsWith("PUBLIC_"))
+          .reduce((acc, key) => {
+            // @ts-expect-error whatever
+            acc[key] = JSON.stringify(process.env[key]);
+            return acc;
+          }, {}),
+        NODE_ENV: JSON.stringify(process.env.NODE_ENV),
+      },
     },
   },
   output: {
