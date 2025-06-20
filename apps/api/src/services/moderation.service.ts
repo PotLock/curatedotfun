@@ -88,8 +88,7 @@ export class ModerationService implements IBaseService {
       return true;
     }
 
-    const connectedAccounts =
-      await this.getConnectedAccounts(actingAccountId);
+    const connectedAccounts = await this.getConnectedAccounts(actingAccountId);
 
     if (connectedAccounts && connectedAccounts.length > 0) {
       for (const identity of connectedAccounts) {
@@ -195,7 +194,11 @@ export class ModerationService implements IBaseService {
 
       if (!isAuthorized) {
         this.logger.warn(
-          { actingAccountId: moderatorNearId, feedId, platform: submissionPlatform },
+          {
+            actingAccountId: moderatorNearId,
+            feedId,
+            platform: submissionPlatform,
+          },
           "User not authorized to moderate this submission.",
         );
         throw new AuthorizationError(
@@ -205,7 +208,10 @@ export class ModerationService implements IBaseService {
       }
       // --- End Permission Check ---
 
-      const moderationSource = isSuperAdmin(moderatorNearId, this.superAdminAccounts)
+      const moderationSource = isSuperAdmin(
+        moderatorNearId,
+        this.superAdminAccounts,
+      )
         ? "super_admin_direct"
         : "ui";
 
@@ -477,27 +483,29 @@ export class ModerationService implements IBaseService {
     return moderations.map((m) => ModerationActionSchema.parse(m));
   }
 
-public async getModerationsByNearAccount(
-  nearAccountId: string,
-): Promise<ModerationAction[]> {
-  const connectedAccounts = await this.getConnectedAccounts(nearAccountId);
-  const platformUsernameStrings: string[] = [];
+  public async getModerationsByNearAccount(
+    nearAccountId: string,
+  ): Promise<ModerationAction[]> {
+    const connectedAccounts = await this.getConnectedAccounts(nearAccountId);
+    const platformUsernameStrings: string[] = [];
 
-  if (connectedAccounts) {
-    for (const acc of connectedAccounts) {
-      if (acc.platform && acc.profile?.username) {
-        platformUsernameStrings.push(`${acc.platform}:${acc.profile.username}`);
+    if (connectedAccounts) {
+      for (const acc of connectedAccounts) {
+        if (acc.platform && acc.profile?.username) {
+          platformUsernameStrings.push(
+            `${acc.platform}:${acc.profile.username}`,
+          );
+        }
       }
     }
-  }
 
-  const rawModerations =
-    await this.moderationRepository.getModerationsLinkedToNearAccount(
-      nearAccountId,
-      platformUsernameStrings,
-    );
-  return rawModerations.map((m) => ModerationActionSchema.parse(m));
-}
+    const rawModerations =
+      await this.moderationRepository.getModerationsLinkedToNearAccount(
+        nearAccountId,
+        platformUsernameStrings,
+      );
+    return rawModerations.map((m) => ModerationActionSchema.parse(m));
+  }
 
   private async getConnectedAccounts(
     actingAccountId: string,

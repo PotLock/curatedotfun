@@ -1,11 +1,6 @@
 import { z } from "zod";
-import {
-  ApiSuccessResponseSchema,
-  QueryOptionsSchema,
-} from "./common";
-import {
-  ModerationActionSchema
-} from "./moderation";
+import { ApiSuccessResponseSchema, QueryOptionsSchema } from "./common";
+import { ModerationActionSchema } from "./moderation";
 
 // --- Enums and Basic Types ---
 
@@ -22,9 +17,11 @@ export type ActivityTypeApi = z.infer<typeof activityTypeApiEnum>;
 
 // --- Core Schemas ---
 
-export const ActivityDataSchema = z.object({
-  moderationDetails: ModerationActionSchema.optional(),
-}).passthrough();
+export const ActivityDataSchema = z
+  .object({
+    moderationDetails: ModerationActionSchema.optional(),
+  })
+  .passthrough();
 export type ActivityData = z.infer<typeof ActivityDataSchema>;
 
 export const ActivitySchema = z.object({
@@ -80,13 +77,14 @@ export const UserFeedRanksSchema = z.object({
 });
 export type UserFeedRanks = z.infer<typeof UserFeedRanksSchema>;
 
-export const FeedInfoSchema = z.object({
-  id: z.string(), // Feed ID
-  name: z.string(),
-  description: z.string().optional().nullable(),
-}).passthrough();
+export const FeedInfoSchema = z
+  .object({
+    id: z.string(), // Feed ID
+    name: z.string(),
+    description: z.string().optional().nullable(),
+  })
+  .passthrough();
 export type FeedInfo = z.infer<typeof FeedInfoSchema>;
-
 
 // --- Request Parameter Schemas (for Hono routes) ---
 
@@ -106,27 +104,47 @@ export const GetLeaderboardApiQuerySchema = QueryOptionsSchema.extend({
   time_range: z.enum(["day", "week", "month", "year", "all"]).optional(),
   feed_id: z.string().optional(),
 });
-export type GetLeaderboardApiQuery = z.infer<typeof GetLeaderboardApiQuerySchema>;
+export type GetLeaderboardApiQuery = z.infer<
+  typeof GetLeaderboardApiQuerySchema
+>;
 
 // For GET /user/:accountId (activities)
 export const GetUserActivitiesApiQuerySchema = QueryOptionsSchema.extend({
-  types: z.string().optional().describe("Comma-separated list of activity types"),
+  types: z
+    .string()
+    .optional()
+    .describe("Comma-separated list of activity types"),
   feed_id: z.string().optional(),
-  from_date: z.string().datetime({ message: "Invalid datetime string for from_date. Must be UTC and in ISO8601 format." }).optional(),
-  to_date: z.string().datetime({ message: "Invalid datetime string for to_date. Must be UTC and in ISO8601 format." }).optional(),
-}).transform(data => {
+  from_date: z
+    .string()
+    .datetime({
+      message:
+        "Invalid datetime string for from_date. Must be UTC and in ISO8601 format.",
+    })
+    .optional(),
+  to_date: z
+    .string()
+    .datetime({
+      message:
+        "Invalid datetime string for to_date. Must be UTC and in ISO8601 format.",
+    })
+    .optional(),
+}).transform((data) => {
   let validatedTypes: ActivityTypeApi[] | undefined = undefined;
   if (data.types) {
-    const typeArray = data.types.split(',').map(t => t.trim()).filter(t => t.length > 0);
-    validatedTypes = typeArray.filter(t => 
-      activityTypeApiEnum.options.includes(t as any)
+    const typeArray = data.types
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+    validatedTypes = typeArray.filter((t) =>
+      activityTypeApiEnum.options.includes(t as any),
     ) as ActivityTypeApi[];
-    
+
     if (validatedTypes.length === 0) {
       validatedTypes = undefined;
     }
   }
-  
+
   return {
     limit: data.limit !== undefined ? Number(data.limit) : 20,
     offset: data.offset !== undefined ? Number(data.offset) : 0,
@@ -135,35 +153,34 @@ export const GetUserActivitiesApiQuerySchema = QueryOptionsSchema.extend({
     types: validatedTypes,
     feed_id: data.feed_id,
     from_date: data.from_date,
-    to_date: data.to_date
+    to_date: data.to_date,
   };
 });
-export type GetUserActivitiesApiQuery = z.infer<typeof GetUserActivitiesApiQuerySchema>;
-
+export type GetUserActivitiesApiQuery = z.infer<
+  typeof GetUserActivitiesApiQuerySchema
+>;
 
 // --- Wrapped Response Schemas ---
 
 export const ActivityListResponseSchema = ApiSuccessResponseSchema(
-  z.array(ActivitySchema)
+  z.array(ActivitySchema),
 );
 export type ActivityListResponse = z.infer<typeof ActivityListResponseSchema>;
 
 export const LeaderboardResponseSchema = ApiSuccessResponseSchema(
-  z.array(UserRankingLeaderboardEntrySchema)
+  z.array(UserRankingLeaderboardEntrySchema),
 );
 export type LeaderboardResponse = z.infer<typeof LeaderboardResponseSchema>;
 
-export const GlobalStatsResponseSchema = ApiSuccessResponseSchema(
-  GlobalStatsSchema
-);
+export const GlobalStatsResponseSchema =
+  ApiSuccessResponseSchema(GlobalStatsSchema);
 export type GlobalStatsResponse = z.infer<typeof GlobalStatsResponseSchema>;
 
 export const FeedInfoListResponseSchema = ApiSuccessResponseSchema(
-  z.array(FeedInfoSchema)
+  z.array(FeedInfoSchema),
 );
 export type FeedInfoListResponse = z.infer<typeof FeedInfoListResponseSchema>;
 
-export const UserFeedRankResponseSchema = ApiSuccessResponseSchema(
-  UserFeedRanksSchema
-);
+export const UserFeedRankResponseSchema =
+  ApiSuccessResponseSchema(UserFeedRanksSchema);
 export type UserFeedRankResponse = z.infer<typeof UserFeedRankResponseSchema>;

@@ -10,8 +10,13 @@ import { submissions } from "./submissions";
 export const moderationActionSchema = z.enum(["approve", "reject"]);
 export type ModerationAction = z.infer<typeof moderationActionSchema>;
 
-export const moderatorAccountIdTypeSchema = z.enum(["near", "platform_username"]);
-export type ModeratorAccountIdType = z.infer<typeof moderatorAccountIdTypeSchema>;
+export const moderatorAccountIdTypeSchema = z.enum([
+  "near",
+  "platform_username",
+]);
+export type ModeratorAccountIdType = z.infer<
+  typeof moderatorAccountIdTypeSchema
+>;
 
 export const moderationSourceSchema = z.enum([
   "ui",

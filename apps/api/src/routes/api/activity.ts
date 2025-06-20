@@ -62,7 +62,10 @@ activityRoutes.get(
           : "Failed to fetch leaderboard";
       return c.json(
         ApiErrorResponseSchema.parse({
-          statusCode: error instanceof Error && error.name === "ValidationError" ? 400 : 500,
+          statusCode:
+            error instanceof Error && error.name === "ValidationError"
+              ? 400
+              : 500,
           success: false,
           error: { message },
         }),
@@ -125,7 +128,9 @@ activityRoutes.get("/user/me", async (c) => {
       ApiErrorResponseSchema.parse({
         statusCode: 401,
         success: false,
-        error: { message: "Unauthorized: Missing or invalid authentication token" },
+        error: {
+          message: "Unauthorized: Missing or invalid authentication token",
+        },
       }),
       401,
     );
@@ -135,7 +140,6 @@ activityRoutes.get("/user/me", async (c) => {
     // Get services from the service provider
     const serviceProvider = ServiceProvider.getInstance();
     const activityService = serviceProvider.getActivityService();
-
 
     const activities = await activityService.getUserActivities(accountId);
 
@@ -217,7 +221,10 @@ activityRoutes.get(
           : "Failed to fetch user activities";
       return c.json(
         ApiErrorResponseSchema.parse({
-          statusCode: error instanceof Error && error.name === "ValidationError" ? 400 : 500,
+          statusCode:
+            error instanceof Error && error.name === "ValidationError"
+              ? 400
+              : 500,
           success: false,
           error: { message },
         }),
@@ -239,7 +246,9 @@ activityRoutes.get("/feeds/curated-by/me", async (c) => {
       ApiErrorResponseSchema.parse({
         statusCode: 401,
         success: false,
-        error: { message: "Unauthorized: Missing or invalid authentication token" },
+        error: {
+          message: "Unauthorized: Missing or invalid authentication token",
+        },
       }),
       401,
     );
@@ -248,7 +257,7 @@ activityRoutes.get("/feeds/curated-by/me", async (c) => {
   try {
     // Get services from the service provider
     const serviceProvider = ServiceProvider.getInstance();
-    const userService = serviceProvider.getUserService(); 
+    const userService = serviceProvider.getUserService();
     const activityService = serviceProvider.getActivityService();
 
     const user = await userService.findUserByNearAccountId(accountId);
@@ -314,7 +323,9 @@ activityRoutes.get("/feeds/approved-by/me", async (c) => {
       ApiErrorResponseSchema.parse({
         statusCode: 401,
         success: false,
-        error: { message: "Unauthorized: Missing or invalid authentication token" },
+        error: {
+          message: "Unauthorized: Missing or invalid authentication token",
+        },
       }),
       401,
     );
@@ -323,7 +334,7 @@ activityRoutes.get("/feeds/approved-by/me", async (c) => {
   try {
     // Get services from the service provider
     const serviceProvider = ServiceProvider.getInstance();
-    const userService = serviceProvider.getUserService(); 
+    const userService = serviceProvider.getUserService();
     const activityService = serviceProvider.getActivityService();
 
     const user = await userService.findUserByNearAccountId(accountId);
@@ -392,7 +403,9 @@ activityRoutes.get(
         ApiErrorResponseSchema.parse({
           statusCode: 401,
           success: false,
-          error: { message: "Unauthorized: Missing or invalid authentication token" },
+          error: {
+            message: "Unauthorized: Missing or invalid authentication token",
+          },
         }),
         401,
       );
@@ -403,21 +416,21 @@ activityRoutes.get(
 
       // Get services from the service provider
       const serviceProvider = ServiceProvider.getInstance();
-      const userService = serviceProvider.getUserService(); 
+      const userService = serviceProvider.getUserService();
       const activityService = serviceProvider.getActivityService();
 
-    const user = await userService.findUserByNearAccountId(accountId);
+      const user = await userService.findUserByNearAccountId(accountId);
 
-    if (!user) {
-      return c.json(
-        ApiErrorResponseSchema.parse({
-          statusCode: 404,
-          success: false,
-          error: { message: "User profile not found" },
-        }),
-        404,
-      );
-    }
+      if (!user) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: 404,
+            success: false,
+            error: { message: "User profile not found" },
+          }),
+          404,
+        );
+      }
 
       // Get the user's rank for the feed
       const ranks = await activityService.getUserFeedRanks(user.id, feedId);

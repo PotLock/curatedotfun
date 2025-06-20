@@ -63,7 +63,9 @@ export class ModerationRepository {
             .from(moderationHistory)
             .where(eq(moderationHistory.id, id))
             .limit(1);
-          return res.length > 0 ? selectModerationHistorySchema.parse(res[0]) : null;
+          return res.length > 0
+            ? selectModerationHistorySchema.parse(res[0])
+            : null;
         }, this.db);
         return result;
       },
@@ -90,7 +92,7 @@ export class ModerationRepository {
             .where(eq(moderationHistory.submissionId, submissionId))
             .orderBy(asc(moderationHistory.createdAt));
         }, this.db);
-        return results.map(row => selectModerationHistorySchema.parse(row));
+        return results.map((row) => selectModerationHistorySchema.parse(row));
       },
       {
         operationName: "get moderations by submission ID",
@@ -121,7 +123,7 @@ export class ModerationRepository {
             )
             .orderBy(asc(moderationHistory.createdAt));
         }, this.db);
-        return results.map(row => selectModerationHistorySchema.parse(row));
+        return results.map((row) => selectModerationHistorySchema.parse(row));
       },
       {
         operationName: "get moderations by submission and feed ID",
@@ -154,7 +156,10 @@ export class ModerationRepository {
           conditions.push(
             and(
               eq(moderationHistory.moderatorAccountIdType, "platform_username"),
-              inArray(moderationHistory.moderatorAccountId, platformUsernameStrings),
+              inArray(
+                moderationHistory.moderatorAccountId,
+                platformUsernameStrings,
+              ),
             ),
           );
         }
@@ -166,11 +171,14 @@ export class ModerationRepository {
             .where(or(...conditions))
             .orderBy(asc(moderationHistory.createdAt));
         }, this.db);
-        return results.map(row => selectModerationHistorySchema.parse(row));
+        return results.map((row) => selectModerationHistorySchema.parse(row));
       },
       {
         operationName: "get moderations linked to NEAR account",
-        additionalContext: { nearAccountId, platformUsernames: platformUsernameStrings.length },
+        additionalContext: {
+          nearAccountId,
+          platformUsernames: platformUsernameStrings.length,
+        },
       },
       [],
     );

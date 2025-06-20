@@ -10,9 +10,7 @@ export const ModerationActionEnum = z.enum(["approve", "reject"]);
 export type ModerationActionType = z.infer<typeof ModerationActionEnum>;
 
 export const ModeratorAccountIdTypeEnum = z.enum(["near", "platform_username"]);
-export type ModeratorAccountIdType = z.infer<
-  typeof ModeratorAccountIdTypeEnum
->;
+export type ModeratorAccountIdType = z.infer<typeof ModeratorAccountIdTypeEnum>;
 
 export const ModerationSourceEnum = z.enum([
   "ui",

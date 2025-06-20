@@ -7,7 +7,7 @@ import {
   GlobalStats,
   GlobalStatsResponse,
   UserFeedRankResponse,
-  UserFeedRanks
+  UserFeedRanks,
 } from "@curatedotfun/types";
 import { useAuth } from "../../contexts/auth-context";
 import { useApiQuery } from "../../hooks/api-client";
@@ -33,7 +33,7 @@ export function useMyActivity() {
     {
       enabled: isSignedIn,
       select: (response) => response.data as Activity[],
-    }
+    },
   );
 }
 
@@ -43,7 +43,11 @@ export function useUserActivity(
 ) {
   const params = new URLSearchParams();
 
-  if (options?.types) params.append("types", Array.isArray(options.types) ? options.types.join(",") : options.types);
+  if (options?.types)
+    params.append(
+      "types",
+      Array.isArray(options.types) ? options.types.join(",") : options.types,
+    );
   if (options?.feed_id) params.append("feed_id", options.feed_id);
   if (options?.from_date) params.append("from_date", options.from_date);
   if (options?.to_date) params.append("to_date", options.to_date);
@@ -56,14 +60,14 @@ export function useUserActivity(
   const queryString = params.toString();
   const path = `/activity/user/${userId}${queryString ? `?${queryString}` : ""}`;
 
-  return useApiQuery<
-    ActivityListResponse,
-    Error,
-    Activity[]
-  >(["user-activity", userId, options], path, {
-    enabled: !!userId,
-    select: (response) => response.data as Activity[],
-  });
+  return useApiQuery<ActivityListResponse, Error, Activity[]>(
+    ["user-activity", userId, options],
+    path,
+    {
+      enabled: !!userId,
+      select: (response) => response.data as Activity[],
+    },
+  );
 }
 
 export function useMyCuratedFeeds() {
@@ -74,7 +78,7 @@ export function useMyCuratedFeeds() {
     {
       enabled: isSignedIn,
       select: (response) => response.data as FeedInfo[],
-    }
+    },
   );
 }
 
@@ -86,7 +90,7 @@ export function useMyApprovedFeeds() {
     {
       enabled: isSignedIn,
       select: (response) => response.data as FeedInfo[],
-    }
+    },
   );
 }
 
