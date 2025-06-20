@@ -26,7 +26,7 @@ import {
   type UserFeedRanks,
   type UserRankingLeaderboardEntry,
 } from "@curatedotfun/types";
-import { ActivityServiceError } from "@curatedotfun/utils";
+import { ActivityServiceError, NotFoundError } from "@curatedotfun/utils";
 import { Logger } from "pino";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { ModerationService } from "./moderation.service";
@@ -79,7 +79,7 @@ export class ActivityService implements IBaseService {
           { accountId },
           "User not found when trying to fetch activities by NEAR account ID.",
         );
-        return []; // TODO: throw NotFoundError
+        throw new NotFoundError("User", accountId);
       }
 
       const activities = await this.activityRepository.getUserActivities(
