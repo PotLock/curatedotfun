@@ -29,7 +29,7 @@ const toastVariants = cva(
       variant: {
         default: "bg-white text-foreground", // Assuming 'foreground' is defined in Tailwind config
         destructive:
-          "destructive group border-destructive bg-destructive text-destructive-foreground",
+          "destructive group border-destructive bg-destructive text-destructive-foreground bg-red-100",
         success: "success group border-green-600 bg-green-100 text-green-800",
       },
     },
