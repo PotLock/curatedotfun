@@ -50,7 +50,7 @@ export type UpdatePlatformIdentitiesRequest = z.infer<
 >;
 
 export const UserProfileSchema = z.object({
-  id: z.string().uuid(),
+  id: z.number(),
   nearAccountId: z.string(),
   username: z.string().optional().nullable(),
   profileImage: z.string().url().optional().nullable(),

@@ -19,6 +19,7 @@ import { connect, KeyPair, keyStores, transactions } from "near-api-js";
 import { KeyPairString } from "near-api-js/lib/utils";
 import { Logger } from "pino";
 import { IBaseService } from "./interfaces/base-service.interface";
+import { logger } from "../utils/logger";
 
 export class UserService implements IBaseService {
   public readonly logger: Logger;
@@ -84,7 +85,7 @@ export class UserService implements IBaseService {
       ) {
         throw error;
       }
-      console.error("Error inserting user into database:", error);
+      logger.error({ error }, "Error inserting user into database");
       throw new UserServiceError(
         error.message || "Failed to save user profile",
         error.statusCode || 500,
@@ -121,9 +122,9 @@ export class UserService implements IBaseService {
       if (error.message?.startsWith("User not found with NEAR account ID:")) {
         throw new NotFoundError("User", nearAccountId);
       }
-      console.error(
-        `Error updating user by NEAR account ID ${nearAccountId}:`,
-        error,
+      logger.error(
+        { error },
+        `Error updating user by NEAR account ID ${nearAccountId}`,
       );
       throw new UserServiceError(
         error.message || "Failed to update user profile",
@@ -152,7 +153,7 @@ export class UserService implements IBaseService {
       if (error instanceof UserServiceError || error instanceof NotFoundError) {
         throw error;
       }
-      console.error("Error updating user:", error);
+      logger.error({ error }, "Error updating user");
       throw new UserServiceError(
         error.message || "Failed to update user profile",
         error.statusCode || 500,
@@ -200,7 +201,7 @@ export class UserService implements IBaseService {
       const nearConnection = await connect(connectionConfig);
       const parentAccount = await nearConnection.account(parentAccountId);
 
-      console.log(
+      logger.info(
         `Attempting to delete NEAR account: ${nearAccountId} with beneficiary ${parentAccountId}`,
       );
 
@@ -211,14 +212,17 @@ export class UserService implements IBaseService {
         actions,
       });
 
-      console.log(`Successfully deleted NEAR account: ${nearAccountId}`);
+      logger.info(`Successfully deleted NEAR account: ${nearAccountId}`);
     } catch (nearError: any) {
-      console.error(`Error deleting NEAR account ${nearAccountId}:`, nearError);
+      logger.error(
+        { error: nearError },
+        `Error deleting NEAR account ${nearAccountId}`,
+      );
       if (
         nearError.message?.includes("Account ID #") &&
         nearError.message?.includes("doesn't exist")
       ) {
-        console.warn(
+        logger.warn(
           `NEAR account ${nearAccountId} might have been already deleted or never existed. Proceeding with DB deletion.`,
         );
       } else {
@@ -239,11 +243,11 @@ export class UserService implements IBaseService {
       });
 
       if (dbDeletionResult) {
-        console.log(
+        logger.info(
           `Successfully deleted user from database (nearAccountId: ${nearAccountIdToDelete})`,
         );
       } else {
-        console.warn(
+        logger.warn(
           `User (nearAccountId: ${nearAccountIdToDelete}) was not found in the database for deletion, or was already deleted.`,
         );
       }
@@ -256,9 +260,9 @@ export class UserService implements IBaseService {
       ) {
         throw error;
       }
-      console.error(
-        `Error deleting user (nearAccountId: ${nearAccountIdToDelete}) from database:`,
-        error,
+      logger.error(
+        { error },
+        `Error deleting user (nearAccountId: ${nearAccountIdToDelete}) from database`,
       );
       throw new UserServiceError(
         error.message || "Failed to delete user from database",
@@ -302,7 +306,7 @@ export class UserService implements IBaseService {
       const nearConnection = await connect(connectionConfig);
       const parentAccount = await nearConnection.account(parentAccountId);
 
-      console.log(
+      logger.info(
         `Attempting to delete NEAR account: ${nearAccountId} with beneficiary ${parentAccountId}`,
       );
 
@@ -313,14 +317,17 @@ export class UserService implements IBaseService {
         actions,
       });
 
-      console.log(`Successfully deleted NEAR account: ${nearAccountId}`);
+      logger.info(`Successfully deleted NEAR account: ${nearAccountId}`);
     } catch (nearError: any) {
-      console.error(`Error deleting NEAR account ${nearAccountId}:`, nearError);
+      logger.error(
+        { error: nearError },
+        `Error deleting NEAR account ${nearAccountId}`,
+      );
       if (
         nearError.message?.includes("Account ID #") &&
         nearError.message?.includes("doesn't exist")
       ) {
-        console.warn(
+        logger.warn(
           `NEAR account ${nearAccountId} might have been already deleted or never existed. Proceeding with DB deletion.`,
         );
       } else {
@@ -338,11 +345,11 @@ export class UserService implements IBaseService {
       });
 
       if (dbDeletionResult) {
-        console.log(
+        logger.info(
           `Successfully deleted user from database: ${authProviderId}`,
         );
       } else {
-        console.warn(
+        logger.warn(
           `User ${authProviderId} was not found in the database for deletion, or was already deleted during the transaction.`,
         );
       }
@@ -355,9 +362,9 @@ export class UserService implements IBaseService {
       ) {
         throw error;
       }
-      console.error(
-        `Error deleting user ${authProviderId} from database:`,
-        error,
+      logger.error(
+        { error },
+        `Error deleting user ${authProviderId} from database`,
       );
       throw new UserServiceError(
         error.message || "Failed to delete user from database",

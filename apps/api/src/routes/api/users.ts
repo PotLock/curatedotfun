@@ -15,6 +15,7 @@ import {
   NotFoundError,
   UserServiceError,
 } from "../../types/errors";
+import { logger } from "../../utils/logger";
 import { ServiceProvider } from "../../utils/service-provider";
 
 const usersRoutes = new Hono<Env>();
@@ -59,7 +60,7 @@ usersRoutes.get("/me", async (c) => {
       }),
     );
   } catch (error) {
-    console.error("Error in usersRoutes.get('/me'):", error);
+    logger.error({ error }, "Error in usersRoutes.get('/me')");
     return c.json(
       ApiErrorResponseSchema.parse({
         statusCode: 500,
@@ -92,7 +93,7 @@ usersRoutes.post(
         201,
       );
     } catch (error: any) {
-      console.error("Error in usersRoutes.post('/'):", error);
+      logger.error({ error }, "Error in usersRoutes.post('/')");
 
       if (
         error instanceof NearAccountError ||
@@ -165,7 +166,7 @@ usersRoutes.put(
         }),
       );
     } catch (error) {
-      console.error("Error in usersRoutes.put('/me'):", error);
+      logger.error({ error }, "Error in usersRoutes.put('/me')");
 
       if (error instanceof NotFoundError || error instanceof UserServiceError) {
         return c.json(
@@ -228,7 +229,7 @@ usersRoutes.delete("/me", async (c) => {
       );
     }
   } catch (error: any) {
-    console.error("Error in usersRoutes.delete('/me'):", error);
+    logger.error({ error }, "Error in usersRoutes.delete('/me')");
 
     if (
       error instanceof NotFoundError ||
@@ -299,9 +300,9 @@ usersRoutes.get(
         }),
       );
     } catch (error) {
-      console.error(
-        `Error in usersRoutes.get('/by-near/${nearAccountId}'):`,
-        error,
+      logger.error(
+        { error },
+        `Error in usersRoutes.get('/by-near/${nearAccountId}')`,
       );
 
       if (error instanceof NotFoundError) {

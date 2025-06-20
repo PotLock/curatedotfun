@@ -10,6 +10,22 @@ const errorSerializer = (err: any) => {
   // If it's not an object, just return it
   if (typeof err !== "object") return err;
 
+  // Handle ZodError specifically for more compact logging
+  if (err.issues && Array.isArray(err.issues)) {
+    const zodIssues = err.issues
+      .map((issue: any) => {
+        const path = issue.path.join(".");
+        return `${path} (${issue.code}): ${issue.message}`;
+      })
+      .join("; ");
+    return {
+      message: `ZodError: ${zodIssues}`,
+      name: err.name,
+      stack: err.stack,
+      issues: err.issues, // Keep original issues for full context if needed
+    };
+  }
+
   // Create a base serialized error
   const serialized: Record<string, any> = {
     message: err.message || "Unknown error",
