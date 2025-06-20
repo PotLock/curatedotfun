@@ -60,7 +60,11 @@ export class ServiceProvider {
       pluginService,
       logger,
     );
-    const distributionService = new DistributionService(pluginService, logger);
+    const distributionService = new DistributionService(
+      pluginService,
+      configService,
+      logger,
+    );
     const processorService = new ProcessorService(
       transformationService,
       distributionService,

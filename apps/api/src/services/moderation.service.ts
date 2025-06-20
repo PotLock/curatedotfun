@@ -44,6 +44,30 @@ export class ModerationService implements IBaseService {
     this.logger = logger.child({ service: ModerationService.name });
   }
 
+  private async checkModerationAuthorization(
+    actingAccountId: string,
+    submissionPlatform: string,
+    configuredApproverPlatformIds: string[],
+  ): Promise<{ isAuthorized: boolean; adminIdForHistory: string }> {
+    if (isSuperAdmin(actingAccountId, this.superAdminAccounts)) {
+      return { isAuthorized: true, adminIdForHistory: actingAccountId };
+    }
+
+    for (const configuredApproverId of configuredApproverPlatformIds) {
+      if (
+        await this.canModerateSubmission(
+          actingAccountId,
+          submissionPlatform,
+          configuredApproverId,
+        )
+      ) {
+        return { isAuthorized: true, adminIdForHistory: configuredApproverId };
+      }
+    }
+
+    return { isAuthorized: false, adminIdForHistory: actingAccountId };
+  }
+
   /**
    * Checks if a user can moderate a submission for a specific feed and platform identity.
    * @param actingAccountId The NEAR account ID of the user performing the action.
@@ -65,36 +89,18 @@ export class ModerationService implements IBaseService {
       return true;
     }
 
-    try {
-      const crosspost = new CrosspostClient();
-      crosspost.setAccountHeader(actingAccountId);
-      const response: ApiResponse<ConnectedAccountsResponse> =
-        await crosspost.auth.getConnectedAccounts();
+    const connectedAccounts =
+      await this.getConnectedAccountsForUser(actingAccountId);
 
-      if (response.success) {
-        const connectedAccounts = response.data;
-        if (connectedAccounts?.accounts?.length > 0) {
-          for (const identity of connectedAccounts.accounts) {
-            if (
-              identity.platform === platform &&
-              identity.profile?.username === platformSpecificUserIdFromApproverList
-            ) {
-              return true; // User is linked to the specified approver ID on the correct platform.
-            }
-          }
+    if (connectedAccounts && connectedAccounts.length > 0) {
+      for (const identity of connectedAccounts) {
+        if (
+          identity.platform === platform &&
+          identity.profile?.username === platformSpecificUserIdFromApproverList
+        ) {
+          return true; // User is linked to the specified approver ID on the correct platform.
         }
-      } else {
-        this.logger.warn(
-          { actingAccountId, platform, error: response.error },
-          "Failed to fetch connected accounts from Crosspost API"
-        );
       }
-    } catch (error) {
-      this.logger.error(
-        { actingAccountId, platform, error },
-        "Error calling Crosspost API for connected accounts"
-      );
-      return false;
     }
 
     this.logger.debug(
@@ -102,7 +108,7 @@ export class ModerationService implements IBaseService {
         actingAccountId,
         platform,
         platformSpecificUserIdFromApproverList,
-        userPlatformIdentities: response.data?.accounts,
+        userPlatformIdentities: connectedAccounts,
       },
       "User does not have matching platform identity for moderation.",
     );
@@ -182,31 +188,12 @@ export class ModerationService implements IBaseService {
         );
       }
 
-      let isAuthorized = false;
-      let adminIdForHistory = actingAccountId; // Default to NEAR ID (for super admins or if no specific platform match is made but still authorized)
-
-      // Check if super admin first
-      if (isSuperAdmin(actingAccountId, this.superAdminAccounts)) {
-        isAuthorized = true;
-        // adminIdForHistory remains actingAccountId (NEAR ID) for super admin actions
-      } else {
-        // If not super admin, check against configured platform-specific approvers
-        for (const configuredApproverId of configuredApproverPlatformIds) {
-          // configuredApproverId is a platform username like "twitterUser123"
-          // canModerateSubmission checks if actingAccountId (NEAR) is linked to this configuredApproverId (platform username)
-          if (
-            await this.canModerateSubmission(
-              actingAccountId,
-              submissionPlatform,
-              configuredApproverId,
-            )
-          ) {
-            isAuthorized = true;
-            adminIdForHistory = configuredApproverId; // Log the platform-specific ID that granted permission
-            break;
-          }
-        }
-      }
+      const { isAuthorized, adminIdForHistory } =
+        await this.checkModerationAuthorization(
+          actingAccountId,
+          submissionPlatform,
+          configuredApproverPlatformIds,
+        );
 
       if (!isAuthorized) {
         this.logger.warn(
@@ -300,7 +287,8 @@ export class ModerationService implements IBaseService {
           `Feed or feed configuration not found for ${newStatus}.`,
         );
         throw new NotFoundError(
-          `Feed configuration for feed ${feedEntry.feedId}`,
+          "Feed configuration",
+          `feed ${feedEntry.feedId}`,
         );
       }
       const feedConfig = feedFromDb.config;
@@ -483,5 +471,30 @@ export class ModerationService implements IBaseService {
         feedId,
       );
     return moderations.map((m) => ModerationActionSchema.parse(m));
+  }
+
+  private async getConnectedAccountsForUser(
+    actingAccountId: string,
+  ): Promise<ConnectedAccountsResponse["accounts"] | null> {
+    try {
+      const crosspost = new CrosspostClient();
+      crosspost.setAccountHeader(actingAccountId);
+      const response: ApiResponse<ConnectedAccountsResponse> =
+        await crosspost.auth.getConnectedAccounts();
+      if (response.success && response.data?.accounts) {
+        return response.data.accounts;
+      }
+      this.logger.warn(
+        { actingAccountId, error: response.errors }, // Assuming 'errors' is the correct property
+        "Failed to fetch connected accounts from Crosspost API or no accounts found.",
+      );
+      return null;
+    } catch (error) {
+      this.logger.error(
+        { actingAccountId, error },
+        "Error calling Crosspost API for connected accounts",
+      );
+      return null;
+    }
   }
 }

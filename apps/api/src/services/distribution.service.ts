@@ -2,7 +2,7 @@ import { DistributorConfig, RichSubmission } from "@curatedotfun/shared-db";
 import type { ActionArgs } from "@curatedotfun/types";
 import { PluginError, PluginErrorCode } from "@curatedotfun/utils";
 import type { Logger } from "pino";
-import { isStaging } from "./config.service";
+import type { ConfigService } from "./config.service";
 import { logPluginError } from "../utils/error";
 import { sanitizeJson } from "../utils/sanitize";
 import type { IBaseService } from "./interfaces/base-service.interface";
@@ -13,6 +13,7 @@ export class DistributionService implements IBaseService {
 
   constructor(
     private pluginService: PluginService,
+    private configService: ConfigService,
     logger: Logger,
   ) {
     this.logger = logger;
@@ -39,7 +40,7 @@ export class DistributionService implements IBaseService {
           input: sanitizedInput,
           config: pluginConfig,
         };
-        if (!isStaging) {
+        if (this.configService.getFeatureFlag("enableDistribution")) {
           await plugin.distribute(args);
         }
       } catch (error) {
@@ -54,7 +55,10 @@ export class DistributionService implements IBaseService {
           false, // Not retryable by default
           {
             cause: error instanceof Error ? error : undefined,
-            details: { isStaging },
+            details: {
+              enableDistribution:
+                this.configService.getFeatureFlag("enableDistribution"),
+            },
           },
         );
         logPluginError(pluginError, this.logger);
@@ -76,7 +80,10 @@ export class DistributionService implements IBaseService {
         false,
         {
           cause: error instanceof Error ? error : undefined,
-          details: { isStaging },
+          details: {
+            enableDistribution:
+              this.configService.getFeatureFlag("enableDistribution"),
+          },
         },
       );
       logPluginError(pluginError, this.logger);
