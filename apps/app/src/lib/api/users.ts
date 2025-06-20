@@ -4,7 +4,7 @@ import { toast } from "../../hooks/use-toast";
 import { apiClient, ApiError } from "../api-client";
 
 export function useCreateUserProfile() {
-  return useApiMutation<{ profile: UserProfile }, Error, CreateUserRequest>(
+  return useApiMutation<UserProfile, Error, CreateUserRequest>(
     {
       method: "POST",
       path: "/users",
@@ -20,13 +20,9 @@ export function useCreateUserProfile() {
 }
 
 export function useCurrentUserProfile(enabled = true) {
-  return useApiQuery<UserProfile | null>(
-    ["currentUserProfile"],
-    `/users/me`,
-    {
-      enabled,
-    },
-  );
+  return useApiQuery<UserProfile | null>(["currentUserProfile"], `/users/me`, {
+    enabled,
+  });
 }
 
 export function useGetUserByNearAccountId(

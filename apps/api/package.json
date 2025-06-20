@@ -36,6 +36,8 @@
     "zod": "^3.25.62"
   },
   "dependencies": {
+    "@crosspost/sdk": "^0.3.0",
+    "@crosspost/types": "^0.3.0",
     "@crosspost/scheduler-sdk": "^0.1.1",
     "@curatedotfun/shared-db": "workspace:*",
     "@curatedotfun/types": "workspace:*",

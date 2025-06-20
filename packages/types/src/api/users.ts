@@ -65,9 +65,8 @@ export const UserProfileSchema = z.object({
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 
-export const UserProfileWrappedResponseSchema = ApiSuccessResponseSchema(
-  UserProfileSchema,
-);
+export const UserProfileWrappedResponseSchema =
+  ApiSuccessResponseSchema(UserProfileSchema);
 export type UserProfileWrappedResponse = ApiSuccessResponse<UserProfile>;
 
 export const UserDeletedWrappedResponseSchema = ApiSuccessResponseSchema(

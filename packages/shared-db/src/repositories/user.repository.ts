@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
-import * as schema from "../schema";
-import { DB, InsertUser, UpdateUser } from "../validators";
+import { eq, sql } from "drizzle-orm";
+import { InsertUser, UpdateUser, users } from "../schema";
 import { executeWithRetry, withErrorHandling } from "../utils";
+import { DB } from "../validators";
 
 export class UserRepository {
   private readonly db: DB;
@@ -21,8 +21,8 @@ export class UserRepository {
         return executeWithRetry(async (dbInstance) => {
           const result = await dbInstance
             .select()
-            .from(schema.users)
-            .where(eq(schema.users.authProviderId, authProviderId))
+            .from(users)
+            .where(eq(users.authProviderId, authProviderId))
             .limit(1);
 
           return result.length > 0 ? result[0] : null;
@@ -47,8 +47,8 @@ export class UserRepository {
         return executeWithRetry(async (dbInstance) => {
           const result = await dbInstance
             .select()
-            .from(schema.users)
-            .where(eq(schema.users.nearAccountId, nearAccountId))
+            .from(users)
+            .where(eq(users.nearAccountId, nearAccountId))
             .limit(1);
 
           return result.length > 0 ? result[0] : null;
@@ -73,8 +73,8 @@ export class UserRepository {
         return executeWithRetry(async (dbInstance) => {
           const result = await dbInstance
             .select()
-            .from(schema.users)
-            .where(eq(schema.users.nearPublicKey, nearPublicKey))
+            .from(users)
+            .where(eq(users.nearPublicKey, nearPublicKey))
             .limit(1);
 
           return result.length > 0 ? result[0] : null;
@@ -99,7 +99,7 @@ export class UserRepository {
       async () => {
         try {
           const insertResult = await txDb
-            .insert(schema.users)
+            .insert(users)
             .values(userData)
             .returning();
 
@@ -146,12 +146,12 @@ export class UserRepository {
     return withErrorHandling(
       async () => {
         const updateResult = await txDb
-          .update(schema.users)
+          .update(users)
           .set({
             ...userData,
-            updatedAt: new Date(),
+            updatedAt: sql`NOW()`,
           })
-          .where(eq(schema.users.nearAccountId, nearAccountId))
+          .where(eq(users.nearAccountId, nearAccountId))
           .returning();
 
         const updatedUser = updateResult[0];
@@ -181,9 +181,9 @@ export class UserRepository {
     return withErrorHandling(
       async () => {
         const updateResult = await txDb
-          .update(schema.users)
-          .set(userData)
-          .where(eq(schema.users.authProviderId, authProviderId))
+          .update(users)
+          .set({ ...userData, updatedAt: sql`NOW()` })
+          .where(eq(users.authProviderId, authProviderId))
           .returning();
 
         const updatedUser = updateResult[0];
@@ -212,8 +212,8 @@ export class UserRepository {
     return withErrorHandling(
       async () => {
         const deleteResult = await txDb
-          .delete(schema.users)
-          .where(eq(schema.users.nearAccountId, nearAccountId))
+          .delete(users)
+          .where(eq(users.nearAccountId, nearAccountId))
           .returning();
 
         return deleteResult.length > 0;
@@ -235,8 +235,8 @@ export class UserRepository {
     return withErrorHandling(
       async () => {
         const deleteResult = await txDb
-          .delete(schema.users)
-          .where(eq(schema.users.authProviderId, authProviderId))
+          .delete(users)
+          .where(eq(users.authProviderId, authProviderId))
           .returning();
 
         return deleteResult.length > 0;

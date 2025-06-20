@@ -112,7 +112,6 @@ export class ServiceProvider {
     const feedRepository = new FeedRepository(db);
     const submissionRepository = new SubmissionRepository(db);
     const moderationRepository = new ModerationRepository(db);
-    const userService = this.services.get("userService") as UserService;
 
     const moderationService = new ModerationService(
       feedRepository,
@@ -120,7 +119,6 @@ export class ServiceProvider {
       submissionRepository,
       processorService,
       feedService,
-      userService,
       this.superAdminAccountsList,
       db,
       logger,

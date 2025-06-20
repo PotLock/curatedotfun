@@ -103,6 +103,7 @@ export const useConnectAccount = () => {
 
         client.setAuthentication(authToken);
 
+        // TODO: fix mixed types
         const response: AuthCallbackResponse =
           await client.auth.loginToPlatform(
             platform.toLowerCase() as PlatformName,

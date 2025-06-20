@@ -1,5 +1,8 @@
+import { CrosspostClient } from "@crosspost/sdk";
+import type { ApiResponse, ConnectedAccountsResponse } from "@crosspost/types";
 import {
   DB,
+  FeedConfig,
   FeedRepository,
   InsertModerationHistory,
   ModerationRepository,
@@ -8,25 +11,22 @@ import {
   SubmissionRepository,
   SubmissionStatus,
   submissionStatusZodEnum,
-  PlatformIdentity,
 } from "@curatedotfun/shared-db";
+import {
+  CreateModerationRequest,
+  ModerationAction,
+  ModerationActionSchema,
+} from "@curatedotfun/types";
 import { Logger } from "pino";
+import {
+  AuthorizationError,
+  ModerationServiceError,
+  NotFoundError,
+} from "../types/errors";
+import { isSuperAdmin } from "../utils/auth.utils";
 import { FeedService } from "./feed.service";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { ProcessorService } from "./processor.service";
-import { UserService } from "./users.service";
-import { isSuperAdmin } from "../utils/auth.utils";
-import { FeedConfig } from "@curatedotfun/shared-db";
-import { AuthorizationError } from "../types/errors";
-
-export interface CreateModerationApiPayload {
-  submissionId: string;
-  feedId: string;
-  adminId: string;
-  action: "approve" | "reject";
-  note?: string | null;
-  timestamp?: Date;
-}
 
 export class ModerationService implements IBaseService {
   public readonly logger: Logger;
@@ -37,8 +37,7 @@ export class ModerationService implements IBaseService {
     private readonly submissionRepository: SubmissionRepository,
     private readonly processorService: ProcessorService,
     private readonly feedService: FeedService,
-    private readonly userService: UserService, // Correctly added UserService
-    private readonly superAdminAccounts: string[], // Correctly added superAdminAccounts
+    private readonly superAdminAccounts: string[],
     private readonly db: DB,
     logger: Logger,
   ) {
@@ -66,27 +65,24 @@ export class ModerationService implements IBaseService {
       return true;
     }
 
-    // 2. Fetch the user's profile to get their platform_identities.
-    const userProfile =
-      await this.userService.findUserByNearAccountId(actingAccountId);
-    if (!userProfile || !userProfile.platform_identities) {
-      this.logger.warn(
-        { actingAccountId },
-        "User profile not found or no platform identities for moderation check.",
-      );
-      return false;
-    }
+    const crosspost = new CrosspostClient();
+    crosspost.setAccountHeader(actingAccountId);
+    const response: ApiResponse<ConnectedAccountsResponse> =
+      await crosspost.auth.getConnectedAccounts(); // would be nice to be PlatformAccount[] or empty array, or maybe an object map
 
-    // 3. Check if any of the user's platform_identities match the given platform and platformSpecificUserIdFromApproverList.
-    const platformIdentities =
-      userProfile.platform_identities as PlatformIdentity[];
-    for (const identity of platformIdentities) {
-      if (
-        identity.platform === platform &&
-        identity.username === platformSpecificUserIdFromApproverList
-      ) {
-        return true; // User is linked to the specified approver ID on the correct platform.
-      }
+    // TODO: need username and profileImage in connected accounts
+    if (response.success) {
+      const connectedAccounts = response.data;
+      if (connectedAccounts?.accounts && connectedAccounts.accounts.length > 0)
+        for (const identity of connectedAccounts.accounts) {
+          if (
+            identity.platform === platform &&
+            identity.profile?.username ===
+              platformSpecificUserIdFromApproverList
+          ) {
+            return true; // User is linked to the specified approver ID on the correct platform.
+          }
+        }
     }
 
     this.logger.debug(
@@ -94,7 +90,7 @@ export class ModerationService implements IBaseService {
         actingAccountId,
         platform,
         platformSpecificUserIdFromApproverList,
-        userPlatformIdentities: platformIdentities,
+        userPlatformIdentities: response.data?.accounts,
       },
       "User does not have matching platform identity for moderation.",
     );
@@ -106,156 +102,170 @@ export class ModerationService implements IBaseService {
    * This is the primary method the new API routes will call.
    */
   public async createModerationAction(
-    payload: CreateModerationApiPayload,
+    payload: CreateModerationRequest,
   ): Promise<void> {
-    const submission = await this.submissionRepository.getSubmission(
-      payload.submissionId,
-    );
-    if (!submission) {
-      this.logger.error(
-        { submissionId: payload.submissionId },
-        "Submission not found for moderation action.",
+    try {
+      const submission = await this.submissionRepository.getSubmission(
+        payload.submissionId,
       );
-      throw new Error(`Submission ${payload.submissionId} not found.`);
-    }
+      if (!submission) {
+        this.logger.error(
+          { submissionId: payload.submissionId },
+          "Submission not found for moderation action.",
+        );
+        throw new NotFoundError("Submission", payload.submissionId);
+      }
 
-    const feedEntry = submission.feeds.find((f) => f.feedId === payload.feedId);
-    if (!feedEntry) {
-      this.logger.error(
-        { submissionId: payload.submissionId, feedId: payload.feedId },
-        "SubmissionFeed entry not found for moderation action.",
+      const feedEntry = submission.feeds.find(
+        (f) => f.feedId === payload.feedId,
       );
-      throw new Error(
-        `SubmissionFeed entry for submission ${payload.submissionId} and feed ${payload.feedId} not found.`,
-      );
-    }
+      if (!feedEntry) {
+        this.logger.error(
+          { submissionId: payload.submissionId, feedId: payload.feedId },
+          "SubmissionFeed entry not found for moderation action.",
+        );
+        throw new NotFoundError(
+          `SubmissionFeed entry for submission ${payload.submissionId} and feed ${payload.feedId}`,
+        );
+      }
 
-    // --- Permission Check ---
-    const actingAccountId = payload.adminId; // This is the NEAR account ID
-    const feedId = payload.feedId;
+      // --- Permission Check ---
+      const actingAccountId = payload.adminId; // This is the NEAR account ID
+      const feedId = payload.feedId;
 
-    const submissionPlatform = "twitter";
+      const submissionPlatform = "twitter";
 
-    const feedConfig: FeedConfig | null =
-      await this.feedRepository.getFeedConfig(feedId);
+      const feedConfig: FeedConfig | null =
+        await this.feedRepository.getFeedConfig(feedId);
 
-    if (
-      !feedConfig ||
-      !feedConfig.moderation ||
-      !feedConfig.moderation.approvers
-    ) {
-      this.logger.warn(
-        { feedId },
-        "Feed config, moderation settings, or approvers not found for permission check.",
-      );
-      throw new AuthorizationError(
-        "Moderation not configured for this feed.",
-        403,
-      );
-    }
+      if (
+        !feedConfig ||
+        !feedConfig.moderation ||
+        !feedConfig.moderation.approvers
+      ) {
+        this.logger.warn(
+          { feedId },
+          "Feed config, moderation settings, or approvers not found for permission check.",
+        );
+        throw new AuthorizationError(
+          "Moderation not configured for this feed.",
+          403,
+        );
+      }
 
-    const configuredApproverPlatformIds =
-      feedConfig.moderation.approvers[submissionPlatform];
+      const configuredApproverPlatformIds =
+        feedConfig.moderation.approvers[submissionPlatform];
 
-    if (
-      !configuredApproverPlatformIds ||
-      configuredApproverPlatformIds.length === 0
-    ) {
-      this.logger.warn(
-        { feedId, platform: submissionPlatform },
-        "No approvers configured for this platform on the feed.",
-      );
-      throw new AuthorizationError(
-        `No approvers configured for platform '${submissionPlatform}' on this feed.`,
-        403,
-      );
-    }
+      if (
+        !configuredApproverPlatformIds ||
+        configuredApproverPlatformIds.length === 0
+      ) {
+        this.logger.warn(
+          { feedId, platform: submissionPlatform },
+          "No approvers configured for this platform on the feed.",
+        );
+        throw new AuthorizationError(
+          `No approvers configured for platform '${submissionPlatform}' on this feed.`,
+          403,
+        );
+      }
 
-    let isAuthorized = false;
-    let adminIdForHistory = actingAccountId; // Default to NEAR ID (for super admins or if no specific platform match is made but still authorized)
+      let isAuthorized = false;
+      let adminIdForHistory = actingAccountId; // Default to NEAR ID (for super admins or if no specific platform match is made but still authorized)
 
-    // Check if super admin first
-    if (isSuperAdmin(actingAccountId, this.superAdminAccounts)) {
-      isAuthorized = true;
-      // adminIdForHistory remains actingAccountId (NEAR ID) for super admin actions
-    } else {
-      // If not super admin, check against configured platform-specific approvers
-      for (const configuredApproverId of configuredApproverPlatformIds) {
-        // configuredApproverId is a platform username like "twitterUser123"
-        // canModerateSubmission checks if actingAccountId (NEAR) is linked to this configuredApproverId (platform username)
-        if (
-          await this.canModerateSubmission(
-            actingAccountId,
-            submissionPlatform,
-            configuredApproverId,
-          )
-        ) {
-          isAuthorized = true;
-          adminIdForHistory = configuredApproverId; // Log the platform-specific ID that granted permission
-          break;
+      // Check if super admin first
+      if (isSuperAdmin(actingAccountId, this.superAdminAccounts)) {
+        isAuthorized = true;
+        // adminIdForHistory remains actingAccountId (NEAR ID) for super admin actions
+      } else {
+        // If not super admin, check against configured platform-specific approvers
+        for (const configuredApproverId of configuredApproverPlatformIds) {
+          // configuredApproverId is a platform username like "twitterUser123"
+          // canModerateSubmission checks if actingAccountId (NEAR) is linked to this configuredApproverId (platform username)
+          if (
+            await this.canModerateSubmission(
+              actingAccountId,
+              submissionPlatform,
+              configuredApproverId,
+            )
+          ) {
+            isAuthorized = true;
+            adminIdForHistory = configuredApproverId; // Log the platform-specific ID that granted permission
+            break;
+          }
         }
       }
-    }
 
-    if (!isAuthorized) {
-      this.logger.warn(
-        { actingAccountId, feedId, platform: submissionPlatform },
-        "User not authorized to moderate this submission.",
-      );
-      throw new AuthorizationError(
-        "You are not authorized to moderate this submission.",
-        403,
-      );
-    }
-    // --- End Permission Check ---
-
-    // Prevent re-moderating if not pending (optional, based on desired logic)
-    // if (feedEntry.status !== submissionStatusZodEnum.Enum.pending) {
-    //   this.logger.warn({ submissionId: payload.submissionId, feedId: payload.feedId, currentStatus: feedEntry.status }, "Submission feed entry is not pending, skipping moderation.");
-    //   // Potentially throw an error or return a specific status
-    //   return;
-    // }
-
-    const moderationActionData: InsertModerationHistory = {
-      tweetId: payload.submissionId,
-      feedId: payload.feedId,
-      adminId: adminIdForHistory,
-      action: payload.action,
-      note: payload.note || null,
-    };
-
-    await this.db.transaction(async (tx) => {
-      await this.moderationRepository.saveModerationAction(
-        moderationActionData,
-        tx,
-      );
-
-      if (payload.action === "approve") {
-        await this.updateStatusAndProcess(
-          submission,
-          feedEntry,
-          submissionStatusZodEnum.Enum.approved,
-          tx,
+      if (!isAuthorized) {
+        this.logger.warn(
+          { actingAccountId, feedId, platform: submissionPlatform },
+          "User not authorized to moderate this submission.",
         );
-      } else if (payload.action === "reject") {
-        await this.updateStatusAndProcess(
-          submission,
-          feedEntry,
-          submissionStatusZodEnum.Enum.rejected,
-          tx,
+        throw new AuthorizationError(
+          "You are not authorized to moderate this submission.",
+          403,
         );
       }
-    });
+      // --- End Permission Check ---
 
-    this.logger.info(
-      {
-        submissionId: payload.submissionId,
+      const moderationActionData: InsertModerationHistory = {
+        tweetId: payload.submissionId,
         feedId: payload.feedId,
+        adminId: adminIdForHistory,
         action: payload.action,
-        adminId: payload.adminId,
-      },
-      "Moderation action processed successfully via API.",
-    );
+        note: payload.note || null,
+      };
+
+      await this.db.transaction(async (tx) => {
+        await this.moderationRepository.saveModerationAction(
+          moderationActionData,
+          tx,
+        );
+
+        if (payload.action === "approve") {
+          await this.updateStatusAndProcess(
+            submission,
+            feedEntry,
+            submissionStatusZodEnum.Enum.approved,
+            tx,
+          );
+        } else if (payload.action === "reject") {
+          await this.updateStatusAndProcess(
+            submission,
+            feedEntry,
+            submissionStatusZodEnum.Enum.rejected,
+            tx,
+          );
+        }
+      });
+
+      this.logger.info(
+        {
+          submissionId: payload.submissionId,
+          feedId: payload.feedId,
+          action: payload.action,
+          adminId: payload.adminId,
+        },
+        "Moderation action processed successfully via API.",
+      );
+    } catch (error: any) {
+      if (
+        error instanceof NotFoundError ||
+        error instanceof AuthorizationError ||
+        error instanceof ModerationServiceError
+      ) {
+        throw error;
+      }
+      this.logger.error(
+        { error, payload },
+        "Failed to create moderation action.",
+      );
+      throw new ModerationServiceError(
+        "Failed to create moderation action",
+        500,
+        error,
+      );
+    }
   }
 
   /**
@@ -267,19 +277,19 @@ export class ModerationService implements IBaseService {
     newStatus: SubmissionStatus,
     tx: DB,
   ): Promise<void> {
-    const feedFromDb = await this.feedService.getFeedById(feedEntry.feedId);
-    if (!feedFromDb || !feedFromDb.config) {
-      this.logger.error(
-        { submissionId: submission.tweetId, feedId: feedEntry.feedId },
-        `Feed or feed configuration not found for ${newStatus}.`,
-      );
-      throw new Error(
-        `Feed configuration not found for feed ${feedEntry.feedId}`,
-      );
-    }
-    const feedConfig = feedFromDb.config;
-
     try {
+      const feedFromDb = await this.feedService.getFeedById(feedEntry.feedId);
+      if (!feedFromDb || !feedFromDb.config) {
+        this.logger.error(
+          { submissionId: submission.tweetId, feedId: feedEntry.feedId },
+          `Feed or feed configuration not found for ${newStatus}.`,
+        );
+        throw new NotFoundError(
+          `Feed configuration for feed ${feedEntry.feedId}`,
+        );
+      }
+      const feedConfig = feedFromDb.config;
+
       await this.feedRepository.updateSubmissionFeedStatus(
         submission.tweetId,
         feedEntry.feedId,
@@ -309,7 +319,13 @@ export class ModerationService implements IBaseService {
           feedConfig.outputs.stream,
         );
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (
+        error instanceof NotFoundError ||
+        error instanceof ModerationServiceError
+      ) {
+        throw error;
+      }
       this.logger.error(
         {
           error,
@@ -319,7 +335,11 @@ export class ModerationService implements IBaseService {
         },
         `Failed to process ${newStatus} submission in ModerationService.`,
       );
-      throw error;
+      throw new ModerationServiceError(
+        `Failed to process ${newStatus} submission`,
+        500,
+        error,
+      );
     }
   }
 
@@ -419,21 +439,33 @@ export class ModerationService implements IBaseService {
   }
 
   // --- Methods for API routes to get moderation data ---
-  public async getModerationById(id: number) {
-    return this.moderationRepository.getModerationById(id);
+  public async getModerationById(id: number): Promise<ModerationAction | null> {
+    const moderation = await this.moderationRepository.getModerationById(id);
+    if (!moderation) {
+      return null;
+    }
+    return ModerationActionSchema.parse(moderation);
   }
 
-  public async getModerationsForSubmission(submissionId: string) {
-    return this.moderationRepository.getModerationsBySubmissionId(submissionId);
+  public async getModerationsForSubmission(
+    submissionId: string,
+  ): Promise<ModerationAction[]> {
+    const moderations =
+      await this.moderationRepository.getModerationsBySubmissionId(
+        submissionId,
+      );
+    return moderations.map((m) => ModerationActionSchema.parse(m));
   }
 
   public async getModerationsForSubmissionFeed(
     submissionId: string,
     feedId: string,
-  ) {
-    return this.moderationRepository.getModerationsBySubmissionFeed(
-      submissionId,
-      feedId,
-    );
+  ): Promise<ModerationAction[]> {
+    const moderations =
+      await this.moderationRepository.getModerationsBySubmissionFeed(
+        submissionId,
+        feedId,
+      );
+    return moderations.map((m) => ModerationActionSchema.parse(m));
   }
 }

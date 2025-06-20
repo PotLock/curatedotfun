@@ -125,6 +125,15 @@ export class UserServiceError extends ServiceError {
 }
 
 /**
+ * Moderation service specific errors
+ */
+export class ModerationServiceError extends ServiceError {
+  constructor(message: string, statusCode: number = 500, cause?: Error) {
+    super(message, statusCode, cause);
+  }
+}
+
+/**
  * Activity service specific errors
  */
 export class ActivityServiceError extends ServiceError {

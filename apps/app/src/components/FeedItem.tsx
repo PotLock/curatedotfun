@@ -1,6 +1,6 @@
 import type { FeedContextSubmission } from "@curatedotfun/types";
 import { useAuth } from "../contexts/auth-context";
-import { useApproveSubmission, useRejectSubmission } from "../lib/api";
+import { useModerateSubmission } from "../lib/api/moderation";
 import { useCanModerateFeed } from "../lib/api/feed";
 import { formatDate } from "../utils/datetime";
 import { Badge } from "./ui/badge";
@@ -58,51 +58,42 @@ const ModerationActions = ({
   submission: FeedContextSubmission;
   feedId: string;
 }) => {
-  const approveMutation = useApproveSubmission();
-  const rejectMutation = useRejectSubmission();
+  const moderateMutation = useModerateSubmission();
 
-  const handleApproveClick = () => {
-    if (!submission.tweetId || !feedId) {
-      console.error("Submission Tweet ID or Feed ID is missing for approval.", {
-        submission,
-        feedId,
-      });
-      return;
-    }
-    approveMutation.mutate({
-      submissionId: submission.tweetId,
-      feedId: feedId,
-    });
-  };
-
-  const handleRejectClick = () => {
+  const handleModerate = (action: "approve" | "reject") => {
     if (!submission.tweetId || !feedId) {
       console.error(
-        "Submission Tweet ID or Feed ID is missing for rejection.",
-        { submission, feedId },
+        `Submission Tweet ID or Feed ID is missing for ${action}.`,
+        {
+          submission,
+          feedId,
+        },
       );
       return;
     }
-    rejectMutation.mutate({
-      submissionId: submission.tweetId,
-      feedId: feedId,
-    });
+    moderateMutation.mutate(
+      {
+        submissionId: submission.tweetId,
+        feedId: feedId,
+      },
+      action,
+    );
   };
 
   return (
     <div className="flex justify-center flex-col gap-2">
       <Button
-        onClick={handleApproveClick}
-        disabled={approveMutation.isPending || rejectMutation.isPending}
+        onClick={() => handleModerate("approve")}
+        disabled={moderateMutation.isPending}
       >
-        {approveMutation.isPending ? "Approving..." : "Approve"}
+        {moderateMutation.isPending ? "Approving..." : "Approve"}
       </Button>
       <Button
-        onClick={handleRejectClick}
+        onClick={() => handleModerate("reject")}
         variant="destructive"
-        disabled={approveMutation.isPending || rejectMutation.isPending}
+        disabled={moderateMutation.isPending}
       >
-        {rejectMutation.isPending ? "Rejecting..." : "Reject"}
+        {moderateMutation.isPending ? "Rejecting..." : "Reject"}
       </Button>
     </div>
   );

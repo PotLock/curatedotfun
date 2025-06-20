@@ -1,11 +1,11 @@
 import { and, asc, eq } from "drizzle-orm";
-import * as schema from "../schema";
-import { executeWithRetry, withErrorHandling } from "../utils";
 import {
-  DB,
   InsertModerationHistory,
+  moderationHistory,
   SelectModerationHistory,
-} from "../validators";
+} from "../schema";
+import { executeWithRetry, withErrorHandling } from "../utils";
+import { DB } from "../validators";
 
 /**
  * Repository for moderation-related database operations.
@@ -24,23 +24,20 @@ export class ModerationRepository {
   async saveModerationAction(
     moderation: InsertModerationHistory,
     txDb?: DB, // Optional transaction DB
-  ): Promise<void> {
+  ): Promise<SelectModerationHistory> {
     const dbInstance = txDb || this.db;
     return withErrorHandling(
       async () => {
-        await dbInstance
-          .insert(schema.moderationHistory) // Use the imported moderationHistory schema
-          .values({
-            // Ensure all fields from InsertModerationHistory are covered
-            tweetId: moderation.tweetId,
-            feedId: moderation.feedId,
-            adminId: moderation.adminId,
-            action: moderation.action,
-            note: moderation.note,
-            createdAt: moderation.createdAt || new Date(), // Default to now if not provided
-            // updatedAt will be handled by DB or triggers if set up, or manually
-          })
-          .execute();
+        const insertResult = await dbInstance
+          .insert(moderationHistory)
+          .values(moderation)
+          .returning();
+
+        const newModeration = insertResult[0];
+        if (!newModeration) {
+          throw new Error("Failed to insert moderation history into database");
+        }
+        return newModeration;
       },
       {
         operationName: "save moderation action",
@@ -59,14 +56,15 @@ export class ModerationRepository {
   async getModerationById(id: number): Promise<SelectModerationHistory | null> {
     return withErrorHandling(
       async () => {
-        const result = await executeWithRetry(
-          (retryDb) =>
-            retryDb.query.moderationHistory.findFirst({
-              where: eq(schema.moderationHistory.id, id),
-            }),
-          this.db,
-        );
-        return result ? (result as SelectModerationHistory) : null;
+        const result = await executeWithRetry(async (dbInstance) => {
+          const res = await dbInstance
+            .select()
+            .from(moderationHistory)
+            .where(eq(moderationHistory.id, id))
+            .limit(1);
+          return res.length > 0 ? res[0] : null;
+        }, this.db);
+        return result;
       },
       {
         operationName: "get moderation by ID",
@@ -84,15 +82,14 @@ export class ModerationRepository {
   ): Promise<SelectModerationHistory[]> {
     return withErrorHandling(
       async () => {
-        const results = await executeWithRetry(
-          (retryDb) =>
-            retryDb.query.moderationHistory.findMany({
-              where: eq(schema.moderationHistory.tweetId, submissionId),
-              orderBy: [asc(schema.moderationHistory.createdAt)],
-            }),
-          this.db,
-        );
-        return results as SelectModerationHistory[];
+        const results = await executeWithRetry(async (dbInstance) => {
+          return await dbInstance
+            .select()
+            .from(moderationHistory)
+            .where(eq(moderationHistory.tweetId, submissionId))
+            .orderBy(asc(moderationHistory.createdAt));
+        }, this.db);
+        return results;
       },
       {
         operationName: "get moderations by submission ID",
@@ -111,18 +108,19 @@ export class ModerationRepository {
   ): Promise<SelectModerationHistory[]> {
     return withErrorHandling(
       async () => {
-        const results = await executeWithRetry(
-          (retryDb) =>
-            retryDb.query.moderationHistory.findMany({
-              where: and(
-                eq(schema.moderationHistory.tweetId, submissionId),
-                eq(schema.moderationHistory.feedId, feedId),
+        const results = await executeWithRetry(async (dbInstance) => {
+          return await dbInstance
+            .select()
+            .from(moderationHistory)
+            .where(
+              and(
+                eq(moderationHistory.tweetId, submissionId),
+                eq(moderationHistory.feedId, feedId),
               ),
-              orderBy: [asc(schema.moderationHistory.createdAt)],
-            }),
-          this.db,
-        );
-        return results as SelectModerationHistory[];
+            )
+            .orderBy(asc(moderationHistory.createdAt));
+        }, this.db);
+        return results;
       },
       {
         operationName: "get moderations by submission and feed ID",
