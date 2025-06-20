@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -70,6 +70,21 @@ export const activities = table(
   ],
 );
 
+export const activitiesRelations = relations(activities, ({ one }) => ({
+  user: one(users, {
+    fields: [activities.user_id],
+    references: [users.id],
+  }),
+  feed: one(feeds, {
+    fields: [activities.feed_id],
+    references: [feeds.id],
+  }),
+  submission: one(submissions, {
+    fields: [activities.submission_id],
+    references: [submissions.tweetId],
+  }),
+}));
+
 // User Stats Table - For aggregated user statistics
 export const userStats = table("user_stats", {
   user_id: integer("user_id")
@@ -85,6 +100,13 @@ export const userStats = table("user_stats", {
 
   ...timestamps,
 });
+
+export const userStatsRelations = relations(userStats, ({ one }) => ({
+  user: one(users, {
+    fields: [userStats.user_id],
+    references: [users.id],
+  }),
+}));
 
 // Feed User Stats Table - For feed-specific user statistics
 export const feedUserStats = table(
@@ -125,6 +147,17 @@ export const feedUserStats = table(
     ),
   ],
 );
+
+export const feedUserStatsRelations = relations(feedUserStats, ({ one }) => ({
+  user: one(users, {
+    fields: [feedUserStats.user_id],
+    references: [users.id],
+  }),
+  feed: one(feeds, {
+    fields: [feedUserStats.feed_id],
+    references: [feeds.id],
+  }),
+}));
 
 export const insertActivitySchema = createInsertSchema(activities, {
   id: z.undefined(),

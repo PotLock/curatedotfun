@@ -11,6 +11,7 @@ import {
   createUpdateSchema,
 } from "drizzle-zod";
 import { z } from "zod";
+import { activities, feedUserStats, userStats } from "./activity";
 import { timestamps } from "./common";
 import { feeds } from "./feeds";
 
@@ -37,6 +38,9 @@ export const usersRelations = relations(users, ({ many }) => ({
   createdFeeds: many(feeds, {
     relationName: "FeedCreator",
   }),
+  activities: many(activities),
+  userStats: many(userStats),
+  feedUserStats: many(feedUserStats),
 }));
 
 export const insertUserSchema = createInsertSchema(users, {

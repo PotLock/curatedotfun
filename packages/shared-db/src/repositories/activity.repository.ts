@@ -4,15 +4,11 @@ import type {
   ActivityType,
   InsertActivity,
   UpdateFeedUserStats,
-  UpdateUserStats
+  UpdateUserStats,
 } from "../schema/activity";
-import {
-  activityTypeZodEnum
-} from "../schema/activity";
+import { activityTypeZodEnum } from "../schema/activity";
 import { executeWithRetry, withErrorHandling } from "../utils";
-import {
-  DB,
-} from "../validators";
+import { DB } from "../validators";
 
 export class ActivityRepository {
   private readonly db: DB;
@@ -73,51 +69,34 @@ export class ActivityRepository {
     activityType: ActivityType,
     feedId?: string | null,
   ) {
-    // Update global user stats
-    const userStatsExists = await txDb
-      .select({ count: count() })
-      .from(schema.userStats)
-      .where(eq(schema.userStats.user_id, userId));
-
-    if (userStatsExists[0].count === 0) {
-      // Create new user stats record
-      await txDb.insert(schema.userStats).values({
+    await txDb
+      .insert(schema.userStats)
+      .values({
         user_id: userId,
         total_submissions:
           activityType === activityTypeZodEnum.Enum.CONTENT_SUBMISSION ? 1 : 0,
         total_approvals:
           activityType === activityTypeZodEnum.Enum.CONTENT_APPROVAL ? 1 : 0,
-        total_points: 0, // Points would be calculated based on business logic
-        data: null,
-        metadata: null,
+      })
+      .onConflictDoUpdate({
+        target: schema.userStats.user_id,
+        set: {
+          total_submissions:
+            activityType === activityTypeZodEnum.Enum.CONTENT_SUBMISSION
+              ? sql`${schema.userStats.total_submissions} + 1`
+              : sql`${schema.userStats.total_submissions}`,
+          total_approvals:
+            activityType === activityTypeZodEnum.Enum.CONTENT_APPROVAL
+              ? sql`${schema.userStats.total_approvals} + 1`
+              : sql`${schema.userStats.total_approvals}`,
+          updatedAt: new Date(),
+        },
       });
-    } else {
-      // Update existing user stats
-      await txDb.execute(sql`
-        UPDATE ${schema.userStats}
-        SET
-          total_submissions = CASE WHEN ${activityType} = ${activityTypeZodEnum.Enum.CONTENT_SUBMISSION} THEN total_submissions + 1 ELSE total_submissions END,
-          total_approvals = CASE WHEN ${activityType} = ${activityTypeZodEnum.Enum.CONTENT_APPROVAL} THEN total_approvals + 1 ELSE total_approvals END,
-          "updatedAt" = ${new Date()}
-        WHERE user_id = ${userId}
-      `);
-    }
 
-    // Update feed-specific user stats if feedId is provided
     if (feedId) {
-      const feedUserStatsExists = await txDb
-        .select({ count: count() })
-        .from(schema.feedUserStats)
-        .where(
-          and(
-            eq(schema.feedUserStats.user_id, userId),
-            eq(schema.feedUserStats.feed_id, feedId),
-          ),
-        );
-
-      if (feedUserStatsExists[0].count === 0) {
-        // Create new feed user stats record
-        await txDb.insert(schema.feedUserStats).values({
+      await txDb
+        .insert(schema.feedUserStats)
+        .values({
           user_id: userId,
           feed_id: feedId,
           submissions_count:
@@ -126,21 +105,21 @@ export class ActivityRepository {
               : 0,
           approvals_count:
             activityType === activityTypeZodEnum.Enum.CONTENT_APPROVAL ? 1 : 0,
-          points: 0, // Points would be calculated based on business logic
-          data: null,
-          metadata: null,
+        })
+        .onConflictDoUpdate({
+          target: [schema.feedUserStats.user_id, schema.feedUserStats.feed_id],
+          set: {
+            submissions_count:
+              activityType === activityTypeZodEnum.Enum.CONTENT_SUBMISSION
+                ? sql`${schema.feedUserStats.submissions_count} + 1`
+                : sql`${schema.feedUserStats.submissions_count}`,
+            approvals_count:
+              activityType === activityTypeZodEnum.Enum.CONTENT_APPROVAL
+                ? sql`${schema.feedUserStats.approvals_count} + 1`
+                : sql`${schema.feedUserStats.approvals_count}`,
+            updatedAt: new Date(),
+          },
         });
-      } else {
-        // Update existing feed user stats
-        await txDb.execute(sql`
-        UPDATE ${schema.feedUserStats}
-        SET
-          submissions_count = CASE WHEN ${activityType} = ${activityTypeZodEnum.Enum.CONTENT_SUBMISSION} THEN submissions_count + 1 ELSE submissions_count END,
-          approvals_count = CASE WHEN ${activityType} = ${activityTypeZodEnum.Enum.CONTENT_APPROVAL} THEN approvals_count + 1 ELSE approvals_count END,
-          "updatedAt" = ${new Date()}
-        WHERE user_id = ${userId} AND feed_id = ${feedId}
-      `);
-      }
 
       // Update ranks for this feed
       await this.updateFeedRanks(txDb, feedId);
@@ -151,41 +130,65 @@ export class ActivityRepository {
    * Update curator and approver ranks for a feed
    */
   private async updateFeedRanks(txDb: DB, feedId: string) {
-    // Update curator ranks
-    await txDb.execute(sql`
-      WITH ranked_curators AS (
-        SELECT 
-          user_id,
-          submissions_count,
-          ROW_NUMBER() OVER (ORDER BY submissions_count DESC) as rank
-        FROM 
-          ${schema.feedUserStats}
-        WHERE 
-          feed_id = ${feedId} AND submissions_count > 0
-      )
-      UPDATE ${schema.feedUserStats} fus
-      SET curator_rank = rc.rank
-      FROM ranked_curators rc
-      WHERE fus.user_id = rc.user_id AND fus.feed_id = ${feedId}
-    `);
+    const rankedCurators = txDb.$with("ranked_curators").as(
+      txDb
+        .select({
+          user_id: schema.feedUserStats.user_id,
+          rank: sql<number>`ROW_NUMBER() OVER (ORDER BY ${schema.feedUserStats.submissions_count} DESC)`.as(
+            "rank",
+          ),
+        })
+        .from(schema.feedUserStats)
+        .where(
+          and(
+            eq(schema.feedUserStats.feed_id, feedId),
+            sql`${schema.feedUserStats.submissions_count} > 0`,
+          ),
+        ),
+    );
 
-    // Update approver ranks
-    await txDb.execute(sql`
-      WITH ranked_approvers AS (
-        SELECT 
-          user_id,
-          approvals_count,
-          ROW_NUMBER() OVER (ORDER BY approvals_count DESC) as rank
-        FROM 
-          ${schema.feedUserStats}
-        WHERE 
-          feed_id = ${feedId} AND approvals_count > 0
-      )
-      UPDATE ${schema.feedUserStats} fus
-      SET approver_rank = ra.rank
-      FROM ranked_approvers ra
-      WHERE fus.user_id = ra.user_id AND fus.feed_id = ${feedId}
-    `);
+    await txDb
+      .with(rankedCurators)
+      .update(schema.feedUserStats)
+      .set({
+        curator_rank: sql`(SELECT rank FROM ${rankedCurators} WHERE ${rankedCurators.user_id} = ${schema.feedUserStats.user_id})`,
+      })
+      .where(
+        and(
+          eq(schema.feedUserStats.feed_id, feedId),
+          sql`${schema.feedUserStats.user_id} IN (SELECT user_id FROM ${rankedCurators})`,
+        ),
+      );
+
+    const rankedApprovers = txDb.$with("ranked_approvers").as(
+      txDb
+        .select({
+          user_id: schema.feedUserStats.user_id,
+          rank: sql<number>`ROW_NUMBER() OVER (ORDER BY ${schema.feedUserStats.approvals_count} DESC)`.as(
+            "rank",
+          ),
+        })
+        .from(schema.feedUserStats)
+        .where(
+          and(
+            eq(schema.feedUserStats.feed_id, feedId),
+            sql`${schema.feedUserStats.approvals_count} > 0`,
+          ),
+        ),
+    );
+
+    await txDb
+      .with(rankedApprovers)
+      .update(schema.feedUserStats)
+      .set({
+        approver_rank: sql`(SELECT rank FROM ${rankedApprovers} WHERE ${rankedApprovers.user_id} = ${schema.feedUserStats.user_id})`,
+      })
+      .where(
+        and(
+          eq(schema.feedUserStats.feed_id, feedId),
+          sql`${schema.feedUserStats.user_id} IN (SELECT user_id FROM ${rankedApprovers})`,
+        ),
+      );
   }
 
   /**
@@ -312,64 +315,66 @@ export class ActivityRepository {
               break;
           }
 
-          // Build the date filter SQL fragment conditionally
-          const dateFilterSql = startDate
-            ? sql`AND a.timestamp >= ${startDate}`
-            : sql``;
+          const conditions = [];
+          if (startDate) {
+            conditions.push(gte(schema.activities.timestamp, startDate));
+          }
+          if (options.feed_id) {
+            conditions.push(eq(schema.activities.feed_id, options.feed_id));
+          }
 
-          // Build the feed filter SQL fragment conditionally
-          const feedFilterSql = options.feed_id
-            ? sql`AND a.feed_id = ${options.feed_id}`
-            : sql``;
+          const userActivityStats = retryDb.$with("user_activity_stats").as(
+            retryDb
+              .select({
+                user_id: schema.activities.user_id,
+                username: schema.users.username,
+                total_submissions:
+                  sql<number>`COUNT(CASE WHEN ${schema.activities.type} = ${activityTypeZodEnum.Enum.CONTENT_SUBMISSION} THEN 1 END)`.as(
+                    "total_submissions",
+                  ),
+                total_approvals:
+                  sql<number>`COUNT(CASE WHEN ${schema.activities.type} = ${activityTypeZodEnum.Enum.CONTENT_APPROVAL} THEN 1 END)`.as(
+                    "total_approvals",
+                  ),
+                total_points:
+                  sql<number>`COALESCE(${schema.userStats.total_points}, 0)`.as(
+                    "total_points",
+                  ),
+              })
+              .from(schema.activities)
+              .innerJoin(
+                schema.users,
+                eq(schema.activities.user_id, schema.users.id),
+              )
+              .leftJoin(
+                schema.userStats,
+                eq(schema.activities.user_id, schema.userStats.user_id),
+              )
+              .where(and(...conditions))
+              .groupBy(
+                schema.activities.user_id,
+                schema.users.username,
+                schema.userStats.total_points,
+              ),
+          );
 
-          // Use a CTE query to get the leaderboard data
-          const result = await retryDb.execute(sql` 
-            WITH user_activity_stats AS (
-              -- Get user activity statistics
-              SELECT 
-                a.user_id,
-                u.username,
-                u.name,
-                COUNT(CASE WHEN a.type = ${activityTypeZodEnum.Enum.CONTENT_SUBMISSION} THEN 1 END) AS total_submissions,
-                COUNT(CASE WHEN a.type = ${activityTypeZodEnum.Enum.CONTENT_APPROVAL} THEN 1 END) AS total_approvals,
-                COALESCE(us.total_points, 0) AS total_points
-              FROM 
-                ${schema.activities} a
-              JOIN 
-                ${schema.users} u ON a.user_id = u.id
-              LEFT JOIN
-                ${schema.userStats} us ON a.user_id = us.user_id
-              WHERE
-                1=1 ${dateFilterSql} ${feedFilterSql}
-              GROUP BY
-                a.user_id, u.username, u.name, us.total_points
-            )
-            -- Rank users and return results
-            SELECT 
-              user_id,
-              username,
-              name,
-              total_submissions,
-              total_approvals,
-              total_points,
-              ROW_NUMBER() OVER (ORDER BY total_points DESC, total_submissions DESC, total_approvals DESC) AS rank
-            FROM 
-              user_activity_stats
-            ORDER BY 
-              rank
-            LIMIT ${options.limit || 10}
-          `);
+          const result = await retryDb
+            .with(userActivityStats)
+            .select({
+              user_id: userActivityStats.user_id,
+              username: userActivityStats.username,
+              total_submissions: userActivityStats.total_submissions,
+              total_approvals: userActivityStats.total_approvals,
+              total_points: userActivityStats.total_points,
+              rank: sql<number>`ROW_NUMBER() OVER (ORDER BY ${userActivityStats.total_points} DESC, ${userActivityStats.total_submissions} DESC, ${userActivityStats.total_approvals} DESC)`.as(
+                "rank",
+              ),
+            })
+            .from(userActivityStats)
+            .orderBy(sql`rank`)
+            .limit(options.limit || 10);
 
-          // Map the results to the expected format
-          return result.rows.map((row: any) => ({
-            user_id: Number(row.user_id),
-            username: row.username,
-            name: row.name,
-            total_points: Number(row.total_points),
-            total_submissions: Number(row.total_submissions),
-            total_approvals: Number(row.total_approvals),
-            rank: Number(row.rank),
-          }));
+          return result;
         }, this.db);
       },
       {
@@ -755,13 +760,13 @@ export class ActivityRepository {
 
           return result.length > 0
             ? {
-              curatorRank: result[0].curator_rank,
-              approverRank: result[0].approver_rank,
-            }
+                curatorRank: result[0].curator_rank,
+                approverRank: result[0].approver_rank,
+              }
             : {
-              curatorRank: null,
-              approverRank: null,
-            };
+                curatorRank: null,
+                approverRank: null,
+              };
         }, this.db);
       },
       {

@@ -370,12 +370,12 @@ export class SubmissionRepository {
         items: [],
         pagination: isPaginated
           ? {
-            page: page!,
-            limit: limit!,
-            totalCount: 0,
-            totalPages: 0,
-            hasNextPage: false,
-          }
+              page: page!,
+              limit: limit!,
+              totalCount: 0,
+              totalPages: 0,
+              hasNextPage: false,
+            }
           : undefined,
       } as PaginatedResponse<RichSubmission>,
     );
