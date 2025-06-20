@@ -8,7 +8,7 @@ import type {
   ModerationActionType,
 } from "@curatedotfun/types";
 
-export const useModerateSubmission = () => {
+const useModerateSubmission = (moderationAction: ModerationActionType) => {
   const queryClient = useQueryClient();
   const auth = useAuth();
 
@@ -55,7 +55,6 @@ export const useModerateSubmission = () => {
 
   const mutate = (
     payload: Omit<CreateModerationRequest, "action" | "adminId">,
-    moderationAction: ModerationActionType,
   ) => {
     if (!auth.isSignedIn || !auth.currentAccountId) {
       console.error(
@@ -78,3 +77,6 @@ export const useModerateSubmission = () => {
 
   return { mutate, ...rest };
 };
+
+export const useApproveSubmission = () => useModerateSubmission("approve");
+export const useRejectSubmission = () => useModerateSubmission("reject");
