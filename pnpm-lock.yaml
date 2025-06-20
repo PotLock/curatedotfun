@@ -154,7 +154,7 @@ importers:
         specifier: ^8.0.2
         version: 8.0.3
       zod:
-        specifier: ^3.24.4
+        specifier: ^3.25.62
         version: 3.25.62
 
   apps/app:

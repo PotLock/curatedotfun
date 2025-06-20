@@ -11,26 +11,26 @@ export class UserRepository {
   }
 
   /**
-   * Find a user by their auth_provider_id
-   * @param auth_provider_id The provider ID from Web3Auth
+   * Find a user by their authProviderId
+   * @param authProviderId The provider ID from Web3Auth
    * @returns The user if found, null otherwise
    */
-  async findByAuthProviderId(auth_provider_id: string) {
+  async findByAuthProviderId(authProviderId: string) {
     return withErrorHandling(
       async () => {
         return executeWithRetry(async (dbInstance) => {
           const result = await dbInstance
             .select()
             .from(schema.users)
-            .where(eq(schema.users.auth_provider_id, auth_provider_id))
+            .where(eq(schema.users.authProviderId, authProviderId))
             .limit(1);
 
           return result.length > 0 ? result[0] : null;
         }, this.db);
       },
       {
-        operationName: "find user by auth_provider_id",
-        additionalContext: { auth_provider_id },
+        operationName: "find user by authProviderId",
+        additionalContext: { authProviderId },
       },
       null,
     );
@@ -38,17 +38,17 @@ export class UserRepository {
 
   /**
    * Find a user by their NEAR account ID
-   * @param near_account_id The NEAR account ID
+   * @param nearAccountId The NEAR account ID
    * @returns The user if found, null otherwise
    */
-  async findByNearAccountId(near_account_id: string) {
+  async findByNearAccountId(nearAccountId: string) {
     return withErrorHandling(
       async () => {
         return executeWithRetry(async (dbInstance) => {
           const result = await dbInstance
             .select()
             .from(schema.users)
-            .where(eq(schema.users.near_account_id, near_account_id))
+            .where(eq(schema.users.nearAccountId, nearAccountId))
             .limit(1);
 
           return result.length > 0 ? result[0] : null;
@@ -56,7 +56,7 @@ export class UserRepository {
       },
       {
         operationName: "find user by NEAR account ID",
-        additionalContext: { near_account_id },
+        additionalContext: { nearAccountId },
       },
       null,
     );
@@ -64,17 +64,17 @@ export class UserRepository {
 
   /**
    * Find a user by their NEAR public key
-   * @param near_public_key The NEAR public key
+   * @param nearPublicKey The NEAR public key
    * @returns The user if found, null otherwise
    */
-  async findByNearPublicKey(near_public_key: string) {
+  async findByNearPublicKey(nearPublicKey: string) {
     return withErrorHandling(
       async () => {
         return executeWithRetry(async (dbInstance) => {
           const result = await dbInstance
             .select()
             .from(schema.users)
-            .where(eq(schema.users.near_public_key, near_public_key))
+            .where(eq(schema.users.nearPublicKey, nearPublicKey))
             .limit(1);
 
           return result.length > 0 ? result[0] : null;
@@ -82,7 +82,7 @@ export class UserRepository {
       },
       {
         operationName: "find user by NEAR public key",
-        additionalContext: { near_public_key },
+        additionalContext: { nearPublicKey },
       },
       null,
     );
@@ -100,13 +100,7 @@ export class UserRepository {
         try {
           const insertResult = await txDb
             .insert(schema.users)
-            .values({
-              auth_provider_id: userData.auth_provider_id as string,
-              near_account_id: userData.near_account_id,
-              near_public_key: userData.near_public_key || null,
-              username: userData.username || null,
-              email: userData.email || null,
-            })
+            .values(userData)
             .returning();
 
           const newUser = insertResult[0];
@@ -139,13 +133,13 @@ export class UserRepository {
 
   /**
    * Update a user by their NEAR account ID
-   * @param near_account_id The NEAR account ID of the user to update
+   * @param nearAccountId The NEAR account ID of the user to update
    * @param userData The user data to update
    * @returns The updated user
    * @throws NotFoundError if the user does not exist
    */
   async updateByNearAccountId(
-    near_account_id: string,
+    nearAccountId: string,
     userData: UpdateUser,
     txDb: DB,
   ) {
@@ -157,13 +151,13 @@ export class UserRepository {
             ...userData,
             updatedAt: new Date(),
           })
-          .where(eq(schema.users.near_account_id, near_account_id))
+          .where(eq(schema.users.nearAccountId, nearAccountId))
           .returning();
 
         const updatedUser = updateResult[0];
         if (!updatedUser) {
           throw new Error(
-            `User not found with NEAR account ID: ${near_account_id}`,
+            `User not found with NEAR account ID: ${nearAccountId}`,
           );
         }
 
@@ -171,65 +165,62 @@ export class UserRepository {
       },
       {
         operationName: "update user by NEAR account ID",
-        additionalContext: { near_account_id, userData },
+        additionalContext: { nearAccountId, userData },
       },
     );
   }
 
   /**
    * Update a user
-   * @param auth_provider_id The provider ID of the user to update
+   * @param authProviderId The provider ID of the user to update
    * @param userData The user data to update
    * @returns The updated user
    * @throws NotFoundError if the user does not exist
    */
-  async updateUser(auth_provider_id: string, userData: UpdateUser, txDb: DB) {
+  async updateUser(authProviderId: string, userData: UpdateUser, txDb: DB) {
     return withErrorHandling(
       async () => {
         const updateResult = await txDb
           .update(schema.users)
-          .set({
-            ...userData,
-            updatedAt: new Date(),
-          })
-          .where(eq(schema.users.auth_provider_id, auth_provider_id))
+          .set(userData)
+          .where(eq(schema.users.authProviderId, authProviderId))
           .returning();
 
         const updatedUser = updateResult[0];
         if (!updatedUser) {
-          throw new Error(`User not found: ${auth_provider_id}`);
+          throw new Error(`User not found: ${authProviderId}`);
         }
 
         return updatedUser;
       },
       {
         operationName: "update user",
-        additionalContext: { auth_provider_id, userData },
+        additionalContext: { authProviderId, userData },
       },
     );
   }
 
   /**
    * Delete a user by their NEAR account ID
-   * @param near_account_id The NEAR account ID of the user to delete
+   * @param nearAccountId The NEAR account ID of the user to delete
    * @returns True if the user was deleted, false otherwise
    */
   async deleteByNearAccountId(
-    near_account_id: string,
+    nearAccountId: string,
     txDb: DB,
   ): Promise<boolean> {
     return withErrorHandling(
       async () => {
         const deleteResult = await txDb
           .delete(schema.users)
-          .where(eq(schema.users.near_account_id, near_account_id))
+          .where(eq(schema.users.nearAccountId, nearAccountId))
           .returning();
 
         return deleteResult.length > 0;
       },
       {
         operationName: "delete user by NEAR account ID",
-        additionalContext: { near_account_id },
+        additionalContext: { nearAccountId },
       },
       false,
     );
@@ -237,22 +228,22 @@ export class UserRepository {
 
   /**
    * Delete a user
-   * @param auth_provider_id The provider ID of the user to delete
+   * @param authProviderId The provider ID of the user to delete
    * @returns True if the user was deleted, false otherwise
    */
-  async deleteUser(auth_provider_id: string, txDb: DB): Promise<boolean> {
+  async deleteUser(authProviderId: string, txDb: DB): Promise<boolean> {
     return withErrorHandling(
       async () => {
         const deleteResult = await txDb
           .delete(schema.users)
-          .where(eq(schema.users.auth_provider_id, auth_provider_id))
+          .where(eq(schema.users.authProviderId, authProviderId))
           .returning();
 
         return deleteResult.length > 0;
       },
       {
         operationName: "delete user",
-        additionalContext: { auth_provider_id },
+        additionalContext: { authProviderId },
       },
       false,
     );

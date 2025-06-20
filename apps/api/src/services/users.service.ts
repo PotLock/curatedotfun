@@ -1,12 +1,15 @@
 import {
-  InsertUser,
   selectUserSchema,
-  UpdateUser,
   UserRepository,
   type DB,
-  type PlatformIdentity,
 } from "@curatedotfun/shared-db";
-import { NearIntegrationConfig } from "@curatedotfun/types";
+import {
+  CreateUserRequest,
+  NearIntegrationConfig,
+  UpdateUserRequest,
+  UserProfile,
+  UserProfileSchema,
+} from "@curatedotfun/types";
 import {
   NearAccountError,
   NotFoundError,
@@ -15,7 +18,6 @@ import {
 import { connect, KeyPair, keyStores, transactions } from "near-api-js";
 import { KeyPairString } from "near-api-js/lib/utils";
 import { Logger } from "pino";
-import { PlatformIdentityPayload } from "../routes/api/users";
 import { IBaseService } from "./interfaces/base-service.interface";
 
 export class UserService implements IBaseService {
@@ -30,47 +32,41 @@ export class UserService implements IBaseService {
     this.logger = logger;
   }
 
-  async findUserByAuthProviderId(auth_provider_id: string) {
-    const user =
-      await this.userRepository.findByAuthProviderId(auth_provider_id);
+  async findUserByAuthProviderId(
+    authProviderId: string,
+  ): Promise<UserProfile | null> {
+    const user = await this.userRepository.findByAuthProviderId(authProviderId);
 
     if (!user) {
       return null;
     }
 
-    return selectUserSchema.parse(user);
+    const parsedUser = selectUserSchema.parse(user);
+    return UserProfileSchema.parse(parsedUser);
   }
 
-  async findUserByNearAccountId(nearAccountId: string) {
+  /**
+   * Find a user by NEAR account ID and return as API UserProfile
+   */
+  async findUserByNearAccountId(
+    nearAccountId: string,
+  ): Promise<UserProfile | null> {
     const user = await this.userRepository.findByNearAccountId(nearAccountId);
     if (!user) {
       return null;
     }
-    return selectUserSchema.parse(user);
+    const parsedUser = selectUserSchema.parse(user);
+    return UserProfileSchema.parse(parsedUser);
   }
 
-  async createUser(data: InsertUser) {
-    const {
-      auth_provider_id,
-      username,
-      near_account_id,
-      near_public_key,
-      email,
-    } = data;
-
+  /**
+   * Create a user from API request data
+   */
+  async createUser(data: CreateUserRequest): Promise<UserProfile> {
     try {
       // The actual database user creation is now wrapped in a transaction
       const newUser = await this.db.transaction(async (tx) => {
-        return this.userRepository.createUser(
-          {
-            auth_provider_id,
-            near_account_id,
-            near_public_key,
-            username,
-            email,
-          },
-          tx,
-        );
+        return this.userRepository.createUser(data, tx);
       });
 
       if (!newUser) {
@@ -78,7 +74,8 @@ export class UserService implements IBaseService {
         throw new UserServiceError("Failed to create user record", 500);
       }
 
-      return selectUserSchema.parse(newUser);
+      const parsedUser = selectUserSchema.parse(newUser);
+      return UserProfileSchema.parse(parsedUser);
     } catch (error: any) {
       // If the error is already a UserServiceError or NearAccountError, rethrow it
       if (
@@ -96,7 +93,13 @@ export class UserService implements IBaseService {
     }
   }
 
-  async updateUserByNearAccountId(nearAccountId: string, data: UpdateUser) {
+  /**
+   * Update a user by NEAR account ID
+   */
+  async updateUserByNearAccountId(
+    nearAccountId: string,
+    data: UpdateUserRequest,
+  ): Promise<UserProfile | null> {
     try {
       const updatedUser = await this.db.transaction(async (tx) => {
         return this.userRepository.updateByNearAccountId(
@@ -109,7 +112,8 @@ export class UserService implements IBaseService {
       if (!updatedUser) {
         return null;
       }
-      return selectUserSchema.parse(updatedUser);
+      const parsedUser = selectUserSchema.parse(updatedUser);
+      return UserProfileSchema.parse(parsedUser);
     } catch (error: any) {
       if (error instanceof UserServiceError || error instanceof NotFoundError) {
         throw error;
@@ -129,17 +133,21 @@ export class UserService implements IBaseService {
     }
   }
 
-  async updateUser(auth_provider_id: string, data: UpdateUser) {
+  async updateUser(
+    authProviderId: string,
+    data: UpdateUserRequest,
+  ): Promise<UserProfile | null> {
     try {
       const updatedUser = await this.db.transaction(async (tx) => {
-        return this.userRepository.updateUser(auth_provider_id, data, tx);
+        return this.userRepository.updateUser(authProviderId, data, tx);
       });
 
       if (!updatedUser) {
         return null;
       }
 
-      return selectUserSchema.parse(updatedUser);
+      const parsedUser = selectUserSchema.parse(updatedUser);
+      return UserProfileSchema.parse(parsedUser);
     } catch (error: any) {
       if (error instanceof UserServiceError || error instanceof NotFoundError) {
         throw error;
@@ -161,11 +169,11 @@ export class UserService implements IBaseService {
       nearAccountIdToDelete,
     );
 
-    if (!user || !user.near_account_id) {
+    if (!user || !user.nearAccountId) {
       throw new NotFoundError("User", nearAccountIdToDelete);
     }
 
-    const { near_account_id } = user;
+    const { nearAccountId } = user;
     const parentAccountId = this.nearConfig.parentAccountId;
 
     try {
@@ -193,32 +201,29 @@ export class UserService implements IBaseService {
       const parentAccount = await nearConnection.account(parentAccountId);
 
       console.log(
-        `Attempting to delete NEAR account: ${near_account_id} with beneficiary ${parentAccountId}`,
+        `Attempting to delete NEAR account: ${nearAccountId} with beneficiary ${parentAccountId}`,
       );
 
       const actions = [transactions.deleteAccount(parentAccountId)];
 
       await parentAccount.signAndSendTransaction({
-        receiverId: near_account_id,
+        receiverId: nearAccountId,
         actions,
       });
 
-      console.log(`Successfully deleted NEAR account: ${near_account_id}`);
+      console.log(`Successfully deleted NEAR account: ${nearAccountId}`);
     } catch (nearError: any) {
-      console.error(
-        `Error deleting NEAR account ${near_account_id}:`,
-        nearError,
-      );
+      console.error(`Error deleting NEAR account ${nearAccountId}:`, nearError);
       if (
         nearError.message?.includes("Account ID #") &&
         nearError.message?.includes("doesn't exist")
       ) {
         console.warn(
-          `NEAR account ${near_account_id} might have been already deleted or never existed. Proceeding with DB deletion.`,
+          `NEAR account ${nearAccountId} might have been already deleted or never existed. Proceeding with DB deletion.`,
         );
       } else {
         throw new NearAccountError(
-          `Failed to delete NEAR account ${near_account_id}`,
+          `Failed to delete NEAR account ${nearAccountId}`,
           500,
           nearError,
         );
@@ -235,11 +240,11 @@ export class UserService implements IBaseService {
 
       if (dbDeletionResult) {
         console.log(
-          `Successfully deleted user from database (near_account_id: ${nearAccountIdToDelete})`,
+          `Successfully deleted user from database (nearAccountId: ${nearAccountIdToDelete})`,
         );
       } else {
         console.warn(
-          `User (near_account_id: ${nearAccountIdToDelete}) was not found in the database for deletion, or was already deleted.`,
+          `User (nearAccountId: ${nearAccountIdToDelete}) was not found in the database for deletion, or was already deleted.`,
         );
       }
       return true;
@@ -252,7 +257,7 @@ export class UserService implements IBaseService {
         throw error;
       }
       console.error(
-        `Error deleting user (near_account_id: ${nearAccountIdToDelete}) from database:`,
+        `Error deleting user (nearAccountId: ${nearAccountIdToDelete}) from database:`,
         error,
       );
       throw new UserServiceError(
@@ -263,78 +268,14 @@ export class UserService implements IBaseService {
     }
   }
 
-  async updateUserPlatformIdentities(
-    nearAccountId: string,
-    identities: PlatformIdentityPayload[],
-  ): Promise<void> {
-    this.logger.info(
-      { nearAccountId, identitiesCount: identities.length },
-      "Attempting to update user platform identities",
-    );
+  async deleteUser(authProviderId: string): Promise<boolean> {
+    const user = await this.userRepository.findByAuthProviderId(authProviderId);
 
-    const user = await this.userRepository.findByNearAccountId(nearAccountId);
-    if (!user || !user.id) {
-      this.logger.warn(
-        { nearAccountId },
-        "User not found for updating platform identities",
-      );
-      throw new NotFoundError("User", nearAccountId);
+    if (!user || !user.nearAccountId) {
+      throw new NotFoundError("User", authProviderId);
     }
 
-    // Map incoming payload to the DB schema's PlatformIdentity type
-    const dbPlatformIdentities: PlatformIdentity[] = identities.map(
-      (identity) => ({
-        platform: identity.platformName,
-        id: identity.platformUserId,
-        username: identity.username,
-        profileImage: identity.profileImageUrl,
-      }),
-    );
-
-    try {
-      const updatedUser = await this.db.transaction(async (tx) => {
-        return this.userRepository.updateByNearAccountId(
-          nearAccountId,
-          { platform_identities: dbPlatformIdentities },
-          tx, // Pass the transaction object
-        );
-      });
-
-      if (!updatedUser) {
-        // This case should ideally be handled by userRepository.updateByNearAccountId throwing an error if user not found
-        this.logger.error(
-          { nearAccountId },
-          "User update returned no result, implies user not found during update.",
-        );
-        throw new NotFoundError("User", nearAccountId);
-      }
-
-      this.logger.info(
-        { nearAccountId, userId: updatedUser.id },
-        "Successfully updated user platform identities.",
-      );
-    } catch (error: any) {
-      this.logger.error(
-        { nearAccountId, error: error.message, stack: error.stack },
-        "Error updating platform identities in transaction",
-      );
-      throw new UserServiceError(
-        `Failed to update platform identities for ${nearAccountId}: ${error.message}`,
-        500,
-        error,
-      );
-    }
-  }
-
-  async deleteUser(auth_provider_id: string): Promise<boolean> {
-    const user =
-      await this.userRepository.findByAuthProviderId(auth_provider_id);
-
-    if (!user || !user.near_account_id) {
-      throw new NotFoundError("User", auth_provider_id);
-    }
-
-    const { near_account_id } = user;
+    const { nearAccountId } = user;
     const parentAccountId = this.nearConfig.parentAccountId;
 
     try {
@@ -362,32 +303,29 @@ export class UserService implements IBaseService {
       const parentAccount = await nearConnection.account(parentAccountId);
 
       console.log(
-        `Attempting to delete NEAR account: ${near_account_id} with beneficiary ${parentAccountId}`,
+        `Attempting to delete NEAR account: ${nearAccountId} with beneficiary ${parentAccountId}`,
       );
 
       const actions = [transactions.deleteAccount(parentAccountId)];
 
       await parentAccount.signAndSendTransaction({
-        receiverId: near_account_id,
+        receiverId: nearAccountId,
         actions,
       });
 
-      console.log(`Successfully deleted NEAR account: ${near_account_id}`);
+      console.log(`Successfully deleted NEAR account: ${nearAccountId}`);
     } catch (nearError: any) {
-      console.error(
-        `Error deleting NEAR account ${near_account_id}:`,
-        nearError,
-      );
+      console.error(`Error deleting NEAR account ${nearAccountId}:`, nearError);
       if (
         nearError.message?.includes("Account ID #") &&
         nearError.message?.includes("doesn't exist")
       ) {
         console.warn(
-          `NEAR account ${near_account_id} might have been already deleted or never existed. Proceeding with DB deletion.`,
+          `NEAR account ${nearAccountId} might have been already deleted or never existed. Proceeding with DB deletion.`,
         );
       } else {
         throw new NearAccountError(
-          `Failed to delete NEAR account ${near_account_id}`,
+          `Failed to delete NEAR account ${nearAccountId}`,
           500,
           nearError,
         );
@@ -396,16 +334,16 @@ export class UserService implements IBaseService {
 
     try {
       const dbDeletionResult = await this.db.transaction(async (tx) => {
-        return this.userRepository.deleteUser(auth_provider_id, tx);
+        return this.userRepository.deleteUser(authProviderId, tx);
       });
 
       if (dbDeletionResult) {
         console.log(
-          `Successfully deleted user from database: ${auth_provider_id}`,
+          `Successfully deleted user from database: ${authProviderId}`,
         );
       } else {
         console.warn(
-          `User ${auth_provider_id} was not found in the database for deletion, or was already deleted during the transaction.`,
+          `User ${authProviderId} was not found in the database for deletion, or was already deleted during the transaction.`,
         );
       }
       return true;
@@ -418,7 +356,7 @@ export class UserService implements IBaseService {
         throw error;
       }
       console.error(
-        `Error deleting user ${auth_provider_id} from database:`,
+        `Error deleting user ${authProviderId} from database:`,
         error,
       );
       throw new UserServiceError(

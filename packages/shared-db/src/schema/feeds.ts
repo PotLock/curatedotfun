@@ -123,7 +123,7 @@ export const feeds = table("feeds", {
   description: text("description"),
   created_by: text("created_by")
     // .notNull() // for now
-    .references(() => users.near_account_id, { onDelete: "cascade" }),
+    .references(() => users.nearAccountId, { onDelete: "cascade" }),
   admins: jsonb("admins")
     .$type<string[]>()
     .default(sql`'[]'::jsonb`),
@@ -134,7 +134,7 @@ export const feeds = table("feeds", {
 export const feedsRelations = relations(feeds, ({ one, many }) => ({
   creator: one(users, {
     fields: [feeds.created_by],
-    references: [users.near_account_id],
+    references: [users.nearAccountId],
     relationName: "FeedCreator",
   }),
   submissionLinks: many(submissionFeeds, {

@@ -1,19 +1,10 @@
-import {
-  CreateUserProfileRequestDto as CreateUserProfilePayload,
-  UserProfileResponseDto as UserProfile,
-} from "@curatedotfun/types/src/dtos/users.dto";
+import { CreateUserRequest, UserProfile } from "@curatedotfun/types";
 import { useApiMutation, useApiQuery } from "../../hooks/api-client";
 import { toast } from "../../hooks/use-toast";
 import { apiClient, ApiError } from "../api-client";
 
 export function useCreateUserProfile() {
-  type CreateUserProfileVariables = CreateUserProfilePayload;
-
-  return useApiMutation<
-    { profile: UserProfile },
-    Error,
-    CreateUserProfileVariables
-  >(
+  return useApiMutation<{ profile: UserProfile }, Error, CreateUserRequest>(
     {
       method: "POST",
       path: "/users",
@@ -29,9 +20,13 @@ export function useCreateUserProfile() {
 }
 
 export function useCurrentUserProfile(enabled = true) {
-  return useApiQuery<UserProfile | null>(["currentUserProfile"], `/users/me`, {
-    enabled,
-  });
+  return useApiQuery<UserProfile | null>(
+    ["currentUserProfile"],
+    `/users/me`,
+    {
+      enabled,
+    },
+  );
 }
 
 export function useGetUserByNearAccountId(
@@ -74,14 +69,14 @@ export async function ensureUserProfile(
       try {
         const response = await apiClient.makeRequest<
           { profile: UserProfile },
-          CreateUserProfilePayload
+          CreateUserRequest
         >(
           "POST",
           "/users",
           { currentAccountId: accountId, isSignedIn: true },
           {
             username: accountId.split(".")[0],
-            near_account_id: accountId,
+            nearAccountId: accountId,
           },
           "createUserProfile", // Message for signing
         );

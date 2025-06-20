@@ -26,17 +26,17 @@ const {
 // User Schemas and Types
 export const insertUserSchema = createInsertSchema(users, {
   id: z.undefined(),
-  auth_provider_id: z.string().optional(),
-  near_public_key: z.string().optional(),
+  authProviderId: z.string().optional(),
+  nearPublicKey: z.string().optional(),
   createdAt: z.undefined(),
   updatedAt: z.undefined(),
 });
 
 export const updateUserSchema = createUpdateSchema(users, {
   id: z.undefined(),
-  auth_provider_id: z.undefined(),
-  near_account_id: z.undefined(),
-  near_public_key: z.undefined(),
+  authProviderId: z.undefined(),
+  nearAccountId: z.undefined(),
+  nearPublicKey: z.undefined(),
   createdAt: z.undefined(),
   updatedAt: z.undefined(),
 }).extend({
