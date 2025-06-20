@@ -23,18 +23,6 @@ services:
       - postgres_data:/var/lib/postgresql/data # dev persists volumes, so you don't lose your setup
     profiles: ["dev"]
 
-  # Production-specific postgres config
-  postgres_prod:
-    extends: postgres
-    container_name: postgres_prod
-    environment:
-      POSTGRES_DB: curatedotfun
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data_prod:/var/lib/postgresql/data
-    profiles: ["prod"]
-
   # Test-specific postgres config
   postgres_test:
     extends: postgres
@@ -46,49 +34,25 @@ services:
     # No volume for a fresh DB each time
     profiles: ["test"]
 
-  # DB initialization (shared configuration)
-  db-init:
-    image: oven/bun:latest # we need bun to run the .ts scripts
-    working_dir: /app
+  # handles data migration and database seeding
+  db-migrate-dev:
+    image: oven/bun:latest
+    working_dir: /app/packages/shared-db
     volumes:
       - ./:/app
-
-    # Development-specific initialization
-  db-init-dev:
-    extends: db-init
+      - node_modules_cache:/app/node_modules
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres_dev:5432/curatedotfun
     depends_on:
       postgres_dev:
         condition: service_healthy
-    volumes:
-      - ./:/app # Mount the entire monorepo root
-      - node_modules_cache:/app/node_modules # Add persistent volume for node_modules, otherwise this messes with rspack bindings
-    command: sh -c "bun add -g pnpm && echo '📦 Ensuring dependencies are installed...' && pnpm install && pnpm run db:migrate && pnpm run db:seed:dev"
+    command: sh -c "bunx drizzle-kit migrate"
     profiles: ["dev"]
 
-  # Test-specific initialization
-  db-init-test:
-    extends: db-init
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres_test:5432/test
-    depends_on:
-      postgres_test:
-        condition: service_healthy
-    command: sh -c "bun add -g pnpm && pnpm install && pnpm run db:migrate && pnpm run db:seed:test"
-    profiles: ["test"]
-
-  # Production-specific initialization
-  db-init-prod:
-    extends: db-init
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres_prod:5432/curatedotfun
-      NODE_ENV: production
-    depends_on:
-      postgres_prod:
-        condition: service_healthy
-    command: sh -c "bun add -g pnpm && pnpm install && pnpm run db:migrate"
-    profiles: ["prod"]
+  db-seed-dev:
+    extends: db-migrate-dev
+    command: sh -c "bun ./scripts/seed-dev.ts"
+    profiles: ["dev"]
 
   # Application service
   app:
@@ -109,5 +73,4 @@ services:
 
 volumes:
   postgres_data:
-  postgres_data_prod:
   node_modules_cache: # Add persistent volume for node_modules

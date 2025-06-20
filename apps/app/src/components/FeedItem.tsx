@@ -1,11 +1,15 @@
 import type { FeedContextSubmission } from "@curatedotfun/types";
+import { useAuth } from "../contexts/auth-context";
 import {
   useApproveSubmission,
   useRejectSubmission,
 } from "../lib/api/moderation";
+import { useCanModerateFeed } from "../lib/api/feed";
+import { getTweetUrl } from "../lib/twitter";
 import { formatDate } from "../utils/datetime";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { ExternalLink } from "lucide-react";
 
 export const UserLink = ({ username }: { username: string }) => (
   <a
@@ -62,9 +66,9 @@ const ModerationActions = ({
   const approveMutation = useApproveSubmission();
   const rejectMutation = useRejectSubmission();
 
-  const handleApproveClick = () => {
+  const handleApprove = () => {
     if (!submission.tweetId || !feedId) {
-      console.error("Submission Tweet ID or Feed ID is missing for approval.", {
+      console.error(`Submission Tweet ID or Feed ID is missing for approval.`, {
         submission,
         feedId,
       });
@@ -76,11 +80,14 @@ const ModerationActions = ({
     });
   };
 
-  const handleRejectClick = () => {
+  const handleReject = () => {
     if (!submission.tweetId || !feedId) {
       console.error(
-        "Submission Tweet ID or Feed ID is missing for rejection.",
-        { submission, feedId },
+        `Submission Tweet ID or Feed ID is missing for rejection.`,
+        {
+          submission,
+          feedId,
+        },
       );
       return;
     }
@@ -90,19 +97,14 @@ const ModerationActions = ({
     });
   };
 
+  const isPending = approveMutation.isPending || rejectMutation.isPending;
+
   return (
     <div className="flex justify-center flex-col gap-2">
-      <Button
-        onClick={handleApproveClick}
-        disabled={approveMutation.isPending || rejectMutation.isPending}
-      >
+      <Button onClick={handleApprove} disabled={isPending}>
         {approveMutation.isPending ? "Approving..." : "Approve"}
       </Button>
-      <Button
-        onClick={handleRejectClick}
-        variant="destructive"
-        disabled={approveMutation.isPending || rejectMutation.isPending}
-      >
+      <Button onClick={handleReject} variant="destructive" disabled={isPending}>
         {rejectMutation.isPending ? "Rejecting..." : "Reject"}
       </Button>
     </div>
@@ -111,7 +113,8 @@ const ModerationActions = ({
 
 interface FeedItemProps {
   submission: FeedContextSubmission;
-  feedId: string; // Added feedId prop
+  feedId?: string;
+  allowModerationControls?: boolean;
 }
 
 // Function to truncate text to a specific character count without breaking words
@@ -128,7 +131,13 @@ const truncateText = (text: string, maxLength: number): string => {
   return text.substring(0, lastSpace) + "...";
 };
 
-export const FeedItem = ({ submission, feedId }: FeedItemProps) => {
+export const FeedItem = ({
+  submission,
+  feedId,
+  allowModerationControls,
+}: FeedItemProps) => {
+  const auth = useAuth();
+  const canModerateQuery = useCanModerateFeed(feedId);
   const lastModeration =
     submission.moderationHistory?.[submission.moderationHistory.length - 1];
 
@@ -159,6 +168,16 @@ export const FeedItem = ({ submission, feedId }: FeedItemProps) => {
               <span className="text-gray-600 mt-1">
                 {formatDate(submission.createdAt)}
               </span>
+              {submission.tweetId && submission.username && (
+                <a
+                  href={getTweetUrl(submission.tweetId, submission.username)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-2 text-gray-500 hover:text-gray-700"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
             </div>
           </div>
           <div>
@@ -166,7 +185,6 @@ export const FeedItem = ({ submission, feedId }: FeedItemProps) => {
           </div>
         </div>
       </div>
-      {/* Title Section */}
 
       {/* Content Section */}
       <div className="w-full overflow-hidden">
@@ -193,9 +211,10 @@ export const FeedItem = ({ submission, feedId }: FeedItemProps) => {
             </div>
           )}
 
-        {/* Curator Notes and Moderation Actions */}
+        {/* Curator Notes and Moderation Actions for Pending Submissions */}
         {submission.status === "pending" && (
           <div className="flex items-center gap-8">
+            {/* Curator's Notes */}
             <div className="flex-col flex-grow">
               <NotesSection
                 title="Curator's Notes"
@@ -203,11 +222,16 @@ export const FeedItem = ({ submission, feedId }: FeedItemProps) => {
                 note={submission.curatorNotes}
               />
             </div>
-            {/* <div className="flex-col">
-              <div className="flex">
+
+            {/* Moderation Actions Column */}
+            <div className="flex-col">
+              {allowModerationControls &&
+              auth.isSignedIn &&
+              feedId &&
+              canModerateQuery.data?.canModerate ? (
                 <ModerationActions submission={submission} feedId={feedId} />
-              </div>
-            </div> */}
+              ) : null}
+            </div>
           </div>
         )}
       </div>

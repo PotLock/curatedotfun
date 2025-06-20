@@ -1,9 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-  usePlugin,
-  useUpdatePlugin,
-  useDeletePlugin,
-} from "../../../lib/api/plugin";
+import { usePlugin, useUpdatePlugin, useDeletePlugin } from "../../../lib/api";
 import { Button } from "../../../components/ui/button";
 import { Label } from "../../../components/ui/label";
 import { Textarea } from "../../../components/ui/textarea";
@@ -48,7 +44,7 @@ function PluginPage() {
   const navigate = useNavigate();
   const { data: plugin, isLoading, error } = usePlugin(pluginId);
   const updatePluginMutation = useUpdatePlugin(pluginId);
-  const deletePluginMutation = useDeletePlugin();
+  const deletePluginMutation = useDeletePlugin(pluginId);
 
   const form = useForm<PluginFormData>({
     resolver: zodResolver(pluginFormSchema),
@@ -88,7 +84,7 @@ function PluginPage() {
     )
       return;
     try {
-      await deletePluginMutation.mutateAsync(plugin.id);
+      await deletePluginMutation.mutateAsync();
       toast.success("Plugin deleted successfully!");
       navigate({ to: "/plugin" });
     } catch (err) {
@@ -151,11 +147,13 @@ function PluginPage() {
             rows={10}
             placeholder='{ "type": "object", "properties": { ... } }'
           />
-          {form.formState.errors.schemaDefinition && (
-            <p className="text-red-500 text-sm mt-1">
-              {form.formState.errors.schemaDefinition.message}
-            </p>
-          )}
+          {form.formState.errors.schemaDefinition &&
+            typeof form.formState.errors.schemaDefinition.message ===
+              "string" && (
+              <p className="text-red-500 text-sm mt-1">
+                {form.formState.errors.schemaDefinition.message}
+              </p>
+            )}
         </div>
 
         <div className="flex justify-between items-center pt-4">

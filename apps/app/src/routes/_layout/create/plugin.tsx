@@ -1,9 +1,12 @@
+import { CreateFrontendPlugin, PluginTypeEnum } from "@curatedotfun/types";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useCreatePlugin } from "../../../lib/api/plugin";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 import { Button } from "../../../components/ui/button";
-import { Label } from "../../../components/ui/label";
-import { Textarea } from "../../../components/ui/textarea";
 import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
 import {
   Select,
   SelectContent,
@@ -11,11 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
-import { z } from "zod";
-import { CreateFrontendPlugin, PluginTypeEnum } from "@curatedotfun/types";
-import { toast } from "sonner";
+import { useCreatePlugin } from "../../../lib/api";
 
 const createPluginFormSchema = z.object({
   name: z.string().min(1, "Plugin name is required"),
@@ -174,7 +173,7 @@ function CreatePluginPage() {
           )}
         </div>
 
-        <div>
+        {/* <div>
           <Label htmlFor="schemaDefinition">
             Schema Definition (JSON - Optional)
           </Label>
@@ -190,7 +189,7 @@ function CreatePluginPage() {
               {form.formState.errors.schemaDefinition.message}
             </p>
           )}
-        </div>
+        </div> */}
 
         <div className="pt-4">
           <Button type="submit" disabled={createPluginMutation.isPending}>

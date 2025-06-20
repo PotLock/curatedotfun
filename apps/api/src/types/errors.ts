@@ -86,6 +86,15 @@ export class DatabaseError extends AppError {
 }
 
 /**
+ * Authorization errors (e.g., insufficient permissions)
+ */
+export class AuthorizationError extends AppError {
+  constructor(message: string, statusCode: number = 403, cause?: Error) {
+    super(message, statusCode, cause);
+  }
+}
+
+/**
  * Not found errors
  */
 export class NotFoundError extends AppError {
@@ -110,6 +119,15 @@ export class ConflictError extends AppError {
  * User service specific errors
  */
 export class UserServiceError extends ServiceError {
+  constructor(message: string, statusCode: number = 500, cause?: Error) {
+    super(message, statusCode, cause);
+  }
+}
+
+/**
+ * Moderation service specific errors
+ */
+export class ModerationServiceError extends ServiceError {
   constructor(message: string, statusCode: number = 500, cause?: Error) {
     super(message, statusCode, cause);
   }

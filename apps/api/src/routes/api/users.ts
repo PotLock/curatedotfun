@@ -1,185 +1,331 @@
+import {
+  ApiErrorResponseSchema,
+  CreateUserRequestSchema,
+  UpdateUserRequestSchema,
+  UserDeletedWrappedResponseSchema,
+  UserNearAccountIdParamSchema,
+  UserProfileWrappedResponseSchema,
+} from "@curatedotfun/types";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { ContentfulStatusCode } from "hono/utils/http-status";
-import { InsertUserData } from "../../services/users.service";
 import { Env } from "../../types/app";
 import {
   NearAccountError,
   NotFoundError,
   UserServiceError,
 } from "../../types/errors";
+import { logger } from "../../utils/logger";
 import { ServiceProvider } from "../../utils/service-provider";
-import {
-  insertUserSchema,
-  updateUserSchema,
-} from "../../validation/users.validation";
 
 const usersRoutes = new Hono<Env>();
 
 // --- GET /api/users/me ---
 usersRoutes.get("/me", async (c) => {
-  const jwtPayload = c.get("jwtPayload");
-  const authProviderId = jwtPayload?.authProviderId;
+  const accountId = c.get("accountId");
 
-  if (!authProviderId) {
+  if (!accountId) {
     return c.json(
-      { error: "Unauthorized: Missing or invalid authentication token" },
+      ApiErrorResponseSchema.parse({
+        statusCode: 401,
+        success: false,
+        error: { message: "Unauthorized: User not authenticated." },
+      }),
       401,
     );
   }
 
   try {
     const userService = ServiceProvider.getInstance().getUserService();
-    const user = await userService.findUserByAuthProviderId(authProviderId);
+    const user = await userService.findUserByNearAccountId(accountId);
 
     if (!user) {
-      return c.json({ error: "User profile not found" }, 404);
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 404,
+          success: false,
+          error: {
+            message: "User profile not found for the given NEAR account ID.",
+          },
+        }),
+        404,
+      );
     }
 
-    return c.json({ profile: user });
+    return c.json(
+      UserProfileWrappedResponseSchema.parse({
+        statusCode: 200,
+        success: true,
+        data: user,
+      }),
+    );
   } catch (error) {
-    console.error("Error in usersRoutes.get('/me'):", error);
-    return c.json({ error: "Failed to fetch user profile" }, 500);
+    logger.error({ error }, "Error in usersRoutes.get('/me')");
+    return c.json(
+      ApiErrorResponseSchema.parse({
+        statusCode: 500,
+        success: false,
+        error: { message: "Failed to fetch user profile" },
+      }),
+      500,
+    );
   }
 });
 
 // --- POST /api/users ---
-usersRoutes.post("/", zValidator("json", insertUserSchema), async (c) => {
-  const createUserData = c.req.valid("json");
-  const jwtPayload = c.get("jwtPayload");
-  const authProviderId = jwtPayload?.authProviderId;
+usersRoutes.post(
+  "/",
+  zValidator("json", CreateUserRequestSchema),
+  async (c) => {
+    const apiData = c.req.valid("json");
 
-  if (!authProviderId) {
-    return c.json(
-      { error: "Unauthorized: Missing or invalid authentication token" },
-      401,
-    );
-  }
+    try {
+      const userService = ServiceProvider.getInstance().getUserService();
 
-  try {
-    const userService = ServiceProvider.getInstance().getUserService();
+      const newUser = await userService.createUser(apiData);
 
-    const newUser = await userService.createUser({
-      auth_provider_id: authProviderId,
-      ...createUserData,
-    } as InsertUserData);
-
-    return c.json({ profile: newUser }, 201);
-  } catch (error: any) {
-    console.error("Error in usersRoutes.post('/'):", error);
-
-    if (error instanceof NearAccountError) {
       return c.json(
-        { error: error.message },
-        error.statusCode as ContentfulStatusCode,
+        UserProfileWrappedResponseSchema.parse({
+          statusCode: 201,
+          success: true,
+          data: newUser,
+        }),
+        201,
+      );
+    } catch (error: any) {
+      logger.error({ error }, "Error in usersRoutes.post('/')");
+
+      if (
+        error instanceof NearAccountError ||
+        error instanceof UserServiceError
+      ) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: error.statusCode as ContentfulStatusCode,
+            success: false,
+            error: { message: error.message },
+          }),
+          error.statusCode as ContentfulStatusCode,
+        );
+      }
+
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 500,
+          success: false,
+          error: { message: "Failed to create user profile" },
+        }),
+        500,
       );
     }
-
-    if (error instanceof UserServiceError) {
-      return c.json(
-        { error: error.message },
-        error.statusCode as ContentfulStatusCode,
-      );
-    }
-
-    return c.json({ error: "Failed to create user profile" }, 500);
-  }
-});
+  },
+);
 
 // --- PUT /api/users/me ---
-usersRoutes.put("/me", zValidator("json", updateUserSchema), async (c) => {
-  const updateData = c.req.valid("json");
-  const jwtPayload = c.get("jwtPayload");
-  const authProviderId = jwtPayload?.authProviderId;
+usersRoutes.put(
+  "/me",
+  zValidator("json", UpdateUserRequestSchema),
+  async (c) => {
+    const apiData = c.req.valid("json");
+    const accountId = c.get("accountId");
 
-  if (!authProviderId) {
-    return c.json(
-      { error: "Unauthorized: Missing or invalid authentication token" },
-      401,
-    );
-  }
-
-  try {
-    const userService = ServiceProvider.getInstance().getUserService();
-    const updatedUser = await userService.updateUser(
-      authProviderId,
-      updateData,
-    );
-
-    if (!updatedUser) {
-      return c.json({ error: "User profile not found" }, 404);
-    }
-
-    return c.json({ profile: updatedUser });
-  } catch (error) {
-    console.error("Error in usersRoutes.put('/me'):", error);
-
-    if (error instanceof NotFoundError) {
+    if (!accountId) {
       return c.json(
-        { error: error.message },
-        error.statusCode as ContentfulStatusCode,
+        ApiErrorResponseSchema.parse({
+          statusCode: 401,
+          success: false,
+          error: { message: "Unauthorized: User not authenticated." },
+        }),
+        401,
       );
     }
 
-    if (error instanceof UserServiceError) {
+    try {
+      const userService = ServiceProvider.getInstance().getUserService();
+      const updatedUser = await userService.updateUserByNearAccountId(
+        accountId,
+        apiData,
+      );
+
+      if (!updatedUser) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: 404,
+            success: false,
+            error: { message: "User profile not found" },
+          }),
+          404,
+        );
+      }
+
       return c.json(
-        { error: error.message },
-        error.statusCode as ContentfulStatusCode,
+        UserProfileWrappedResponseSchema.parse({
+          statusCode: 200,
+          success: true,
+          data: updatedUser,
+        }),
+      );
+    } catch (error) {
+      logger.error({ error }, "Error in usersRoutes.put('/me')");
+
+      if (error instanceof NotFoundError || error instanceof UserServiceError) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: error.statusCode as ContentfulStatusCode,
+            success: false,
+            error: { message: error.message },
+          }),
+          error.statusCode as ContentfulStatusCode,
+        );
+      }
+
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 500,
+          success: false,
+          error: { message: "Failed to update user profile" },
+        }),
+        500,
       );
     }
-
-    return c.json({ error: "Failed to update user profile" }, 500);
-  }
-});
+  },
+);
 
 // --- DELETE /api/users/me ---
 usersRoutes.delete("/me", async (c) => {
-  const jwtPayload = c.get("jwtPayload");
-  const authProviderId = jwtPayload?.authProviderId;
+  const accountId = c.get("accountId");
 
-  if (!authProviderId) {
+  if (!accountId) {
     return c.json(
-      { error: "Unauthorized: Missing or invalid authentication token" },
+      ApiErrorResponseSchema.parse({
+        statusCode: 401,
+        success: false,
+        error: { message: "Unauthorized: User not authenticated." },
+      }),
       401,
     );
   }
 
   try {
     const userService = ServiceProvider.getInstance().getUserService();
-    const success = await userService.deleteUser(authProviderId);
+    const success = await userService.deleteUserByNearAccountId(accountId);
 
     if (success) {
-      return c.json({ message: "User profile deleted successfully" }, 200);
+      return c.json(
+        UserDeletedWrappedResponseSchema.parse({
+          statusCode: 200,
+          success: true,
+          data: { message: "User profile deleted successfully" },
+        }),
+      );
     } else {
-      // This case should ideally be handled by NotFoundError thrown from the service
-      return c.json({ error: "Failed to delete user profile" }, 500);
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 500,
+          success: false,
+          error: { message: "Failed to delete user profile" },
+        }),
+        500,
+      );
     }
   } catch (error: any) {
-    console.error("Error in usersRoutes.delete('/me'):", error);
+    logger.error({ error }, "Error in usersRoutes.delete('/me')");
 
-    if (error instanceof NotFoundError) {
+    if (
+      error instanceof NotFoundError ||
+      error instanceof NearAccountError ||
+      error instanceof UserServiceError
+    ) {
       return c.json(
-        { error: error.message },
+        ApiErrorResponseSchema.parse({
+          statusCode: error.statusCode as ContentfulStatusCode,
+          success: false,
+          error: { message: error.message },
+        }),
         error.statusCode as ContentfulStatusCode,
       );
     }
 
-    if (error instanceof NearAccountError) {
-      return c.json(
-        { error: error.message },
-        error.statusCode as ContentfulStatusCode,
-      );
-    }
-
-    if (error instanceof UserServiceError) {
-      return c.json(
-        { error: error.message },
-        error.statusCode as ContentfulStatusCode,
-      );
-    }
-
-    return c.json({ error: "Failed to delete user profile" }, 500);
+    return c.json(
+      ApiErrorResponseSchema.parse({
+        statusCode: 500,
+        success: false,
+        error: { message: "Failed to delete user profile" },
+      }),
+      500,
+    );
   }
 });
+
+// --- GET /api/users/by-near/:nearAccountId ---
+usersRoutes.get(
+  "/by-near/:nearAccountId",
+  zValidator("param", UserNearAccountIdParamSchema),
+  async (c) => {
+    const { nearAccountId } = c.req.param();
+
+    if (!nearAccountId) {
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 400,
+          success: false,
+          error: { message: "nearAccountId path parameter is required." },
+        }),
+        400,
+      );
+    }
+
+    try {
+      const userService = ServiceProvider.getInstance().getUserService();
+      const user = await userService.findUserByNearAccountId(nearAccountId);
+
+      if (!user) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: 404,
+            success: false,
+            error: {
+              message: "User profile not found for the given NEAR account ID.",
+            },
+          }),
+          404,
+        );
+      }
+
+      return c.json(
+        UserProfileWrappedResponseSchema.parse({
+          statusCode: 200,
+          success: true,
+          data: user,
+        }),
+      );
+    } catch (error) {
+      logger.error(
+        { error },
+        `Error in usersRoutes.get('/by-near/${nearAccountId}')`,
+      );
+
+      if (error instanceof NotFoundError) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: 404,
+            success: false,
+            error: { message: error.message },
+          }),
+          404,
+        );
+      }
+
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 500,
+          success: false,
+          error: { message: "Failed to fetch user profile" },
+        }),
+        500,
+      );
+    }
+  },
+);
 
 export { usersRoutes };

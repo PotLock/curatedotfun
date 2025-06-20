@@ -1,10 +1,7 @@
-import { capitalize } from "../../../../utils/string";
-import { Platform, PlatformName } from "@crosspost/types";
-import { Twitter } from "lucide-react";
+import { PlatformName } from "@crosspost/types";
 import React from "react";
 import { useToast } from "../../../../hooks/use-toast";
-import { useConnectAccount } from "../../../../store/platformAccountsStore";
-import { Button } from "../../../ui/button";
+import { capitalize } from "../../../../utils/string";
 import {
   Tooltip,
   TooltipContent,
@@ -33,7 +30,7 @@ export function ConnectPlatform({
   size = "sm",
   showIcon = true,
 }: ConnectPlatformProps) {
-  const connectAccount = useConnectAccount();
+  // const connectAccount = useConnectAccount();
   const { toast } = useToast();
   const [isConnecting, setIsConnecting] = React.useState(false);
 
@@ -49,9 +46,9 @@ export function ConnectPlatform({
 
     try {
       console.log("platform", platform);
-      await connectAccount.mutateAsync({
-        platform: platform as PlatformName,
-      });
+      // await connectAccount.mutateAsync({
+      //   platform: platform as PlatformName,
+      // });
 
       loadingToast.update({
         title: `${capitalize(platform)} Account Connected!`,
@@ -90,7 +87,7 @@ export function ConnectPlatform({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
+          {/* <Button
             onClick={handleConnect}
             disabled={isConnecting || connectAccount.isPending}
             size={size}
@@ -123,7 +120,7 @@ export function ConnectPlatform({
             {isConnecting || connectAccount.isPending
               ? "Connecting..."
               : `Connect ${capitalize(platform)} Account`}
-          </Button>
+          </Button> */}
         </TooltipTrigger>
         <TooltipContent>
           To connect a different social account than the one currently logged

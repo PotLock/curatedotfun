@@ -4,10 +4,11 @@ import { secureHeaders } from "hono/secure-headers";
 import { db } from "./db";
 import { apiRoutes } from "./routes/api";
 import { AppInstance, Env } from "./types/app";
-import { web3AuthJwtMiddleware } from "./utils/auth";
 import { getAllowedOrigins } from "./utils/config";
 import { errorHandler } from "./utils/error";
 import { ServiceProvider } from "./utils/service-provider";
+import { logger } from "utils/logger";
+import { createAuthMiddleware } from "./middlewares/auth.middleware";
 
 const ALLOWED_ORIGINS = getAllowedOrigins();
 
@@ -18,7 +19,7 @@ export async function createApp(): Promise<AppInstance> {
   const app = new Hono<Env>();
 
   app.onError((err, c) => {
-    return errorHandler(err, c);
+    return errorHandler(err, c, logger);
   });
 
   app.use(
@@ -44,8 +45,8 @@ export async function createApp(): Promise<AppInstance> {
     await next();
   });
 
-  // Authentication middleware
-  app.use("*", web3AuthJwtMiddleware);
+  // Apply auth middleware to all /api routes
+  app.use("/api/*", createAuthMiddleware());
 
   // Mount API routes
   app.route("/api", apiRoutes);

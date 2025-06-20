@@ -11,17 +11,72 @@ import {
 import { Logger } from "pino";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { ProcessorService } from "./processor.service";
+import { isSuperAdmin } from "../utils/auth.utils";
+
+export type FeedAction =
+  | "update" // For general updates to feed config, name, description
+  | "delete"
+  | "manage_admins"; // For adding/removing users from the feed's admin list
 
 export class FeedService implements IBaseService {
   public readonly logger: Logger;
+  private superAdminAccounts: string[];
 
   constructor(
     private feedRepository: FeedRepository,
     private processorService: ProcessorService,
     private db: DB,
     logger: Logger,
+    superAdminAccounts: string[],
   ) {
     this.logger = logger;
+    this.superAdminAccounts = superAdminAccounts;
+  }
+
+  private _isCurrentUserSuperAdmin(accountId: string | null): boolean {
+    return isSuperAdmin(accountId, this.superAdminAccounts);
+  }
+
+  public async hasPermission(
+    accountId: string | null,
+    feedId: string,
+    action: FeedAction,
+  ): Promise<boolean> {
+    if (!accountId) {
+      return false;
+    }
+
+    if (this._isCurrentUserSuperAdmin(accountId)) {
+      return true;
+    }
+
+    const feed = await this.feedRepository.getFeedById(feedId);
+    if (!feed) {
+      this.logger.warn(
+        { accountId, feedId, action },
+        "hasPermission check: Feed not found.",
+      );
+      return false;
+    }
+
+    const isCreator = accountId === feed.created_by;
+    const feedAdmins = (feed.admins as string[] | null) || [];
+    const isAdminOnFeed = feedAdmins.includes(accountId);
+
+    switch (action) {
+      case "update":
+        return isCreator || isAdminOnFeed;
+      case "delete":
+        return isCreator;
+      case "manage_admins":
+        return isCreator || isAdminOnFeed;
+      default:
+        this.logger.warn(
+          { accountId, feedId, action },
+          "Unknown feed action for permission check",
+        );
+        return false;
+    }
   }
 
   async getAllFeeds() {

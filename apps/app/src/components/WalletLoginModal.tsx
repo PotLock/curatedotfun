@@ -1,6 +1,6 @@
 import { Button } from "./ui/button";
 import { Modal } from "./Modal";
-import { useWalletSelector } from "@near-wallet-selector/react-hook";
+import { near } from "../lib/near";
 
 interface WalletLoginModalProps {
   isOpen: boolean;
@@ -11,11 +11,11 @@ export const WalletLoginModal = ({
   isOpen,
   onClose,
 }: WalletLoginModalProps) => {
-  const { signIn } = useWalletSelector();
+  // const { signIn } = useWalletSelector();
 
   const handleWalletSelect = (chain: "near" | "solana" | "evm") => {
     if (chain === "near") {
-      signIn();
+      near.requestSignIn();
     }
     onClose();
   };

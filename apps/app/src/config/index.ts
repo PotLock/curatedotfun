@@ -24,7 +24,7 @@ const evmWalletChains: EVMWalletChains = {
   },
 };
 
-export const NETWORK_ID = "mainnet";
+export const NETWORK_ID = process.env.PUBLIC_NETWORK || "testnet";
 export const EVMWalletChain = evmWalletChains[NETWORK_ID];
 
 // API Configuration

@@ -1,5 +1,5 @@
 import ContentApprovers from "./ContentApprovers";
-import ContentProgress from "./ContentProgress";
+// import ContentProgress from "./ContentProgress";
 import PublishingIntegrations from "./PublishIntegrations";
 
 const StepHeader = ({
@@ -34,12 +34,12 @@ type Step = {
 };
 
 const steps: Step[] = [
-  {
-    title: "Content Progress Configuration",
-    description: "Define how content is processed before being published",
-    id: 1,
-    component: <ContentProgress />,
-  },
+  // {
+  //   title: "Content Progress Configuration",
+  //   description: "Define how content is processed before being published",
+  //   id: 1,
+  //   component: <ContentProgress />,
+  // },
   {
     title: "Publishing Integrations",
     description: "Define how content is processed before being published",

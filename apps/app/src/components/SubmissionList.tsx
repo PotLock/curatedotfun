@@ -1,10 +1,11 @@
 import { useBotId } from "../lib/config";
-import { SubmissionWithFeedData } from "../types/twitter";
 import FeedItem from "./FeedItem";
 
 interface SubmissionListProps {
-  items: SubmissionWithFeedData[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  items: any[];
   feedId?: string | undefined;
+  allowModerationControls?: boolean;
   /**
    * Layout style for the list of items
    * @default "flex" - Items will be displayed in a vertical flex container
@@ -16,6 +17,7 @@ const SubmissionList = ({
   items,
   feedId,
   layout = "flex",
+  allowModerationControls,
 }: SubmissionListProps) => {
   const botId = useBotId();
 
@@ -31,7 +33,6 @@ const SubmissionList = ({
     );
   }
 
-  // Render the list with appropriate layout
   return (
     <div
       className={
@@ -41,7 +42,12 @@ const SubmissionList = ({
       }
     >
       {items.map((item) => (
-        <FeedItem key={item.tweetId} submission={item} />
+        <FeedItem
+          key={item.tweetId}
+          submission={item}
+          feedId={feedId}
+          allowModerationControls={allowModerationControls}
+        />
       ))}
     </div>
   );

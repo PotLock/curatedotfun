@@ -6,11 +6,11 @@ import {
 } from "drizzle-zod";
 import { z } from "zod";
 import * as schema from "./schema";
+import type { SelectModerationHistory } from "./schema/moderation";
 
 export type DB = NodePgDatabase<typeof schema>;
 
 const {
-  users,
   activities,
   userStats,
   feedUserStats,
@@ -19,21 +19,8 @@ const {
   feedPlugins,
   submissions,
   submissionFeeds,
-  moderationHistory,
   submissionCounts,
 } = schema;
-
-// User Schemas and Types
-export const insertUserSchema = createInsertSchema(users, {
-  id: z.undefined(),
-  createdAt: z.undefined(),
-  updatedAt: z.undefined(),
-});
-export const updateUserSchema = createUpdateSchema(users);
-export const selectUserSchema = createSelectSchema(users);
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type UpdateUser = z.infer<typeof updateUserSchema>;
-export type SelectUser = z.infer<typeof selectUserSchema>;
 
 // Activity Schemas and Types
 export const insertActivitySchema = createInsertSchema(activities, {
@@ -72,10 +59,16 @@ export type SelectFeedUserStats = z.infer<typeof selectFeedUserStatsSchema>;
 
 // Feed Schemas and Types
 export const insertFeedSchema = createInsertSchema(feeds, {
+  created_by: z.string().min(1),
+  admins: z.array(z.string()).optional(),
   createdAt: z.undefined(),
   updatedAt: z.undefined(),
 });
-export const updateFeedSchema = createUpdateSchema(feeds);
+
+export const updateFeedSchema = createUpdateSchema(feeds).extend({
+  admins: z.array(z.string()).optional(),
+});
+
 export const selectFeedSchema = createSelectSchema(feeds);
 export type InsertFeed = z.infer<typeof insertFeedSchema>;
 export type UpdateFeed = z.infer<typeof updateFeedSchema>;
@@ -133,34 +126,6 @@ export const selectSubmissionFeedSchema = createSelectSchema(submissionFeeds);
 export type InsertSubmissionFeed = z.infer<typeof insertSubmissionFeedSchema>;
 export type UpdateSubmissionFeed = z.infer<typeof updateSubmissionFeedSchema>;
 export type SelectSubmissionFeed = z.infer<typeof selectSubmissionFeedSchema>;
-
-// ModerationHistory Schemas and Types
-export const insertModerationHistorySchema = createInsertSchema(
-  moderationHistory,
-  {
-    id: z.undefined(),
-    createdAt: z.undefined(),
-    updatedAt: z.undefined(),
-  },
-);
-export const updateModerationHistorySchema =
-  createUpdateSchema(moderationHistory);
-export const selectModerationHistorySchema = createSelectSchema(
-  moderationHistory,
-  {
-    createdAt: z.date(),
-    updatedAt: z.date().nullable(),
-  },
-);
-export type InsertModerationHistory = z.infer<
-  typeof insertModerationHistorySchema
->;
-export type UpdateModerationHistory = z.infer<
-  typeof updateModerationHistorySchema
->;
-export type SelectModerationHistory = z.infer<
-  typeof selectModerationHistorySchema
->;
 
 // SubmissionCounts Schemas and Types
 export const insertSubmissionCountSchema = createInsertSchema(

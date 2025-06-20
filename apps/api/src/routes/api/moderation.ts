@@ -1,28 +1,26 @@
-import { Hono } from "hono";
+import {
+  ApiErrorResponseSchema,
+  CreateModerationRequestSchema,
+  ModerationActionWrappedResponseSchema,
+  ModerationActionListWrappedResponseSchema,
+  ModerationActionCreatedWrappedResponseSchema,
+  ModerationIdParamSchema,
+  SubmissionIdParamSchema,
+  SubmissionAndFeedIdsParamSchema,
+} from "@curatedotfun/types";
 import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
+import { Hono } from "hono";
+import { ContentfulStatusCode } from "hono/utils/http-status";
 import { ModerationService } from "../../services/moderation.service";
 import { Env } from "../../types/app";
-
-const createModerationSchema = z.object({
-  submissionId: z.string().min(1),
-  feedId: z.string().min(1),
-  adminId: z.string().min(1), // TODO: real user
-  action: z.enum(["approve", "reject"]),
-  note: z.string().optional().nullable(),
-  timestamp: z
-    .string()
-    .datetime()
-    .optional()
-    .transform((val) => (val ? new Date(val) : undefined)),
-});
+import { NotFoundError, ServiceError } from "../../types/errors";
 
 export const moderationRoutes = new Hono<Env>();
 
 // Create a new moderation action
 moderationRoutes.post(
   "/",
-  zValidator("json", createModerationSchema),
+  zValidator("json", CreateModerationRequestSchema),
   async (c) => {
     const payload = c.req.valid("json");
     const sp = c.var.sp;
@@ -32,12 +30,33 @@ moderationRoutes.post(
     try {
       await moderationService.createModerationAction(payload);
       return c.json(
-        { message: "Moderation action created successfully." },
+        ModerationActionCreatedWrappedResponseSchema.parse({
+          statusCode: 201,
+          success: true,
+          data: { message: "Moderation action created successfully." },
+        }),
         201,
       );
     } catch (error: any) {
+      console.error("Error in moderationRoutes.post('/'):", error);
+
+      if (error instanceof NotFoundError || error instanceof ServiceError) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: error.statusCode as ContentfulStatusCode,
+            success: false,
+            error: { message: error.message },
+          }),
+          error.statusCode as ContentfulStatusCode,
+        );
+      }
+
       return c.json(
-        { error: error.message || "Failed to create moderation action" },
+        ApiErrorResponseSchema.parse({
+          statusCode: 500,
+          success: false,
+          error: { message: "Failed to create moderation action" },
+        }),
         500,
       );
     }
@@ -45,63 +64,154 @@ moderationRoutes.post(
 );
 
 // Get a specific moderation entry by its ID
-moderationRoutes.get("/:id", async (c) => {
-  const id = parseInt(c.req.param("id"), 10);
-  if (isNaN(id)) {
-    return c.json({ error: "Invalid moderation ID" }, 400);
-  }
-  const sp = c.var.sp;
-  const moderationService =
-    sp.getService<ModerationService>("moderationService");
-  try {
-    const moderation = await moderationService.getModerationById(id);
-    if (!moderation) {
-      return c.json({ error: "Moderation entry not found" }, 404);
+moderationRoutes.get(
+  "/:id",
+  zValidator("param", ModerationIdParamSchema),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const sp = c.var.sp;
+    const moderationService =
+      sp.getService<ModerationService>("moderationService");
+    try {
+      const moderation = await moderationService.getModerationById(id);
+      if (!moderation) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: 404,
+            success: false,
+            error: { message: "Moderation entry not found" },
+          }),
+          404,
+        );
+      }
+      return c.json(
+        ModerationActionWrappedResponseSchema.parse({
+          statusCode: 200,
+          success: true,
+          data: moderation,
+        }),
+      );
+    } catch (error: any) {
+      console.error("Error in moderationRoutes.get('/:id'):", error);
+
+      if (error instanceof NotFoundError || error instanceof ServiceError) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: error.statusCode as ContentfulStatusCode,
+            success: false,
+            error: { message: error.message },
+          }),
+          error.statusCode as ContentfulStatusCode,
+        );
+      }
+
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 500,
+          success: false,
+          error: { message: "Failed to get moderation entry" },
+        }),
+        500,
+      );
     }
-    return c.json(moderation);
-  } catch (error: any) {
-    return c.json(
-      { error: error.message || "Failed to get moderation entry" },
-      500,
-    );
-  }
-});
+  },
+);
 
 // Get all moderation entries for a submission
-moderationRoutes.get("/submission/:submissionId", async (c) => {
-  const submissionId = c.req.param("submissionId");
-  const sp = c.var.sp;
-  const moderationService =
-    sp.getService<ModerationService>("moderationService");
-  try {
-    const moderations =
-      await moderationService.getModerationsForSubmission(submissionId);
-    return c.json(moderations);
-  } catch (error: any) {
-    return c.json(
-      { error: error.message || "Failed to get moderation entries" },
-      500,
-    );
-  }
-});
+moderationRoutes.get(
+  "/submission/:submissionId",
+  zValidator("param", SubmissionIdParamSchema),
+  async (c) => {
+    const { submissionId } = c.req.valid("param");
+    const sp = c.var.sp;
+    const moderationService =
+      sp.getService<ModerationService>("moderationService");
+    try {
+      const moderations =
+        await moderationService.getModerationsForSubmission(submissionId);
+      return c.json(
+        ModerationActionListWrappedResponseSchema.parse({
+          statusCode: 200,
+          success: true,
+          data: moderations,
+        }),
+      );
+    } catch (error: any) {
+      console.error(
+        "Error in moderationRoutes.get('/submission/:submissionId'):",
+        error,
+      );
+
+      if (error instanceof NotFoundError || error instanceof ServiceError) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: error.statusCode as ContentfulStatusCode,
+            success: false,
+            error: { message: error.message },
+          }),
+          error.statusCode as ContentfulStatusCode,
+        );
+      }
+
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 500,
+          success: false,
+          error: { message: "Failed to get moderation entries" },
+        }),
+        500,
+      );
+    }
+  },
+);
 
 // Get all moderation entries for a specific submission within a feed
-moderationRoutes.get("/submission/:submissionId/feed/:feedId", async (c) => {
-  const submissionId = c.req.param("submissionId");
-  const feedId = c.req.param("feedId");
-  const sp = c.var.sp;
-  const moderationService =
-    sp.getService<ModerationService>("moderationService");
-  try {
-    const moderations = await moderationService.getModerationsForSubmissionFeed(
-      submissionId,
-      feedId,
-    );
-    return c.json(moderations);
-  } catch (error: any) {
-    return c.json(
-      { error: error.message || "Failed to get moderation entries" },
-      500,
-    );
-  }
-});
+moderationRoutes.get(
+  "/submission/:submissionId/feed/:feedId",
+  zValidator("param", SubmissionAndFeedIdsParamSchema),
+  async (c) => {
+    const { submissionId, feedId } = c.req.valid("param");
+    const sp = c.var.sp;
+    const moderationService =
+      sp.getService<ModerationService>("moderationService");
+    try {
+      const moderations =
+        await moderationService.getModerationsForSubmissionFeed(
+          submissionId,
+          feedId,
+        );
+      return c.json(
+        ModerationActionListWrappedResponseSchema.parse({
+          statusCode: 200,
+          success: true,
+          data: moderations,
+        }),
+      );
+    } catch (error: any) {
+      console.error(
+        "Error in moderationRoutes.get('/submission/:submissionId/feed/:feedId'):",
+        error,
+      );
+
+      if (error instanceof NotFoundError || error instanceof ServiceError) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: error.statusCode as ContentfulStatusCode,
+            success: false,
+            error: { message: error.message },
+          }),
+          error.statusCode as ContentfulStatusCode,
+        );
+      }
+
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 500,
+          success: false,
+          error: { message: "Failed to get moderation entries" },
+        }),
+        500,
+      );
+    }
+  },
+);

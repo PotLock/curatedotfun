@@ -1,10 +1,15 @@
-import { useState } from "react";
 import { Switch } from "./ui/switch";
 import { Button } from "./ui/button";
+import { useFeedCreationStore } from "../store/feed-creation-store";
 
 export default function PublishingIntegrations() {
-  const [telegramEnabled, setTelegramEnabled] = useState(false);
-  const [threadId, setThreadId] = useState("");
+  const {
+    telegramEnabled,
+    telegramChannelId,
+    telegramThreadId,
+    setTelegramConfig,
+  } = useFeedCreationStore();
+
   return (
     <div className="border border-gray-200 rounded-lg ">
       <div className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-blue-50 gap-4 md:gap-0">
@@ -48,7 +53,7 @@ export default function PublishingIntegrations() {
               </p>
             </div>
           </div>
-          <div className="px-3 py-2 flex gap-[4px] bg-white border font-sans border-neutral-600 rounded-md text-sm font-medium self-start md:self-auto">
+          {/* <div className="px-3 py-2 flex gap-[4px] bg-white border font-sans border-neutral-600 rounded-md text-sm font-medium self-start md:self-auto">
             <div>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -73,19 +78,21 @@ export default function PublishingIntegrations() {
               </svg>
             </div>
             150 $CURATE
-          </div>
+          </div> */}
         </div>
         <div className="flex items-center gap-4 self-end md:self-auto">
           <Switch
             checked={telegramEnabled}
-            onCheckedChange={setTelegramEnabled}
+            onCheckedChange={(checked) =>
+              setTelegramConfig({ telegramEnabled: checked })
+            }
           />
         </div>
       </div>
       <div className=" ">
         {telegramEnabled && (
           <div className="space-y-4 md:space-y-6 border-t pt-4 md:pt-6 p-4 bg-white">
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <label className="text-sm font-medium">Bot Token</label>
               <input
                 type="text"
@@ -95,7 +102,7 @@ export default function PublishingIntegrations() {
               <p className="text-xs text-gray-500">
                 Your Telegram bot token from @BotFather
               </p>
-            </div>
+            </div> */}
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Channel ID</label>
@@ -103,6 +110,10 @@ export default function PublishingIntegrations() {
                 type="text"
                 className="w-full p-2 border border-gray-300 rounded-md text-sm md:text-base"
                 placeholder="Enter channel username or ID"
+                value={telegramChannelId}
+                onChange={(e) =>
+                  setTelegramConfig({ telegramChannelId: e.target.value })
+                }
               />
               <p className="text-xs text-gray-500">
                 Username or ID of your Channel/group
@@ -117,20 +128,40 @@ export default function PublishingIntegrations() {
                 type="text"
                 className="w-full p-2 border border-gray-300 rounded-md text-sm md:text-base"
                 placeholder="Enter thread ID if applicable"
-                value={threadId}
-                onChange={(e) => setThreadId(e.target.value)}
+                value={telegramThreadId}
+                onChange={(e) =>
+                  setTelegramConfig({ telegramThreadId: e.target.value })
+                }
               />
             </div>
 
             <div className="flex flex-col md:flex-row gap-3 md:gap-0 md:justify-between pt-4">
               <Button
                 variant="outline"
-                onClick={() => setTelegramEnabled(false)}
+                onClick={() => {
+                  // Optionally clear fields when closing, or just hide the section
+                  setTelegramConfig({ telegramEnabled: false });
+                }}
                 className="order-2 md:order-1"
               >
                 Close
               </Button>
-              <Button className="order-1 md:order-2">Save</Button>
+              <Button
+                className="order-1 md:order-2"
+                onClick={() => {
+                  // Data is already in the store due to onChange handlers
+                  // This button can be used for explicit save confirmation if needed
+                  // or to trigger other actions. For now, it doesn't need to do much
+                  // if we rely on onChange to update the store.
+                  // We can add a toast notification here if desired.
+                  console.log("Telegram settings saved to store:", {
+                    telegramChannelId,
+                    telegramThreadId,
+                  });
+                }}
+              >
+                Save
+              </Button>
             </div>
           </div>
         )}

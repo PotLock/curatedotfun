@@ -6,6 +6,15 @@ console.log(
   "Using environment: ",
   process.env.RAILWAY_ENVIRONMENT_NAME ?? process.env.NODE_ENV,
 );
+
+export const featureFlags = {
+  enableDistribution: Boolean(process.env.ENABLE_DISTRIBUTION) || false,
+};
+
 export class ConfigService {
   public constructor() {}
+
+  public getFeatureFlag(flagName: keyof typeof featureFlags): boolean {
+    return featureFlags[flagName];
+  }
 }

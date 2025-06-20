@@ -1,46 +1,39 @@
-import { useEffect, useState } from "react";
-import { AuthUserInfo } from "../../types/web3auth";
-import { useWeb3Auth } from "../../hooks/use-web3-auth";
-export function ProfileHeader() {
-  const [userInfo, setUserInfo] = useState<Partial<AuthUserInfo>>();
+import { useNearSocialProfile } from "src/hooks/near-social";
+import { FALLBACK_URL, getImageUrl } from "src/lib/near-social";
 
-  const { isLoggedIn, getUserInfo, currentUserProfile } = useWeb3Auth();
+export function ProfileHeader({ accountId }: { accountId: string }) {
+  const { data: socialProfile, isLoading: isLoadingSocialProfile } =
+    useNearSocialProfile(accountId);
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const info = await getUserInfo();
-        setUserInfo(info);
-      } catch (error) {
-        console.error("Error fetching user info:", error);
-      }
-    };
+  const displayName = socialProfile?.name || accountId || "User";
 
-    if (isLoggedIn) {
-      fetchUserInfo();
-    } else {
-      setUserInfo({});
-    }
-  }, [isLoggedIn, getUserInfo]);
+  const profileImageUrl = getImageUrl(socialProfile?.image, FALLBACK_URL);
+
+  if (isLoadingSocialProfile && accountId) {
+    return (
+      <div className="flex flex-col md:flex-row w-full items-center justify-center gap-6 md:gap-10 p-4 md:p-6 border border-neutral-300 rounded-md light min-h-[160px]">
+        <p>Loading social profile...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col md:flex-row w-full items-center gap-6 md:gap-10 p-4 md:p-6 border border-neutral-300 rounded-md light">
       <img
         className="size-24 md:size-28 rounded-full shrink-0 mx-auto md:mx-0"
-        src={userInfo?.profileImage}
+        src={profileImageUrl}
+        alt={displayName}
       />
       <div className="flex flex-col gap-2.5 items-center md:items-start text-center md:text-left">
         <div className="flex flex-col space-y-4">
-          <h2 className="text-lg md:text-2xl capitalize">
-            {currentUserProfile?.username}
-          </h2>
+          <h2 className="text-lg md:text-2xl capitalize">{displayName}</h2>
           <div className="flex items-center gap-2 justify-center md:justify-start">
             <img
               className="size-5 md:size-6 rounded-lg"
               src="/images/near.png"
             />
             <p className="text-sm md:text-base font-normal text-[#64748B]">
-              {currentUserProfile?.near_account_id}
+              {accountId}
             </p>
           </div>
         </div>

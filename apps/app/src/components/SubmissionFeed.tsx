@@ -69,7 +69,11 @@ export default function SubmissionFeed({
         noMoreItemsMessage="No more submissions to load"
         initialLoadingMessage="Loading submissions..."
         renderItems={(renderableItems) => (
-          <SubmissionList items={renderableItems} feedId={feedId} />
+          <SubmissionList
+            items={renderableItems}
+            feedId={feedId}
+            allowModerationControls={!!feedId}
+          />
         )}
       />
     </div>

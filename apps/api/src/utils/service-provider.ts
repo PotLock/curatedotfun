@@ -3,6 +3,7 @@ import {
   ModerationRepository,
   SubmissionRepository,
   TwitterRepository,
+  UserRepository,
 } from "@curatedotfun/shared-db";
 import { SubmissionService } from "services/submission.service";
 import { MockTwitterService } from "../__test__/mocks/twitter-service.mock";
@@ -18,17 +19,22 @@ import { ProcessorService } from "../services/processor.service";
 import { TransformationService } from "../services/transformation.service";
 import { TwitterService } from "../services/twitter/client";
 import { UserService } from "../services/users.service";
+import { getSuperAdminAccounts } from "./auth.utils";
 import { logger } from "./logger";
 
 export class ServiceProvider {
   private static instance: ServiceProvider;
   private services: Map<string, any> = new Map();
   private backgroundTaskServices: IBackgroundTaskService[] = [];
+  private readonly superAdminAccountsList: string[];
 
   private constructor() {
+    this.superAdminAccountsList = getSuperAdminAccounts(
+      process.env.SUPER_ADMIN_ACCOUNTS,
+    );
+
     const feedRepository = new FeedRepository(db);
     const twitterRespository = new TwitterRepository(db);
-    const submissionRepository = new SubmissionRepository(db);
 
     const configService = new ConfigService();
 
@@ -54,18 +60,36 @@ export class ServiceProvider {
       pluginService,
       logger,
     );
-    const distributionService = new DistributionService(pluginService, logger);
+    const distributionService = new DistributionService(
+      pluginService,
+      configService,
+      logger,
+    );
     const processorService = new ProcessorService(
       transformationService,
       distributionService,
       logger,
     );
 
+    const userRepository = new UserRepository(db);
+    const userService = new UserService(
+      userRepository,
+      db,
+      {
+        parentAccountId: "users.curatefun.near",
+        parentKeyPair: process.env.MASTER_KEYPAIR || "",
+        networkId: "mainnet",
+      },
+      logger,
+    );
+    this.services.set("userService", userService);
+
     const feedService = new FeedService(
       feedRepository,
       processorService,
       db,
       logger,
+      this.superAdminAccountsList,
     );
 
     this.services.set("configService", configService);
@@ -90,7 +114,6 @@ export class ServiceProvider {
     await twitterService.initialize();
 
     const feedRepository = new FeedRepository(db);
-    const twitterRespository = new TwitterRepository(db);
     const submissionRepository = new SubmissionRepository(db);
     const moderationRepository = new ModerationRepository(db);
 
@@ -100,6 +123,7 @@ export class ServiceProvider {
       submissionRepository,
       processorService,
       feedService,
+      this.superAdminAccountsList,
       db,
       logger,
     );

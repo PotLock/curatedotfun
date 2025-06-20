@@ -1,9 +1,14 @@
-import { index, pgTable as table, serial, text } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import { index, serial, pgTable as table, text } from "drizzle-orm/pg-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { z } from "zod";
 
+import { timestamps } from "./common";
 import { feeds } from "./feeds";
 import { submissions } from "./submissions";
-import { timestamps } from "./common";
+
+export const moderationActionSchema = z.enum(["approve", "reject"]);
+export type ModerationAction = z.infer<typeof moderationActionSchema>;
 
 export const moderationHistory = table(
   "moderation_history",
@@ -42,3 +47,27 @@ export const moderationHistoryRelations = relations(
     }),
   }),
 );
+
+export const insertModerationHistorySchema = createInsertSchema(
+  moderationHistory,
+  {
+    id: z.undefined(),
+    createdAt: z.undefined(),
+    updatedAt: z.undefined(),
+  },
+);
+
+export const selectModerationHistorySchema = createSelectSchema(
+  moderationHistory,
+  {
+    createdAt: z.date(),
+    updatedAt: z.date().nullable(),
+  },
+);
+
+export type InsertModerationHistory = z.infer<
+  typeof insertModerationHistorySchema
+>;
+export type SelectModerationHistory = z.infer<
+  typeof selectModerationHistorySchema
+>;
