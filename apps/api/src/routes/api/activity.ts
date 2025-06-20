@@ -1,14 +1,22 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { ContentfulStatusCode } from "hono/utils/http-status";
-import { z } from "zod";
 import { Env } from "../../types/app";
 import { ActivityServiceError } from "../../types/errors";
 import { ServiceProvider } from "../../utils/service-provider";
+
 import {
-  activityQueryOptionsSchema,
-  leaderboardQueryOptionsSchema,
-} from "../../validation/activity.validation";
+  ActivityFeedPathParamsSchema,
+  ActivityUserPathParamsSchema,
+  GetLeaderboardApiQuerySchema,
+  GetUserActivitiesApiQuerySchema,
+  ActivityListResponseSchema,
+  LeaderboardResponseSchema,
+  GlobalStatsResponseSchema,
+  FeedInfoListResponseSchema,
+  UserFeedRankResponseSchema,
+  ApiErrorResponseSchema,
+} from "@curatedotfun/types";
 
 const activityRoutes = new Hono<Env>();
 
@@ -18,42 +26,46 @@ const activityRoutes = new Hono<Env>();
  */
 activityRoutes.get(
   "/leaderboard",
-  zValidator(
-    "query",
-    z.object({
-      time_range: z.enum(["day", "week", "month", "year", "all"]).optional(),
-      feed_id: z.string().optional(),
-      limit: z.string().transform(Number).optional(),
-    }),
-  ),
+  zValidator("query", GetLeaderboardApiQuerySchema),
   async (c) => {
     try {
-      const query = c.req.valid("query");
-      const options = leaderboardQueryOptionsSchema.parse({
-        time_range: query.time_range,
-        feed_id: query.feed_id,
-        limit: query.limit,
-      });
+      const options = c.req.valid("query");
 
-      // Get the activity service from the service provider
       const activityService =
         ServiceProvider.getInstance().getActivityService();
       const leaderboard =
         await activityService.getUserRankingLeaderboard(options);
 
-      return c.json({ leaderboard });
+      return c.json(
+        LeaderboardResponseSchema.parse({
+          statusCode: 200,
+          success: true,
+          data: leaderboard,
+        }),
+      );
     } catch (error) {
       console.error("Error in activityRoutes.get('/leaderboard'):", error);
 
       if (error instanceof ActivityServiceError) {
         return c.json(
-          { error: error.message },
+          ApiErrorResponseSchema.parse({
+            statusCode: error.statusCode as ContentfulStatusCode,
+            success: false,
+            error: { message: error.message },
+          }),
           error.statusCode as ContentfulStatusCode,
         );
       }
-
+      const message =
+        error instanceof Error && error.name === "ValidationError"
+          ? "Invalid query parameters"
+          : "Failed to fetch leaderboard";
       return c.json(
-        { error: "Failed to fetch leaderboard" },
+        ApiErrorResponseSchema.parse({
+          statusCode: error instanceof Error && error.name === "ValidationError" ? 400 : 500,
+          success: false,
+          error: { message },
+        }),
         error instanceof Error && error.name === "ValidationError" ? 400 : 500,
       );
     }
@@ -66,22 +78,38 @@ activityRoutes.get(
  */
 activityRoutes.get("/stats", async (c) => {
   try {
-    // Get the activity service from the service provider
     const activityService = ServiceProvider.getInstance().getActivityService();
     const stats = await activityService.getGlobalStats();
 
-    return c.json({ stats });
+    return c.json(
+      GlobalStatsResponseSchema.parse({
+        statusCode: 200,
+        success: true,
+        data: stats,
+      }),
+    );
   } catch (error) {
     console.error("Error in activityRoutes.get('/stats'):", error);
 
     if (error instanceof ActivityServiceError) {
       return c.json(
-        { error: error.message },
+        ApiErrorResponseSchema.parse({
+          statusCode: error.statusCode as ContentfulStatusCode,
+          success: false,
+          error: { message: error.message },
+        }),
         error.statusCode as ContentfulStatusCode,
       );
     }
 
-    return c.json({ error: "Failed to fetch global stats" }, 500);
+    return c.json(
+      ApiErrorResponseSchema.parse({
+        statusCode: 500,
+        success: false,
+        error: { message: "Failed to fetch global stats" },
+      }),
+      500,
+    );
   }
 });
 
@@ -90,12 +118,15 @@ activityRoutes.get("/stats", async (c) => {
  * Get activity log for the authenticated user
  */
 activityRoutes.get("/user/me", async (c) => {
-  const jwtPayload = c.get("jwtPayload");
-  const authProviderId = jwtPayload?.authProviderId;
+  const accountId = c.get("accountId");
 
-  if (!authProviderId) {
+  if (!accountId) {
     return c.json(
-      { error: "Unauthorized: Missing or invalid authentication token" },
+      ApiErrorResponseSchema.parse({
+        statusCode: 401,
+        success: false,
+        error: { message: "Unauthorized: Missing or invalid authentication token" },
+      }),
       401,
     );
   }
@@ -103,98 +134,93 @@ activityRoutes.get("/user/me", async (c) => {
   try {
     // Get services from the service provider
     const serviceProvider = ServiceProvider.getInstance();
-    const userService = serviceProvider.getUserService();
     const activityService = serviceProvider.getActivityService();
 
-    // Get the user from the auth provider ID
-    const user = await userService.findUserByAuthProviderId(authProviderId);
 
-    if (!user) {
-      return c.json({ error: "User profile not found" }, 404);
-    }
+    const activities = await activityService.getUserActivities(accountId);
 
-    // Get the user's activities
-    const activities = await activityService.getUserActivities(user.id);
-
-    return c.json({ activities });
+    return c.json(
+      ActivityListResponseSchema.parse({
+        statusCode: 200,
+        success: true,
+        data: activities,
+      }),
+    );
   } catch (error) {
     console.error("Error in activityRoutes.get('/user/me'):", error);
 
     if (error instanceof ActivityServiceError) {
       return c.json(
-        { error: error.message },
+        ApiErrorResponseSchema.parse({
+          statusCode: error.statusCode as ContentfulStatusCode,
+          success: false,
+          error: { message: error.message },
+        }),
         error.statusCode as ContentfulStatusCode,
       );
     }
 
-    return c.json({ error: "Failed to fetch user activities" }, 500);
+    return c.json(
+      ApiErrorResponseSchema.parse({
+        statusCode: 500,
+        success: false,
+        error: { message: "Failed to fetch user activities" },
+      }),
+      500,
+    );
   }
 });
 
 /**
- * GET /api/activity/user/:userId
- * Get activity log for a specific user
+ * GET /api/activity/user/:accountId
+ * Get activity log for a specific user by NEAR account ID
  */
 activityRoutes.get(
-  "/user/:userId",
-  zValidator(
-    "param",
-    z.object({
-      userId: z.string().transform(Number),
-    }),
-  ),
-  zValidator(
-    "query",
-    z.object({
-      limit: z.string().transform(Number).optional(),
-      offset: z.string().transform(Number).optional(),
-      types: z.string().optional(),
-      feed_id: z.string().optional(),
-      from_date: z.string().optional(),
-      to_date: z.string().optional(),
-    }),
-  ),
+  "/user/:accountId",
+  zValidator("param", ActivityUserPathParamsSchema),
+  zValidator("query", GetUserActivitiesApiQuerySchema),
   async (c) => {
     try {
-      const { userId } = c.req.valid("param");
-      const query = c.req.valid("query");
+      const { accountId } = c.req.valid("param");
+      const options = c.req.valid("query");
 
-      // Parse types if provided
-      let types;
-      if (query.types) {
-        types = query.types.split(",");
-      }
-
-      const options = activityQueryOptionsSchema.parse({
-        limit: query.limit,
-        offset: query.offset,
-        types,
-        feed_id: query.feed_id,
-        from_date: query.from_date,
-        to_date: query.to_date,
-      });
-
-      // Get the activity service from the service provider
       const activityService =
         ServiceProvider.getInstance().getActivityService();
       const activities = await activityService.getUserActivities(
-        userId,
+        accountId,
         options,
       );
 
-      return c.json({ activities });
+      return c.json(
+        ActivityListResponseSchema.parse({
+          statusCode: 200,
+          success: true,
+          data: activities,
+        }),
+      );
     } catch (error) {
-      console.error("Error in activityRoutes.get('/user/:userId'):", error);
+      console.error("Error in activityRoutes.get('/user/:accountId'):", error);
 
       if (error instanceof ActivityServiceError) {
         return c.json(
-          { error: error.message },
+          ApiErrorResponseSchema.parse({
+            statusCode: error.statusCode as ContentfulStatusCode,
+            success: false,
+            error: { message: error.message },
+          }),
           error.statusCode as ContentfulStatusCode,
         );
       }
-
+      const message =
+        error instanceof Error && error.name === "ValidationError"
+          ? "Invalid query parameters"
+          : "Failed to fetch user activities";
       return c.json(
-        { error: "Failed to fetch user activities" },
+        ApiErrorResponseSchema.parse({
+          statusCode: error instanceof Error && error.name === "ValidationError" ? 400 : 500,
+          success: false,
+          error: { message },
+        }),
         error instanceof Error && error.name === "ValidationError" ? 400 : 500,
       );
     }
@@ -206,12 +232,15 @@ activityRoutes.get(
  * Get feeds curated by the authenticated user
  */
 activityRoutes.get("/feeds/curated-by/me", async (c) => {
-  const jwtPayload = c.get("jwtPayload");
-  const authProviderId = jwtPayload?.authProviderId;
+  const accountId = c.get("accountId");
 
-  if (!authProviderId) {
+  if (!accountId) {
     return c.json(
-      { error: "Unauthorized: Missing or invalid authentication token" },
+      ApiErrorResponseSchema.parse({
+        statusCode: 401,
+        success: false,
+        error: { message: "Unauthorized: Missing or invalid authentication token" },
+      }),
       401,
     );
   }
@@ -219,20 +248,32 @@ activityRoutes.get("/feeds/curated-by/me", async (c) => {
   try {
     // Get services from the service provider
     const serviceProvider = ServiceProvider.getInstance();
-    const userService = serviceProvider.getUserService();
+    const userService = serviceProvider.getUserService(); 
     const activityService = serviceProvider.getActivityService();
 
-    // Get the user from the auth provider ID
-    const user = await userService.findUserByAuthProviderId(authProviderId);
+    const user = await userService.findUserByNearAccountId(accountId);
 
     if (!user) {
-      return c.json({ error: "User profile not found" }, 404);
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 404,
+          success: false,
+          error: { message: "User profile not found" },
+        }),
+        404,
+      );
     }
 
     // Get the feeds curated by the user
     const feeds = await activityService.getFeedsCuratedByUser(user.id);
 
-    return c.json({ feeds });
+    return c.json(
+      FeedInfoListResponseSchema.parse({
+        statusCode: 200,
+        success: true,
+        data: feeds,
+      }),
+    );
   } catch (error) {
     console.error(
       "Error in activityRoutes.get('/feeds/curated-by/me'):",
@@ -241,12 +282,23 @@ activityRoutes.get("/feeds/curated-by/me", async (c) => {
 
     if (error instanceof ActivityServiceError) {
       return c.json(
-        { error: error.message },
+        ApiErrorResponseSchema.parse({
+          statusCode: error.statusCode as ContentfulStatusCode,
+          success: false,
+          error: { message: error.message },
+        }),
         error.statusCode as ContentfulStatusCode,
       );
     }
 
-    return c.json({ error: "Failed to fetch curated feeds" }, 500);
+    return c.json(
+      ApiErrorResponseSchema.parse({
+        statusCode: 500,
+        success: false,
+        error: { message: "Failed to fetch curated feeds" },
+      }),
+      500,
+    );
   }
 });
 
@@ -255,12 +307,15 @@ activityRoutes.get("/feeds/curated-by/me", async (c) => {
  * Get feeds approved by the authenticated user
  */
 activityRoutes.get("/feeds/approved-by/me", async (c) => {
-  const jwtPayload = c.get("jwtPayload");
-  const authProviderId = jwtPayload?.authProviderId;
+  const accountId = c.get("accountId");
 
-  if (!authProviderId) {
+  if (!accountId) {
     return c.json(
-      { error: "Unauthorized: Missing or invalid authentication token" },
+      ApiErrorResponseSchema.parse({
+        statusCode: 401,
+        success: false,
+        error: { message: "Unauthorized: Missing or invalid authentication token" },
+      }),
       401,
     );
   }
@@ -268,20 +323,32 @@ activityRoutes.get("/feeds/approved-by/me", async (c) => {
   try {
     // Get services from the service provider
     const serviceProvider = ServiceProvider.getInstance();
-    const userService = serviceProvider.getUserService();
+    const userService = serviceProvider.getUserService(); 
     const activityService = serviceProvider.getActivityService();
 
-    // Get the user from the auth provider ID
-    const user = await userService.findUserByAuthProviderId(authProviderId);
+    const user = await userService.findUserByNearAccountId(accountId);
 
     if (!user) {
-      return c.json({ error: "User profile not found" }, 404);
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 404,
+          success: false,
+          error: { message: "User profile not found" },
+        }),
+        404,
+      );
     }
 
     // Get the feeds approved by the user
     const feeds = await activityService.getFeedsApprovedByUser(user.id);
 
-    return c.json({ feeds });
+    return c.json(
+      FeedInfoListResponseSchema.parse({
+        statusCode: 200,
+        success: true,
+        data: feeds,
+      }),
+    );
   } catch (error) {
     console.error(
       "Error in activityRoutes.get('/feeds/approved-by/me'):",
@@ -290,12 +357,23 @@ activityRoutes.get("/feeds/approved-by/me", async (c) => {
 
     if (error instanceof ActivityServiceError) {
       return c.json(
-        { error: error.message },
+        ApiErrorResponseSchema.parse({
+          statusCode: error.statusCode as ContentfulStatusCode,
+          success: false,
+          error: { message: error.message },
+        }),
         error.statusCode as ContentfulStatusCode,
       );
     }
 
-    return c.json({ error: "Failed to fetch approved feeds" }, 500);
+    return c.json(
+      ApiErrorResponseSchema.parse({
+        statusCode: 500,
+        success: false,
+        error: { message: "Failed to fetch approved feeds" },
+      }),
+      500,
+    );
   }
 });
 
@@ -305,19 +383,17 @@ activityRoutes.get("/feeds/approved-by/me", async (c) => {
  */
 activityRoutes.get(
   "/feeds/:feedId/my-rank",
-  zValidator(
-    "param",
-    z.object({
-      feedId: z.string(),
-    }),
-  ),
+  zValidator("param", ActivityFeedPathParamsSchema),
   async (c) => {
-    const jwtPayload = c.get("jwtPayload");
-    const authProviderId = jwtPayload?.authProviderId;
+    const accountId = c.get("accountId");
 
-    if (!authProviderId) {
+    if (!accountId) {
       return c.json(
-        { error: "Unauthorized: Missing or invalid authentication token" },
+        ApiErrorResponseSchema.parse({
+          statusCode: 401,
+          success: false,
+          error: { message: "Unauthorized: Missing or invalid authentication token" },
+        }),
         401,
       );
     }
@@ -327,20 +403,32 @@ activityRoutes.get(
 
       // Get services from the service provider
       const serviceProvider = ServiceProvider.getInstance();
-      const userService = serviceProvider.getUserService();
+      const userService = serviceProvider.getUserService(); 
       const activityService = serviceProvider.getActivityService();
 
-      // Get the user from the auth provider ID
-      const user = await userService.findUserByAuthProviderId(authProviderId);
+    const user = await userService.findUserByNearAccountId(accountId);
 
-      if (!user) {
-        return c.json({ error: "User profile not found" }, 404);
-      }
+    if (!user) {
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 404,
+          success: false,
+          error: { message: "User profile not found" },
+        }),
+        404,
+      );
+    }
 
       // Get the user's rank for the feed
       const ranks = await activityService.getUserFeedRanks(user.id, feedId);
 
-      return c.json({ ranks });
+      return c.json(
+        UserFeedRankResponseSchema.parse({
+          statusCode: 200,
+          success: true,
+          data: ranks,
+        }),
+      );
     } catch (error) {
       console.error(
         "Error in activityRoutes.get('/feeds/:feedId/my-rank'):",
@@ -349,12 +437,23 @@ activityRoutes.get(
 
       if (error instanceof ActivityServiceError) {
         return c.json(
-          { error: error.message },
+          ApiErrorResponseSchema.parse({
+            statusCode: error.statusCode as ContentfulStatusCode,
+            success: false,
+            error: { message: error.message },
+          }),
           error.statusCode as ContentfulStatusCode,
         );
       }
 
-      return c.json({ error: "Failed to fetch user feed ranks" }, 500);
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 500,
+          success: false,
+          error: { message: "Failed to fetch user feed ranks" },
+        }),
+        500,
+      );
     }
   },
 );

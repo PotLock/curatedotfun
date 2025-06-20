@@ -3,7 +3,6 @@ import {
   DB,
   InsertActivity,
   LeaderboardRepository,
-  queries,
   SelectActivity,
   selectActivitySchema,
   SelectFeedUserStats,
@@ -11,21 +10,27 @@ import {
   SelectUserStats,
   selectUserStatsSchema,
   UpdateFeedUserStats,
-  UpdateUserStats,
+  UpdateUserStats
 } from "@curatedotfun/shared-db";
 import {
-  ActivityQueryOptionsSchema,
+  ActivitySchema,
+  FeedInfoSchema,
   GlobalStatsSchema,
-  LeaderboardQueryOptionsSchema,
+  UserFeedRanksSchema,
   UserRankingLeaderboardEntrySchema,
-  type ActivityQueryOptions,
+  type Activity as ActivityApiType,
+  type FeedInfo,
+  type GetLeaderboardApiQuery,
+  type GetUserActivitiesApiQuery,
   type GlobalStats,
-  type LeaderboardQueryOptions,
-  type UserRankingLeaderboardEntry,
+  type UserFeedRanks,
+  type UserRankingLeaderboardEntry
 } from "@curatedotfun/types";
 import { ActivityServiceError } from "@curatedotfun/utils";
 import { Logger } from "pino";
 import { IBaseService } from "./interfaces/base-service.interface";
+import { ModerationService } from "./moderation.service";
+import { UserService } from "./users.service";
 
 export class ActivityService implements IBaseService {
   public readonly logger: Logger;
@@ -33,10 +38,12 @@ export class ActivityService implements IBaseService {
   constructor(
     private activityRepository: ActivityRepository,
     private leaderboardRepository: LeaderboardRepository,
+    private moderationService: ModerationService,
+    private userService: UserService,
     private db: DB,
     logger: Logger,
   ) {
-    this.logger = logger;
+    this.logger = logger.child({ service: ActivityService.name });
   }
 
   /**
@@ -60,21 +67,55 @@ export class ActivityService implements IBaseService {
    * Get activities for a specific user
    */
   async getUserActivities(
-    userId: number,
-    options?: ActivityQueryOptions,
-  ): Promise<SelectActivity[]> {
+    accountId: string,
+    options?: GetUserActivitiesApiQuery,
+  ): Promise<ActivityApiType[]> {
     try {
-      const validatedOptions = options
-        ? ActivityQueryOptionsSchema.parse(options)
-        : {};
+
+      const userProfile =
+        await this.userService.findUserByNearAccountId(accountId);
+
+      if (!userProfile) {
+        this.logger.warn(
+          { accountId },
+          "User not found when trying to fetch activities by NEAR account ID.",
+        );
+        return []; // TODO: throw NotFoundError
+      }
+
       const activities = await this.activityRepository.getUserActivities(
-        userId,
-        validatedOptions,
+        userProfile.id,
+        options,
       );
 
-      return activities.map((activity: any) =>
-        selectActivitySchema.parse(activity),
-      );
+      let detailedModerationsMap = new Map();
+
+      try {
+        const detailedModerations =
+          await this.moderationService.getModerationsByNearAccount(
+            accountId,
+          );
+        detailedModerations.forEach((modAction) => {
+          if (modAction.submissionId) {
+            if (!detailedModerationsMap.has(modAction.submissionId)) {
+              detailedModerationsMap.set(modAction.submissionId, modAction);
+            }
+          }
+        });
+      } catch (modError) {
+        this.logger.error(
+          {
+            accountId,
+            error: modError,
+          },
+          "Failed to fetch detailed moderations for activity feed.",
+        );
+      }
+
+      return activities.map((activity) => {
+        const parsedActivity = selectActivitySchema.parse(activity);
+        return ActivitySchema.parse(parsedActivity);
+      });
     } catch (error) {
       throw new ActivityServiceError(
         `Failed to get user activities: ${error instanceof Error ? error.message : String(error)}`,
@@ -87,18 +128,14 @@ export class ActivityService implements IBaseService {
    * Get the user ranking leaderboard.
    */
   async getUserRankingLeaderboard(
-    options?: LeaderboardQueryOptions,
+    options?: GetLeaderboardApiQuery,
   ): Promise<UserRankingLeaderboardEntry[]> {
     try {
-      const validatedOptions = options
-        ? LeaderboardQueryOptionsSchema.parse(options)
-        : {};
       const rawLeaderboardData =
         await this.activityRepository.getUserRankingLeaderboard(
-          validatedOptions,
+          options,
         );
-      // Assuming rawLeaderboardData is an array of objects that need to be parsed
-      return rawLeaderboardData.map((entry) =>
+      return rawLeaderboardData.map(entry =>
         UserRankingLeaderboardEntrySchema.parse(entry),
       );
     } catch (error) {
@@ -128,7 +165,7 @@ export class ActivityService implements IBaseService {
    * Get user statistics
    */
   async getUserStats(userId: number): Promise<SelectUserStats | null> {
-    // Use SelectUserStats
+
     try {
       const stats = await this.activityRepository.getUserStats(userId);
 
@@ -136,7 +173,7 @@ export class ActivityService implements IBaseService {
         return null;
       }
 
-      return selectUserStatsSchema.parse(stats); // Use selectUserStatsSchema from db/types
+      return selectUserStatsSchema.parse(stats);
     } catch (error) {
       throw new ActivityServiceError(
         `Failed to get user stats: ${error instanceof Error ? error.message : String(error)}`,
@@ -172,7 +209,7 @@ export class ActivityService implements IBaseService {
     userId: number,
     feedId: string,
   ): Promise<SelectFeedUserStats | null> {
-    // Use SelectFeedUserStats
+
     try {
       const stats = await this.activityRepository.getFeedUserStats(
         userId,
@@ -183,7 +220,7 @@ export class ActivityService implements IBaseService {
         return null;
       }
 
-      return selectFeedUserStatsSchema.parse(stats); // Use selectFeedUserStatsSchema from db/types
+      return selectFeedUserStatsSchema.parse(stats);
     } catch (error) {
       throw new ActivityServiceError(
         `Failed to get feed user stats: ${error instanceof Error ? error.message : String(error)}`,
@@ -223,10 +260,13 @@ export class ActivityService implements IBaseService {
    */
   async getCuratorStatsLeaderboard(
     timeRange: string = "all",
-  ): Promise<queries.LeaderboardEntry[]> {
+  ): Promise<UserRankingLeaderboardEntry[]> {
     try {
-      return await this.leaderboardRepository.getCuratorStatsLeaderboard(
+      const rawData = await this.leaderboardRepository.getCuratorStatsLeaderboard(
         timeRange,
+      );
+      return rawData.map(entry =>
+        UserRankingLeaderboardEntrySchema.parse(entry)
       );
     } catch (error) {
       throw new ActivityServiceError(
@@ -239,9 +279,10 @@ export class ActivityService implements IBaseService {
   /**
    * Get feeds that a user has curated for
    */
-  async getFeedsCuratedByUser(userId: number): Promise<any[]> {
+  async getFeedsCuratedByUser(userId: number): Promise<FeedInfo[]> {
     try {
-      return await this.activityRepository.getFeedsCuratedByUser(userId);
+      const feeds = await this.activityRepository.getFeedsCuratedByUser(userId);
+      return feeds.map(feed => FeedInfoSchema.parse(feed));
     } catch (error) {
       throw new ActivityServiceError(
         `Failed to get feeds curated by user: ${error instanceof Error ? error.message : String(error)}`,
@@ -253,9 +294,10 @@ export class ActivityService implements IBaseService {
   /**
    * Get feeds that a user is an approver for
    */
-  async getFeedsApprovedByUser(userId: number): Promise<any[]> {
+  async getFeedsApprovedByUser(userId: number): Promise<FeedInfo[]> {
     try {
-      return await this.activityRepository.getFeedsApprovedByUser(userId);
+      const feeds = await this.activityRepository.getFeedsApprovedByUser(userId);
+      return feeds.map(feed => FeedInfoSchema.parse(feed));
     } catch (error) {
       throw new ActivityServiceError(
         `Failed to get feeds approved by user: ${error instanceof Error ? error.message : String(error)}`,
@@ -270,12 +312,10 @@ export class ActivityService implements IBaseService {
   async getUserFeedRanks(
     userId: number,
     feedId: string,
-  ): Promise<{
-    curatorRank: number | null;
-    approverRank: number | null;
-  }> {
+  ): Promise<UserFeedRanks> {
     try {
-      return await this.activityRepository.getUserFeedRanks(userId, feedId);
+      const ranks = await this.activityRepository.getUserFeedRanks(userId, feedId);
+      return UserFeedRanksSchema.parse(ranks);
     } catch (error) {
       throw new ActivityServiceError(
         `Failed to get user feed ranks: ${error instanceof Error ? error.message : String(error)}`,
