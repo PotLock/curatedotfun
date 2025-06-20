@@ -1,23 +1,29 @@
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   index,
   integer,
   jsonb,
+  pgEnum,
   serial,
   pgTable as table,
   text,
   timestamp,
-  pgEnum,
 } from "drizzle-orm/pg-core";
+import {
+  createInsertSchema,
+  createSelectSchema,
+  createUpdateSchema,
+} from "drizzle-zod";
 import { z } from "zod";
 import { Metadata, timestamps } from "./common";
-import { users } from "./users";
 import { feeds } from "./feeds";
 import { submissions } from "./submissions";
+import { users } from "./users";
 
 export const activityTypeValues = [
   "CONTENT_SUBMISSION",
   "CONTENT_APPROVAL",
+  "CONTENT_REJECTION",
   "TOKEN_BUY",
   "TOKEN_SELL",
   "POINTS_REDEMPTION",
@@ -64,6 +70,21 @@ export const activities = table(
   ],
 );
 
+export const activitiesRelations = relations(activities, ({ one }) => ({
+  user: one(users, {
+    fields: [activities.user_id],
+    references: [users.id],
+  }),
+  feed: one(feeds, {
+    fields: [activities.feed_id],
+    references: [feeds.id],
+  }),
+  submission: one(submissions, {
+    fields: [activities.submission_id],
+    references: [submissions.tweetId],
+  }),
+}));
+
 // User Stats Table - For aggregated user statistics
 export const userStats = table("user_stats", {
   user_id: integer("user_id")
@@ -79,6 +100,13 @@ export const userStats = table("user_stats", {
 
   ...timestamps,
 });
+
+export const userStatsRelations = relations(userStats, ({ one }) => ({
+  user: one(users, {
+    fields: [userStats.user_id],
+    references: [users.id],
+  }),
+}));
 
 // Feed User Stats Table - For feed-specific user statistics
 export const feedUserStats = table(
@@ -119,3 +147,48 @@ export const feedUserStats = table(
     ),
   ],
 );
+
+export const feedUserStatsRelations = relations(feedUserStats, ({ one }) => ({
+  user: one(users, {
+    fields: [feedUserStats.user_id],
+    references: [users.id],
+  }),
+  feed: one(feeds, {
+    fields: [feedUserStats.feed_id],
+    references: [feeds.id],
+  }),
+}));
+
+export const insertActivitySchema = createInsertSchema(activities, {
+  id: z.undefined(),
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
+export const updateActivitySchema = createUpdateSchema(activities);
+export const selectActivitySchema = createSelectSchema(activities);
+export type InsertActivity = z.infer<typeof insertActivitySchema>;
+export type UpdateActivity = z.infer<typeof updateActivitySchema>;
+export type SelectActivity = z.infer<typeof selectActivitySchema>;
+
+// UserStats Schemas and Types
+export const insertUserStatsSchema = createInsertSchema(userStats, {
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
+export const updateUserStatsSchema = createUpdateSchema(userStats);
+export const selectUserStatsSchema = createSelectSchema(userStats);
+export type InsertUserStats = z.infer<typeof insertUserStatsSchema>;
+export type UpdateUserStats = z.infer<typeof updateUserStatsSchema>;
+export type SelectUserStats = z.infer<typeof selectUserStatsSchema>;
+
+// FeedUserStats Schemas and Types
+export const insertFeedUserStatsSchema = createInsertSchema(feedUserStats, {
+  id: z.undefined(),
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
+export const updateFeedUserStatsSchema = createUpdateSchema(feedUserStats);
+export const selectFeedUserStatsSchema = createSelectSchema(feedUserStats);
+export type InsertFeedUserStats = z.infer<typeof insertFeedUserStatsSchema>;
+export type UpdateFeedUserStats = z.infer<typeof updateFeedUserStatsSchema>;
+export type SelectFeedUserStats = z.infer<typeof selectFeedUserStatsSchema>;

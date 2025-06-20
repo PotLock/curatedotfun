@@ -9,11 +9,24 @@ import {
 export const ModerationActionEnum = z.enum(["approve", "reject"]);
 export type ModerationActionType = z.infer<typeof ModerationActionEnum>;
 
+export const ModeratorAccountIdTypeEnum = z.enum(["near", "platform_username"]);
+export type ModeratorAccountIdType = z.infer<typeof ModeratorAccountIdTypeEnum>;
+
+export const ModerationSourceEnum = z.enum([
+  "ui",
+  "platform_comment",
+  "auto_approval",
+  "super_admin_direct",
+]);
+export type ModerationSource = z.infer<typeof ModerationSourceEnum>;
+
 export const ModerationActionSchema = z.object({
   id: z.number().int().positive(),
   submissionId: z.string().min(1),
   feedId: z.string().min(1),
-  adminId: z.string().min(1),
+  moderatorAccountId: z.string().min(1),
+  moderatorAccountIdType: ModeratorAccountIdTypeEnum,
+  source: ModerationSourceEnum,
   action: ModerationActionEnum,
   note: z.string().optional().nullable(),
   createdAt: z.preprocess(
@@ -30,7 +43,7 @@ export type ModerationAction = z.infer<typeof ModerationActionSchema>;
 export const CreateModerationRequestSchema = z.object({
   submissionId: z.string().min(1),
   feedId: z.string().min(1),
-  adminId: z.string().min(1),
+  moderatorAccountId: z.string().min(1),
   action: ModerationActionEnum,
   note: z.string().optional().nullable(),
 });

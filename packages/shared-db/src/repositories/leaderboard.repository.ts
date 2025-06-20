@@ -1,4 +1,5 @@
-import { sql } from "drizzle-orm";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
+import * as schema from "../schema";
 import { executeWithRetry, withErrorHandling } from "../utils";
 import { DB } from "../validators";
 
@@ -70,100 +71,126 @@ export class LeaderboardRepository {
               break;
           }
 
-          // Build the date filter SQL fragment conditionally
-          const dateFilterSql = startDate
-            ? sql`AND s.created_at >= ${startDate}`
-            : sql``;
+          const dateFilter = startDate
+            ? gte(schema.submissions.createdAt, startDate)
+            : undefined;
 
-          // Use a single query with Common Table Expressions (CTEs) for better performance
-          const result = await dbInstance.execute(sql`
-    WITH feed_totals AS (
-      -- Get total submissions per feed
-      SELECT
-        feed_id AS feedid,
-        COUNT(DISTINCT submission_id) AS totalcount
-      FROM 
-        submission_feeds
-      GROUP BY 
-        feed_id
-    ),
-    curator_stats AS (
-      -- Get curator statistics
-      SELECT 
-        s.curator_id AS curatorid,
-        s.curator_username AS curatorusername,
-        COUNT(DISTINCT s.tweet_id) AS submissioncount,
-        COUNT(DISTINCT CASE WHEN mh.action = 'approve' THEN s.tweet_id END) AS approvalcount,
-        COUNT(DISTINCT CASE WHEN mh.action = 'reject' THEN s.tweet_id END) AS rejectioncount
-      FROM 
-        submissions s
-      LEFT JOIN 
-        moderation_history mh ON s.tweet_id = mh.tweet_id
-      WHERE
-        s.curator_id IS NOT NULL ${dateFilterSql}
-      GROUP BY
-        s.curator_id, s.curator_username
-    ),
-    curator_feeds AS (
-      -- Get feed submissions per curator
-      SELECT 
-        s.curator_id AS curatorid,
-        sf.feed_id AS feedid,
-        COUNT(DISTINCT sf.submission_id) AS count,
-        ft.totalcount
-      FROM 
-        submission_feeds sf
-      JOIN 
-        submissions s ON sf.submission_id = s.tweet_id
-      JOIN
-        feed_totals ft ON sf.feed_id = ft.feedid
-      WHERE
-        s.curator_id IS NOT NULL ${dateFilterSql}
-      GROUP BY
-        s.curator_id, sf.feed_id, ft.totalcount
-    )
-    -- Combine all data with JSON aggregation
-    SELECT 
-      cs.curatorid,
-      cs.curatorusername,
-      cs.submissioncount,
-      cs.approvalcount,
-      cs.rejectioncount,
-      COALESCE(
-        json_agg(
-          json_build_object(
-            'feedId', cf.feedid, 
-            'count', cf.count, 
-            'totalInFeed', cf.totalcount
-          ) ORDER BY cf.count DESC
-        ) FILTER (WHERE cf.feedid IS NOT NULL),
-        '[]'
-      ) AS feedsubmissions
-    FROM 
-      curator_stats cs
-    LEFT JOIN 
-      curator_feeds cf ON cs.curatorid = cf.curatorid
-    GROUP BY 
-      cs.curatorid, cs.curatorusername, cs.submissioncount, cs.approvalcount, cs.rejectioncount
-    ORDER BY 
-      cs.submissioncount DESC
-  `);
+          const feedTotals = dbInstance.$with("feed_totals").as(
+            dbInstance
+              .select({
+                feedId: schema.submissionFeeds.feedId,
+                totalCount:
+                  sql<number>`COUNT(DISTINCT ${schema.submissionFeeds.submissionId})`.as(
+                    "totalCount",
+                  ),
+              })
+              .from(schema.submissionFeeds)
+              .groupBy(schema.submissionFeeds.feedId),
+          );
 
-          // Map the results to the expected format
-          return result.rows.map((row: any) => ({
-            curatorId: String(row.curatorid),
-            curatorUsername: String(row.curatorusername),
-            submissionCount: Number(row.submissioncount),
-            approvalCount: Number(row.approvalcount),
-            rejectionCount: Number(row.rejectioncount),
-            feedSubmissions: Array.isArray(row.feedsubmissions)
-              ? row.feedsubmissions.map((fs: any) => ({
-                  feedId: String(fs.feedId),
-                  count: Number(fs.count),
-                  totalInFeed: Number(fs.totalInFeed),
-                }))
-              : [],
-          }));
+          const curatorStats = dbInstance.$with("curator_stats").as(
+            dbInstance
+              .select({
+                curatorId: schema.submissions.curatorId,
+                curatorUsername: schema.submissions.curatorUsername,
+                submissionCount:
+                  sql<number>`COUNT(DISTINCT ${schema.submissions.tweetId})`.as(
+                    "submissionCount",
+                  ),
+                approvalCount:
+                  sql<number>`COUNT(DISTINCT CASE WHEN ${schema.moderationHistory.action} = 'approve' THEN ${schema.submissions.tweetId} END)`.as(
+                    "approvalCount",
+                  ),
+                rejectionCount:
+                  sql<number>`COUNT(DISTINCT CASE WHEN ${schema.moderationHistory.action} = 'reject' THEN ${schema.submissions.tweetId} END)`.as(
+                    "rejectionCount",
+                  ),
+              })
+              .from(schema.submissions)
+              .leftJoin(
+                schema.moderationHistory,
+                eq(
+                  schema.submissions.tweetId,
+                  schema.moderationHistory.submissionId,
+                ),
+              )
+              .where(
+                and(
+                  sql`${schema.submissions.curatorId} IS NOT NULL`,
+                  dateFilter,
+                ),
+              )
+              .groupBy(
+                schema.submissions.curatorId,
+                schema.submissions.curatorUsername,
+              ),
+          );
+
+          const curatorFeeds = dbInstance.$with("curator_feeds").as(
+            dbInstance
+              .select({
+                curatorId: schema.submissions.curatorId,
+                feedId: schema.submissionFeeds.feedId,
+                count:
+                  sql<number>`COUNT(DISTINCT ${schema.submissionFeeds.submissionId})`.as(
+                    "count",
+                  ),
+                totalCount: feedTotals.totalCount,
+              })
+              .from(schema.submissionFeeds)
+              .innerJoin(
+                schema.submissions,
+                eq(
+                  schema.submissionFeeds.submissionId,
+                  schema.submissions.tweetId,
+                ),
+              )
+              .innerJoin(
+                feedTotals,
+                eq(schema.submissionFeeds.feedId, feedTotals.feedId),
+              )
+              .where(
+                and(
+                  sql`${schema.submissions.curatorId} IS NOT NULL`,
+                  dateFilter,
+                ),
+              )
+              .groupBy(
+                schema.submissions.curatorId,
+                schema.submissionFeeds.feedId,
+                feedTotals.totalCount,
+              ),
+          );
+
+          const result = await dbInstance
+            .with(feedTotals, curatorStats, curatorFeeds)
+            .select({
+              curatorId: curatorStats.curatorId,
+              curatorUsername: curatorStats.curatorUsername,
+              submissionCount: curatorStats.submissionCount,
+              approvalCount: curatorStats.approvalCount,
+              rejectionCount: curatorStats.rejectionCount,
+              feedSubmissions: sql<
+                FeedSubmissionCount[]
+              >`COALESCE(json_agg(json_build_object('feedId', ${curatorFeeds.feedId}, 'count', ${curatorFeeds.count}, 'totalInFeed', ${curatorFeeds.totalCount})) FILTER (WHERE ${curatorFeeds.feedId} IS NOT NULL), '[]'::json)`.as(
+                "feedSubmissions",
+              ),
+            })
+            .from(curatorStats)
+            .leftJoin(
+              curatorFeeds,
+              eq(curatorStats.curatorId, curatorFeeds.curatorId),
+            )
+            .groupBy(
+              curatorStats.curatorId,
+              curatorStats.curatorUsername,
+              curatorStats.submissionCount,
+              curatorStats.approvalCount,
+              curatorStats.rejectionCount,
+            )
+            .orderBy(desc(curatorStats.submissionCount));
+
+          return result;
         }, this.db),
       {
         operationName: "get curator stats leaderboard",

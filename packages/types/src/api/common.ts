@@ -40,3 +40,35 @@ export type SimpleMessageData = z.infer<typeof SimpleMessageDataSchema>;
 export const NoContentDataSchema = z
   .undefined()
   .describe("Represents no data payload");
+
+// --- Common Query Options ---
+
+export const QueryOptionsSchema = z.object({
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .pipe(z.number().int().min(1).optional()),
+  offset: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .pipe(z.number().int().min(0).optional()),
+  sortBy: z.string().optional(),
+  sortOrder: z.enum(["asc", "desc"]).optional(),
+});
+export type BaseStringQueryOptions = z.infer<typeof QueryOptionsSchema>;
+
+export const PaginatedDataSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
+  z.object({
+    items: z.array(itemSchema),
+    total: z.number().int().min(0),
+    limit: z.number().int().min(1),
+    offset: z.number().int().min(0),
+    totalPages: z.number().int().min(0).optional(), // Calculated: Math.ceil(total / limit)
+    hasNextPage: z.boolean().optional(),
+    hasPrevPage: z.boolean().optional(),
+  });
+export type PaginatedData<T> = z.infer<
+  ReturnType<typeof PaginatedDataSchema<z.ZodType<T>>>
+>;

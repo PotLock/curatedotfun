@@ -1,131 +1,106 @@
+import {
+  Activity,
+  ActivityListResponse,
+  FeedInfo,
+  FeedInfoListResponse,
+  GetUserActivitiesApiQuery,
+  GlobalStats,
+  GlobalStatsResponse,
+  UserFeedRankResponse,
+  UserFeedRanks,
+} from "@curatedotfun/types";
+import { useAuth } from "../../contexts/auth-context";
 import { useApiQuery } from "../../hooks/api-client";
 
-// Types from the old api.ts
-export const ActivityType = {
-  CONTENT_SUBMISSION: "CONTENT_SUBMISSION",
-  CONTENT_APPROVAL: "CONTENT_APPROVAL",
-  TOKEN_BUY: "TOKEN_BUY",
-  TOKEN_SELL: "TOKEN_SELL",
-  POINTS_REDEMPTION: "POINTS_REDEMPTION",
-  POINTS_AWARDED: "POINTS_AWARDED",
-} as const;
-
-export type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];
-
-export interface UserActivityStats {
-  type: ActivityType;
-  feed_id: string | null;
-  user_id: number;
-  id: number;
-  data: unknown;
-  metadata: unknown | null;
-  createdAt: Date;
-  updatedAt: Date | null;
-  timestamp: Date;
-  submission_id: string | null;
-}
-
-// This type might not be directly used if useApiQuery returns UserActivityStats[] directly
-// export interface ListOfUserActivityStats {
-//   activities: UserActivityStats[];
-// }
-
-export interface ActivityQueryOptions {
-  timeRange?: string;
-  feedId?: string;
-}
-
-export interface CuratedFeed {
-  feed_id: string;
-  feed_name: string | null;
-  submissions_count: number;
-  curator_rank: number | null;
-  points: number;
-  data: unknown;
-  metadata: unknown | null;
-}
-
-export interface FeedRank {
-  curatorRank: number | null;
-  approverRank: number | null;
-}
-
-export interface GlobalActivityStats {
-  approval_rate: number;
-  total_approvals: number;
-  total_submissions: number;
-}
-
-export interface AggregatedActivityStats {
-  totalSubmissions: number;
-  totalApprovals: number;
-  totalRejections: number;
-  approvalRate: number;
-}
-// End of copied types
-
 export function useGlobalActivityStats() {
-  return useApiQuery<GlobalActivityStats>(
+  return useApiQuery<GlobalStatsResponse, Error, GlobalStats>(
     ["global-activity-stats"],
     `/activity/stats`,
     {
       refetchInterval: 30000,
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,
+      select: (response) => response.data as GlobalStats,
     },
   );
 }
 
 export function useMyActivity() {
-  return useApiQuery<AggregatedActivityStats>(
+  const { isSignedIn } = useAuth();
+  return useApiQuery<ActivityListResponse, Error, Activity[]>(
     ["my-activity"],
     `/activity/user/me`,
-    // { enabled: isLoggedIn } // This would require useAuth here or passing enabled status
+    {
+      enabled: isSignedIn,
+      select: (response) => response.data as Activity[],
+    },
   );
 }
 
 export function useUserActivity(
   userId: string | number,
-  options?: ActivityQueryOptions,
+  options?: Partial<GetUserActivitiesApiQuery>,
 ) {
   const params = new URLSearchParams();
-  if (options?.timeRange) params.append("timeRange", options.timeRange);
-  if (options?.feedId) params.append("feedId", options.feedId);
+
+  if (options?.types)
+    params.append(
+      "types",
+      Array.isArray(options.types) ? options.types.join(",") : options.types,
+    );
+  if (options?.feed_id) params.append("feed_id", options.feed_id);
+  if (options?.from_date) params.append("from_date", options.from_date);
+  if (options?.to_date) params.append("to_date", options.to_date);
+
+  if (options?.limit) params.append("limit", options.limit.toString());
+  if (options?.offset) params.append("offset", options.offset.toString());
+  if (options?.sortBy) params.append("sortBy", options.sortBy);
+  if (options?.sortOrder) params.append("sortOrder", options.sortOrder);
+
   const queryString = params.toString();
   const path = `/activity/user/${userId}${queryString ? `?${queryString}` : ""}`;
 
-  // Assuming the API returns an object like { activities: UserActivityStats[] }
-  // and we want to extract the 'activities' array.
-  return useApiQuery<
-    { activities: UserActivityStats[] },
-    Error,
-    UserActivityStats[]
-  >(["user-activity", userId, options], path, {
-    select: (data) => data.activities,
-    // enabled: !!userId // Or other conditions
-  });
+  return useApiQuery<ActivityListResponse, Error, Activity[]>(
+    ["user-activity", userId, options],
+    path,
+    {
+      enabled: !!userId,
+      select: (response) => response.data as Activity[],
+    },
+  );
 }
 
 export function useMyCuratedFeeds() {
-  return useApiQuery<CuratedFeed[]>(
+  const { isSignedIn } = useAuth();
+  return useApiQuery<FeedInfoListResponse, Error, FeedInfo[]>(
     ["my-curated-feeds"],
     `/activity/feeds/curated-by/me`,
-    // { enabled: isLoggedIn }
+    {
+      enabled: isSignedIn,
+      select: (response) => response.data as FeedInfo[],
+    },
   );
 }
 
 export function useMyApprovedFeeds() {
-  return useApiQuery<CuratedFeed[]>(
+  const { isSignedIn } = useAuth();
+  return useApiQuery<FeedInfoListResponse, Error, FeedInfo[]>(
     ["my-approved-feeds"],
     `/activity/feeds/approved-by/me`,
-    // { enabled: isLoggedIn }
+    {
+      enabled: isSignedIn,
+      select: (response) => response.data as FeedInfo[],
+    },
   );
 }
 
 export function useMyFeedRank(feedId: string) {
-  return useApiQuery<FeedRank>(
+  return useApiQuery<UserFeedRankResponse, Error, UserFeedRanks>(
     ["my-feed-rank", feedId],
     `/activity/feeds/${feedId}/my-rank`,
-    { enabled: !!feedId },
+    {
+      enabled: !!feedId,
+      select: (response) => response.data as UserFeedRanks,
+    },
   );
 }

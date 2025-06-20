@@ -251,7 +251,6 @@ export class SubmissionService implements IBackgroundTaskService {
             tweetId: originalTweet.id!,
             content: originalTweet.text || "",
             username: originalTweet.username!,
-            createdAt: originalTweet.timeParsed || new Date(),
             curatorId: curatorUserId,
             curatorUsername: curatorTweet.username!,
             curatorNotes,
