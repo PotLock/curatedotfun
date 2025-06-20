@@ -670,6 +670,8 @@ export class ActivityRepository {
             .select({
               feed_id: schema.feedUserStats.feed_id,
               feed_name: schema.feeds.name,
+              feed_image_url: sql<string>`${schema.feeds.config} ->> 'image'`,
+              description: schema.feeds.description,
               submissions_count: schema.feedUserStats.submissions_count,
               curator_rank: schema.feedUserStats.curator_rank,
               points: schema.feedUserStats.points,
@@ -709,6 +711,8 @@ export class ActivityRepository {
             .select({
               feed_id: schema.feedUserStats.feed_id,
               feed_name: schema.feeds.name,
+              feed_image_url: sql<string>`${schema.feeds.config} ->> 'image'`, // TODO: we'll clean it up
+              description: schema.feeds.description,
               approvals_count: schema.feedUserStats.approvals_count,
               approver_rank: schema.feedUserStats.approver_rank,
               points: schema.feedUserStats.points,

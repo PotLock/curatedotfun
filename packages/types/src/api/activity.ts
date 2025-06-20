@@ -79,9 +79,10 @@ export type UserFeedRanks = z.infer<typeof UserFeedRanksSchema>;
 
 export const FeedInfoSchema = z
   .object({
-    id: z.string(), // Feed ID
+    id: z.string(),
     name: z.string(),
     description: z.string().optional().nullable(),
+    image: z.string().optional().nullable(),
   })
   .passthrough();
 export type FeedInfo = z.infer<typeof FeedInfoSchema>;

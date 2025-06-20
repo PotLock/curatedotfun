@@ -1,5 +1,7 @@
 import {
+  ActivityRepository,
   FeedRepository,
+  LeaderboardRepository,
   ModerationRepository,
   SubmissionRepository,
   TwitterRepository,
@@ -144,6 +146,18 @@ export class ServiceProvider {
       submissionService.initialize(); // TODO: remove
       this.backgroundTaskServices.push(submissionService);
     }
+
+    const activityRepository = new ActivityRepository(db);
+    const leaderboardRepository = new LeaderboardRepository(db);
+    const activityService = new ActivityService(
+      activityRepository,
+      leaderboardRepository,
+      moderationService,
+      this.getUserService(),
+      db,
+      logger,
+    );
+    this.services.set("activityService", activityService);
   }
 
   /**
