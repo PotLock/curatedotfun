@@ -1,12 +1,17 @@
 import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
 import * as schema from "../schema";
-import { activityTypeZodEnum, type ActivityType } from "../schema/activity";
+import type {
+  ActivityType,
+  InsertActivity,
+  UpdateFeedUserStats,
+  UpdateUserStats
+} from "../schema/activity";
+import {
+  activityTypeZodEnum
+} from "../schema/activity";
 import { executeWithRetry, withErrorHandling } from "../utils";
 import {
   DB,
-  InsertActivity,
-  UpdateFeedUserStats,
-  UpdateUserStats,
 } from "../validators";
 
 export class ActivityRepository {
@@ -750,13 +755,13 @@ export class ActivityRepository {
 
           return result.length > 0
             ? {
-                curatorRank: result[0].curator_rank,
-                approverRank: result[0].approver_rank,
-              }
+              curatorRank: result[0].curator_rank,
+              approverRank: result[0].approver_rank,
+            }
             : {
-                curatorRank: null,
-                approverRank: null,
-              };
+              curatorRank: null,
+              approverRank: null,
+            };
         }, this.db);
       },
       {

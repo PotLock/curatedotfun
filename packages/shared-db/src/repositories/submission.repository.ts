@@ -121,9 +121,11 @@ export class SubmissionRepository {
               (mh) =>
                 ({
                   id: mh.id,
-                  tweetId: mh.tweetId,
+                  submissionId: mh.submissionId,
                   feedId: mh.feedId,
-                  adminId: mh.adminId,
+                  moderatorAccountId: mh.moderatorAccountId,
+                  moderatorAccountIdType: mh.moderatorAccountIdType,
+                  source: mh.source,
                   action: mh.action,
                   note: mh.note,
                   createdAt: mh.createdAt,
@@ -196,9 +198,11 @@ export class SubmissionRepository {
               (mh) =>
                 ({
                   id: mh.id,
-                  tweetId: mh.tweetId,
+                  submissionId: mh.submissionId,
                   feedId: mh.feedId,
-                  adminId: mh.adminId,
+                  moderatorAccountId: mh.moderatorAccountId,
+                  moderatorAccountIdType: mh.moderatorAccountIdType,
+                  source: mh.source,
                   action: mh.action,
                   note: mh.note,
                   createdAt: mh.createdAt,
@@ -318,9 +322,11 @@ export class SubmissionRepository {
                   (mh) =>
                     ({
                       id: mh.id,
-                      tweetId: mh.tweetId,
+                      submissionId: mh.submissionId,
                       feedId: mh.feedId,
-                      adminId: mh.adminId,
+                      moderatorAccountId: mh.moderatorAccountId,
+                      moderatorAccountIdType: mh.moderatorAccountIdType,
+                      source: mh.source,
                       action: mh.action,
                       note: mh.note,
                       createdAt: mh.createdAt,
@@ -364,12 +370,12 @@ export class SubmissionRepository {
         items: [],
         pagination: isPaginated
           ? {
-              page: page!,
-              limit: limit!,
-              totalCount: 0,
-              totalPages: 0,
-              hasNextPage: false,
-            }
+            page: page!,
+            limit: limit!,
+            totalCount: 0,
+            totalPages: 0,
+            hasNextPage: false,
+          }
           : undefined,
       } as PaginatedResponse<RichSubmission>,
     );
