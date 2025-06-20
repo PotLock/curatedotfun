@@ -1,9 +1,10 @@
 ALTER TABLE "moderation_history" RENAME COLUMN "tweet_id" TO "submission_id";--> statement-breakpoint
 ALTER TABLE "moderation_history" RENAME COLUMN "admin_id" TO "moderator_account_id";--> statement-breakpoint
-ALTER TABLE "moderation_history" DROP CONSTRAINT "moderation_history_tweet_id_submissions_tweet_id_fk";
+ALTER TABLE "moderation_history" DROP CONSTRAINT IF EXISTS "moderation_history_tweet_id_submissions_tweet_id_fk";
 --> statement-breakpoint
-DROP INDEX "moderation_history_tweet_idx";--> statement-breakpoint
-DROP INDEX "moderation_history_admin_idx";--> statement-breakpoint
+DROP INDEX IF EXISTS "moderation_history_tweet_idx";--> statement-breakpoint
+DROP INDEX IF EXISTS "moderation_history_admin_idx";--> statement-breakpoint
+
 ALTER TABLE "moderation_history" ADD COLUMN "moderator_account_id_type" text;--> statement-breakpoint
 ALTER TABLE "moderation_history" ADD COLUMN "source" text;--> statement-breakpoint
 

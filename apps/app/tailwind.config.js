@@ -14,6 +14,12 @@ export default {
         sharp: "4px 4px 0 rgba(0, 0, 0, 1)",
         "sharp-hover": "6px 6px 0 rgba(0, 0, 0, 1)",
       },
+      colors: {
+        destructive: {
+          DEFAULT: "oklch(var(--destructive))",
+          foreground: "oklch(var(--destructive-foreground))",
+        },
+      },
     },
   },
   plugins: [typography],

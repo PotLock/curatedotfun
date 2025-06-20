@@ -3,6 +3,7 @@ import { ListFilter } from "lucide-react";
 import FeedLayout from "../../../components/FeedLayout";
 import { Badge } from "../../../components/ui/badge";
 import { useFeed } from "../../../lib/api";
+import { DistributorBadges } from "../../../components/DistributorBadges";
 
 const TABS = [
   // {
@@ -94,23 +95,13 @@ function FeedPageLayout() {
                 Twitter
               </Badge>
             </div>
-            <div className="flex  sm:flex-row items-center gap-2 justify-end sm:gap-3 w-full sm:w-full">
-              <p className="flex">Posting to:</p>
-              {feed?.config?.outputs?.stream?.distribute?.map((distributor) => {
-                const pluginName = distributor.plugin.replace(
-                  "@curatedotfun/",
-                  "",
-                );
-                return (
-                  <Badge
-                    key={distributor.plugin}
-                    className="text-black border border-stone-500 rounded-md bg-stone-50 shadow-none capitalize px-2 py-0.5"
-                  >
-                    {pluginName}
-                  </Badge>
-                );
-              })}
-            </div>
+            {(feed?.config?.outputs?.stream?.distribute?.length ?? 0) > 0 && (
+              <div className="flex sm:flex-row items-center gap-2 justify-end sm:gap-3 w-full sm:w-full">
+                <DistributorBadges
+                  distribute={feed?.config?.outputs?.stream?.distribute ?? []}
+                />
+              </div>
+            )}
           </div>
         </div>
 
