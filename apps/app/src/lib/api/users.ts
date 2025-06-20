@@ -1,23 +1,11 @@
-import { CreateUserRequest, UserProfile } from "@curatedotfun/types";
-import { useApiMutation, useApiQuery } from "../../hooks/api-client";
+import {
+  CreateUserRequest,
+  UserProfile,
+  UserProfileWrappedResponse,
+} from "@curatedotfun/types";
+import { useApiQuery } from "../../hooks/api-client";
 import { toast } from "../../hooks/use-toast";
 import { apiClient, ApiError } from "../api-client";
-
-export function useCreateUserProfile() {
-  return useApiMutation<UserProfile, Error, CreateUserRequest>(
-    {
-      method: "POST",
-      path: "/users",
-      message: "createUserProfile",
-    },
-    {
-      // onSuccess: (data) => {
-      //   const queryClient = useQueryClient();
-      //   queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
-      // },
-    },
-  );
-}
 
 export function useCurrentUserProfile(enabled = true) {
   return useApiQuery<UserProfile | null>(["currentUserProfile"], `/users/me`, {
@@ -64,7 +52,8 @@ export async function ensureUserProfile(
       // User profile not found (404), proceed to create it.
       try {
         const response = await apiClient.makeRequest<
-          { profile: UserProfile },
+          // TODO: honestly, creating an account can be entirely server-side, and just be a log of whoever signed in
+          UserProfileWrappedResponse, // TODO: ApiSuccessResponse can be moved to makeRequest typings after all types are aligned
           CreateUserRequest
         >(
           "POST",
@@ -74,17 +63,21 @@ export async function ensureUserProfile(
             username: accountId.split(".")[0],
             nearAccountId: accountId,
           },
-          "createUserProfile", // Message for signing
+          "createUserProfile",
         );
-        const newUserProfile = response.profile;
 
-        toast({
-          title: "Account Created",
-          description: "Your profile has been successfully set up.",
-          variant: "success",
-        });
-        // Caller might want to invalidate queries like ['currentUserProfile'] and ['userByNearAccountId', accountId]
-        return newUserProfile;
+        if (response.success && response.data) {
+          // this data extraction will be moved to makeRequest response
+          const newUserProfile = response.data;
+          toast({
+            title: "Account Created",
+            description: "Your profile has been successfully set up.",
+            variant: "success",
+          });
+          return newUserProfile;
+        }
+
+        return null;
       } catch (creationError) {
         console.error("Error creating user profile:", creationError);
         const creationErrorMessage =

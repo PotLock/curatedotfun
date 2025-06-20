@@ -1,10 +1,6 @@
 import { relations } from "drizzle-orm";
 import { index, serial, pgTable as table, text } from "drizzle-orm/pg-core";
-import {
-  createInsertSchema,
-  createSelectSchema,
-  createUpdateSchema,
-} from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import { timestamps } from "./common";

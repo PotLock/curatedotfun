@@ -26,6 +26,12 @@ importers:
       '@crosspost/scheduler-sdk':
         specifier: ^0.1.1
         version: 0.1.1
+      '@crosspost/sdk':
+        specifier: ^0.3.0
+        version: 0.3.0
+      '@crosspost/types':
+        specifier: ^0.3.0
+        version: 0.3.0
       '@curatedotfun/shared-db':
         specifier: workspace:*
         version: link:../../packages/shared-db
@@ -120,12 +126,6 @@ importers:
         specifier: ^3.24.5
         version: 3.24.5(zod@3.25.62)
     devDependencies:
-      '@crosspost/sdk':
-        specifier: ^0.3.0
-        version: 0.3.0
-      '@crosspost/types':
-        specifier: ^0.3.0
-        version: 0.3.0
       '@module-federation/node':
         specifier: ^2.6.30
         version: 2.7.7(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.9(esbuild@0.25.5))

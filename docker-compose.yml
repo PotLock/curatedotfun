@@ -54,17 +54,6 @@ services:
     command: sh -c "bun ./scripts/seed-dev.ts"
     profiles: ["dev"]
 
-  # Test-specific initialization
-  db-init-test:
-    extends: db-init
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres_test:5432/test
-    depends_on:
-      postgres_test:
-        condition: service_healthy
-    command: sh -c "bun add -g pnpm && pnpm install && pnpm run db:migrate && pnpm run db:seed:test"
-    profiles: ["test"]
-
   # Application service
   app:
     build:

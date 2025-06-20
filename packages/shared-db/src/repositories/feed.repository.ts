@@ -23,10 +23,10 @@ import {
   InsertSubmissionFeed,
   RichSubmission,
   SelectFeed,
-  SelectModerationHistory,
   SelectSubmissionFeed,
   UpdateFeed,
 } from "../validators";
+import { SelectModerationHistory } from "../schema/moderation";
 import { PaginatedResponse } from "./submission.repository";
 
 /**

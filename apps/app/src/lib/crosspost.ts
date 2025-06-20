@@ -2,28 +2,26 @@ import { CrosspostClient, getErrorMessage, isAuthError } from "@crosspost/sdk";
 import {
   PlatformName,
   type ApiResponse,
+  type AuthCallbackResponse,
   type ConnectedAccount,
   type ConnectedAccountsResponse,
-  type AuthCallbackResponse,
 } from "@crosspost/types";
-import { sign } from "near-sign-verify";
-import { useAuth } from "../contexts/auth-context";
 import {
-  useQuery,
   useMutation,
+  useQuery,
   useQueryClient,
   type QueryKey,
 } from "@tanstack/react-query";
-import { useUpdateUserPlatformIdentitiesMutation } from "../hooks/mutations/user-platforms";
-import { PlatformIdentityData } from "./api-client";
-import { near } from "./near";
+import { sign } from "near-sign-verify";
+import { useAuth } from "../contexts/auth-context";
 import { useToast } from "../hooks/use-toast";
+import { near } from "./near";
 
 export const crosspostClient = new CrosspostClient();
 
 export function useConnectedAccounts() {
   const { isSignedIn, currentAccountId } = useAuth();
-  const queryKey: QueryKey = ["connectedCrosspostAccounts", currentAccountId];
+  const queryKey: QueryKey = ["connectedAccounts", currentAccountId];
 
   const queryFn = async (): Promise<ConnectedAccount[]> => {
     if (!isSignedIn || !currentAccountId) {
@@ -68,7 +66,6 @@ export interface ConnectAccountVariables {
 export const useConnectAccount = () => {
   const queryClient = useQueryClient();
   const { currentAccountId, isSignedIn } = useAuth();
-  const updateUserDbMutation = useUpdateUserPlatformIdentitiesMutation();
   const { toast } = useToast();
 
   return useMutation<void, Error, ConnectAccountVariables>({
@@ -115,24 +112,6 @@ export const useConnectAccount = () => {
           typeof response.status === "object" &&
           response.status.code === "AUTH_SUCCESS"
         ) {
-          const latestAccountsResponse: ApiResponse<ConnectedAccountsResponse> =
-            await crosspostClient.auth.getConnectedAccounts();
-          const latestAccounts = latestAccountsResponse.data?.accounts || [];
-
-          if (latestAccounts.length > 0) {
-            const platformIdentities: PlatformIdentityData[] = latestAccounts
-              .map((acc) => ({
-                platformName: acc.platform as string,
-                platformUserId: acc.userId,
-                username: acc.profile?.username || "",
-                profileImageUrl: acc.profile?.profileImageUrl,
-              }))
-              .filter((identity) => identity.username);
-
-            if (platformIdentities.length > 0) {
-              await updateUserDbMutation.mutateAsync(platformIdentities);
-            }
-          }
           return; // Success: platform, userId, status.code format
         } else {
           console.error(

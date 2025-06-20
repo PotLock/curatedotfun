@@ -1,12 +1,12 @@
 import { and, asc, count, desc, eq, ilike, or, sql, SQL } from "drizzle-orm";
 import * as schema from "../schema";
 import { SubmissionStatus } from "../schema";
+import { SelectModerationHistory } from "../schema/moderation";
 import { executeWithRetry, withErrorHandling } from "../utils";
 import {
   DB,
   InsertSubmission,
   RichSubmission,
-  SelectModerationHistory,
   SelectSubmission,
   SelectSubmissionFeed,
 } from "../validators";
