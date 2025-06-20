@@ -5,9 +5,11 @@ import {
   useRejectSubmission,
 } from "../lib/api/moderation";
 import { useCanModerateFeed } from "../lib/api/feed";
+import { getTweetUrl } from "../lib/twitter";
 import { formatDate } from "../utils/datetime";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { ExternalLink } from "lucide-react";
 
 export const UserLink = ({ username }: { username: string }) => (
   <a
@@ -166,6 +168,16 @@ export const FeedItem = ({
               <span className="text-gray-600 mt-1">
                 {formatDate(submission.createdAt)}
               </span>
+              {submission.tweetId && submission.username && (
+                <a
+                  href={getTweetUrl(submission.tweetId, submission.username)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-2 text-gray-500 hover:text-gray-700"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
             </div>
           </div>
           <div>

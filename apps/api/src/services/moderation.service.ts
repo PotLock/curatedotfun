@@ -227,6 +227,7 @@ export class ModerationService implements IBaseService {
             submission,
             feedEntry,
             submissionStatusZodEnum.Enum.approved,
+            adminIdForHistory,
             tx,
           );
         } else if (payload.action === "reject") {
@@ -234,6 +235,7 @@ export class ModerationService implements IBaseService {
             submission,
             feedEntry,
             submissionStatusZodEnum.Enum.rejected,
+            adminIdForHistory,
             tx,
           );
         }
@@ -275,6 +277,7 @@ export class ModerationService implements IBaseService {
     submission: RichSubmission,
     feedEntry: SelectSubmissionFeed,
     newStatus: SubmissionStatus,
+    adminId: string,
     tx: DB,
   ): Promise<void> {
     try {
@@ -302,8 +305,9 @@ export class ModerationService implements IBaseService {
           submissionId: submission.tweetId,
           feedId: feedEntry.feedId,
           status: newStatus,
+          adminId: adminId,
         },
-        `Submission status updated to ${newStatus}.`,
+        `Submission status for ${submission.tweetId} ${newStatus} by ${adminId} on feed ${feedEntry.feedId}.`,
       );
 
       if (
