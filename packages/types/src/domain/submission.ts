@@ -1,3 +1,5 @@
+import { ModerationAction } from "../api/moderation";
+
 export const SubmissionStatusEnum = {
   PENDING: "pending",
   APPROVED: "approved",
@@ -15,16 +17,6 @@ export interface SubmissionFeed {
   updatedAt?: Date | null;
 }
 
-export interface Moderation {
-  adminId: string;
-  action: "approve" | "reject";
-  timestamp: Date;
-  tweetId: string;
-  feedId: string;
-  note: string | null;
-  moderationTweetId: string;
-}
-
 export interface Submission {
   tweetId: string;
   userId: string;
@@ -37,7 +29,7 @@ export interface Submission {
   createdAt: Date;
   submittedAt: Date | null;
   updatedAt?: Date | null;
-  moderationHistory: Moderation[];
+  moderationHistory: ModerationAction[];
   feeds: SubmissionFeed[];
   status?: SubmissionStatus;
 }
@@ -57,5 +49,5 @@ export interface FeedContextSubmission {
 
   status: SubmissionStatus;
 
-  moderationHistory: Moderation[];
+  moderationHistory: ModerationAction[];
 }

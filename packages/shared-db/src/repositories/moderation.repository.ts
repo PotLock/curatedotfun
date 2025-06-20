@@ -1,8 +1,9 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, or, inArray } from "drizzle-orm";
 import {
   InsertModerationHistory,
   moderationHistory,
   SelectModerationHistory,
+  selectModerationHistorySchema,
 } from "../schema";
 import { executeWithRetry, withErrorHandling } from "../utils";
 import { DB } from "../validators";
@@ -19,7 +20,6 @@ export class ModerationRepository {
 
   /**
    * Saves a moderation action to the database.
-   * This method was originally in SubmissionRepository.
    */
   async saveModerationAction(
     moderation: InsertModerationHistory,
@@ -37,14 +37,15 @@ export class ModerationRepository {
         if (!newModeration) {
           throw new Error("Failed to insert moderation history into database");
         }
-        return newModeration;
+        return selectModerationHistorySchema.parse(newModeration);
       },
       {
         operationName: "save moderation action",
         additionalContext: {
-          tweetId: moderation.tweetId,
+          submissionId: moderation.submissionId,
           feedId: moderation.feedId,
           action: moderation.action,
+          moderatorAccountId: moderation.moderatorAccountId,
         },
       },
     );
@@ -62,7 +63,7 @@ export class ModerationRepository {
             .from(moderationHistory)
             .where(eq(moderationHistory.id, id))
             .limit(1);
-          return res.length > 0 ? res[0] : null;
+          return res.length > 0 ? selectModerationHistorySchema.parse(res[0]) : null;
         }, this.db);
         return result;
       },
@@ -86,10 +87,10 @@ export class ModerationRepository {
           return await dbInstance
             .select()
             .from(moderationHistory)
-            .where(eq(moderationHistory.tweetId, submissionId))
+            .where(eq(moderationHistory.submissionId, submissionId))
             .orderBy(asc(moderationHistory.createdAt));
         }, this.db);
-        return results;
+        return results.map(row => selectModerationHistorySchema.parse(row));
       },
       {
         operationName: "get moderations by submission ID",
@@ -114,17 +115,62 @@ export class ModerationRepository {
             .from(moderationHistory)
             .where(
               and(
-                eq(moderationHistory.tweetId, submissionId),
+                eq(moderationHistory.submissionId, submissionId), // Updated from tweetId
                 eq(moderationHistory.feedId, feedId),
               ),
             )
             .orderBy(asc(moderationHistory.createdAt));
         }, this.db);
-        return results;
+        return results.map(row => selectModerationHistorySchema.parse(row));
       },
       {
         operationName: "get moderations by submission and feed ID",
         additionalContext: { submissionId, feedId },
+      },
+      [],
+    );
+  }
+
+  /**
+   * Retrieves all moderation entries linked to a specific NEAR account,
+   * either directly or through their connected platform usernames.
+   * @param nearAccountId The NEAR account ID.
+   * @param platformUsernameStrings An array of formatted platform username strings (e.g., ["twitter:userA", "mastodon:userB@social.com"]).
+   */
+  async getModerationsLinkedToNearAccount(
+    nearAccountId: string,
+    platformUsernameStrings: string[],
+  ): Promise<SelectModerationHistory[]> {
+    return withErrorHandling(
+      async () => {
+        const conditions = [
+          and(
+            eq(moderationHistory.moderatorAccountIdType, "near"),
+            eq(moderationHistory.moderatorAccountId, nearAccountId),
+          ),
+        ];
+
+        if (platformUsernameStrings.length > 0) {
+          conditions.push(
+            and(
+              eq(moderationHistory.moderatorAccountIdType, "platform_username"),
+              inArray(moderationHistory.moderatorAccountId, platformUsernameStrings),
+            ),
+          );
+        }
+
+        const results = await executeWithRetry(async (dbInstance) => {
+          return await dbInstance
+            .select()
+            .from(moderationHistory)
+            .where(or(...conditions))
+            .orderBy(asc(moderationHistory.createdAt));
+        }, this.db);
+        return results.map(row => selectModerationHistorySchema.parse(row));
+      },
+      {
+        operationName: "get moderations linked to NEAR account",
+        additionalContext: { nearAccountId, platformUsernames: platformUsernameStrings.length },
       },
       [],
     );

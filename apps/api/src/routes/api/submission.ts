@@ -9,7 +9,6 @@ import {
   FeedContextSubmission,
   SubmissionStatus as DomainSubmissionStatus,
   SubmissionStatusEnum as DomainSubmissionStatusEnum,
-  Moderation as DomainModeration,
   SubmissionFeed as DomainSubmissionFeed,
 } from "@curatedotfun/types";
 import { zValidator } from "@hono/zod-validator";
@@ -86,18 +85,22 @@ submissionRoutes.get(
         createdAt: rs.createdAt,
         submittedAt: rs.submittedAt,
         updatedAt: rs.updatedAt,
-        moderationHistory: rs.moderationHistory.map(
+        moderationHistory: (rs.moderationHistory ?? []).map(
           (mh) =>
             ({
-              adminId: mh.adminId,
-              action: mh.action as "approve" | "reject", // Assuming action is always one of these for DomainModeration
-              timestamp: mh.createdAt,
-              tweetId: mh.tweetId,
+              id: mh.id,
+              moderatorAccountId: mh.moderatorAccountId,
+              moderatorAccountIdType: mh.moderatorAccountIdType,
+              action: mh.action as "approve" | "reject",
+              submissionId: mh.submissionId,
+              source: mh.source,
               feedId: mh.feedId,
               note: mh.note,
-            }) as DomainModeration,
+              createdAt: mh.createdAt.toISOString(),
+              updatedAt: mh.updatedAt ? mh.updatedAt.toISOString() : mh.createdAt.toISOString(),
+            }),
         ),
-        feeds: rs.feeds.map(
+        feeds: (rs.feeds ?? []).map(
           (sf) =>
             ({
               submissionId: sf.submissionId,
@@ -170,18 +173,22 @@ submissionRoutes.get("/single/:submissionId", async (c) => {
     createdAt: richSubmission.createdAt,
     submittedAt: richSubmission.submittedAt,
     updatedAt: richSubmission.updatedAt,
-    moderationHistory: richSubmission.moderationHistory.map(
+    moderationHistory: (richSubmission.moderationHistory ?? []).map(
       (mh) =>
         ({
-          adminId: mh.adminId,
+          id: mh.id,
+          moderatorAccountId: mh.moderatorAccountId,
+          moderatorAccountIdType: mh.moderatorAccountIdType,
+          source: mh.source,
           action: mh.action as "approve" | "reject",
-          timestamp: mh.createdAt,
-          tweetId: mh.tweetId,
-          feedId: mh.feedId,
-          note: mh.note,
-        }) as DomainModeration,
-    ),
-    feeds: richSubmission.feeds.map(
+          submissionId: mh.submissionId,
+              feedId: mh.feedId,
+              note: mh.note,
+              createdAt: mh.createdAt.toISOString(),
+              updatedAt: mh.updatedAt ? mh.updatedAt.toISOString() : mh.createdAt.toISOString(),
+            }),
+        ),
+        feeds: (richSubmission.feeds ?? []).map(
       (sf) =>
         ({
           submissionId: sf.submissionId,
@@ -248,16 +255,20 @@ submissionRoutes.get(
         submittedAt: rs.submittedAt,
         updatedAt: rs.updatedAt,
         status: statusInFeed,
-        moderationHistory: rs.moderationHistory.map(
+        moderationHistory: (rs.moderationHistory ?? []).map(
           (mh) =>
             ({
-              adminId: mh.adminId,
+              id: mh.id,
+              moderatorAccountId: mh.moderatorAccountId,
+              moderatorAccountIdType: mh.moderatorAccountIdType,
+              source: mh.source,
               action: mh.action as "approve" | "reject",
-              timestamp: mh.createdAt,
-              tweetId: mh.tweetId,
+              submissionId: mh.submissionId,
               feedId: mh.feedId,
               note: mh.note,
-            }) as DomainModeration,
+              createdAt: mh.createdAt.toISOString(),
+              updatedAt: mh.updatedAt ? mh.updatedAt.toISOString() : mh.createdAt.toISOString(),
+            }),
         ),
       };
     });

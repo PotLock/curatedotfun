@@ -48,9 +48,9 @@ export class ModerationService implements IBaseService {
     actingAccountId: string,
     submissionPlatform: string,
     configuredApproverPlatformIds: string[],
-  ): Promise<{ isAuthorized: boolean; adminIdForHistory: string }> {
+  ): Promise<boolean> {
     if (isSuperAdmin(actingAccountId, this.superAdminAccounts)) {
-      return { isAuthorized: true, adminIdForHistory: actingAccountId };
+      return true;
     }
 
     for (const configuredApproverId of configuredApproverPlatformIds) {
@@ -61,11 +61,10 @@ export class ModerationService implements IBaseService {
           configuredApproverId,
         )
       ) {
-        return { isAuthorized: true, adminIdForHistory: configuredApproverId };
+        return true;
       }
     }
-
-    return { isAuthorized: false, adminIdForHistory: actingAccountId };
+    return false;
   }
 
   /**
@@ -90,7 +89,7 @@ export class ModerationService implements IBaseService {
     }
 
     const connectedAccounts =
-      await this.getConnectedAccountsForUser(actingAccountId);
+      await this.getConnectedAccounts(actingAccountId);
 
     if (connectedAccounts && connectedAccounts.length > 0) {
       for (const identity of connectedAccounts) {
@@ -148,10 +147,10 @@ export class ModerationService implements IBaseService {
       }
 
       // --- Permission Check ---
-      const actingAccountId = payload.adminId; // This is the NEAR account ID
+      const moderatorNearId = payload.moderatorAccountId;
       const feedId = payload.feedId;
 
-      const submissionPlatform = "twitter";
+      const submissionPlatform = "twitter"; // TODO: dynamic, tied to source
 
       const feedConfig: FeedConfig | null =
         await this.feedRepository.getFeedConfig(feedId);
@@ -188,16 +187,15 @@ export class ModerationService implements IBaseService {
         );
       }
 
-      const { isAuthorized, adminIdForHistory } =
-        await this.checkModerationAuthorization(
-          actingAccountId,
-          submissionPlatform,
-          configuredApproverPlatformIds,
-        );
+      const isAuthorized = await this.checkModerationAuthorization(
+        moderatorNearId,
+        submissionPlatform,
+        configuredApproverPlatformIds,
+      );
 
       if (!isAuthorized) {
         this.logger.warn(
-          { actingAccountId, feedId, platform: submissionPlatform },
+          { actingAccountId: moderatorNearId, feedId, platform: submissionPlatform },
           "User not authorized to moderate this submission.",
         );
         throw new AuthorizationError(
@@ -207,10 +205,16 @@ export class ModerationService implements IBaseService {
       }
       // --- End Permission Check ---
 
+      const moderationSource = isSuperAdmin(moderatorNearId, this.superAdminAccounts)
+        ? "super_admin_direct"
+        : "ui";
+
       const moderationActionData: InsertModerationHistory = {
-        tweetId: payload.submissionId,
+        submissionId: payload.submissionId,
         feedId: payload.feedId,
-        adminId: adminIdForHistory,
+        moderatorAccountId: moderatorNearId,
+        moderatorAccountIdType: "near",
+        source: moderationSource,
         action: payload.action,
         note: payload.note || null,
       };
@@ -226,7 +230,7 @@ export class ModerationService implements IBaseService {
             submission,
             feedEntry,
             submissionStatusZodEnum.Enum.approved,
-            adminIdForHistory,
+            moderatorNearId,
             tx,
           );
         } else if (payload.action === "reject") {
@@ -234,7 +238,7 @@ export class ModerationService implements IBaseService {
             submission,
             feedEntry,
             submissionStatusZodEnum.Enum.rejected,
-            adminIdForHistory,
+            moderatorNearId,
             tx,
           );
         }
@@ -245,7 +249,7 @@ export class ModerationService implements IBaseService {
           submissionId: payload.submissionId,
           feedId: payload.feedId,
           action: payload.action,
-          adminId: payload.adminId,
+          moderatorAccountId: moderatorNearId,
         },
         "Moderation action processed successfully via API.",
       );
@@ -276,7 +280,7 @@ export class ModerationService implements IBaseService {
     submission: RichSubmission,
     feedEntry: SelectSubmissionFeed,
     newStatus: SubmissionStatus,
-    adminId: string,
+    moderatorAccountId: string,
     tx: DB,
   ): Promise<void> {
     try {
@@ -305,9 +309,9 @@ export class ModerationService implements IBaseService {
           submissionId: submission.tweetId,
           feedId: feedEntry.feedId,
           status: newStatus,
-          adminId: adminId,
+          moderatorAccountId: moderatorAccountId,
         },
-        `Submission status for ${submission.tweetId} ${newStatus} by ${adminId} on feed ${feedEntry.feedId}.`,
+        `Submission status for ${submission.tweetId} ${newStatus} by ${moderatorAccountId} on feed ${feedEntry.feedId}.`,
       );
 
       if (
@@ -473,7 +477,29 @@ export class ModerationService implements IBaseService {
     return moderations.map((m) => ModerationActionSchema.parse(m));
   }
 
-  private async getConnectedAccountsForUser(
+public async getModerationsByNearAccount(
+  nearAccountId: string,
+): Promise<ModerationAction[]> {
+  const connectedAccounts = await this.getConnectedAccounts(nearAccountId);
+  const platformUsernameStrings: string[] = [];
+
+  if (connectedAccounts) {
+    for (const acc of connectedAccounts) {
+      if (acc.platform && acc.profile?.username) {
+        platformUsernameStrings.push(`${acc.platform}:${acc.profile.username}`);
+      }
+    }
+  }
+
+  const rawModerations =
+    await this.moderationRepository.getModerationsLinkedToNearAccount(
+      nearAccountId,
+      platformUsernameStrings,
+    );
+  return rawModerations.map((m) => ModerationActionSchema.parse(m));
+}
+
+  private async getConnectedAccounts(
     actingAccountId: string,
   ): Promise<ConnectedAccountsResponse["accounts"] | null> {
     try {
