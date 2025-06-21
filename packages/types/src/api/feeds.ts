@@ -6,9 +6,7 @@ import { ApiSuccessResponseSchema } from "./common";
  * The request body sent to the API to create a new feed.
  * It's based on the main FeedConfig, as the client sends the entire configuration object.
  */
-export const CreateFeedRequestSchema = FeedConfigSchema.extend({
-  id: z.undefined(),
-});
+export const CreateFeedRequestSchema = FeedConfigSchema;
 export type CreateFeedRequest = z.infer<typeof CreateFeedRequestSchema>;
 
 export type CreateFeedConfig = Partial<FeedConfig>;
