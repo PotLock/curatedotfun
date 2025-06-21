@@ -1,4 +1,10 @@
-import { serial, pgTable as table, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  serial,
+  pgTable as table,
+  text,
+  timestamp,
+  index,
+} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { users } from "./users";
 import { timestamps } from "./common";
@@ -13,6 +19,13 @@ export const authRequests = table("auth_requests", {
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   ...timestamps,
 });
+
+export const authRequestsIndexes = {
+  accountIdCreatedAt: index("auth_requests_account_id_created_at_idx").on(
+    authRequests.accountId,
+    authRequests.createdAt,
+  ),
+};
 
 export const authRequestsRelations = relations(authRequests, ({ one }) => ({
   user: one(users, {

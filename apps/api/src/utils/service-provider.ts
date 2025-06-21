@@ -214,6 +214,14 @@ export class ServiceProvider {
   }
 
   /**
+   * Get the auth service
+   * @returns The auth service
+   */
+  public getAuthService(): AuthService {
+    return this.getService<AuthService>("authService");
+  }
+
+  /**
    * Get the activity service
    * @returns The activity service
    */

@@ -1,4 +1,4 @@
-import { and, eq, gte } from "drizzle-orm";
+import { and, eq, gte, lt } from "drizzle-orm";
 import { InsertAuthRequest, authRequests } from "../schema";
 import { executeWithRetry, withErrorHandling } from "../utils";
 import { DB } from "../validators";
@@ -71,6 +71,25 @@ export class AuthRequestRepository {
         additionalContext: { id },
       },
       false,
+    );
+  }
+
+  async deleteExpired(): Promise<number> {
+    return withErrorHandling(
+      async () => {
+        return executeWithRetry(async (dbInstance) => {
+          const now = new Date();
+          const result = await dbInstance
+            .delete(authRequests)
+            .where(lt(authRequests.expiresAt, now))
+            .returning();
+          return result.length;
+        }, this.db);
+      },
+      {
+        operationName: "delete expired auth requests",
+      },
+      0,
     );
   }
 }

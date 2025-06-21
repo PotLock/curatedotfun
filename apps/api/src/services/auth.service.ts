@@ -8,6 +8,9 @@ import {
   AuthRequestRepository,
 } from "@curatedotfun/shared-db";
 
+const AUTH_REQUEST_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+const JWT_EXPIRY_SECONDS = 60 * 60 * 24 * 7; // 7 days
+
 const CreateAuthRequestSchema = z.object({
   accountId: z.string(),
 });
@@ -34,7 +37,7 @@ export class AuthService {
     await this.userService.ensureUserProfile(accountId);
 
     const nonce = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    const expiresAt = new Date(Date.now() + AUTH_REQUEST_EXPIRY_MS);
 
     const newAuthRequest: InsertAuthRequest = {
       nonce,
@@ -79,7 +82,7 @@ export class AuthService {
 
     const jwtPayload = {
       sub: accountId,
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 7 days
+      exp: Math.floor(Date.now() / 1000) + JWT_EXPIRY_SECONDS,
     };
 
     const secret = process.env.JWT_SECRET;

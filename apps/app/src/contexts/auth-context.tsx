@@ -46,7 +46,8 @@ export function AuthProvider({
     try {
       await apiClient.makeRequest("GET", "/users/me");
       setIsAuthorized(true);
-    } catch {
+    } catch (error) {
+      console.error("Authorization check failed:", error);
       setIsAuthorized(false);
     }
   }, []);
@@ -89,10 +90,11 @@ export function AuthProvider({
 
       const message = "Authorize Curate.fun";
 
-      const authToken = await sign(message, {
+      const authToken = await sign({
         signer: near,
         recipient,
-        nonce,
+        message,
+        nonce: new TextEncoder().encode(nonce),
       });
 
       await apiClient.makeRequest("POST", "/auth/verify-login", {
