@@ -1,6 +1,6 @@
-import { createFileRoute, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { Hero } from "@/components/Hero";
 import { Progress } from "@/components/ui/progress";
+import { createFileRoute, Outlet, useMatchRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_layout/create/feed")({
   component: FeedLayoutComponent,
@@ -39,8 +39,9 @@ function FeedLayoutComponent() {
               <div
                 key={index}
                 className="flex flex-col items-center min-w-[100px] px-2"
-                role="button"
-                tabIndex={index <= currentStep ? 0 : -1}
+                role="presentation"
+                aria-current={index === currentStep ? "step" : undefined}
+                aria-label={`Step ${index + 1}: ${step.title}`}
               >
                 <span
                   className={`text-sm text-center ${

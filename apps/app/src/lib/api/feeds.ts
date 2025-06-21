@@ -1,4 +1,5 @@
 import type {
+  CanModerateResponse,
   CreateFeedRequest,
   FeedResponse,
   FeedsWrappedResponse,
@@ -130,13 +131,6 @@ export function useFeedItems(feedId: string, filters: SubmissionFilters = {}) {
     refetchOnReconnect: true,
     enabled: !!feedId,
   });
-}
-
-interface CanModerateResponse {
-  // TODO: should match with API
-  canModerate: boolean;
-  reason?: string;
-  error?: string;
 }
 
 /**

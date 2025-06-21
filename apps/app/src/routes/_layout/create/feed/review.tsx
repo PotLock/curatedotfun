@@ -19,7 +19,7 @@ function FeedReviewComponent() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // @ts-expect-error TODO: feed validation
+      // @ts-expect-error needs to be fixed
       await createFeedMutation.mutateAsync(feedConfig);
       toast({
         title: "Feed Created Successfully!",

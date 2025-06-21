@@ -1,8 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import ContentApprovers from "@/components/ContentApprovers";
 import PublishingIntegrations from "@/components/PublishIntegrations";
 import { Button } from "@/components/ui/button";
 import { useFeedCreationStore } from "@/store/feed-creation-store";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { FormProvider, useForm } from "react-hook-form";
 
 const StepHeader = ({
@@ -62,6 +62,13 @@ function CurationSettingsComponent() {
     defaultValues: feedConfig,
   });
 
+  const handleNext = async () => {
+    const isValid = await methods.trigger();
+    if (isValid) {
+      navigate({ to: "/create/feed/review" });
+    }
+  };
+
   return (
     <FormProvider {...methods}>
       <div className="flex flex-col gap-4 md:gap-8">
@@ -87,11 +94,7 @@ function CurationSettingsComponent() {
           >
             Previous
           </Button>
-          <Button
-            onClick={() => navigate({ to: "/create/feed/review" })}
-            className="text-sm md:text-base"
-            type="submit"
-          >
+          <Button onClick={handleNext} className="text-sm md:text-base">
             Next
           </Button>
         </div>

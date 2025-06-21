@@ -1,13 +1,17 @@
 import { z } from "zod";
-import { FeedConfigSchema } from "../config";
+import { FeedConfig, FeedConfigSchema } from "../config";
 import { ApiSuccessResponseSchema } from "./common";
 
 /**
  * The request body sent to the API to create a new feed.
  * It's based on the main FeedConfig, as the client sends the entire configuration object.
  */
-export const CreateFeedRequestSchema = FeedConfigSchema;
+export const CreateFeedRequestSchema = FeedConfigSchema.extend({
+  id: z.undefined(),
+});
 export type CreateFeedRequest = z.infer<typeof CreateFeedRequestSchema>;
+
+export type CreateFeedConfig = Partial<FeedConfig>;
 
 /**
  * The request body sent to the API to update an existing feed.
@@ -63,3 +67,5 @@ export const CanModerateResponseSchema = z.object({
   reason: z.string().optional(),
   error: z.string().optional(),
 });
+
+export type CanModerateResponse = z.infer<typeof CanModerateResponseSchema>;

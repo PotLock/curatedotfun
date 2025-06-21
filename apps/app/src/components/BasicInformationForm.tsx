@@ -30,7 +30,7 @@ export default function BasicInformationForm() {
 
   const {
     profileImage: storedProfileImage,
-    feedName,
+    name,
     description,
     hashtags,
     setBasicInfo,
