@@ -1,8 +1,4 @@
-import {
-  createFileRoute,
-  Outlet,
-  useMatchRoute,
-} from "@tanstack/react-router";
+import { createFileRoute, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { Hero } from "@/components/Hero";
 import { Progress } from "@/components/ui/progress";
 
@@ -19,8 +15,8 @@ function FeedLayoutComponent() {
     { id: "/_layout/create/feed/review", title: "Feed Review" },
   ];
 
-  const currentStepIndex = steps.findIndex(
-    (step) => matchRoute({ to: step.id })
+  const currentStepIndex = steps.findIndex((step) =>
+    matchRoute({ to: step.id }),
   );
   const currentStep = currentStepIndex !== -1 ? currentStepIndex : 0;
   const progressValue = ((currentStep + 1) / steps.length) * 100;

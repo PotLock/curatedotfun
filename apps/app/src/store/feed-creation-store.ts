@@ -95,8 +95,7 @@ export const useFeedCreationStore = create(
     },
     setTelegramConfig: ({ enabled, channelId, threadId }) => {
       setState((state) => {
-        const distribute =
-          state.feedConfig.outputs?.stream?.distribute ?? [];
+        const distribute = state.feedConfig.outputs?.stream?.distribute ?? [];
         const telegramDistributorIndex = distribute.findIndex(
           (d) => d.plugin === TELEGRAM_PLUGIN_NAME,
         );

@@ -10,10 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import {
-  useFeedCreationStore,
-  Approver,
-} from "../store/feed-creation-store";
+import { useFeedCreationStore, Approver } from "../store/feed-creation-store";
 
 export default function ContentApprovers() {
   const { control, watch } = useFormContext();

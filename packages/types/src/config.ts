@@ -32,10 +32,10 @@ export const StreamConfigSchema = z.object({
 
 // Schema for RecapConfig (using structure from recap.ts)
 export const RecapConfigSchema = z.object({
-  id: z.string(),
-  name: z.string(),
+  id: z.string().optional(),
+  name: z.string().optional(),
   enabled: z.boolean(),
-  schedule: z.string(), // Cron expression or interval
+  schedule: z.string().optional(),
   timezone: z.string().optional(),
   transform: z.array(TransformConfigSchema).optional(),
   batchTransform: z.array(TransformConfigSchema).optional(),
@@ -76,8 +76,9 @@ export const FeedConfigSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
-  image: z.string().url().optional(),
+  image: z.string().url().or(z.literal("")).optional(),
   enabled: z.boolean().optional().default(true),
+  admins: z.array(z.string()).optional(),
   pollingIntervalMs: z.number().int().positive().optional(),
   moderation: ModerationConfigSchema,
   sources: z.array(SourceConfigSchema).optional(),

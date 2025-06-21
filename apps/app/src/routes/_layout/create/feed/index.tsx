@@ -19,7 +19,10 @@ import { z } from "zod";
 
 const BasicInformationFormSchema = z.object({
   name: z.string().min(3, "Feed name must be at least 3 characters").optional(),
-  description: z.string().min(10, "Description must be at least 10 characters").optional(),
+  description: z
+    .string()
+    .min(10, "Description must be at least 10 characters")
+    .optional(),
   id: z.string().min(1, "Please provide at least one hashtag").optional(),
   image: z.string().optional().optional(),
 });
@@ -85,7 +88,11 @@ function BasicInformationComponent() {
                 <FormItem>
                   <FormLabel>Feed Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Name of your feed" required {...field} />
+                    <Input
+                      placeholder="Name of your feed"
+                      required
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
