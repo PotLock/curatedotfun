@@ -28,10 +28,16 @@ export const RETRYABLE_ERROR_CODES = [
  * Determines if an error is retryable (connection-related)
  */
 export function isRetryableError(error: unknown): boolean {
-  return RETRYABLE_ERROR_CODES.some(
-    (code) =>
-      error.code === code || (error.original && error.original.code === code),
-  );
+  if (typeof error !== "object" || error === null) return false;
+  const errorAsObject = error as Record<string, unknown>;
+  return RETRYABLE_ERROR_CODES.some((code) => {
+    if (errorAsObject.code === code) return true;
+    if (errorAsObject.original && typeof errorAsObject.original === "object") {
+      const originalError = errorAsObject.original as Record<string, unknown>;
+      if (originalError.code === code) return true;
+    }
+    return false;
+  });
 }
 
 /**
@@ -46,13 +52,18 @@ export const DEFAULT_RETRY_OPTIONS: retry.Options = {
   onRetry: (error: unknown, attempt: number) => {
     const maxRetries = 3; // Same as retries above
     const isLastAttempt = attempt === maxRetries;
+    const message = error instanceof Error ? error.message : String(error);
+    const code =
+      typeof error === "object" && error !== null && "code" in error
+        ? (error as { code: unknown }).code
+        : undefined;
 
     console.warn(
       // TODO: Logger
       `Database operation failed (attempt ${attempt}/${maxRetries})`,
       {
-        error: error.message,
-        code: error.code,
+        error: message,
+        code,
         isLastAttempt,
       },
     );
@@ -107,11 +118,16 @@ export async function withErrorHandling<T>(
     return await operation();
   } catch (error: unknown) {
     const { operationName, errorMessage, additionalContext } = context;
+    const message = error instanceof Error ? error.message : String(error);
+    const code =
+      typeof error === "object" && error !== null && "code" in error
+        ? (error as { code: unknown }).code
+        : undefined;
 
     console.error(`Failed to ${operationName}:`, {
       // TODO: Logger
-      error: error.message,
-      code: error.code,
+      error: message,
+      code,
       ...additionalContext,
     });
 
@@ -119,8 +135,6 @@ export async function withErrorHandling<T>(
       return defaultValue;
     }
 
-    throw new Error(
-      errorMessage || `Failed to ${operationName}: ${error.message}`,
-    );
+    throw new Error(errorMessage || `Failed to ${operationName}: ${message}`);
   }
 }
