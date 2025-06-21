@@ -103,7 +103,7 @@ async function seedRemote() {
     console.log("Data restored to local database.");
 
     console.log("Remote seeding process completed successfully!");
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error during remote seeding:", error.message);
     console.error("Details:", error);
     process.exit(1);
@@ -114,7 +114,7 @@ async function seedRemote() {
         fs.unlinkSync(dumpFilePath);
         console.log(`Cleaned up dump file: ${dumpFilePath}`);
       }
-    } catch (cleanupError: any) {
+    } catch (cleanuperror: unknown) {
       console.error("Error cleaning up dump file:", cleanupError.message);
     }
   }

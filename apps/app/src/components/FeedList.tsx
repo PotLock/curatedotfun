@@ -4,6 +4,8 @@ import { useAllFeeds } from "../lib/api";
 const FeedList = () => {
   const { data: feeds = [] } = useAllFeeds();
 
+  console.log("feeds", feeds);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex justify-start items-start gap-6 ">
