@@ -1,3 +1,4 @@
+import { isProduction } from './../../../api/src/services/config.service';
 interface EVMChain {
   chainId: number;
   name: string;
@@ -24,7 +25,7 @@ const evmWalletChains: EVMWalletChains = {
   },
 };
 
-export const NETWORK_ID = process.env.PUBLIC_NETWORK || "testnet";
+export const NETWORK_ID = isProduction ? "mainnet" : (process.env.PUBLIC_NETWORK || "testnet");
 export const EVMWalletChain = evmWalletChains[NETWORK_ID];
 
 // API Configuration
