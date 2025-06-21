@@ -21,8 +21,14 @@ interface UserMenuProps {
 export default function UserMenu({ className }: UserMenuProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
-  const { currentAccountId, handleSignIn, isSignedIn, handleSignOut } =
-    useAuth();
+  const {
+    currentAccountId,
+    handleSignIn,
+    isSignedIn,
+    handleSignOut,
+    isAuthorized,
+    handleAuthorize,
+  } = useAuth();
   const { data: userProfile } = useNearSocialProfile(currentAccountId || "");
 
   const ProfileImage = ({ size = "small" }: { size?: "small" | "medium" }) => {
@@ -41,71 +47,79 @@ export default function UserMenu({ className }: UserMenuProps) {
     return "User";
   };
 
+  if (!isSignedIn) {
+    return (
+      <Button className={className || "hidden md:flex"} onClick={handleSignIn}>
+        Login
+      </Button>
+    );
+  }
+
+  if (!isAuthorized) {
+    return (
+      <Button
+        className={className || "hidden md:flex"}
+        onClick={handleAuthorize}
+      >
+        Authorize App
+      </Button>
+    );
+  }
+
   return (
-    <>
-      {isSignedIn ? (
-        <DropdownMenu onOpenChange={setDropdownOpen}>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className={className || "hidden md:flex"}>
-              <div className="flex gap-1 items-center justify-center">
-                {currentAccountId ? (
-                  <AvatarProfile accountId={currentAccountId} size="small" />
-                ) : (
-                  <ProfileImage size="small" />
-                )}
-                <p className="text-sm font-medium leading-6 hidden sm:block">
-                  {getUserDisplayName()}
-                </p>
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform duration-200 ${
-                    dropdownOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 mt-4">
-            <DropdownMenuItem>
-              <div className="flex gap-2 w-full items-start">
-                {currentAccountId ? (
-                  <AvatarProfile accountId={currentAccountId} size="medium" />
-                ) : (
-                  <ProfileImage />
-                )}
-                <div>
-                  <p className="text-sm font-semibold leading-5">
-                    {currentAccountId}
-                  </p>
-                </div>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="cursor-pointer hover:bg-gray-100"
-              onClick={() => {
-                navigate({ to: "/profile" });
-              }}
-            >
-              <CircleUserRound />
-              <span>Profile</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={handleSignOut}
-              className="cursor-pointer hover:bg-gray-100"
-            >
-              <LogOut />
-              <span>Disconnect</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ) : (
-        <Button
-          className={className || "hidden md:flex"}
-          onClick={handleSignIn}
-        >
-          Login
+    <DropdownMenu onOpenChange={setDropdownOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" className={className || "hidden md:flex"}>
+          <div className="flex gap-1 items-center justify-center">
+            {currentAccountId ? (
+              <AvatarProfile accountId={currentAccountId} size="small" />
+            ) : (
+              <ProfileImage size="small" />
+            )}
+            <p className="text-sm font-medium leading-6 hidden sm:block">
+              {getUserDisplayName()}
+            </p>
+            <ChevronDown
+              className={`h-4 w-4 transition-transform duration-200 ${
+                dropdownOpen ? "rotate-180" : ""
+              }`}
+            />
+          </div>
         </Button>
-      )}
-    </>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56 mt-4">
+        <DropdownMenuItem>
+          <div className="flex gap-2 w-full items-start">
+            {currentAccountId ? (
+              <AvatarProfile accountId={currentAccountId} size="medium" />
+            ) : (
+              <ProfileImage />
+            )}
+            <div>
+              <p className="text-sm font-semibold leading-5">
+                {currentAccountId}
+              </p>
+            </div>
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="cursor-pointer hover:bg-gray-100"
+          onClick={() => {
+            navigate({ to: "/profile" });
+          }}
+        >
+          <CircleUserRound />
+          <span>Profile</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={handleSignOut}
+          className="cursor-pointer hover:bg-gray-100"
+        >
+          <LogOut />
+          <span>Disconnect</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

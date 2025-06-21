@@ -46,6 +46,16 @@ export class UserService implements IBaseService {
     return UserProfileSchema.parse(parsedUser);
   }
 
+  async ensureUserProfile(nearAccountId: string): Promise<UserProfile> {
+    const existingUser = await this.findUserByNearAccountId(nearAccountId);
+    if (existingUser) {
+      return existingUser;
+    }
+
+    const newUser = await this.createUser({ nearAccountId });
+    return newUser;
+  }
+
   /**
    * Find a user by NEAR account ID and return as API UserProfile
    */

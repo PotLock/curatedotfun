@@ -1,54 +1,31 @@
 import { Context, MiddlewareHandler, Next } from "hono";
-import { verify } from "near-sign-verify";
+import { verify } from "hono/jwt";
+import { getCookie } from "hono/cookie";
 
 export function createAuthMiddleware(): MiddlewareHandler {
   return async (c: Context, next: Next) => {
-    const method = c.req.method;
+    const token = getCookie(c, "token");
     let accountId: string | null = null;
 
-    if (method === "GET") {
-      const nearAccountHeader = c.req.header("X-Near-Account");
-      if (
-        nearAccountHeader &&
-        nearAccountHeader.toLowerCase() !== "anonymous"
-      ) {
-        accountId = nearAccountHeader;
+    if (token) {
+      const secret = process.env.JWT_SECRET;
+      if (!secret) {
+        console.error("JWT_SECRET is not set.");
+        c.status(500);
+        return c.json({ error: "Internal Server Error" });
       }
-      // If header is missing or "anonymous", accountId remains null
-      c.set("accountId", accountId);
-      await next();
-      return;
+      try {
+        const decodedPayload = await verify(token, secret);
+        if (decodedPayload && typeof decodedPayload.sub === "string") {
+          accountId = decodedPayload.sub;
+        }
+      } catch (error) {
+        // Invalid token, proceed as anonymous
+        console.warn("JWT verification failed:", error);
+      }
     }
 
-    // For non-GET requests (POST, PUT, DELETE, PATCH, etc.)
-    const authHeader = c.req.header("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      c.status(401);
-      return c.json({
-        error: "Unauthorized",
-        details: "Missing or malformed Authorization header.",
-      });
-    }
-
-    const token = authHeader.substring(7); // Remove "Bearer "
-
-    try {
-      const verificationResult = await verify(token, {
-        expectedRecipient: "curatefun.near",
-        requireFullAccessKey: false,
-        nonceMaxAge: 300000, // 5 mins
-      });
-
-      accountId = verificationResult.accountId;
-      c.set("accountId", accountId);
-      await next();
-    } catch (error) {
-      console.error("Token verification error:", error);
-      c.status(401);
-      return c.json({
-        error: "Unauthorized",
-        details: "Invalid token signature or recipient.",
-      });
-    }
+    c.set("accountId", accountId);
+    await next();
   };
 }

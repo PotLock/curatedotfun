@@ -41,6 +41,9 @@ importers:
       '@curatedotfun/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      '@fastnear/utils':
+        specifier: ^0.9.7
+        version: 0.9.7
       '@hono/node-server':
         specifier: ^1.8.2
         version: 1.14.4(hono@4.7.11)
@@ -99,8 +102,8 @@ importers:
         specifier: ^5.1.1
         version: 5.1.1(encoding@0.1.13)
       near-sign-verify:
-        specifier: ^0.3.6
-        version: 0.3.8
+        specifier: ^0.4.1
+        version: 0.4.1
       ora:
         specifier: ^8.1.1
         version: 8.2.0
@@ -168,6 +171,9 @@ importers:
       '@crosspost/sdk':
         specifier: ^0.3.0
         version: 0.3.0
+      '@fastnear/utils':
+        specifier: ^0.9.7
+        version: 0.9.7
       '@hookform/resolvers':
         specifier: ^5.0.1
         version: 5.1.1(react-hook-form@7.57.0(react@18.3.1))
@@ -245,7 +251,7 @@ importers:
         version: 4.1.0
       fastintear:
         specifier: latest
-        version: 0.1.13
+        version: 0.1.14
       immer:
         specifier: ^10.1.1
         version: 10.1.1
@@ -256,8 +262,8 @@ importers:
         specifier: ^0.483.0
         version: 0.483.0(react@18.3.1)
       near-sign-verify:
-        specifier: ^0.3.6
-        version: 0.3.8
+        specifier: ^0.4.1
+        version: 0.4.1
       pinata-web3:
         specifier: ^0.5.4
         version: 0.5.4
@@ -3298,8 +3304,8 @@ packages:
   fast-uri@3.0.6:
     resolution: {integrity: sha512-Atfo14OibSv5wAp4VWNsFYE1AchQRTv9cBGWET4pZWHzYshFSS9NQI6I57rdKn9croWVMbYFbLhJ+yJvmZIIHw==}
 
-  fastintear@0.1.13:
-    resolution: {integrity: sha512-enWIBztIaGz814HTHtOSr0jHQOAWwY9VIvkE51Ai+M4JMMXiozRoI9K+N70XGoQFch8ntTgehopzXXTpm4X9vA==}
+  fastintear@0.1.14:
+    resolution: {integrity: sha512-fwZsvD8TLlBaMm1yFrltIrhzp1EH2cutiR+80+SozD5ugzmeI1/sEI5qghvBdOi+YPnPiNO90tAVm73rOTAJjg==}
 
   fastq@1.19.1:
     resolution: {integrity: sha512-GwLTyxkCXjXbxqIhTsMI2Nui8huMPtnxg7krajPJAjnEG/iiOS7i+zCtWGZR9G0NBKbXKh6X9m9UIsYX/N6vvQ==}
@@ -4030,8 +4036,8 @@ packages:
   near-api-js@5.1.1:
     resolution: {integrity: sha512-h23BGSKxNv8ph+zU6snicstsVK1/CTXsQz4LuGGwoRE24Hj424nSe4+/1tzoiC285Ljf60kPAqRCmsfv9etF2g==}
 
-  near-sign-verify@0.3.8:
-    resolution: {integrity: sha512-GyA5ytiqEWTm3hX9iJRMbI9nHgh5GooYHi36d+EZh5L1WjQ6SKazx50b1ukrOh4NjilywSo2Ao3o4D8HaTGUzg==}
+  near-sign-verify@0.4.1:
+    resolution: {integrity: sha512-yQzYUetcv/KjOf7/GIqAfLsy6bQktJyRJQp6i9DCTgVL9jjMHtCD/e5EBqPYSI5iSdPGQ7a/GAcFDvvtV4X7mw==}
 
   negotiator@0.6.3:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
@@ -8329,7 +8335,7 @@ snapshots:
 
   fast-uri@3.0.6: {}
 
-  fastintear@0.1.13:
+  fastintear@0.1.14:
     dependencies:
       '@fastnear/utils': 0.9.7
       '@noble/curves': 1.9.2
@@ -9057,7 +9063,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  near-sign-verify@0.3.8:
+  near-sign-verify@0.4.1:
     dependencies:
       '@noble/curves': 1.9.2
       '@noble/hashes': 1.8.0
