@@ -45,9 +45,12 @@ authRoutes.post(
         maxAge: 60 * 60 * 24 * 7, // 7 days
       });
       return c.json({ success: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
       c.status(401);
-      return c.json({ success: false, error: error.message });
+      return c.json({
+        success: false,
+        error: error instanceof Error ? error.message : "Authentication failed",
+      });
     }
   },
 );

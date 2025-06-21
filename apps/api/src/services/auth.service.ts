@@ -65,6 +65,11 @@ export class AuthService {
       throw new Error("No recent auth request found for this account.");
     }
 
+    if (latestRequest.expiresAt < new Date()) {
+      await this.authRequestRepository.deleteById(latestRequest.id);
+      throw new Error("Auth request has expired.");
+    }
+
     const message = `Authorize Curate.fun`;
 
     const verificationResult = await verify(token, {

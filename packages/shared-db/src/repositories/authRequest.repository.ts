@@ -1,4 +1,4 @@
-import { and, eq, gte, lt } from "drizzle-orm";
+import { and, eq, desc, gte, lt } from "drizzle-orm";
 import { InsertAuthRequest, authRequests } from "../schema";
 import { executeWithRetry, withErrorHandling } from "../utils";
 import { DB } from "../validators";
@@ -42,7 +42,7 @@ export class AuthRequestRepository {
                 gte(authRequests.createdAt, fiveMinutesAgo),
               ),
             )
-            .orderBy(authRequests.createdAt)
+            .orderBy(desc(authRequests.createdAt))
             .limit(1);
           return result[0] ?? null;
         }, this.db);
