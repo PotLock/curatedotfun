@@ -259,7 +259,7 @@ export class ModerationService implements IBaseService {
         },
         "Moderation action processed successfully via API.",
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (
         error instanceof NotFoundError ||
         error instanceof AuthorizationError ||
@@ -333,7 +333,7 @@ export class ModerationService implements IBaseService {
           feedConfig.outputs.stream,
         );
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (
         error instanceof NotFoundError ||
         error instanceof ModerationServiceError

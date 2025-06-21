@@ -75,31 +75,41 @@ function FeedPageLayout() {
               </p>
             </div>
           </div>
-          <div className="flex sm:flex-row sm:items-center justify-between sm:justify-between w-full gap-2">
-            <div className="flex  sm:flex-row items-center gap-2 w-full">
-              <p>Curating from:</p>
-              <Badge className="flex gap-1 text-black border border-stone-500 rounded-md bg-stone-50 shadow-none">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                >
-                  <path
-                    d="M5.47681 2.1748L8.34204 5.96094L8.4729 6.13379L8.6145 5.9707L11.9094 2.1748H13.4788L9.28638 6.99902L9.1936 7.10645L9.27954 7.21973L14.3137 13.873H10.6301L7.46997 9.73828L7.34009 9.56836L7.19849 9.72949L3.55688 13.873H1.9856L6.49829 8.70117L6.59302 8.59375L6.5061 8.47949L1.68774 2.1748H5.47681ZM3.57642 3.25781L10.9661 12.9229L11.0188 12.9922H12.5813L12.3704 12.7109L5.08813 3.0459L5.0354 2.97559H3.36157L3.57642 3.25781Z"
-                    stroke="#57534E"
-                    strokeWidth="0.350493"
-                  />
-                </svg>
-                Twitter
-              </Badge>
+          <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-row sm:items-center sm:justify-between">
+            {/* Mobile: Top left, Desktop: Left side */}
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+              <p className="text-sm sm:text-base">Curating from:</p>
+              <div className="flex items-center gap-2 sm:mt-0">
+                <Badge className="flex gap-1 text-black border border-stone-500 rounded-md bg-stone-50 shadow-none">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                  >
+                    <path
+                      d="M5.47681 2.1748L8.34204 5.96094L8.4729 6.13379L8.6145 5.9707L11.9094 2.1748H13.4788L9.28638 6.99902L9.1936 7.10645L9.27954 7.21973L14.3137 13.873H10.6301L7.46997 9.73828L7.34009 9.56836L7.19849 9.72949L3.55688 13.873H1.9856L6.49829 8.70117L6.59302 8.59375L6.5061 8.47949L1.68774 2.1748H5.47681ZM3.57642 3.25781L10.9661 12.9229L11.0188 12.9922H12.5813L12.3704 12.7109L5.08813 3.0459L5.0354 2.97559H3.36157L3.57642 3.25781Z"
+                      stroke="#57534E"
+                      strokeWidth="0.350493"
+                    />
+                  </svg>
+                  Twitter
+                </Badge>
+              </div>
             </div>
+
+            {/* Mobile: Top right, Desktop: Right side */}
             {(feed?.config?.outputs?.stream?.distribute?.length ?? 0) > 0 && (
-              <div className="flex sm:flex-row items-center gap-2 justify-end sm:gap-3 w-full sm:w-full">
-                <DistributorBadges
-                  distribute={feed?.config?.outputs?.stream?.distribute ?? []}
-                />
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 justify-self-end sm:justify-self-auto">
+                <p className="text-sm sm:text-base text-right sm:text-left">
+                  Posting to:
+                </p>
+                <div className="flex items-center gap-2 justify-end sm:justify-start">
+                  <DistributorBadges
+                    distribute={feed?.config?.outputs?.stream?.distribute ?? []}
+                  />
+                </div>
               </div>
             )}
           </div>

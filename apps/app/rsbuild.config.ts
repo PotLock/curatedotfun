@@ -1,6 +1,6 @@
 import { defineConfig, rspack } from "@rsbuild/core";
 import { pluginReact } from "@rsbuild/plugin-react";
-import TanStackRouterRspack from "@tanstack/router-plugin/rspack";
+import { tanstackRouter } from "@tanstack/router-plugin/rspack";
 import "dotenv/config";
 import path from "path";
 
@@ -24,6 +24,7 @@ export default defineConfig({
   },
   source: {
     alias: {
+      "@": path.resolve(__dirname, "./src"),
       "@fonts": path.resolve(__dirname, "public/fonts"),
     },
     define: {
@@ -45,9 +46,9 @@ export default defineConfig({
   tools: {
     rspack: {
       plugins: [
-        TanStackRouterRspack({
+        tanstackRouter({
           routesDirectory: "./src/routes",
-          enableRouteGeneration: false,
+          enableRouteGeneration: true,
         }),
         ...(isProduction || isStaging
           ? []

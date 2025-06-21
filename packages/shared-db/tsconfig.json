@@ -6,6 +6,6 @@
     "baseUrl": "."
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "tests", "**/*.test.ts", "**/*.spec.ts"]
-  // "references": []
+  "exclude": ["node_modules", "dist", "tests", "**/*.test.ts", "**/*.spec.ts"],
+  "references": [{ "path": "../types" }]
 }

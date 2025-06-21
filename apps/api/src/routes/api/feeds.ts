@@ -1,266 +1,308 @@
+import {
+  ApiErrorResponseSchema,
+  CanModerateResponseSchema,
+  CreateFeedRequestSchema,
+  FeedsWrappedResponseSchema,
+  FeedWrappedResponseSchema,
+  UpdateFeedRequestSchema,
+} from "@curatedotfun/types";
+import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
+import { z } from "zod";
 import { Env } from "../../types/app";
-import { badRequest } from "../../utils/error";
+import { ForbiddenError, NotFoundError } from "../../types/errors";
 import { logger } from "../../utils/logger";
-import { insertFeedSchema, updateFeedSchema } from "@curatedotfun/shared-db";
-import { z } from "zod"; // Added import for z
-import { zValidator } from "@hono/zod-validator"; // Added import for zValidator
-import { ModerationService } from "../../services/moderation.service"; // Added import for ModerationService
+import { ServiceProvider } from "../../utils/service-provider";
 
 const feedsRoutes = new Hono<Env>();
 
-/**
- * Get all feeds
- */
-feedsRoutes.get("/", async (c) => {
-  const sp = c.get("sp");
-  const feedService = sp.getFeedService();
-  try {
-    const feeds = await feedService.getAllFeeds();
-    return c.json(feeds);
-  } catch (error) {
-    logger.error("Error fetching all feeds:", error);
-    return c.json({ error: "Failed to fetch feeds" }, 500);
-  }
-});
-
-/**
- * Create a new feed
- */
-feedsRoutes.post("/", async (c) => {
-  const accountId = c.get("accountId");
-  if (!accountId) {
-    return c.json(
-      { error: "Unauthorized. User must be logged in to create a feed." },
-      401,
-    );
-  }
-
-  const body = await c.req.json();
-  const partialValidationResult = insertFeedSchema
-    .omit({ created_by: true })
-    .safeParse(body);
-
-  if (!partialValidationResult.success) {
-    return badRequest(
-      c,
-      "Invalid feed data",
-      partialValidationResult.error.flatten(),
-    );
-  }
-
-  const feedDataWithCreator = {
-    ...partialValidationResult.data,
-    created_by: accountId,
-  };
-
-  const finalValidationResult = insertFeedSchema.safeParse(feedDataWithCreator);
-  if (!finalValidationResult.success) {
-    logger.error(
-      "Error in final validation after adding created_by",
-      finalValidationResult.error,
-    );
-    return badRequest(
-      c,
-      "Internal validation error",
-      finalValidationResult.error.flatten(),
-    );
-  }
-
-  const sp = c.get("sp");
-  const feedService = sp.getFeedService();
-  try {
-    const newFeed = await feedService.createFeed(finalValidationResult.data);
-    return c.json(newFeed, 201);
-  } catch (error) {
-    logger.error("Error creating feed:", error);
-    return c.json({ error: "Failed to create feed" }, 500);
-  }
-});
-
-/**
- * Get a specific feed by its ID
- */
-feedsRoutes.get("/:feedId", async (c) => {
-  const feedId = c.req.param("feedId");
-  const sp = c.get("sp");
-  const feedService = sp.getFeedService();
-  try {
-    const feed = await feedService.getFeedById(feedId);
-    if (!feed) {
-      return c.notFound();
-    }
-    return c.json(feed);
-  } catch (error) {
-    logger.error(`Error fetching feed ${feedId}:`, error);
-    return c.json({ error: "Failed to fetch feed" }, 500);
-  }
-});
-
-/**
- * Update an existing feed
- */
-feedsRoutes.put("/:feedId", async (c) => {
-  const accountId = c.get("accountId");
-  if (!accountId) {
-    return c.json(
-      { error: "Unauthorized. User must be logged in to update a feed." },
-      401,
-    );
-  }
-
-  const feedId = c.req.param("feedId");
-  const sp = c.get("sp");
-  const feedService = sp.getFeedService();
-
-  const canUpdate = await feedService.hasPermission(
-    accountId,
-    feedId,
-    "update",
-  );
-  if (!canUpdate) {
-    return c.json(
-      { error: "Forbidden. You do not have permission to update this feed." },
-      403,
-    );
-  }
-
-  const body = await c.req.json();
-  const validationResult = updateFeedSchema.safeParse(body);
-
-  if (!validationResult.success) {
-    return badRequest(c, "Invalid feed data", validationResult.error.flatten());
-  }
-
-  try {
-    const updatedFeed = await feedService.updateFeed(
-      feedId,
-      validationResult.data,
-    );
-    if (!updatedFeed) {
-      return c.notFound();
-    }
-    return c.json(updatedFeed);
-  } catch (error) {
-    logger.error(`Error updating feed ${feedId}:`, error);
-    return c.json({ error: "Failed to update feed" }, 500);
-  }
-});
-
-/**
- * Process approved submissions for a feed
- * Optional query parameter: distributors - comma-separated list of distributor plugins to use
- * Example: /api/feeds/solana/process?distributors=@curatedotfun/rss
- */
-feedsRoutes.post("/:feedId/process", async (c) => {
-  const accountId = c.get("accountId");
-  if (!accountId) {
-    return c.json(
-      { error: "Unauthorized. User must be logged in to process a feed." },
-      401,
-    );
-  }
-
-  const sp = c.get("sp");
-  const feedService = sp.getFeedService();
-
-  const feedId = c.req.param("feedId");
-  const distributorsParam = c.req.query("distributors");
-
-  try {
-    const result = await feedService.processFeed(feedId, distributorsParam);
-    return c.json(result);
-  } catch (error: any) {
-    logger.error(`Error processing feed ${feedId}:`, error);
-    // FeedService.processFeed might throw specific errors (e.g., NotFoundError)
-    // For now, a generic 500, but could be more specific based on error type
-    if (error.message && error.message.startsWith("Feed not found")) {
-      return c.json({ error: error.message }, 404);
-    }
-    if (
-      error.message &&
-      error.message.startsWith("Feed configuration not found")
-    ) {
-      return c.json({ error: error.message }, 404); // Or 500 if it's an internal config issue
-    }
-    return c.json({ error: "Failed to process feed" }, 500);
-  }
-});
-
-/**
- * Delete a specific feed by its ID
- */
-feedsRoutes.delete("/:feedId", async (c) => {
-  const accountId = c.get("accountId");
-  if (!accountId) {
-    return c.json(
-      { error: "Unauthorized. User must be logged in to delete a feed." },
-      401,
-    );
-  }
-
-  const feedId = c.req.param("feedId");
-  const sp = c.get("sp");
-  const feedService = sp.getFeedService();
-
-  const canDelete = await feedService.hasPermission(
-    accountId,
-    feedId,
-    "delete",
-  );
-  if (!canDelete) {
-    return c.json(
-      { error: "Forbidden. You do not have permission to delete this feed." },
-      403,
-    );
-  }
-
-  try {
-    const result = await feedService.deleteFeed(feedId);
-    if (!result) {
-      return c.notFound();
-    }
-    return c.json({ message: "Feed deleted successfully" }, 200);
-  } catch (error) {
-    logger.error(`Error deleting feed ${feedId}:`, error);
-    return c.json({ error: "Failed to delete feed" }, 500);
-  }
-});
-
-const feedParamSchemaCanModerate = z.object({
-  // Renamed to avoid conflict if other schemas exist
+const feedIdParamSchema = z.object({
   feedId: z.string().min(1, "Feed ID is required"),
 });
 
-feedsRoutes.get(
-  "/:feedId/can-moderate",
-  zValidator("param", feedParamSchemaCanModerate),
+// GET /api/feeds - Get all feeds
+feedsRoutes.get("/", async (c) => {
+  try {
+    const feedService = ServiceProvider.getInstance().getFeedService();
+    const feeds = await feedService.getAllFeeds();
+    return c.json(
+      FeedsWrappedResponseSchema.parse({
+        statusCode: 200,
+        success: true,
+        data: feeds.map((feed) => ({
+          ...feed,
+          config: feed.config,
+        })),
+      }),
+    );
+  } catch (error) {
+    logger.error({ error }, "Error fetching all feeds");
+    return c.json(
+      ApiErrorResponseSchema.parse({
+        statusCode: 500,
+        success: false,
+        error: { message: "Failed to fetch feeds" },
+      }),
+      500,
+    );
+  }
+});
+
+// POST /api/feeds - Create a new feed
+feedsRoutes.post(
+  "/",
+  zValidator("json", CreateFeedRequestSchema),
   async (c) => {
-    const { feedId } = c.req.valid("param");
-    const sp = c.get("sp");
-    const moderationService =
-      sp.getService<ModerationService>("moderationService");
-
-    const actingAccountId = c.get("accountId");
-
-    if (!actingAccountId) {
-      return c.json({ canModerate: false, reason: "User not authenticated" });
+    const accountId = c.get("accountId");
+    if (!accountId) {
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 401,
+          success: false,
+          error: { message: "Unauthorized. User must be logged in." },
+        }),
+        401,
+      );
     }
 
     try {
+      const feedConfig = c.req.valid("json");
+      const feedService = ServiceProvider.getInstance().getFeedService();
+      const newFeed = await feedService.createFeed(feedConfig, accountId);
+
+      return c.json(
+        FeedWrappedResponseSchema.parse({
+          statusCode: 201,
+          success: true,
+          data: {
+            ...newFeed,
+            config: newFeed.config,
+          },
+        }),
+        201,
+      );
+    } catch (error) {
+      logger.error({ error, accountId }, "Error creating feed");
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 500,
+          success: false,
+          error: { message: "Failed to create feed" },
+        }),
+        500,
+      );
+    }
+  },
+);
+
+// GET /api/feeds/:feedId - Get a specific feed
+feedsRoutes.get(
+  "/:feedId",
+  zValidator("param", feedIdParamSchema),
+  async (c) => {
+    try {
+      const { feedId } = c.req.valid("param");
+      const feedService = ServiceProvider.getInstance().getFeedService();
+      const feed = await feedService.getFeedById(feedId);
+
+      return c.json(
+        FeedWrappedResponseSchema.parse({
+          statusCode: 200,
+          success: true,
+          data: {
+            ...feed,
+            config: feed.config,
+          },
+        }),
+      );
+    } catch (error) {
+      logger.error({ error }, `Error fetching feed`);
+      if (error instanceof NotFoundError) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: 404,
+            success: false,
+            error: { message: error.message },
+          }),
+          404,
+        );
+      }
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 500,
+          success: false,
+          error: { message: "Failed to fetch feed" },
+        }),
+        500,
+      );
+    }
+  },
+);
+
+// PUT /api/feeds/:feedId - Update an existing feed
+feedsRoutes.put(
+  "/:feedId",
+  zValidator("param", feedIdParamSchema),
+  zValidator("json", UpdateFeedRequestSchema),
+  async (c) => {
+    const accountId = c.get("accountId");
+    if (!accountId) {
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 401,
+          success: false,
+          error: { message: "Unauthorized. User must be logged in." },
+        }),
+        401,
+      );
+    }
+
+    try {
+      const { feedId } = c.req.valid("param");
+      const feedConfig = c.req.valid("json");
+      const feedService = ServiceProvider.getInstance().getFeedService();
+
+      const updatedFeed = await feedService.updateFeed(
+        feedId,
+        feedConfig,
+        accountId,
+      );
+
+      return c.json(
+        FeedWrappedResponseSchema.parse({
+          statusCode: 200,
+          success: true,
+          data: {
+            ...updatedFeed,
+            config: updatedFeed.config,
+          },
+        }),
+      );
+    } catch (error) {
+      logger.error({ error, accountId }, "Error updating feed");
+      if (error instanceof NotFoundError) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: 404,
+            success: false,
+            error: { message: error.message },
+          }),
+          404,
+        );
+      }
+      if (error instanceof ForbiddenError) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: 403,
+            success: false,
+            error: { message: error.message },
+          }),
+          403,
+        );
+      }
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 500,
+          success: false,
+          error: { message: "Failed to update feed" },
+        }),
+        500,
+      );
+    }
+  },
+);
+
+// DELETE /api/feeds/:feedId - Delete a feed
+feedsRoutes.delete(
+  "/:feedId",
+  zValidator("param", feedIdParamSchema),
+  async (c) => {
+    const accountId = c.get("accountId");
+    if (!accountId) {
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 401,
+          success: false,
+          error: { message: "Unauthorized. User must be logged in." },
+        }),
+        401,
+      );
+    }
+
+    try {
+      const { feedId } = c.req.valid("param");
+      const feedService = ServiceProvider.getInstance().getFeedService();
+      await feedService.deleteFeed(feedId, accountId);
+      return c.body(null, 204);
+    } catch (error: unknown) {
+      logger.error({ error, accountId }, "Error deleting feed");
+      if (error instanceof NotFoundError) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: 404,
+            success: false,
+            error: { message: error.message },
+          }),
+          404,
+        );
+      }
+      if (error instanceof ForbiddenError) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: 403,
+            success: false,
+            error: { message: error.message },
+          }),
+          403,
+        );
+      }
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 500,
+          success: false,
+          error: { message: "Failed to delete feed" },
+        }),
+        500,
+      );
+    }
+  },
+);
+
+// GET /api/feeds/:feedId/can-moderate - Check moderation permission
+feedsRoutes.get(
+  "/:feedId/can-moderate",
+  zValidator("param", feedIdParamSchema),
+  async (c) => {
+    const actingAccountId = c.get("accountId");
+    if (!actingAccountId) {
+      return c.json(
+        CanModerateResponseSchema.parse({
+          canModerate: false,
+          reason: "User not authenticated",
+        }),
+      );
+    }
+
+    try {
+      const { feedId } = c.req.valid("param");
+      const moderationService =
+        ServiceProvider.getInstance().getModerationService();
       const canModerate =
         await moderationService.checkUserFeedModerationPermission(
           feedId,
           actingAccountId,
         );
-      return c.json({ canModerate });
-    } catch (error: any) {
+      return c.json(CanModerateResponseSchema.parse({ canModerate }));
+    } catch (error: unknown) {
       logger.error(
-        `Error in /:feedId/can-moderate for feed ${feedId}, user ${actingAccountId}:`,
-        error,
+        { error, actingAccountId },
+        "Error in /:feedId/can-moderate",
       );
       return c.json(
-        { canModerate: false, error: "Failed to check moderation permission" },
+        CanModerateResponseSchema.parse({
+          canModerate: false,
+          error: "Failed to check moderation permission",
+        }),
         500,
       );
     }

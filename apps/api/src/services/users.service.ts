@@ -46,6 +46,16 @@ export class UserService implements IBaseService {
     return UserProfileSchema.parse(parsedUser);
   }
 
+  async ensureUserProfile(nearAccountId: string): Promise<UserProfile> {
+    const existingUser = await this.findUserByNearAccountId(nearAccountId);
+    if (existingUser) {
+      return existingUser;
+    }
+
+    const newUser = await this.createUser({ nearAccountId });
+    return newUser;
+  }
+
   /**
    * Find a user by NEAR account ID and return as API UserProfile
    */
@@ -77,7 +87,7 @@ export class UserService implements IBaseService {
 
       const parsedUser = selectUserSchema.parse(newUser);
       return UserProfileSchema.parse(parsedUser);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If the error is already a UserServiceError or NearAccountError, rethrow it
       if (
         error instanceof UserServiceError ||
@@ -115,7 +125,7 @@ export class UserService implements IBaseService {
       }
       const parsedUser = selectUserSchema.parse(updatedUser);
       return UserProfileSchema.parse(parsedUser);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof UserServiceError || error instanceof NotFoundError) {
         throw error;
       }
@@ -149,7 +159,7 @@ export class UserService implements IBaseService {
 
       const parsedUser = selectUserSchema.parse(updatedUser);
       return UserProfileSchema.parse(parsedUser);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof UserServiceError || error instanceof NotFoundError) {
         throw error;
       }
@@ -213,7 +223,7 @@ export class UserService implements IBaseService {
       });
 
       logger.info(`Successfully deleted NEAR account: ${nearAccountId}`);
-    } catch (nearError: any) {
+    } catch (nearerror: unknown) {
       logger.error(
         { error: nearError },
         `Error deleting NEAR account ${nearAccountId}`,
@@ -252,7 +262,7 @@ export class UserService implements IBaseService {
         );
       }
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (
         error instanceof UserServiceError ||
         error instanceof NotFoundError ||
@@ -318,7 +328,7 @@ export class UserService implements IBaseService {
       });
 
       logger.info(`Successfully deleted NEAR account: ${nearAccountId}`);
-    } catch (nearError: any) {
+    } catch (nearerror: unknown) {
       logger.error(
         { error: nearError },
         `Error deleting NEAR account ${nearAccountId}`,
@@ -354,7 +364,7 @@ export class UserService implements IBaseService {
         );
       }
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (
         error instanceof UserServiceError ||
         error instanceof NotFoundError ||

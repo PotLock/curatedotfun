@@ -1,4 +1,7 @@
-import { PluginErrorInterface, PluginErrorContext } from "@curatedotfun/types";
+import type {
+  PluginErrorInterface,
+  PluginErrorContext,
+} from "@curatedotfun/types";
 
 export enum PluginErrorCode {
   // General Plugin Errors

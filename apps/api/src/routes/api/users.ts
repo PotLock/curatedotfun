@@ -92,7 +92,7 @@ usersRoutes.post(
         }),
         201,
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ error }, "Error in usersRoutes.post('/')");
 
       if (
@@ -228,7 +228,7 @@ usersRoutes.delete("/me", async (c) => {
         500,
       );
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ error }, "Error in usersRoutes.delete('/me')");
 
     if (

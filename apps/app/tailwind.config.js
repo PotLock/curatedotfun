@@ -16,8 +16,8 @@ export default {
       },
       colors: {
         destructive: {
-          DEFAULT: "oklch(var(--destructive))",
-          foreground: "oklch(var(--destructive-foreground))",
+          DEFAULT: "var(--destructive)",
+          foreground: "var(--destructive-foreground)",
         },
       },
     },

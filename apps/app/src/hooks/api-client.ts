@@ -27,13 +27,7 @@ export function useApiQuery<
     "queryKey" | "queryFn"
   >,
 ) {
-  const { currentAccountId, isSignedIn } = useAuth();
-
-  const queryFunction = () =>
-    apiClient.makeRequest<TQueryFnData>("GET", path, {
-      currentAccountId,
-      isSignedIn,
-    });
+  const queryFunction = () => apiClient.makeRequest<TQueryFnData>("GET", path);
 
   const finalQueryOptions: UseQueryOptions<
     TQueryFnData,
@@ -80,9 +74,7 @@ export function useApiMutation<
     return apiClient.makeRequest<TData, TVariables>(
       mutationConfig.method,
       mutationConfig.path,
-      { currentAccountId, isSignedIn },
       variables, // Pass 'variables' from mutate() as requestData
-      mutationConfig.message,
     );
   };
 
@@ -118,16 +110,11 @@ export function useApiInfiniteQuery<
     "queryKey" | "queryFn" | "initialPageParam" // initialPageParam is now required in options
   > & { initialPageParam: TPageParam }, // Ensure initialPageParam is provided
 ) {
-  const { currentAccountId, isSignedIn } = useAuth();
-
   const queryFunction = (
     context: QueryFunctionContext<TQueryKey, TPageParam>,
   ) => {
     const path = pathFn(context.pageParam as TPageParam);
-    return apiClient.makeRequest<TQueryFnData>("GET", path, {
-      currentAccountId,
-      isSignedIn,
-    });
+    return apiClient.makeRequest<TQueryFnData>("GET", path);
   };
 
   const finalQueryOptions: UseInfiniteQueryOptions<

@@ -1,5 +1,6 @@
 import {
   ActivityRepository,
+  AuthRequestRepository,
   FeedRepository,
   LeaderboardRepository,
   ModerationRepository,
@@ -11,6 +12,7 @@ import { SubmissionService } from "services/submission.service";
 import { MockTwitterService } from "../__test__/mocks/twitter-service.mock";
 import { db } from "../db";
 import { ActivityService } from "../services/activity.service";
+import { AuthService } from "../services/auth.service";
 import { ConfigService, isProduction } from "../services/config.service";
 import { DistributionService } from "../services/distribution.service";
 import { FeedService } from "../services/feed.service";
@@ -85,6 +87,10 @@ export class ServiceProvider {
       logger,
     );
     this.services.set("userService", userService);
+
+    const authRequestRepository = new AuthRequestRepository(db);
+    const authService = new AuthService(authRequestRepository, userService);
+    this.services.set("authService", authService);
 
     const feedService = new FeedService(
       feedRepository,
@@ -208,6 +214,14 @@ export class ServiceProvider {
   }
 
   /**
+   * Get the auth service
+   * @returns The auth service
+   */
+  public getAuthService(): AuthService {
+    return this.getService<AuthService>("authService");
+  }
+
+  /**
    * Get the activity service
    * @returns The activity service
    */
@@ -237,6 +251,10 @@ export class ServiceProvider {
 
   public getFeedService(): FeedService {
     return this.getService<FeedService>("feedService");
+  }
+
+  public getModerationService(): ModerationService {
+    return this.getService<ModerationService>("moderationService");
   }
 
   /**

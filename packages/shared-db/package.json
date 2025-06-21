@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@types/async-retry": "^1.4.9",
+    "@curatedotfun/types": "workspace:*",
     "dotenv": "^16.5.0",
     "drizzle-kit": "^0.31.1",
     "eslint": "^9.28.0",

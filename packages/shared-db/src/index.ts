@@ -15,3 +15,4 @@ export * from "./repositories/submission.repository";
 export * from "./repositories/moderation.repository";
 export * from "./repositories/user.repository";
 export * from "./repositories/plugin.repository";
+export * from "./repositories/authRequest.repository";

@@ -14,6 +14,7 @@ import { activityRoutes } from "./activity";
 import { uploadRoutes } from "./upload";
 import { pluginsRoutes } from "./plugins";
 import { moderationRoutes } from "./moderation";
+import { authRoutes } from "./auth";
 
 // Create main API router
 export const apiRoutes = new Hono<Env>();
@@ -36,3 +37,4 @@ apiRoutes.route("/users", usersRoutes);
 apiRoutes.route("/activity", activityRoutes);
 apiRoutes.route("/upload", uploadRoutes);
 apiRoutes.route("/moderate", moderationRoutes);
+apiRoutes.route("/auth", authRoutes);

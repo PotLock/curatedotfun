@@ -78,20 +78,20 @@ export function ProfileHeader({ accountId }: { accountId: string }) {
               <path
                 d="M11.4671 5.33301C12.528 5.33301 13.5454 5.75444 14.2956 6.50458C15.0457 7.25473 15.4671 8.27214 15.4671 9.33301V13.9997H12.8005V9.33301C12.8005 8.97939 12.66 8.64025 12.4099 8.3902C12.1599 8.14015 11.8207 7.99967 11.4671 7.99967C11.1135 7.99967 10.7744 8.14015 10.5243 8.3902C10.2743 8.64025 10.1338 8.97939 10.1338 9.33301V13.9997H7.46712V9.33301C7.46712 8.27214 7.88855 7.25473 8.6387 6.50458C9.38884 5.75444 10.4063 5.33301 11.4671 5.33301Z"
                 stroke="black"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <path
                 d="M4.80046 5.99967H2.13379V13.9997H4.80046V5.99967Z"
                 stroke="black"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <path
                 d="M3.46712 3.99967C4.2035 3.99967 4.80046 3.40272 4.80046 2.66634C4.80046 1.92996 4.2035 1.33301 3.46712 1.33301C2.73074 1.33301 2.13379 1.92996 2.13379 2.66634C2.13379 3.40272 2.73074 3.99967 3.46712 3.99967Z"
                 stroke="black"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
             /web3.plungrel

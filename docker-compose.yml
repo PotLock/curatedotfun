@@ -36,22 +36,19 @@ services:
 
   # handles data migration and database seeding
   db-migrate-dev:
-    image: oven/bun:latest
-    working_dir: /app/packages/shared-db
-    volumes:
-      - ./:/app
-      - node_modules_cache:/app/node_modules
+    build:
+      context: .
+      dockerfile: packages/shared-db/Dockerfile.dev
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres_dev:5432/curatedotfun
     depends_on:
       postgres_dev:
         condition: service_healthy
-    command: sh -c "bunx drizzle-kit migrate"
     profiles: ["dev"]
 
   db-seed-dev:
     extends: db-migrate-dev
-    command: sh -c "bun ./scripts/seed-dev.ts"
+    command: ["seed:dev"]
     profiles: ["dev"]
 
   # Application service

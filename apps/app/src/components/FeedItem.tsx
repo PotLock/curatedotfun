@@ -4,7 +4,7 @@ import {
   useApproveSubmission,
   useRejectSubmission,
 } from "../lib/api/moderation";
-import { useCanModerateFeed } from "../lib/api/feed";
+import { useCanModerateFeed } from "../lib/api/feeds";
 import { getTweetUrl } from "../lib/twitter";
 import { formatDate } from "../utils/datetime";
 import { Badge } from "./ui/badge";

@@ -11,23 +11,18 @@ import {
   SQL,
 } from "drizzle-orm";
 import * as schema from "../schema";
-import {
-  FeedConfig,
-  SubmissionStatus,
-  submissionStatusZodEnum,
-} from "../schema";
+import { SubmissionStatus, submissionStatusZodEnum } from "../schema";
 import { executeWithRetry, withErrorHandling } from "../utils";
 import {
   DB,
-  InsertFeed,
   InsertSubmissionFeed,
   RichSubmission,
-  SelectFeed,
   SelectSubmissionFeed,
-  UpdateFeed,
 } from "../validators";
+import type { InsertFeed, SelectFeed, UpdateFeed } from "../schema/feeds";
 import { SelectModerationHistory } from "../schema/moderation";
 import { PaginatedResponse } from "./submission.repository";
+import type { FeedConfig } from "@curatedotfun/types";
 
 /**
  * Repository for feed-related database operations
@@ -42,18 +37,17 @@ export class FeedRepository {
   /**
    * Get a feed by ID
    */
-  async getFeedById(feedId: string): Promise<SelectFeed | null> {
+  async findFeedById(feedId: string): Promise<SelectFeed | null> {
     return withErrorHandling(
-      async () =>
-        executeWithRetry(async (dbInstance) => {
-          const result = await dbInstance
-            .select()
-            .from(schema.feeds)
-            .where(eq(schema.feeds.id, feedId))
-            .limit(1);
-          return result.length > 0 ? (result[0] as SelectFeed) : null;
-        }, this.db),
-      { operationName: "getFeedById", additionalContext: { feedId } },
+      async () => {
+        return executeWithRetry(async (dbInstance) => {
+          const result = await dbInstance.query.feeds.findFirst({
+            where: eq(schema.feeds.id, feedId),
+          });
+          return result ? (result as SelectFeed) : null;
+        }, this.db);
+      },
+      { operationName: "findFeedById", additionalContext: { feedId } },
       null,
     );
   }
@@ -80,6 +74,9 @@ export class FeedRepository {
     return withErrorHandling(
       async () => {
         const result = await txDb.insert(schema.feeds).values(data).returning();
+        if (result.length === 0) {
+          throw new Error("Failed to create feed, no record returned.");
+        }
         return result[0] as SelectFeed;
       },
       { operationName: "createFeed", additionalContext: { data } },
@@ -110,22 +107,27 @@ export class FeedRepository {
   /**
    * Delete a feed by ID.
    */
-  async deleteFeed(feedId: string, txDb: DB): Promise<number> {
+  async deleteFeed(feedId: string, txDb: DB): Promise<SelectFeed | null> {
     return withErrorHandling(
       async () => {
+        // First, delete related entries in other tables
         await txDb
           .delete(schema.submissionFeeds)
           .where(eq(schema.submissionFeeds.feedId, feedId));
         await txDb
-          .delete(schema.feedRecapsState) // Still need to delete from feedRecapsState here if a feed is deleted
+          .delete(schema.feedRecapsState)
           .where(eq(schema.feedRecapsState.feedId, feedId));
+
+        // Now, delete the feed and return the deleted record
         const result = await txDb
           .delete(schema.feeds)
           .where(eq(schema.feeds.id, feedId))
-          .returning({ id: schema.feeds.id });
-        return result.length;
+          .returning();
+
+        return result.length > 0 ? (result[0] as SelectFeed) : null;
       },
       { operationName: "deleteFeed", additionalContext: { feedId } },
+      null,
     );
   }
 

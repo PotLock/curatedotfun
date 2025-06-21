@@ -109,17 +109,25 @@ export class UserRepository {
           }
 
           return newUser;
-        } catch (error: any) {
+        } catch (error: unknown) {
           // Handle unique constraint violations
-          if (error?.code === "23505") {
+          if (
+            error &&
+            typeof error === "object" &&
+            "code" in error &&
+            error.code === "23505"
+          ) {
             // Extract the constraint name to provide a more specific error message
-            const constraintMatch = error.detail?.match(/Key \((.*?)\)=/);
+            const detail =
+              "detail" in error && typeof error.detail === "string"
+                ? error.detail
+                : "";
+            const constraintMatch = detail.match(/Key \((.*?)\)=/);
             const field = constraintMatch ? constraintMatch[1] : "unknown";
 
-            throw new Error(
-              `A user with this ${field} already exists`,
-              error.code,
-            );
+            throw new Error(`A user with this ${field} already exists`, {
+              cause: error,
+            });
           }
           throw error;
         }

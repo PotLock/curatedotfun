@@ -1,45 +1,49 @@
-import type { FeedConfig, Submission } from "@curatedotfun/types";
+import type {
+  CanModerateResponse,
+  CreateFeedRequest,
+  FeedResponse,
+  FeedsWrappedResponse,
+  FeedWrappedResponse,
+  Submission,
+  UpdateFeedRequest,
+} from "@curatedotfun/types";
+import { useAuth } from "../../contexts/auth-context";
 import {
-  useApiQuery,
-  useApiMutation,
   useApiInfiniteQuery,
+  useApiMutation,
+  useApiQuery,
 } from "../../hooks/api-client";
 import type {
+  PaginatedResponse,
   SortOrderType,
   StatusFilterType,
   SubmissionFilters,
-  PaginatedResponse,
   TransformedInfiniteData,
 } from "./types";
 
-export interface FeedDetails {
-  id: string;
-  name: string;
-  description: string | null;
-  config: FeedConfig;
-  createdAt: string;
-  updatedAt: string | null;
-}
-
 export function useFeed(feedId: string) {
-  return useApiQuery<FeedDetails>(
+  return useApiQuery<FeedWrappedResponse, Error, FeedResponse | undefined>(
     ["feed-details", feedId],
     `/feeds/${feedId}`,
-    { enabled: !!feedId },
+    {
+      enabled: !!feedId,
+      select: (data) => data.data,
+    },
   );
 }
 
 export function useAllFeeds() {
-  return useApiQuery<FeedDetails[]>(["feeds"], `/feeds`);
+  return useApiQuery<FeedsWrappedResponse, Error, FeedResponse[]>(
+    ["feeds"],
+    `/feeds`,
+    {
+      select: (data) => data.data ?? [],
+    },
+  );
 }
 
 export function useCreateFeed() {
-  type CreateFeedVariables = Omit<FeedConfig, "id"> & {
-    id: string;
-    name: string;
-    description?: string | null;
-  };
-  return useApiMutation<FeedDetails, Error, CreateFeedVariables>(
+  return useApiMutation<FeedResponse, Error, CreateFeedRequest>(
     {
       method: "POST",
       path: `/feeds`,
@@ -52,8 +56,7 @@ export function useCreateFeed() {
 }
 
 export function useUpdateFeed(feedId: string) {
-  type UpdateFeedVariables = { config: FeedConfig };
-  return useApiMutation<FeedDetails, Error, UpdateFeedVariables>(
+  return useApiMutation<FeedResponse, Error, UpdateFeedRequest>(
     {
       method: "PUT",
       path: `/feeds/${feedId}`,
@@ -118,7 +121,7 @@ export function useFeedItems(feedId: string, filters: SubmissionFilters = {}) {
     },
     select: (data) => ({
       pages: data.pages,
-      pageParams: data.pageParams as number[], // Ensure pageParams is number[]
+      pageParams: data.pageParams as number[],
       items: data.pages.flatMap((page) =>
         Array.isArray(page.items) ? page.items : [],
       ),
@@ -129,3 +132,23 @@ export function useFeedItems(feedId: string, filters: SubmissionFilters = {}) {
     enabled: !!feedId,
   });
 }
+
+/**
+ * Hook to check if the current authenticated user can moderate a specific feed.
+ * @param feedId The ID of the feed to check. If undefined, the query will not run.
+ * @returns Query result including `canModerate` boolean.
+ */
+export const useCanModerateFeed = (feedId: string | undefined) => {
+  const { isSignedIn, currentAccountId } = useAuth();
+
+  const enabled = !!feedId && isSignedIn && !!currentAccountId;
+
+  return useApiQuery<CanModerateResponse>(
+    ["can-moderate", feedId, currentAccountId],
+    `/feeds/${feedId}/can-moderate`,
+    {
+      enabled,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  );
+};

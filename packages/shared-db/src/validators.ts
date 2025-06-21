@@ -11,33 +11,12 @@ import type { SelectModerationHistory } from "./schema/moderation";
 export type DB = NodePgDatabase<typeof schema>;
 
 const {
-  activities,
-  userStats,
-  feedUserStats,
-  feeds,
   feedRecapsState,
   feedPlugins,
   submissions,
   submissionFeeds,
   submissionCounts,
 } = schema;
-
-// Feed Schemas and Types
-export const insertFeedSchema = createInsertSchema(feeds, {
-  created_by: z.string().min(1),
-  admins: z.array(z.string()).optional(),
-  createdAt: z.undefined(),
-  updatedAt: z.undefined(),
-});
-
-export const updateFeedSchema = createUpdateSchema(feeds).extend({
-  admins: z.array(z.string()).optional(),
-});
-
-export const selectFeedSchema = createSelectSchema(feeds);
-export type InsertFeed = z.infer<typeof insertFeedSchema>;
-export type UpdateFeed = z.infer<typeof updateFeedSchema>;
-export type SelectFeed = z.infer<typeof selectFeedSchema>;
 
 // FeedRecapsState Schemas and Types
 export const insertFeedRecapStateSchema = createInsertSchema(feedRecapsState, {

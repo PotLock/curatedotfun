@@ -35,12 +35,13 @@
     "zod": "^3.25.62"
   },
   "dependencies": {
+    "@crosspost/scheduler-sdk": "^0.1.1",
     "@crosspost/sdk": "^0.3.0",
     "@crosspost/types": "^0.3.0",
-    "@crosspost/scheduler-sdk": "^0.1.1",
     "@curatedotfun/shared-db": "workspace:*",
     "@curatedotfun/types": "workspace:*",
     "@curatedotfun/utils": "workspace:*",
+    "@fastnear/utils": "^0.9.7",
     "@hono/node-server": "^1.8.2",
     "@hono/zod-openapi": "^0.9.5",
     "@hono/zod-validator": "^0.5.0",
@@ -60,7 +61,7 @@
     "lodash": "^4.17.21",
     "mustache": "^4.2.0",
     "near-api-js": "^5.1.1",
-    "near-sign-verify": "^0.3.6",
+    "near-sign-verify": "^0.4.1",
     "ora": "^8.1.1",
     "pg": "^8.15.6",
     "pinata-web3": "^0.5.4",
