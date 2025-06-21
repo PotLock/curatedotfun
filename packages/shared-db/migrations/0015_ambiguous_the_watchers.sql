@@ -4,6 +4,7 @@ ALTER TABLE "moderation_history" DROP CONSTRAINT IF EXISTS "moderation_history_t
 --> statement-breakpoint
 DROP INDEX IF EXISTS "moderation_history_tweet_idx";--> statement-breakpoint
 DROP INDEX IF EXISTS "moderation_history_admin_idx";--> statement-breakpoint
+
 ALTER TABLE "moderation_history" ADD COLUMN "moderator_account_id_type" text;--> statement-breakpoint
 ALTER TABLE "moderation_history" ADD COLUMN "source" text;--> statement-breakpoint
 

@@ -37,7 +37,7 @@ moderationRoutes.post(
         }),
         201,
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error in moderationRoutes.post('/'):", error);
 
       if (error instanceof NotFoundError || error instanceof ServiceError) {
@@ -91,7 +91,7 @@ moderationRoutes.get(
           data: moderation,
         }),
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error in moderationRoutes.get('/:id'):", error);
 
       if (error instanceof NotFoundError || error instanceof ServiceError) {
@@ -136,7 +136,7 @@ moderationRoutes.get(
           data: moderations,
         }),
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(
         "Error in moderationRoutes.get('/submission/:submissionId'):",
         error,
@@ -187,7 +187,7 @@ moderationRoutes.get(
           data: moderations,
         }),
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(
         "Error in moderationRoutes.get('/submission/:submissionId/feed/:feedId'):",
         error,

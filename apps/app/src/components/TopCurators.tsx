@@ -113,22 +113,22 @@ const TopCurators = ({ feedId, limit = 10 }: TopCuratorsProps) => {
                             d="M7.4659 3.32994C8.12994 3.32994 8.76678 3.59373 9.23633 4.06327C9.70587 4.53282 9.96966 5.16966 9.96966 5.8337V8.75476H8.30049V5.8337C8.30049 5.61235 8.21256 5.40007 8.05604 5.24356C7.89952 5.08704 7.68724 4.99911 7.4659 4.99911C7.24455 4.99911 7.03227 5.08704 6.87575 5.24356C6.71924 5.40007 6.63131 5.61235 6.63131 5.8337V8.75476H4.96213V5.8337C4.96213 5.16966 5.22592 4.53282 5.69547 4.06327C6.16501 3.59373 6.80186 3.32994 7.4659 3.32994Z"
                             stroke="#0F172A"
                             stroke-width="0.678103"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
                           />
                           <path
                             d="M3.29296 3.74723H1.62378V8.75476H3.29296V3.74723Z"
                             stroke="#0F172A"
                             stroke-width="0.678103"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
                           />
                           <path
                             d="M2.45837 2.49535C2.9193 2.49535 3.29296 2.12169 3.29296 1.66076C3.29296 1.19983 2.9193 0.826172 2.45837 0.826172C1.99744 0.826172 1.62378 1.19983 1.62378 1.66076C1.62378 2.12169 1.99744 2.49535 2.45837 2.49535Z"
                             stroke="#0F172A"
                             stroke-width="0.678103"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
                           />
                         </g>
                         <defs>

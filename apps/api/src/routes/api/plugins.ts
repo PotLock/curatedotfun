@@ -28,7 +28,7 @@ pluginsRoutes.post(
     try {
       const newPlugin = await pluginRepository.createPlugin(pluginData);
       return c.json(newPlugin, 201);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error registering plugin:", { error, pluginData });
       if (error.code === "PLUGIN_ALREADY_EXISTS") {
         throw new HTTPException(409, { message: error.message });

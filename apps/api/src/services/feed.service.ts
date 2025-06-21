@@ -1,22 +1,24 @@
 import {
-  DistributorConfig,
   FeedRepository,
   InsertFeed,
   RichSubmission,
-  StreamConfig,
   submissionStatusZodEnum,
   UpdateFeed,
   type DB,
 } from "@curatedotfun/shared-db";
+import {
+  DistributorConfig,
+  FeedConfig,
+  StreamConfig,
+} from "@curatedotfun/types";
 import { Logger } from "pino";
+import { ForbiddenError, NotFoundError } from "../types/errors";
+import { isSuperAdmin } from "../utils/auth.utils";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { ProcessorService } from "./processor.service";
-import { isSuperAdmin } from "../utils/auth.utils";
+import { merge } from "lodash";
 
-export type FeedAction =
-  | "update" // For general updates to feed config, name, description
-  | "delete"
-  | "manage_admins"; // For adding/removing users from the feed's admin list
+export type FeedAction = "update" | "delete" | "manage_admins";
 
 export class FeedService implements IBaseService {
   public readonly logger: Logger;
@@ -50,7 +52,7 @@ export class FeedService implements IBaseService {
       return true;
     }
 
-    const feed = await this.feedRepository.getFeedById(feedId);
+    const feed = await this.feedRepository.findFeedById(feedId);
     if (!feed) {
       this.logger.warn(
         { accountId, feedId, action },
@@ -83,33 +85,80 @@ export class FeedService implements IBaseService {
     return this.feedRepository.getAllFeeds();
   }
 
-  async createFeed(data: InsertFeed) {
+  async createFeed(feedConfig: FeedConfig, accountId: string) {
+    const dbData: InsertFeed = {
+      id: feedConfig.id,
+      name: feedConfig.name,
+      description: feedConfig.description,
+      created_by: accountId,
+      config: feedConfig,
+    };
+
     return this.db.transaction(async (tx) => {
-      return this.feedRepository.createFeed(data, tx);
+      return this.feedRepository.createFeed(dbData, tx);
     });
   }
 
   async getFeedById(feedId: string) {
-    return this.feedRepository.getFeedById(feedId);
+    const feed = await this.feedRepository.findFeedById(feedId);
+    if (!feed) {
+      throw new NotFoundError("Feed", feedId);
+    }
+    return feed;
   }
 
-  async updateFeed(feedId: string, data: UpdateFeed) {
+  async updateFeed(
+    feedId: string,
+    data: Partial<FeedConfig>,
+    accountId: string,
+  ) {
+    const hasPermission = await this.hasPermission(accountId, feedId, "update");
+    if (!hasPermission) {
+      throw new ForbiddenError(
+        "You do not have permission to update this feed.",
+      );
+    }
+
+    // Fetch the existing feed to merge the config
+    const existingFeed = await this.getFeedById(feedId);
+    const existingConfig = existingFeed.config as FeedConfig;
+
+    const newConfig: FeedConfig = merge({}, existingConfig, data);
+
+    const dbData: UpdateFeed = {
+      name: newConfig.name,
+      description: newConfig.description,
+      config: newConfig,
+      admins: newConfig.admins as string[],
+    };
+
     return this.db.transaction(async (tx) => {
-      return this.feedRepository.updateFeed(feedId, data, tx);
+      const updatedFeed = await this.feedRepository.updateFeed(
+        feedId,
+        dbData,
+        tx,
+      );
+      if (!updatedFeed) {
+        throw new NotFoundError("Feed", feedId);
+      }
+      return updatedFeed;
     });
   }
 
-  async deleteFeed(feedId: string) {
+  async deleteFeed(feedId: string, accountId: string) {
+    const hasPermission = await this.hasPermission(accountId, feedId, "delete");
+    if (!hasPermission) {
+      throw new ForbiddenError(
+        "You do not have permission to delete this feed.",
+      );
+    }
+
     return this.db.transaction(async (tx) => {
-      const result = await this.feedRepository.deleteFeed(feedId, tx);
-      if (result === 0) {
-        this.logger.warn(
-          { feedId },
-          "FeedService: deleteFeed - Feed not found or not deleted",
-        );
-        return 0;
+      const deletedFeed = await this.feedRepository.deleteFeed(feedId, tx);
+      if (!deletedFeed) {
+        throw new NotFoundError("Feed", feedId);
       }
-      return result;
+      return deletedFeed;
     });
   }
 
@@ -117,16 +166,16 @@ export class FeedService implements IBaseService {
   // In order to process a feed, you must be the feed owner
   // this will be called by trigger/
   async processFeed(feedId: string, distributorsParam?: string) {
-    const feed = await this.feedRepository.getFeedById(feedId);
+    const feed = await this.feedRepository.findFeedById(feedId);
     if (!feed) {
       this.logger.error(
         { feedId },
         "FeedService: processFeed - Feed not found",
       );
-      throw new Error(`Feed not found: ${feedId}`); // Or a custom NotFoundError
+      throw new NotFoundError("Feed", feedId);
     }
 
-    const feedConfig = await this.feedRepository.getFeedConfig(feedId); // Get config from DB
+    const feedConfig = await this.feedRepository.getFeedConfig(feedId);
     if (!feedConfig) {
       this.logger.error(
         { feedId },
@@ -176,7 +225,8 @@ export class FeedService implements IBaseService {
             .split(",")
             .map((d) => d.trim());
           const availableDistributors =
-            streamConfig.distribute?.map((d) => d.plugin) || [];
+            streamConfig.distribute?.map((d: DistributorConfig) => d.plugin) ||
+            [];
           const validDistributors = requestedDistributors.filter((d) =>
             availableDistributors.includes(d),
           );
@@ -187,7 +237,11 @@ export class FeedService implements IBaseService {
           if (invalidDistributors.length > 0) {
             this.logger.warn(
               { feedId, invalidDistributors, availableDistributors },
-              `Invalid distributor(s) specified for feed ${feedId}: ${invalidDistributors.join(", ")}. Available: ${availableDistributors.join(", ")}`,
+              `Invalid distributor(s) specified for feed ${
+                feedId
+              }: ${invalidDistributors.join(
+                ", ",
+              )}. Available: ${availableDistributors.join(", ")}`,
             );
           }
 
@@ -204,7 +258,11 @@ export class FeedService implements IBaseService {
             validDistributors.forEach((d) => usedDistributors.add(d));
             this.logger.info(
               { submissionId: submission.tweetId, feedId, validDistributors },
-              `Processing submission ${submission.tweetId} for feed ${feedId} with selected distributors: ${validDistributors.join(", ")}`,
+              `Processing submission ${
+                submission.tweetId
+              } for feed ${feedId} with selected distributors: ${validDistributors.join(
+                ", ",
+              )}`,
             );
           }
         }

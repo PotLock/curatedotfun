@@ -1,3 +1,4 @@
+import type { FeedConfig } from "@curatedotfun/types";
 import {
   index,
   jsonb,
@@ -14,110 +15,18 @@ import { z } from "zod";
 import { submissionFeeds } from "./submissions";
 import { moderationHistory } from "./moderation";
 import { users } from "./users";
-
-// Schema for ModerationConfig
-export const ModerationConfigSchema = z.object({
-  approvers: z.record(z.string(), z.array(z.string())).optional(),
-  // Key is the platform identifier,
-  // value is an array of approver usernames or IDs for that platform.
-  blacklist: z.record(z.string(), z.array(z.string())).optional(), // e.g. { "twitter": ["user1", "user2"], "all": ["global_spammer"] }
-
-  // TODO: usernames can change, and so we should root in userIds per platform (on feed creation)
-});
-
-// Schema for TransformConfig (used in StreamConfig, DistributorConfig, RecapConfig)
-export const TransformConfigSchema = z.object({
-  plugin: z.string(), // Name/key of the transformer plugin registered in AppConfig.plugins
-  config: z.record(z.string(), z.any()),
-});
-
-// Schema for DistributorConfig (used in StreamConfig, RecapConfig)
-export const DistributorConfigSchema = z.object({
-  plugin: z.string(), // Name/key of the distributor plugin registered in AppConfig.plugins
-  config: z.record(z.string()), // Config specific to this distributor instance
-  transform: z.array(TransformConfigSchema).optional(), // Per-distributor transforms
-});
-
-// Schema for StreamConfig (part of FeedConfig.outputs)
-export const StreamConfigSchema = z.object({
-  enabled: z.boolean(),
-  transform: z.array(TransformConfigSchema).optional(), // Global transforms for the stream
-  distribute: z.array(DistributorConfigSchema).optional(),
-});
-
-// Schema for RecapConfig (using structure from recap.ts)
-export const RecapConfigSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  enabled: z.boolean(),
-  schedule: z.string(), // Cron expression or interval
-  timezone: z.string().optional(),
-  transform: z.array(TransformConfigSchema).optional(),
-  batchTransform: z.array(TransformConfigSchema).optional(),
-  distribute: z.array(DistributorConfigSchema).optional(),
-});
-
-// Schema for individual search configuration within a source
-export const SourceSearchConfigSchema = z
-  .object({
-    searchId: z.string(), // Unique ID for this search block to manage its state
-    type: z.string(), // Type of search within the plugin (e.g., "twitter-scraper", "reddit-posts")
-    query: z.string().optional(), // General query string
-    pageSize: z.number().int().positive().optional(),
-    language: z.string().optional(), // e.g., "en", "es"
-    platformArgs: z.record(z.string(), z.any()).optional(),
-    // Allow other dynamic properties
-  })
-  .catchall(z.any());
-
-// Schema for SourceConfig (part of FeedConfig)
-export const SourceConfigSchema = z.object({
-  plugin: z.string(), // Name/key of the source plugin registered in AppConfig.plugins
-  // Config for the source plugin instance itself (e.g., API keys, base URLs)
-  // This 'config' is passed to the plugin's initialize method.
-  config: z.record(z.string(), z.any()).optional(),
-  // Array of search configurations for this source instance in this feed.
-  // Each object defines a specific query/task for the source plugin.
-  search: z.array(SourceSearchConfigSchema),
-});
-
-// Schema for feed ingestion scheduling
-export const IngestionConfigSchema = z.object({
-  enabled: z.boolean().default(false).optional(),
-  schedule: z.string().min(1),
-});
-
-export const FeedConfigSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string(),
-  enabled: z.boolean().optional().default(true),
-  pollingIntervalMs: z.number().int().positive().optional(),
-  moderation: ModerationConfigSchema,
-  sources: z.array(SourceConfigSchema).optional(),
-  ingestion: IngestionConfigSchema.optional(), // Configuration for source ingestion scheduling
-  outputs: z.object({
-    stream: StreamConfigSchema.optional(),
-    recap: z.array(RecapConfigSchema).optional(),
-  }),
-});
-
-export type StreamConfig = z.infer<typeof StreamConfigSchema>;
-export type IngestionConfig = z.infer<typeof IngestionConfigSchema>;
-export type ModerationConfig = z.infer<typeof ModerationConfigSchema>;
-export type TransformConfig = z.infer<typeof TransformConfigSchema>;
-export type DistributorConfig = z.infer<typeof DistributorConfigSchema>;
-export type RecapConfig = z.infer<typeof RecapConfigSchema>;
-export type SourceSearchConfig = z.infer<typeof SourceSearchConfigSchema>;
-export type SourceConfig = z.infer<typeof SourceConfigSchema>;
-export type FeedConfig = z.infer<typeof FeedConfigSchema>;
+import {
+  createInsertSchema,
+  createSelectSchema,
+  createUpdateSchema,
+} from "drizzle-zod";
 
 // Feeds Table
 // Stores the entire feed configuration as JSONB
 export const feeds = table("feeds", {
   id: text("id").primaryKey(), // (hashtag)
   // Store the entire configuration as JSONB
-  config: jsonb("config").$type<FeedConfig>().notNull(),
+  config: jsonb("config").$type<FeedConfig>().notNull(), // This should be FeedConfig
   // Keep these fields for backward compatibility and quick lookups
   name: text("name").notNull(),
   description: text("description"),
@@ -189,3 +98,19 @@ export const feedPlugins = table(
     primaryKey({ columns: [table.feedId, table.pluginId] }), // Ensure one config per plugin per feed
   ],
 );
+
+export const insertFeedSchema = createInsertSchema(feeds, {
+  created_by: z.string().min(1),
+  admins: z.array(z.string()).optional(),
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
+
+export const updateFeedSchema = createUpdateSchema(feeds).extend({
+  admins: z.array(z.string()).optional(),
+});
+
+export const selectFeedSchema = createSelectSchema(feeds);
+export type InsertFeed = z.infer<typeof insertFeedSchema>;
+export type UpdateFeed = z.infer<typeof updateFeedSchema>;
+export type SelectFeed = z.infer<typeof selectFeedSchema>;
