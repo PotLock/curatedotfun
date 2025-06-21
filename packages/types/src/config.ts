@@ -19,7 +19,7 @@ export const TransformConfigSchema = z.object({
 // Schema for DistributorConfig (used in StreamConfig, RecapConfig)
 export const DistributorConfigSchema = z.object({
   plugin: z.string(), // Name/key of the distributor plugin registered in AppConfig.plugins
-  config: z.record(z.string()), // Config specific to this distributor instance
+  config: z.record(z.string(), z.any()), // Config specific to this distributor instance
   transform: z.array(TransformConfigSchema).optional(), // Per-distributor transforms
 });
 
