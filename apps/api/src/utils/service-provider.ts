@@ -1,5 +1,6 @@
 import {
   ActivityRepository,
+  AuthRequestRepository,
   FeedRepository,
   LeaderboardRepository,
   ModerationRepository,
@@ -11,6 +12,7 @@ import { SubmissionService } from "services/submission.service";
 import { MockTwitterService } from "../__test__/mocks/twitter-service.mock";
 import { db } from "../db";
 import { ActivityService } from "../services/activity.service";
+import { AuthService } from "../services/auth.service";
 import { ConfigService, isProduction } from "../services/config.service";
 import { DistributionService } from "../services/distribution.service";
 import { FeedService } from "../services/feed.service";
@@ -85,6 +87,10 @@ export class ServiceProvider {
       logger,
     );
     this.services.set("userService", userService);
+
+    const authRequestRepository = new AuthRequestRepository(db);
+    const authService = new AuthService(authRequestRepository, userService);
+    this.services.set("authService", authService);
 
     const feedService = new FeedService(
       feedRepository,

@@ -38,7 +38,7 @@
     "date-fns": "^4.1.0",
     "fastintear": "latest",
     "lucide-react": "^0.483.0",
-    "near-sign-verify": "^0.3.6",
+    "near-sign-verify": "^0.4.1",
     "pinata-web3": "^0.5.4",
     "postcss": "^8.4.49",
     "react": "^18.3.1",

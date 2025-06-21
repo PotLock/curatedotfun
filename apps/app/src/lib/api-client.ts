@@ -1,6 +1,3 @@
-import { near } from "./near";
-import { sign } from "near-sign-verify";
-
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -22,9 +19,7 @@ class ApiClient {
   async makeRequest<TResponse, TRequest = unknown>(
     method: string,
     path: string,
-    auth: { currentAccountId: string | null; isSignedIn: boolean },
     requestData?: TRequest,
-    message?: string, // Descriptive message for signing non-GET requests
   ): Promise<TResponse> {
     const fullUrl = new URL(this.baseUrl + path, window.location.origin);
     const bodyString =
@@ -37,30 +32,6 @@ class ApiClient {
     };
     if (method !== "GET" && method !== "DELETE" && requestData) {
       headers["Content-Type"] = "application/json";
-    }
-
-    if (method === "GET") {
-      if (auth.currentAccountId) {
-        headers["X-Near-Account"] = auth.currentAccountId || "anonymous";
-      }
-    } else {
-      // Non-GET requests (POST, PUT, DELETE, PATCH)
-      if (!auth.currentAccountId) {
-        throw new ApiError(
-          "Account ID missing for authenticated request.",
-          400,
-        );
-      }
-
-      const messageForSigning = message || `${method} request to ${path}`;
-
-      const authToken = await sign({
-        signer: near,
-        recipient: "curatefun.near",
-        message: messageForSigning,
-      });
-
-      headers["Authorization"] = `Bearer ${authToken}`;
     }
 
     const requestOptions: RequestInit = {
