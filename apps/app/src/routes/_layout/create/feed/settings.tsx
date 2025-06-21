@@ -45,7 +45,7 @@ const steps: Step[] = [
   },
   {
     title: "Content Approvers",
-    description: "Define how content is processed before being published",
+    description: "Set up approvers who will review content before publication",
     id: 2,
     component: <ContentApprovers />,
   },
