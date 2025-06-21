@@ -10,6 +10,7 @@ import React, {
 import { toast } from "../hooks/use-toast";
 import { apiClient } from "../lib/api-client";
 import { near } from "../lib/near";
+import { fromHex } from "@fastnear/utils";
 
 interface IAuthContext {
   currentAccountId: string | null;
@@ -90,11 +91,10 @@ export function AuthProvider({
 
       const message = "Authorize Curate.fun";
 
-      const authToken = await sign({
+      const authToken = await sign(message, {
         signer: near,
         recipient,
-        message,
-        nonce: new TextEncoder().encode(nonce),
+        nonce: fromHex(nonce),
       });
 
       await apiClient.makeRequest("POST", "/auth/verify-login", {

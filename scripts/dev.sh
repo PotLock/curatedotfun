@@ -39,7 +39,7 @@ trap cleanup SIGINT SIGTERM EXIT
 # Set DATABASE_URL environment variable for the dev process
 export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/curatedotfun"
 
-echo "Running pnpm install for monorepo dependencies (if not already done)..."
+echo "Installing packages..."
 pnpm install # Ensure all host dependencies are installed for turbo to work, and for db scripts when volume is mounted.
 
 if [ "$SKIP_DB" = true ]; then

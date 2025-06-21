@@ -11,21 +11,23 @@ import { timestamps } from "./common";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const authRequests = table("auth_requests", {
-  id: serial("id").primaryKey(),
-  nonce: text("nonce").notNull().unique(),
-  state: text("state").unique(),
-  accountId: text("account_id").notNull(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  ...timestamps,
-});
-
-export const authRequestsIndexes = {
-  accountIdCreatedAt: index("auth_requests_account_id_created_at_idx").on(
-    authRequests.accountId,
-    authRequests.createdAt,
-  ),
-};
+export const authRequests = table(
+  "auth_requests",
+  {
+    id: serial("id").primaryKey(),
+    nonce: text("nonce").notNull().unique(),
+    state: text("state").unique(),
+    accountId: text("account_id").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    ...timestamps,
+  },
+  (authRequests) => [
+    index("auth_requests_account_id_created_at_idx").on(
+      authRequests.accountId,
+      authRequests.createdAt,
+    ),
+  ],
+);
 
 export const authRequestsRelations = relations(authRequests, ({ one }) => ({
   user: one(users, {

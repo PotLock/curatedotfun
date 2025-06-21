@@ -1,5 +1,5 @@
 {
-  "id": "31b8073d-55f3-4d87-9b94-74d55cdc575f",
+  "id": "b69c918c-1d07-4586-a203-c127f2e4c4e0",
   "prevId": "44639cd2-5a48-4df4-a04f-1b99d8cc672b",
   "version": "7",
   "dialect": "postgresql",
@@ -1421,7 +1421,7 @@
           "name": "state",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "account_id": {
           "name": "account_id",
@@ -1450,7 +1450,29 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "auth_requests_account_id_created_at_idx": {
+          "name": "auth_requests_account_id_created_at_idx",
+          "columns": [
+            {
+              "expression": "account_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
