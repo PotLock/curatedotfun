@@ -85,7 +85,12 @@ export const FeedConfigSchema = z.object({
   ingestion: IngestionConfigSchema.optional(), // Configuration for source ingestion scheduling
   outputs: z.object({
     stream: StreamConfigSchema.optional(),
-    recap: z.array(RecapConfigSchema).optional(),
+    recap: z
+      .preprocess(
+        (val) => (Array.isArray(val) ? val : val ? [val] : undefined),
+        z.array(RecapConfigSchema).optional(),
+      )
+      .optional(),
   }),
 });
 
