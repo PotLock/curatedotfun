@@ -19,9 +19,7 @@ import { z } from "zod";
 
 const BasicInformationFormSchema = z.object({
   name: z.string().min(3, "Feed name must be at least 3 characters"),
-  description: z
-    .string()
-    .min(10, "Description must be at least 10 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
   id: z.string().min(1, "Please provide at least one hashtag"),
   image: z.string().optional(),
 });
