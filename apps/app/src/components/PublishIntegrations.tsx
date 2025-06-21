@@ -1,14 +1,12 @@
+import { useFormContext } from "react-hook-form";
 import { Switch } from "./ui/switch";
 import { Button } from "./ui/button";
-import { useFeedCreationStore } from "../store/feed-creation-store";
+import { FormControl, FormField, FormItem, FormLabel } from "./ui/form";
+import { Input } from "./ui/input";
 
 export default function PublishingIntegrations() {
-  const {
-    telegramEnabled,
-    telegramChannelId,
-    telegramThreadId,
-    setTelegramConfig,
-  } = useFeedCreationStore();
+  const { control, watch, setValue } = useFormContext();
+  const telegramEnabled = watch("telegramEnabled");
 
   return (
     <div className="border border-gray-200 rounded-lg ">
@@ -53,94 +51,67 @@ export default function PublishingIntegrations() {
               </p>
             </div>
           </div>
-          {/* <div className="px-3 py-2 flex gap-[4px] bg-white border font-sans border-neutral-600 rounded-md text-sm font-medium self-start md:self-auto">
-            <div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-              >
-                <g clipPath="url(#clip0_2539_9441)">
-                  <path
-                    d="M12.0607 6.91406C12.6909 7.14901 13.2517 7.53908 13.6912 8.0482C14.1307 8.55731 14.4348 9.16902 14.5752 9.82677C14.7157 10.4845 14.688 11.1671 14.4947 11.8113C14.3015 12.4555 13.9489 13.0406 13.4697 13.5125C12.9904 13.9843 12.3999 14.3277 11.7527 14.5109C11.1055 14.694 10.4226 14.7111 9.76717 14.5604C9.11169 14.4097 8.50479 14.0961 8.0026 13.6487C7.5004 13.2013 7.11913 12.6345 6.89404 12.0007M4.66732 4.00065H5.33398V6.66732M11.1407 9.25391L11.6074 9.72724L9.72738 11.6072M9.33398 5.33398C9.33398 7.54312 7.54312 9.33398 5.33398 9.33398C3.12485 9.33398 1.33398 7.54312 1.33398 5.33398C1.33398 3.12485 3.12485 1.33398 5.33398 1.33398C7.54312 1.33398 9.33398 3.12485 9.33398 5.33398Z"
-                    stroke="#525252"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </g>
-                <defs>
-                  <clipPath id="clip0_2539_9441">
-                    <rect width="16" height="16" fill="white" />
-                  </clipPath>
-                </defs>
-              </svg>
-            </div>
-            150 $CURATE
-          </div> */}
         </div>
         <div className="flex items-center gap-4 self-end md:self-auto">
-          <Switch
-            checked={telegramEnabled}
-            onCheckedChange={(checked) =>
-              setTelegramConfig({ telegramEnabled: checked })
-            }
+          <FormField
+            control={control}
+            name="telegramEnabled"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
           />
         </div>
       </div>
       <div className=" ">
         {telegramEnabled && (
           <div className="space-y-4 md:space-y-6 border-t pt-4 md:pt-6 p-4 bg-white">
-            {/* <div className="space-y-2">
-              <label className="text-sm font-medium">Bot Token</label>
-              <input
-                type="text"
-                className="w-full p-2 border border-gray-300 rounded-md text-sm md:text-base"
-                placeholder="Enter your bot token"
-              />
-              <p className="text-xs text-gray-500">
-                Your Telegram bot token from @BotFather
-              </p>
-            </div> */}
+            <FormField
+              control={control}
+              name="telegramChannelId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Channel ID</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter channel username or ID"
+                      {...field}
+                    />
+                  </FormControl>
+                  <p className="text-xs text-gray-500">
+                    Username or ID of your Channel/group
+                  </p>
+                </FormItem>
+              )}
+            />
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Channel ID</label>
-              <input
-                type="text"
-                className="w-full p-2 border border-gray-300 rounded-md text-sm md:text-base"
-                placeholder="Enter channel username or ID"
-                value={telegramChannelId}
-                onChange={(e) =>
-                  setTelegramConfig({ telegramChannelId: e.target.value })
-                }
-              />
-              <p className="text-xs text-gray-500">
-                Username or ID of your Channel/group
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Thread ID (optional)
-              </label>
-              <input
-                type="text"
-                className="w-full p-2 border border-gray-300 rounded-md text-sm md:text-base"
-                placeholder="Enter thread ID if applicable"
-                value={telegramThreadId}
-                onChange={(e) =>
-                  setTelegramConfig({ telegramThreadId: e.target.value })
-                }
-              />
-            </div>
+            <FormField
+              control={control}
+              name="telegramThreadId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Thread ID (optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter thread ID if applicable"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
             <div className="flex flex-col md:flex-row gap-3 md:gap-0 md:justify-between pt-4">
               <Button
                 variant="outline"
                 onClick={() => {
-                  // Optionally clear fields when closing, or just hide the section
-                  setTelegramConfig({ telegramEnabled: false });
+                  setValue("telegramEnabled", false);
                 }}
                 className="order-2 md:order-1"
               >
@@ -149,15 +120,7 @@ export default function PublishingIntegrations() {
               <Button
                 className="order-1 md:order-2"
                 onClick={() => {
-                  // Data is already in the store due to onChange handlers
-                  // This button can be used for explicit save confirmation if needed
-                  // or to trigger other actions. For now, it doesn't need to do much
-                  // if we rely on onChange to update the store.
-                  // We can add a toast notification here if desired.
-                  console.log("Telegram settings saved to store:", {
-                    telegramChannelId,
-                    telegramThreadId,
-                  });
+                  console.log("Telegram settings saved to store:");
                 }}
               >
                 Save

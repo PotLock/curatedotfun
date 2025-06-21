@@ -1,17 +1,43 @@
-import { format } from "date-fns";
-import { useFeedCreationStore } from "../store/feed-creation-store";
-import { Badge } from "./ui/badge";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+import { useCreateFeed } from "@/lib/api";
+import { useFeedCreationStore } from "@/store/feed-creation-store";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 
-export default function FeedReviewForm() {
-  const {
-    profileImage,
-    feedName,
-    description,
-    hashtags,
-    createdAt,
-    approvers,
-    // submissionRules,
-  } = useFeedCreationStore();
+export const Route = createFileRoute("/_layout/create/feed/review")({
+  component: FeedReviewComponent,
+});
+
+function FeedReviewComponent() {
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { feedConfig } = useFeedCreationStore();
+  const createFeedMutation = useCreateFeed();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      // @ts-expect-error TODO: feed validation
+      await createFeedMutation.mutateAsync(feedConfig);
+      toast({
+        title: "Feed Created Successfully!",
+        description: `Your feed "${feedConfig.name}" has been created.`,
+        variant: "default",
+      });
+      navigate({ to: "/" });
+    } catch (error) {
+      console.error("Error creating feed:", error);
+      toast({
+        title: "Error Creating Feed",
+        description: "There was an error creating your feed. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -24,13 +50,12 @@ export default function FeedReviewForm() {
         </p>
       </div>
       <div className="flex flex-col gap-6">
-        {/* Feed Basic Information */}
         <div className="p-6 rounded-md border-1 flex w-full border border-neutral-300 ">
           <div className="flex items-center gap-[40px] w-full">
             <div className="h-24 w-24 overflow-hidden rounded-full bg-gray-100 flex items-center justify-center">
-              {profileImage ? (
+              {feedConfig.image ? (
                 <img
-                  src={profileImage}
+                  src={feedConfig.image}
                   alt="Feed Profile"
                   className="h-[108px] w-[108px] object-cover"
                 />
@@ -45,40 +70,36 @@ export default function FeedReviewForm() {
             <div className="flex flex-col gap-2 w-full">
               <div className="flex gap-2">
                 <h3 className="text-xl font-semibold">
-                  {feedName || "Untitled Feed"}
+                  {feedConfig.name || "Untitled Feed"}
                 </h3>
                 <Badge className="p-1">
-                  #{hashtags || "No hashtag provided"}
+                  #{feedConfig.id || "No hashtag provided"}
                 </Badge>
               </div>
               <p className="text-gray-700">
-                {description || "No description provided"}
+                {feedConfig.description || "No description provided"}
               </p>
-              {createdAt && (
-                <p className="text-sm text-gray-500">
-                  Created on {format(createdAt, "MMMM d, yyyy")}
-                </p>
-              )}
+              {/* Created at is not part of the new store */}
             </div>
           </div>
         </div>
 
-        {/* Approvers */}
         <div className="flex flex-col gap-[24px]">
           <h3 className="text-2xl text-neutral-500 font-normal">Approvers</h3>
-          {approvers && approvers.length > 0 ? (
+          {feedConfig.moderation?.approvers?.twitter &&
+          feedConfig.moderation.approvers.twitter.length > 0 ? (
             <div className="space-y-2">
-              {approvers.map((approver) => (
+              {feedConfig.moderation.approvers.twitter.map((handle) => (
                 <div
-                  key={approver.id}
+                  key={handle}
                   className="flex items-center justify-between py-3 px-4 border border-neutral-300 rounded-md "
                 >
                   <div className="flex flex-col">
                     <span className="font-bold">
-                      {approver.name}
+                      {/* TODO: Get user name from handle */}
                       <span className="text-[#171717] font-normal">
                         {" "}
-                        @{approver.handle}
+                        @{handle}
                       </span>
                     </span>
                     <div className="flex items-center text-xs text-[#171717]">
@@ -104,64 +125,11 @@ export default function FeedReviewForm() {
             <p className="text-sm text-[#64748B]">No approvers added</p>
           )}
         </div>
-
-        {/* Submission Rules */}
-        {/* <div className="flex flex-col gap-[24px]">
-          <h3 className="text-2xl text-neutral-500 font-normal">
-            Submission Rules
-          </h3>
-          {submissionRules && (
-            <div className="p-6 flex gap-2 border border-neutral-300 rounded-md justify-between">
-              {submissionRules.minFollowersEnabled && (
-                <div className="flex items-start gap-1 flex-col">
-                  <h3 className="text-lg md:text-2xl text-neutral-500 font-normal">
-                    {submissionRules.minFollowers}
-                  </h3>
-                  <span className="text-xs md:text-sm text-[#64748B]">
-                    Minimum Followers
-                  </span>
-                </div>
-              )}
-
-              {submissionRules.minAccountAgeEnabled && (
-                <div className="flex gap-1 flex-col">
-                  <h3 className="text-lg md:text-2xl text-neutral-500 font-normal">
-                    {submissionRules.minAccountAge} Months
-                  </h3>
-                  <span className="text-xs md:text-sm text-[#64748B]">
-                    Minimum Account Age
-                  </span>
-                </div>
-              )}
-
-              <div className="flex gap-1 flex-col">
-                <h3 className="text-lg md:text-2xl text-neutral-500 font-normal">
-                  Blue Tick
-                </h3>
-                <span className="text-xs md:text-sm text-[#64748B]">
-                  {submissionRules.blueTickVerified ? "Verified" : "No"}
-                </span>
-              </div>
-            </div>
-          )}
-        </div> */}
         <div className="p-4 border rounded-md flex justify-start items-start gap-3 border-neutral-400 bg-neutral-50">
-          {/* <div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="h-4 w-4 text-gray-500" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  Set a minimum follower count requirement
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div> */}
           <div className="text-base text-[#020617]">
             <p className="font-semibold">What Happens Next?</p>
             <div className="text-sm">
-              <p>After creating your feed, you&apos;ll be able to:</p>
+              <p>After creating your feed, you'll be able to:</p>
               <ul className="list-disc pl-5 mt-2">
                 <li>Add content sources (Twitter, RSS feeds, etc.)</li>
                 <li>Configure content generation templates</li>
@@ -170,6 +138,22 @@ export default function FeedReviewForm() {
             </div>
           </div>
         </div>
+      </div>
+      <div className="flex justify-between mt-8">
+        <Button
+          variant="outline"
+          onClick={() => navigate({ to: "/create/feed/settings" })}
+          className="text-sm md:text-base"
+        >
+          Previous
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="text-sm md:text-base "
+        >
+          {isSubmitting ? "Submitting..." : "Create Feed"}
+        </Button>
       </div>
     </div>
   );
