@@ -9,7 +9,7 @@ import {
 } from "./ui/dropdown-menu";
 
 import { useNavigate } from "@tanstack/react-router";
-import { ChevronDown, CircleUserRound, LogOut } from "lucide-react";
+import { ChevronDown, CircleUserRound, LogOut, Settings } from "lucide-react";
 import { useAuth } from "../contexts/auth-context";
 import { useNearSocialProfile } from "../hooks/near-social";
 import { AvatarProfile } from "./AvatarProfile";
@@ -89,7 +89,7 @@ export default function UserMenu({ className }: UserMenuProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 mt-4">
         <DropdownMenuItem>
-          <div className="flex gap-2 w-full items-start">
+          <div className="flex gap-2 w-full items-center">
             {currentAccountId ? (
               <AvatarProfile accountId={currentAccountId} size="medium" />
             ) : (
@@ -111,6 +111,15 @@ export default function UserMenu({ className }: UserMenuProps) {
         >
           <CircleUserRound />
           <span>Profile</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="cursor-pointer hover:bg-gray-100"
+          onClick={() => {
+            navigate({ to: "/profile/settings" });
+          }}
+        >
+          <Settings />
+          <span>Settings</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={handleSignOut}
