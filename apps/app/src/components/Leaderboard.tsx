@@ -3,7 +3,8 @@ import { LeaderboardEntry } from "../lib/api";
 import { Container } from "./Container";
 import { Hero } from "./Hero";
 import { useLeaderboard } from "../hooks/useLeaderboard";
-import { LeaderboardFilters, LeaderboardTable } from "./leaderboard";
+import { LeaderboardFilters } from "./leaderboard/LeaderboardFilters";
+import { LeaderboardTable } from "./leaderboard/LeaderboardTable";
 
 interface LeaderboardSearch {
   feed: string;
