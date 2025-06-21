@@ -253,6 +253,10 @@ export class ServiceProvider {
     return this.getService<FeedService>("feedService");
   }
 
+  public getModerationService(): ModerationService {
+    return this.getService<ModerationService>("moderationService");
+  }
+
   /**
    * Get all services that implement IBackgroundTaskService
    * @returns An array of background task services

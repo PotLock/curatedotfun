@@ -1,119 +1,139 @@
 import { create } from "zustand";
+import { FeedConfig, DistributorConfig } from "@curatedotfun/types";
+import { immer } from "zustand/middleware/immer";
+import { set, groupBy } from "lodash";
 
-export interface FeedCreationState {
-  // Basic Information
-  profileImage: string;
-  feedName: string;
-  description: string;
-  hashtags: string;
-  createdAt: Date | null;
+const TELEGRAM_PLUGIN_NAME = "@curatedotfun/telegram-distributor";
 
-  // Approvers
-  approvers: Array<{
-    id: number;
-    name: string;
-    handle: string;
-  }>;
+export type Approver = {
+  handle: string;
+  platform: string;
+};
 
-  // Submission Rules
-  submissionRules: {
-    minFollowers: number;
-    minFollowersEnabled: boolean;
-    minAccountAge: number;
-    minAccountAgeEnabled: boolean;
-    blueTickVerified: boolean;
-    cryptoSettingsEnabled: boolean;
-  };
-
-  // Telegram Configuration
-  telegramEnabled: boolean;
-  telegramChannelId: string;
-  telegramThreadId: string;
-
-  // Actions
-  setBasicInfo: (data: {
-    profileImage?: string;
-    feedName?: string;
-    description?: string;
-    hashtags?: string;
-    createdAt?: Date;
+type FeedCreationState = {
+  feedConfig: Partial<FeedConfig>;
+  approvers: Approver[];
+  setValue: (path: string, value: unknown) => void;
+  setValues: (values: Partial<FeedConfig>) => void;
+  setTelegramConfig: (config: {
+    enabled?: boolean;
+    channelId?: string;
+    threadId?: string;
   }) => void;
+  setApprovers: (approvers: Approver[]) => void;
+};
 
-  setApprovers: (
-    approvers: Array<{
-      id: number;
-      name: string;
-      handle: string;
-    }>,
-  ) => void;
-
-  setSubmissionRules: (rules: {
-    minFollowers?: number;
-    minFollowersEnabled?: boolean;
-    minAccountAge?: number;
-    minAccountAgeEnabled?: boolean;
-    blueTickVerified?: boolean;
-    cryptoSettingsEnabled?: boolean;
-  }) => void;
-
-  setTelegramConfig: (data: {
-    telegramEnabled?: boolean;
-    telegramChannelId?: string;
-    telegramThreadId?: string;
-  }) => void;
-}
-
-export const useFeedCreationStore = create<FeedCreationState>((set) => ({
-  // Basic Information
-  profileImage: "",
-  feedName: "",
-  description: "",
-  hashtags: "",
-  createdAt: new Date(),
-
-  // Approvers
-  approvers: [],
-
-  // Submission Rules
-  submissionRules: {
-    minFollowers: 1000,
-    minFollowersEnabled: true,
-    minAccountAge: 30,
-    minAccountAgeEnabled: true,
-    blueTickVerified: true,
-    cryptoSettingsEnabled: false,
-  },
-
-  // Telegram Configuration
-  telegramEnabled: false,
-  telegramChannelId: "",
-  telegramThreadId: "",
-
-  // Actions
-  setBasicInfo: (data) =>
-    set((state) => ({
-      ...state,
-      ...data,
-    })),
-
-  setApprovers: (approvers) =>
-    set((state) => ({
-      ...state,
-      approvers,
-    })),
-
-  setSubmissionRules: (rules) =>
-    set((state) => ({
-      ...state,
-      submissionRules: {
-        ...state.submissionRules,
-        ...rules,
+export const useFeedCreationStore = create(
+  immer<FeedCreationState>((setState) => ({
+    feedConfig: {
+      name: "",
+      description: "",
+      id: "",
+      enabled: true,
+      moderation: {
+        approvers: {
+          twitter: [],
+        },
       },
-    })),
+      outputs: {
+        stream: {
+          enabled: true,
+          transform: [
+            {
+              plugin: "@curatedotfun/object-transform",
+              config: {
+                mappings: {
+                  notes: "{{curator.notes}}",
+                  author: "{{username}}",
+                  source: "https://x.com/{{username}}/status/{{tweetId}}",
+                  content: "{{content}}",
+                  submittedAt: "{{submittedAt}}",
+                },
+              },
+            },
+            {
+              plugin: "@curatedotfun/ai-transform",
+              config: {
+                apiKey: "{{OPENROUTER_API_KEY}}",
+                prompt:
+                  "Summarize the content into a concise news flash, incorporating relevant details from the curator's notes. Maintain a neutral, third-person tone. Mention the author if relevant, or simply convey the information. When processing social media-style content, convert @mentions into markdown links in the format: [@username](https://x.com/username). Ensure all mentions are accurately linked and preserve their original intent.",
+                schema: {
+                  tags: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                    },
+                    description: "Relevant tags for the content",
+                  },
+                  title: {
+                    type: "string",
+                    description: "Title derived from summary of content",
+                  },
+                  summary: {
+                    type: "string",
+                    description:
+                      "Summary of content influenced by curator notes",
+                  },
+                },
+              },
+            },
+          ],
+          distribute: [],
+        },
+      },
+    },
+    approvers: [],
+    setValue: (path, value) => {
+      setState((state) => {
+        set(state.feedConfig, path, value);
+      });
+    },
+    setValues: (values) => {
+      setState((state) => {
+        state.feedConfig = { ...state.feedConfig, ...values };
+      });
+    },
+    setTelegramConfig: ({ enabled, channelId, threadId }) => {
+      setState((state) => {
+        const distribute = state.feedConfig.outputs?.stream?.distribute ?? [];
+        const telegramDistributorIndex = distribute.findIndex(
+          (d) => d.plugin === TELEGRAM_PLUGIN_NAME,
+        );
 
-  setTelegramConfig: (data) =>
-    set((state) => ({
-      ...state,
-      ...data,
-    })),
-}));
+        if (enabled) {
+          const newConfig: DistributorConfig = {
+            plugin: TELEGRAM_PLUGIN_NAME,
+            config: {
+              botToken: "{{TELEGRAM_BOT_TOKEN}}",
+              chatId: channelId ?? "",
+              messageThreadId: threadId ?? "",
+            },
+          };
+          if (telegramDistributorIndex > -1) {
+            distribute[telegramDistributorIndex] = newConfig;
+          } else {
+            distribute.push(newConfig);
+          }
+        } else if (telegramDistributorIndex > -1) {
+          distribute.splice(telegramDistributorIndex, 1);
+        }
+
+        set(state.feedConfig, "outputs.stream.distribute", distribute);
+      });
+    },
+    setApprovers: (approvers) => {
+      setState((state) => {
+        state.approvers = approvers;
+        const groupedByPlatform = groupBy(approvers, "platform");
+        const moderationApprovers = Object.entries(groupedByPlatform).reduce(
+          (acc, [platform, approversList]) => {
+            acc[platform.toLowerCase()] = approversList.map((a) => a.handle);
+            return acc;
+          },
+          {} as Record<string, string[]>,
+        );
+        set(state.feedConfig, "moderation.approvers", moderationApprovers);
+      });
+    },
+  })),
+);
