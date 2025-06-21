@@ -1,11 +1,10 @@
 import { useFormContext } from "react-hook-form";
-import { Switch } from "./ui/switch";
-import { Button } from "./ui/button";
 import { FormControl, FormField, FormItem, FormLabel } from "./ui/form";
 import { Input } from "./ui/input";
+import { Switch } from "./ui/switch";
 
 export default function PublishingIntegrations() {
-  const { control, watch, setValue } = useFormContext();
+  const { control, watch } = useFormContext();
   const telegramEnabled = watch("telegramEnabled");
 
   return (
@@ -106,26 +105,6 @@ export default function PublishingIntegrations() {
                 </FormItem>
               )}
             />
-
-            <div className="flex flex-col md:flex-row gap-3 md:gap-0 md:justify-between pt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setValue("telegramEnabled", false);
-                }}
-                className="order-2 md:order-1"
-              >
-                Close
-              </Button>
-              <Button
-                className="order-1 md:order-2"
-                onClick={() => {
-                  console.log("Telegram settings saved to store:");
-                }}
-              >
-                Save
-              </Button>
-            </div>
           </div>
         )}
       </div>

@@ -1,7 +1,7 @@
 import {
   ApiErrorResponseSchema,
+  CanModerateResponseSchema,
   CreateFeedRequestSchema,
-  FeedResponse,
   FeedsWrappedResponseSchema,
   FeedWrappedResponseSchema,
   UpdateFeedRequestSchema,
@@ -9,8 +9,6 @@ import {
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import { FeedService } from "../../services/feed.service";
-import { ModerationService } from "../../services/moderation.service";
 import { Env } from "../../types/app";
 import { ForbiddenError, NotFoundError } from "../../types/errors";
 import { logger } from "../../utils/logger";
@@ -170,9 +168,6 @@ feedsRoutes.put(
         accountId,
       );
 
-      if (!updatedFeed) {
-        throw new NotFoundError("Feed", feedId);
-      }
       return c.json(
         FeedWrappedResponseSchema.parse({
           statusCode: 200,
@@ -239,7 +234,7 @@ feedsRoutes.delete(
       const feedService = ServiceProvider.getInstance().getFeedService();
       await feedService.deleteFeed(feedId, accountId);
       return c.body(null, 204);
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ error, accountId }, "Error deleting feed");
       if (error instanceof NotFoundError) {
         return c.json(
@@ -280,28 +275,34 @@ feedsRoutes.get(
   async (c) => {
     const actingAccountId = c.get("accountId");
     if (!actingAccountId) {
-      return c.json({ canModerate: false, reason: "User not authenticated" });
+      return c.json(
+        CanModerateResponseSchema.parse({
+          canModerate: false,
+          reason: "User not authenticated",
+        }),
+      );
     }
 
     try {
       const { feedId } = c.req.valid("param");
       const moderationService =
-        ServiceProvider.getInstance().getService<ModerationService>(
-          "moderationService",
-        );
+        ServiceProvider.getInstance().getModerationService();
       const canModerate =
         await moderationService.checkUserFeedModerationPermission(
           feedId,
           actingAccountId,
         );
-      return c.json({ canModerate });
-    } catch (error: any) {
+      return c.json(CanModerateResponseSchema.parse({ canModerate }));
+    } catch (error: unknown) {
       logger.error(
         { error, actingAccountId },
         "Error in /:feedId/can-moderate",
       );
       return c.json(
-        { canModerate: false, error: "Failed to check moderation permission" },
+        CanModerateResponseSchema.parse({
+          canModerate: false,
+          error: "Failed to check moderation permission",
+        }),
         500,
       );
     }

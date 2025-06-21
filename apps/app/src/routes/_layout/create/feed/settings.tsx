@@ -90,6 +90,7 @@ function CurationSettingsComponent() {
           <Button
             onClick={() => navigate({ to: "/create/feed/review" })}
             className="text-sm md:text-base"
+            type="submit"
           >
             Next
           </Button>

@@ -16,11 +16,9 @@ import { ForbiddenError, NotFoundError } from "../types/errors";
 import { isSuperAdmin } from "../utils/auth.utils";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { ProcessorService } from "./processor.service";
+import { merge } from "lodash";
 
-export type FeedAction =
-  | "update" // For general updates to feed config, name, description
-  | "delete"
-  | "manage_admins"; // For adding/removing users from the feed's admin list
+export type FeedAction = "update" | "delete" | "manage_admins";
 
 export class FeedService implements IBaseService {
   public readonly logger: Logger;
@@ -125,19 +123,7 @@ export class FeedService implements IBaseService {
     const existingFeed = await this.getFeedById(feedId);
     const existingConfig = existingFeed.config as FeedConfig;
 
-    const newConfig: FeedConfig = {
-      ...existingConfig,
-      ...data,
-      // Ensure nested objects are merged correctly if necessary
-      moderation: {
-        ...existingConfig.moderation,
-        ...data.moderation,
-      },
-      outputs: {
-        ...existingConfig.outputs,
-        ...data.outputs,
-      },
-    };
+    const newConfig: FeedConfig = merge({}, existingConfig, data);
 
     const dbData: UpdateFeed = {
       name: newConfig.name,
@@ -189,9 +175,7 @@ export class FeedService implements IBaseService {
       throw new NotFoundError("Feed", feedId);
     }
 
-    const feedConfig = (await this.feedRepository.getFeedConfig(
-      feedId,
-    )) as FeedConfig; // Get config from DB
+    const feedConfig = await this.feedRepository.getFeedConfig(feedId);
     if (!feedConfig) {
       this.logger.error(
         { feedId },

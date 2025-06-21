@@ -109,7 +109,7 @@ export class UserRepository {
           }
 
           return newUser;
-        } catch (error: any) {
+        } catch (error: unknown) {
           // Handle unique constraint violations
           if (error?.code === "23505") {
             // Extract the constraint name to provide a more specific error message

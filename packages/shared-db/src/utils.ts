@@ -27,7 +27,7 @@ export const RETRYABLE_ERROR_CODES = [
 /**
  * Determines if an error is retryable (connection-related)
  */
-export function isRetryableError(error: any): boolean {
+export function isRetryableError(error: unknown): boolean {
   return RETRYABLE_ERROR_CODES.some(
     (code) =>
       error.code === code || (error.original && error.original.code === code),
@@ -43,7 +43,7 @@ export const DEFAULT_RETRY_OPTIONS: retry.Options = {
   minTimeout: 100,
   maxTimeout: 3000,
   randomize: true,
-  onRetry: (error: any, attempt: number) => {
+  onRetry: (error: unknown, attempt: number) => {
     const maxRetries = 3; // Same as retries above
     const isLastAttempt = attempt === maxRetries;
 
@@ -76,7 +76,7 @@ export async function executeWithRetry<T>(
   return retry(async (bail) => {
     try {
       return await operation(dbInstance);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (!isRetryableError(error)) {
         bail(error);
         return Promise.reject(error);
@@ -105,7 +105,7 @@ export async function withErrorHandling<T>(
 ): Promise<T> {
   try {
     return await operation();
-  } catch (error: any) {
+  } catch (error: unknown) {
     const { operationName, errorMessage, additionalContext } = context;
 
     console.error(`Failed to ${operationName}:`, {

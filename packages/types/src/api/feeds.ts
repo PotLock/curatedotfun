@@ -57,3 +57,9 @@ export type FeedWrappedResponse = z.infer<typeof FeedWrappedResponseSchema>;
 export const FeedsWrappedResponseSchema =
   ApiSuccessResponseSchema(FeedsResponseSchema);
 export type FeedsWrappedResponse = z.infer<typeof FeedsWrappedResponseSchema>;
+
+export const CanModerateResponseSchema = z.object({
+  canModerate: z.boolean(),
+  reason: z.string().optional(),
+  error: z.string().optional(),
+});

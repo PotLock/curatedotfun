@@ -39,6 +39,8 @@ function FeedLayoutComponent() {
               <div
                 key={index}
                 className="flex flex-col items-center min-w-[100px] px-2"
+                role="button"
+                tabIndex={index <= currentStep ? 0 : -1}
               >
                 <span
                   className={`text-sm text-center ${
