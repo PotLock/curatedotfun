@@ -26,7 +26,10 @@ function FeedReviewComponent() {
         description: `Your feed "${feedConfig.name}" has been created.`,
         variant: "default",
       });
-      navigate({ to: "/" });
+      navigate({
+        to: "/feed/welcome/$feedId",
+        params: { feedId: feedConfig.id! },
+      });
     } catch (error) {
       console.error("Error creating feed:", error);
       toast({

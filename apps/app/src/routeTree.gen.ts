@@ -25,6 +25,7 @@ import { Route as LayoutCreateFeedIndexRouteImport } from "./routes/_layout/crea
 import { Route as LayoutProfileSettingsPreferencesRouteImport } from "./routes/_layout/profile/settings/preferences";
 import { Route as LayoutProfileSettingsNotificationsRouteImport } from "./routes/_layout/profile/settings/notifications";
 import { Route as LayoutProfileSettingsConnectionsRouteImport } from "./routes/_layout/profile/settings/connections";
+import { Route as LayoutFeedWelcomeFeedIdRouteImport } from "./routes/_layout/feed/welcome/$feedId";
 import { Route as LayoutFeedFeedIdTokenRouteImport } from "./routes/_layout/feed/$feedId/token";
 import { Route as LayoutFeedFeedIdProposalsRouteImport } from "./routes/_layout/feed/$feedId/proposals";
 import { Route as LayoutFeedFeedIdPointsRouteImport } from "./routes/_layout/feed/$feedId/points";
@@ -120,6 +121,11 @@ const LayoutProfileSettingsConnectionsRoute =
     path: "/connections",
     getParentRoute: () => LayoutProfileSettingsRouteRoute,
   } as any);
+const LayoutFeedWelcomeFeedIdRoute = LayoutFeedWelcomeFeedIdRouteImport.update({
+  id: "/feed/welcome/$feedId",
+  path: "/feed/welcome/$feedId",
+  getParentRoute: () => LayoutRoute,
+} as any);
 const LayoutFeedFeedIdTokenRoute = LayoutFeedFeedIdTokenRouteImport.update({
   id: "/token",
   path: "/token",
@@ -194,6 +200,7 @@ export interface FileRoutesByFullPath {
   "/feed/$feedId/points": typeof LayoutFeedFeedIdPointsRoute;
   "/feed/$feedId/proposals": typeof LayoutFeedFeedIdProposalsRoute;
   "/feed/$feedId/token": typeof LayoutFeedFeedIdTokenRoute;
+  "/feed/welcome/$feedId": typeof LayoutFeedWelcomeFeedIdRoute;
   "/profile/settings/connections": typeof LayoutProfileSettingsConnectionsRoute;
   "/profile/settings/notifications": typeof LayoutProfileSettingsNotificationsRoute;
   "/profile/settings/preferences": typeof LayoutProfileSettingsPreferencesRoute;
@@ -218,6 +225,7 @@ export interface FileRoutesByTo {
   "/feed/$feedId/points": typeof LayoutFeedFeedIdPointsRoute;
   "/feed/$feedId/proposals": typeof LayoutFeedFeedIdProposalsRoute;
   "/feed/$feedId/token": typeof LayoutFeedFeedIdTokenRoute;
+  "/feed/welcome/$feedId": typeof LayoutFeedWelcomeFeedIdRoute;
   "/profile/settings/connections": typeof LayoutProfileSettingsConnectionsRoute;
   "/profile/settings/notifications": typeof LayoutProfileSettingsNotificationsRoute;
   "/profile/settings/preferences": typeof LayoutProfileSettingsPreferencesRoute;
@@ -247,6 +255,7 @@ export interface FileRoutesById {
   "/_layout/feed/$feedId/points": typeof LayoutFeedFeedIdPointsRoute;
   "/_layout/feed/$feedId/proposals": typeof LayoutFeedFeedIdProposalsRoute;
   "/_layout/feed/$feedId/token": typeof LayoutFeedFeedIdTokenRoute;
+  "/_layout/feed/welcome/$feedId": typeof LayoutFeedWelcomeFeedIdRoute;
   "/_layout/profile/settings/connections": typeof LayoutProfileSettingsConnectionsRoute;
   "/_layout/profile/settings/notifications": typeof LayoutProfileSettingsNotificationsRoute;
   "/_layout/profile/settings/preferences": typeof LayoutProfileSettingsPreferencesRoute;
@@ -276,6 +285,7 @@ export interface FileRouteTypes {
     | "/feed/$feedId/points"
     | "/feed/$feedId/proposals"
     | "/feed/$feedId/token"
+    | "/feed/welcome/$feedId"
     | "/profile/settings/connections"
     | "/profile/settings/notifications"
     | "/profile/settings/preferences"
@@ -300,6 +310,7 @@ export interface FileRouteTypes {
     | "/feed/$feedId/points"
     | "/feed/$feedId/proposals"
     | "/feed/$feedId/token"
+    | "/feed/welcome/$feedId"
     | "/profile/settings/connections"
     | "/profile/settings/notifications"
     | "/profile/settings/preferences"
@@ -328,6 +339,7 @@ export interface FileRouteTypes {
     | "/_layout/feed/$feedId/points"
     | "/_layout/feed/$feedId/proposals"
     | "/_layout/feed/$feedId/token"
+    | "/_layout/feed/welcome/$feedId"
     | "/_layout/profile/settings/connections"
     | "/_layout/profile/settings/notifications"
     | "/_layout/profile/settings/preferences"
@@ -455,6 +467,13 @@ declare module "@tanstack/react-router" {
       fullPath: "/profile/settings/connections";
       preLoaderRoute: typeof LayoutProfileSettingsConnectionsRouteImport;
       parentRoute: typeof LayoutProfileSettingsRouteRoute;
+    };
+    "/_layout/feed/welcome/$feedId": {
+      id: "/_layout/feed/welcome/$feedId";
+      path: "/feed/welcome/$feedId";
+      fullPath: "/feed/welcome/$feedId";
+      preLoaderRoute: typeof LayoutFeedWelcomeFeedIdRouteImport;
+      parentRoute: typeof LayoutRoute;
     };
     "/_layout/feed/$feedId/token": {
       id: "/_layout/feed/$feedId/token";
@@ -604,6 +623,7 @@ interface LayoutRouteChildren {
   LayoutPluginIndexRoute: typeof LayoutPluginIndexRoute;
   LayoutProfileIndexRoute: typeof LayoutProfileIndexRoute;
   LayoutEditFeedFeedIdRoute: typeof LayoutEditFeedFeedIdRoute;
+  LayoutFeedWelcomeFeedIdRoute: typeof LayoutFeedWelcomeFeedIdRoute;
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
@@ -617,6 +637,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutPluginIndexRoute: LayoutPluginIndexRoute,
   LayoutProfileIndexRoute: LayoutProfileIndexRoute,
   LayoutEditFeedFeedIdRoute: LayoutEditFeedFeedIdRoute,
+  LayoutFeedWelcomeFeedIdRoute: LayoutFeedWelcomeFeedIdRoute,
 };
 
 const LayoutRouteWithChildren =
