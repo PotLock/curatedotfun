@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useFeed } from "../../../../lib/api";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "../../../../utils/datetime";
@@ -12,7 +12,8 @@ export const Route = createFileRoute("/_layout/feed/welcome/$feedId")({
 
 function FeedWelcomePage() {
   const { feedId } = Route.useParams();
-  const { data: feed } = useFeed(feedId);
+  const navigate = useNavigate();
+  const { data: feed, isLoading, isError } = useFeed(feedId);
 
   const steps = [
     {
@@ -41,9 +42,32 @@ function FeedWelcomePage() {
     {
       icon: <ScrollText size={24} />,
       title: "Set Up Content Publishing",
-      description: "Set Up Content Publishing.",
+      description:
+        "Configure AI to automatically generate content from your sources.",
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p>Loading feed...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Failed to load feed</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[1440px] mx-auto w-full">
@@ -52,9 +76,12 @@ function FeedWelcomePage() {
         <div className="flex flex-col gap-4 sm:gap-6 p-4 sm:p-6 rounded-md border border-neutral-400 bg-white">
           <div className="flex flex-col sm:flex-row sm:gap-[40px] gap-4 items-center sm:items-start w-full border-b border-1 border-dashed border-black pb-4">
             <img
-              src={feed?.config.image}
-              alt={feed?.config.name}
-              className="h-[80px] w-[80px] sm:h-[108px] sm:w-[108px]"
+              src={feed?.config.image || "/images/feed-image.png"}
+              alt={feed?.config.name || "Feed image"}
+              className="h-[80px] w-[80px] sm:h-[108px] sm:w-[108px] rounded-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = "/images/feed-image.png";
+              }}
             />
             <div className="flex flex-col gap-2 sm:gap-3 text-center sm:text-left">
               <div className="flex flex-col sm:flex-row sm:gap-[10px] gap-2 items-center">
@@ -111,7 +138,13 @@ function FeedWelcomePage() {
               </Card>
             ))}
           </div>
-          <Button>Continue Feed Setup</Button>
+          <Button
+            onClick={() =>
+              navigate({ to: "/feed/$feedId/settings", params: { feedId } })
+            }
+          >
+            Continue Feed Setup
+          </Button>
         </div>
       </div>
     </div>

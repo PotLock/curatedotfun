@@ -58,9 +58,12 @@ function FeedPageLayout() {
         <div className="flex flex-col gap-4 sm:gap-6 p-4 sm:p-6 rounded-md border border-neutral-400 bg-white">
           <div className="flex flex-col sm:flex-row sm:gap-[40px] gap-4 items-center sm:items-start w-full border-b border-1 border-dashed border-black pb-4">
             <img
-              src={feed?.config.image}
-              alt={feed?.config.name}
-              className="h-[80px] w-[80px] sm:h-[108px] sm:w-[108px]"
+              src={feed?.config.image || "/images/feed-image.png"}
+              alt={feed?.config.name || "Feed image"}
+              className="h-[80px] w-[80px] sm:h-[108px] sm:w-[108px] rounded-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = "/images/feed-image.png";
+              }}
             />
             <div className="flex flex-col gap-2 sm:gap-3 text-center sm:text-left">
               <div className="flex flex-col sm:flex-row sm:gap-[10px] gap-2 items-center">
