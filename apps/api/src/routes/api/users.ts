@@ -14,7 +14,7 @@ import {
   NearAccountError,
   NotFoundError,
   UserServiceError,
-} from "../../types/errors";
+} from "@curatedotfun/utils";
 import { logger } from "../../utils/logger";
 import { ServiceProvider } from "../../utils/service-provider";
 

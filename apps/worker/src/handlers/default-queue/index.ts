@@ -8,7 +8,5 @@ export const defaultQueueConfig: WorkerConfig<JobName> = {
     concurrency: 1,
     maxStalledCount: 2,
     stalledInterval: 30000, // 30 seconds
-    // @ts-expect-error connection gets set later, via createWorkerInstance in shared-queue
-    connection: null,
   },
 };

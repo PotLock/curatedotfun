@@ -13,7 +13,7 @@ import { Hono } from "hono";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { ModerationService } from "../../services/moderation.service";
 import { Env } from "../../types/app";
-import { NotFoundError, ServiceError } from "../../types/errors";
+import { NotFoundError, ServiceError } from "@curatedotfun/utils";
 
 export const moderationRoutes = new Hono<Env>();
 
