@@ -30,7 +30,7 @@ const NotesSection = ({
 }: {
   title: string;
   username: string;
-  note: string | null;
+  note?: string | null;
   className?: string;
 }) => {
   // Change title based on whether there are notes or not
@@ -63,8 +63,8 @@ const ModerationActions = ({
   submission: FeedContextSubmission;
   feedId: string;
 }) => {
-  const approveMutation = useApproveSubmission();
-  const rejectMutation = useRejectSubmission();
+  const approveMutation = useApproveSubmission(submission.tweetId);
+  const rejectMutation = useRejectSubmission(submission.tweetId);
 
   const handleApprove = () => {
     if (!submission.tweetId || !feedId) {
@@ -97,14 +97,19 @@ const ModerationActions = ({
     });
   };
 
-  const isPending = approveMutation.isPending || rejectMutation.isPending;
-
   return (
     <div className="flex justify-center flex-col gap-2">
-      <Button onClick={handleApprove} disabled={isPending}>
+      <Button
+        onClick={handleApprove}
+        disabled={approveMutation.isPending || rejectMutation.isPending}
+      >
         {approveMutation.isPending ? "Approving..." : "Approve"}
       </Button>
-      <Button onClick={handleReject} variant="destructive" disabled={isPending}>
+      <Button
+        onClick={handleReject}
+        variant="destructive"
+        disabled={approveMutation.isPending || rejectMutation.isPending}
+      >
         {rejectMutation.isPending ? "Rejecting..." : "Reject"}
       </Button>
     </div>
@@ -203,7 +208,7 @@ export const FeedItem = ({
               <div className="flex-col flex-grow">
                 <NotesSection
                   title="Moderation Notes"
-                  username={lastModeration.adminId}
+                  username={lastModeration.moderatorAccountId}
                   note={lastModeration.note}
                   // className="mb-4"
                 />
