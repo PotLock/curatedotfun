@@ -144,6 +144,7 @@ export class ServiceProvider {
           submissionRepository,
           db,
           feedService,
+          moderationService,
           logger,
         )
       : null;

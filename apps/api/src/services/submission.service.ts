@@ -11,6 +11,7 @@ import { Tweet } from "agent-twitter-client";
 import { Logger } from "pino";
 import { FeedService } from "./feed.service";
 import { IBackgroundTaskService } from "./interfaces/background-task.interface";
+import { ModerationService } from "./moderation.service";
 import { TwitterService } from "./twitter/client";
 
 export class SubmissionService implements IBackgroundTaskService {
@@ -23,6 +24,7 @@ export class SubmissionService implements IBackgroundTaskService {
     private readonly submissionRepository: SubmissionRepository,
     private readonly db: DB,
     private readonly feedService: FeedService,
+    private readonly moderationService: ModerationService,
     logger: Logger,
   ) {
     this.logger = logger;
@@ -295,6 +297,14 @@ export class SubmissionService implements IBackgroundTaskService {
                 status: "pending",
               },
               "Submission associated with new feed.",
+            );
+
+            // Attempt auto-approval
+            await this.moderationService.attemptAutoApproval(
+              originalTweet.id!,
+              feed.id,
+              curatorTweet.username!,
+              tx,
             );
           } else {
             this.logger.info(

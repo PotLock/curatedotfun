@@ -1,4 +1,3 @@
-import { isProduction } from "./../../../api/src/services/config.service";
 interface EVMChain {
   chainId: number;
   name: string;

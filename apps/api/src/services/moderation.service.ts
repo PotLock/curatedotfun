@@ -2,7 +2,6 @@ import { CrosspostClient } from "@crosspost/sdk";
 import type { ApiResponse, ConnectedAccountsResponse } from "@crosspost/types";
 import {
   DB,
-  FeedConfig,
   FeedRepository,
   InsertModerationHistory,
   ModerationRepository,
@@ -14,15 +13,16 @@ import {
 } from "@curatedotfun/shared-db";
 import {
   CreateModerationRequest,
+  FeedConfig,
   ModerationAction,
   ModerationActionSchema,
 } from "@curatedotfun/types";
-import { Logger } from "pino";
 import {
   AuthorizationError,
   ModerationServiceError,
   NotFoundError,
-} from "../types/errors";
+} from "@curatedotfun/utils";
+import { Logger } from "pino";
 import { isSuperAdmin } from "../utils/auth.utils";
 import { FeedService } from "./feed.service";
 import { IBaseService } from "./interfaces/base-service.interface";
@@ -274,7 +274,9 @@ export class ModerationService implements IBaseService {
       throw new ModerationServiceError(
         "Failed to create moderation action",
         500,
-        error,
+        {
+          cause: error as Error,
+        },
       );
     }
   }
@@ -352,9 +354,63 @@ export class ModerationService implements IBaseService {
       throw new ModerationServiceError(
         `Failed to process ${newStatus} submission`,
         500,
-        error,
+        { cause: error as Error },
       );
     }
+  }
+
+  public async attemptAutoApproval(
+    submissionId: string,
+    feedId: string,
+    curatorUsername: string,
+    tx: DB,
+  ): Promise<boolean> {
+    const feedConfig = await this.feedRepository.getFeedConfig(feedId);
+    if (
+      !feedConfig?.moderation?.approvers?.twitter?.includes(curatorUsername)
+    ) {
+      return false;
+    }
+
+    const submission =
+      await this.submissionRepository.getSubmission(submissionId);
+    const feedEntry = submission?.feeds.find((f) => f.feedId === feedId);
+
+    if (!submission || !feedEntry) {
+      this.logger.error(
+        { submissionId, feedId },
+        "Could not find submission or feed entry for auto-approval.",
+      );
+      return false;
+    }
+
+    const moderationActionData: InsertModerationHistory = {
+      submissionId,
+      feedId,
+      moderatorAccountId: curatorUsername,
+      moderatorAccountIdType: "platform_username",
+      source: "auto_approval",
+      action: "approve",
+    };
+
+    await this.moderationRepository.saveModerationAction(
+      moderationActionData,
+      tx,
+    );
+
+    await this.updateStatusAndProcess(
+      submission,
+      feedEntry,
+      submissionStatusZodEnum.Enum.approved,
+      curatorUsername,
+      tx,
+    );
+
+    this.logger.info(
+      { submissionId, feedId, curatorUsername },
+      "Submission auto-approved.",
+    );
+    return true;
   }
 
   /**
