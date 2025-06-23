@@ -22,16 +22,16 @@ export interface WorkerConfig<T extends JobName> {
   name: T;
   processor: WorkerProcessor<T>;
   // Optional: Allows passing specific BullMQ Worker options per worker
-  opts?: ConstructorParameters<typeof Worker>[2];
+  opts?: Omit<ConstructorParameters<typeof Worker>[2], "connection">;
 }
 
-export const redisConnection = {
+export const getRedisConnection = () => ({
   host: process.env.REDIS_HOST || "localhost",
   port: parseInt(process.env.REDIS_PORT || "6379", 10),
-};
+});
 
 export function createQueue<T extends JobName>(name: T): Queue<JobData<T>> {
-  return new Queue<JobData<T>>(name, { connection: redisConnection });
+  return new Queue<JobData<T>>(name, { connection: getRedisConnection() });
 }
 
 export function createWorkerInstance<T extends JobName>(
@@ -40,7 +40,7 @@ export function createWorkerInstance<T extends JobName>(
   opts?: ConstructorParameters<typeof Worker>[2],
 ): Worker<JobData<T>, any, string> {
   return new Worker<JobData<T>>(name, processor, {
-    connection: redisConnection,
+    connection: getRedisConnection(),
     ...opts, // Merge in any specific options for this worker
   });
 }

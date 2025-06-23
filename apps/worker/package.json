@@ -14,8 +14,9 @@
     "@curatedotfun/shared-db": "workspace:*",
     "@curatedotfun/shared-queue": "workspace:*",
     "bullmq": "^5.56.0",
-    "hono": "latest",
+    "dotenv": "^16.5.0",
     "drizzle-orm": "^0.43.1",
+    "hono": "latest",
     "pg": "^8.16.2"
   },
   "devDependencies": {

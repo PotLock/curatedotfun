@@ -237,7 +237,7 @@ export async function fetchPackageJsonFromRepo(
     return null;
   } catch (error: unknown) {
     logger.error(
-      `Error processing repo URL ${repoUrl} (last attempted URL: ${packageJsonUrlAttempted}): ${error.message}`,
+      `Error processing repo URL ${repoUrl} (last attempted URL: ${packageJsonUrlAttempted}): ${(error as Error).message}`,
       { error },
     );
     return null;

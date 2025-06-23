@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { Queue } from "bullmq";
 import { createQueue } from "@curatedotfun/shared-queue";
 import { initializeWorkers, gracefulShutdown } from "./worker-lifecycle";

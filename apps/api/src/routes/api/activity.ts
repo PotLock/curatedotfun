@@ -2,7 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { Env } from "../../types/app";
-import { ActivityServiceError } from "../../types/errors";
+import { ActivityServiceError } from "@curatedotfun/utils";
 import { ServiceProvider } from "../../utils/service-provider";
 
 import {

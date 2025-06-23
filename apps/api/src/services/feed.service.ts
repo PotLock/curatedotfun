@@ -12,7 +12,7 @@ import {
   StreamConfig,
 } from "@curatedotfun/types";
 import { Logger } from "pino";
-import { ForbiddenError, NotFoundError } from "../types/errors";
+import { ForbiddenError, NotFoundError } from "@curatedotfun/utils";
 import { isSuperAdmin } from "../utils/auth.utils";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { ProcessorService } from "./processor.service";
