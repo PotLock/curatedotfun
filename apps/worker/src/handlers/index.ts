@@ -1,5 +1,3 @@
-import { defaultQueueConfig } from './default-queue';
+import { defaultQueueConfig } from "./default-queue";
 
-export const workerConfigurations = [
-  defaultQueueConfig,
-];
+export const workerConfigurations = [defaultQueueConfig];

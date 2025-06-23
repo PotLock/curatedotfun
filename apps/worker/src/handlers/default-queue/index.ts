@@ -1,5 +1,5 @@
-import { QUEUE_NAMES, WorkerConfig, JobName } from '@curatedotfun/shared-queue';
-import { defaultProcessor } from './processor';
+import { QUEUE_NAMES, WorkerConfig, JobName } from "@curatedotfun/shared-queue";
+import { defaultProcessor } from "./processor";
 
 export const defaultQueueConfig: WorkerConfig<JobName> = {
   name: QUEUE_NAMES.DEFAULT,
@@ -9,6 +9,6 @@ export const defaultQueueConfig: WorkerConfig<JobName> = {
     maxStalledCount: 2,
     stalledInterval: 30000, // 30 seconds
     // @ts-expect-error connection gets set later, via createWorkerInstance in shared-queue
-    connection: null
+    connection: null,
   },
 };
