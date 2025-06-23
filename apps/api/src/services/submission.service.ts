@@ -260,6 +260,9 @@ export class SubmissionService implements IBackgroundTaskService {
             submittedAt: curatorTweet.timeParsed || new Date(),
           };
           await this.submissionRepository.saveSubmission(newSubmissionData, tx);
+          submission = await this.submissionRepository.getSubmission(
+            originalTweet.id!,
+          );
           this.logger.info(
             {
               originalTweetId: originalTweet.id,
@@ -300,12 +303,22 @@ export class SubmissionService implements IBackgroundTaskService {
             );
 
             // Attempt auto-approval
-            await this.moderationService.attemptAutoApproval(
-              originalTweet.id!,
-              feed.id,
-              curatorTweet.username!,
-              tx,
-            );
+            if (submission && feed.config) {
+              await this.moderationService.attemptAutoApproval(
+                submission,
+                feed.config,
+                curatorTweet.username!,
+                tx,
+              );
+            } else {
+              this.logger.error(
+                {
+                  submissionId: originalTweet.id!,
+                  feedId: feed.id,
+                },
+                "Could not attempt auto-approval due to missing submission or feed config.",
+              );
+            }
           } else {
             this.logger.info(
               {

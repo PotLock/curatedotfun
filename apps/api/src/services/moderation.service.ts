@@ -360,33 +360,30 @@ export class ModerationService implements IBaseService {
   }
 
   public async attemptAutoApproval(
-    submissionId: string,
-    feedId: string,
+    submission: RichSubmission,
+    feedConfig: FeedConfig,
     curatorUsername: string,
     tx: DB,
   ): Promise<boolean> {
-    const feedConfig = await this.feedRepository.getFeedConfig(feedId);
     if (
       !feedConfig?.moderation?.approvers?.twitter?.includes(curatorUsername)
     ) {
       return false;
     }
 
-    const submission =
-      await this.submissionRepository.getSubmission(submissionId);
-    const feedEntry = submission?.feeds.find((f) => f.feedId === feedId);
+    const feedEntry = submission.feeds.find((f) => f.feedId === feedConfig.id);
 
-    if (!submission || !feedEntry) {
+    if (!feedEntry) {
       this.logger.error(
-        { submissionId, feedId },
-        "Could not find submission or feed entry for auto-approval.",
+        { submissionId: submission.tweetId, feedId: feedConfig.id },
+        "Could not find corresponding feed entry in submission for auto-approval.",
       );
       return false;
     }
 
     const moderationActionData: InsertModerationHistory = {
-      submissionId,
-      feedId,
+      submissionId: submission.tweetId,
+      feedId: feedConfig.id,
       moderatorAccountId: curatorUsername,
       moderatorAccountIdType: "platform_username",
       source: "auto_approval",
@@ -407,7 +404,11 @@ export class ModerationService implements IBaseService {
     );
 
     this.logger.info(
-      { submissionId, feedId, curatorUsername },
+      {
+        submissionId: submission.tweetId,
+        feedId: feedConfig.id,
+        curatorUsername,
+      },
       "Submission auto-approved.",
     );
     return true;
