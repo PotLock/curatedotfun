@@ -1,7 +1,7 @@
-import { Job, Queue, Worker, Processor } from 'bullmq';
+import { Job, Queue, Worker, Processor } from "bullmq";
 
 export const QUEUE_NAMES = {
-  DEFAULT: 'default',
+  DEFAULT: "default",
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -15,7 +15,7 @@ export type JobName = keyof JobPayloads;
 export type JobData<T extends JobName> = JobPayloads[T];
 
 export type WorkerProcessor<T extends JobName> = (
-  job: Job<JobData<T>, any, string>
+  job: Job<JobData<T>, any, string>,
 ) => Promise<void>;
 
 export interface WorkerConfig<T extends JobName> {
@@ -26,8 +26,8 @@ export interface WorkerConfig<T extends JobName> {
 }
 
 export const redisConnection = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379', 10),
+  host: process.env.REDIS_HOST || "localhost",
+  port: parseInt(process.env.REDIS_PORT || "6379", 10),
 };
 
 export function createQueue<T extends JobName>(name: T): Queue<JobData<T>> {
@@ -37,7 +37,7 @@ export function createQueue<T extends JobName>(name: T): Queue<JobData<T>> {
 export function createWorkerInstance<T extends JobName>(
   name: T,
   processor: Processor<JobData<T>, any, string>,
-  opts?: ConstructorParameters<typeof Worker>[2]
+  opts?: ConstructorParameters<typeof Worker>[2],
 ): Worker<JobData<T>, any, string> {
   return new Worker<JobData<T>>(name, processor, {
     connection: redisConnection,
