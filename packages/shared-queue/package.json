@@ -1,0 +1,20 @@
+{
+  "name": "@curatedotfun/shared-queue",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "lint": "eslint . --ext .ts,.tsx",
+    "clean": "rm -rf .turbo node_modules dist"
+  },
+  "devDependencies": {
+    "eslint": "^9.29.0",
+    "typescript": "^5.8.3"
+  },
+  "peerDependencies": {
+    "bullmq": "^5.0.0",
+    "typescript": "^5.0.0"
+  }
+}
