@@ -1,14 +1,17 @@
-import { useApiMutation } from "../../hooks/api-client";
-import { useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "../../contexts/auth-context";
-import { toast } from "../../hooks/use-toast";
 import type {
   CreateModerationRequest,
   ModerationActionCreatedWrappedResponse,
   ModerationActionType,
 } from "@curatedotfun/types";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "../../contexts/auth-context";
+import { useApiMutation } from "../../hooks/api-client";
+import { toast } from "../../hooks/use-toast";
 
-const useModerateSubmission = (moderationAction: ModerationActionType) => {
+const useModerateSubmission = (
+  moderationAction: ModerationActionType,
+  submissionId: string,
+) => {
   const queryClient = useQueryClient();
   const auth = useAuth();
 
@@ -23,6 +26,7 @@ const useModerateSubmission = (moderationAction: ModerationActionType) => {
       message: "moderateSubmission",
     },
     {
+      mutationKey: ["moderate", moderationAction, submissionId],
       onSuccess: (_data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["submissions"] });
         queryClient.invalidateQueries({
@@ -54,7 +58,7 @@ const useModerateSubmission = (moderationAction: ModerationActionType) => {
   );
 
   const mutate = (
-    payload: Omit<CreateModerationRequest, "action" | "adminId">,
+    payload: Omit<CreateModerationRequest, "action" | "moderatorAccountId">,
   ) => {
     if (!auth.isSignedIn || !auth.currentAccountId) {
       console.error(
@@ -70,7 +74,7 @@ const useModerateSubmission = (moderationAction: ModerationActionType) => {
     const internalPayload: CreateModerationRequest = {
       ...payload,
       action: moderationAction,
-      adminId: auth.currentAccountId,
+      moderatorAccountId: auth.currentAccountId,
     };
     actualMutate(internalPayload);
   };
@@ -78,5 +82,7 @@ const useModerateSubmission = (moderationAction: ModerationActionType) => {
   return { mutate, ...rest };
 };
 
-export const useApproveSubmission = () => useModerateSubmission("approve");
-export const useRejectSubmission = () => useModerateSubmission("reject");
+export const useApproveSubmission = (submissionId: string) =>
+  useModerateSubmission("approve", submissionId);
+export const useRejectSubmission = (submissionId: string) =>
+  useModerateSubmission("reject", submissionId);
