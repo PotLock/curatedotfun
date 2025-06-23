@@ -251,7 +251,7 @@ importers:
         version: 4.1.0
       fastintear:
         specifier: latest
-        version: 0.1.14
+        version: 0.1.15
       immer:
         specifier: ^10.1.1
         version: 10.1.1
@@ -3304,8 +3304,8 @@ packages:
   fast-uri@3.0.6:
     resolution: {integrity: sha512-Atfo14OibSv5wAp4VWNsFYE1AchQRTv9cBGWET4pZWHzYshFSS9NQI6I57rdKn9croWVMbYFbLhJ+yJvmZIIHw==}
 
-  fastintear@0.1.14:
-    resolution: {integrity: sha512-fwZsvD8TLlBaMm1yFrltIrhzp1EH2cutiR+80+SozD5ugzmeI1/sEI5qghvBdOi+YPnPiNO90tAVm73rOTAJjg==}
+  fastintear@0.1.15:
+    resolution: {integrity: sha512-Wf3FngMINFcI59vpR46lFuOQS6ndgk7la3bg2ny20pMLCIGx4mCqqZswah2iQWLl44GQHt9jj3swZQa2zzkmpA==}
 
   fastq@1.19.1:
     resolution: {integrity: sha512-GwLTyxkCXjXbxqIhTsMI2Nui8huMPtnxg7krajPJAjnEG/iiOS7i+zCtWGZR9G0NBKbXKh6X9m9UIsYX/N6vvQ==}
@@ -8335,7 +8335,7 @@ snapshots:
 
   fast-uri@3.0.6: {}
 
-  fastintear@0.1.14:
+  fastintear@0.1.15:
     dependencies:
       '@fastnear/utils': 0.9.7
       '@noble/curves': 1.9.2
