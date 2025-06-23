@@ -4,6 +4,8 @@ import { Tweet } from "agent-twitter-client";
 import { Hono } from "hono";
 import { Env } from "types/app";
 import { z } from "zod";
+import { defaultQueue } from "../../queue";
+import { QUEUE_NAMES } from "@curatedotfun/shared-queue";
 
 // Create a single mock instance to maintain state
 const mockTwitterService = new MockTwitterService();
@@ -72,6 +74,25 @@ testRoutes.post("/reset", (c) => {
   mockTwitterService.clearMockTweets();
   return c.json({ success: true });
 });
+
+// POST /api/test/enqueue
+testRoutes.post(
+  "/enqueue",
+  zValidator(
+    "json",
+    z.object({
+      message: z.string(),
+    }),
+  ),
+  async (c) => {
+    const { message } = c.req.valid("json");
+    const job = await defaultQueue.add(QUEUE_NAMES.DEFAULT, {
+      message,
+      timestamp: Date.now(),
+    });
+    return c.json({ success: true, jobId: job.id });
+  },
+);
 
 // Export for use in tests and for replacing the real service
 export { mockTwitterService, testRoutes };

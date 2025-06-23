@@ -8,551 +8,551 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root";
-import { Route as LayoutRouteImport } from "./routes/_layout";
-import { Route as LayoutIndexRouteImport } from "./routes/_layout/index";
-import { Route as LayoutLeaderboardRouteImport } from "./routes/_layout/leaderboard";
-import { Route as LayoutProfileIndexRouteImport } from "./routes/_layout/profile/index";
-import { Route as LayoutPluginIndexRouteImport } from "./routes/_layout/plugin/index";
-import { Route as LayoutPluginPluginIdRouteImport } from "./routes/_layout/plugin/$pluginId";
-import { Route as LayoutFeedFeedIdRouteImport } from "./routes/_layout/feed/$feedId";
-import { Route as LayoutCreatePluginRouteImport } from "./routes/_layout/create/plugin";
-import { Route as LayoutCreateFeedRouteImport } from "./routes/_layout/create/feed";
-import { Route as LayoutProfileSettingsRouteRouteImport } from "./routes/_layout/profile/settings/route";
-import { Route as LayoutProfileSettingsIndexRouteImport } from "./routes/_layout/profile/settings/index";
-import { Route as LayoutFeedFeedIdIndexRouteImport } from "./routes/_layout/feed/$feedId/index";
-import { Route as LayoutCreateFeedIndexRouteImport } from "./routes/_layout/create/feed/index";
-import { Route as LayoutProfileSettingsPreferencesRouteImport } from "./routes/_layout/profile/settings/preferences";
-import { Route as LayoutProfileSettingsNotificationsRouteImport } from "./routes/_layout/profile/settings/notifications";
-import { Route as LayoutProfileSettingsConnectionsRouteImport } from "./routes/_layout/profile/settings/connections";
-import { Route as LayoutFeedWelcomeFeedIdRouteImport } from "./routes/_layout/feed/welcome/$feedId";
-import { Route as LayoutFeedFeedIdTokenRouteImport } from "./routes/_layout/feed/$feedId/token";
-import { Route as LayoutFeedFeedIdProposalsRouteImport } from "./routes/_layout/feed/$feedId/proposals";
-import { Route as LayoutFeedFeedIdPointsRouteImport } from "./routes/_layout/feed/$feedId/points";
-import { Route as LayoutFeedFeedIdMembersRouteImport } from "./routes/_layout/feed/$feedId/members";
-import { Route as LayoutFeedFeedIdCurationRouteImport } from "./routes/_layout/feed/$feedId/curation";
-import { Route as LayoutEditFeedFeedIdRouteImport } from "./routes/_layout/edit/feed.$feedId";
-import { Route as LayoutCreateFeedSettingsRouteImport } from "./routes/_layout/create/feed/settings";
-import { Route as LayoutCreateFeedReviewRouteImport } from "./routes/_layout/create/feed/review";
-import { Route as LayoutFeedFeedIdSettingsIndexRouteImport } from "./routes/_layout/feed/$feedId/settings/index";
-import { Route as LayoutFeedFeedIdSettingsConnectedRouteImport } from "./routes/_layout/feed/$feedId/settings/connected";
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as LayoutRouteImport } from './routes/_layout'
+import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
+import { Route as LayoutLeaderboardRouteImport } from './routes/_layout/leaderboard'
+import { Route as LayoutProfileIndexRouteImport } from './routes/_layout/profile/index'
+import { Route as LayoutPluginIndexRouteImport } from './routes/_layout/plugin/index'
+import { Route as LayoutPluginPluginIdRouteImport } from './routes/_layout/plugin/$pluginId'
+import { Route as LayoutFeedFeedIdRouteImport } from './routes/_layout/feed/$feedId'
+import { Route as LayoutCreatePluginRouteImport } from './routes/_layout/create/plugin'
+import { Route as LayoutCreateFeedRouteImport } from './routes/_layout/create/feed'
+import { Route as LayoutProfileSettingsRouteRouteImport } from './routes/_layout/profile/settings/route'
+import { Route as LayoutProfileSettingsIndexRouteImport } from './routes/_layout/profile/settings/index'
+import { Route as LayoutFeedFeedIdIndexRouteImport } from './routes/_layout/feed/$feedId/index'
+import { Route as LayoutCreateFeedIndexRouteImport } from './routes/_layout/create/feed/index'
+import { Route as LayoutProfileSettingsPreferencesRouteImport } from './routes/_layout/profile/settings/preferences'
+import { Route as LayoutProfileSettingsNotificationsRouteImport } from './routes/_layout/profile/settings/notifications'
+import { Route as LayoutProfileSettingsConnectionsRouteImport } from './routes/_layout/profile/settings/connections'
+import { Route as LayoutFeedWelcomeFeedIdRouteImport } from './routes/_layout/feed/welcome/$feedId'
+import { Route as LayoutFeedFeedIdTokenRouteImport } from './routes/_layout/feed/$feedId/token'
+import { Route as LayoutFeedFeedIdProposalsRouteImport } from './routes/_layout/feed/$feedId/proposals'
+import { Route as LayoutFeedFeedIdPointsRouteImport } from './routes/_layout/feed/$feedId/points'
+import { Route as LayoutFeedFeedIdMembersRouteImport } from './routes/_layout/feed/$feedId/members'
+import { Route as LayoutFeedFeedIdCurationRouteImport } from './routes/_layout/feed/$feedId/curation'
+import { Route as LayoutEditFeedFeedIdRouteImport } from './routes/_layout/edit/feed.$feedId'
+import { Route as LayoutCreateFeedSettingsRouteImport } from './routes/_layout/create/feed/settings'
+import { Route as LayoutCreateFeedReviewRouteImport } from './routes/_layout/create/feed/review'
+import { Route as LayoutFeedFeedIdSettingsIndexRouteImport } from './routes/_layout/feed/$feedId/settings/index'
+import { Route as LayoutFeedFeedIdSettingsConnectedRouteImport } from './routes/_layout/feed/$feedId/settings/connected'
 
 const LayoutRoute = LayoutRouteImport.update({
-  id: "/_layout",
+  id: '/_layout',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const LayoutIndexRoute = LayoutIndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
 const LayoutLeaderboardRoute = LayoutLeaderboardRouteImport.update({
-  id: "/leaderboard",
-  path: "/leaderboard",
+  id: '/leaderboard',
+  path: '/leaderboard',
   getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
 const LayoutProfileIndexRoute = LayoutProfileIndexRouteImport.update({
-  id: "/profile/",
-  path: "/profile/",
+  id: '/profile/',
+  path: '/profile/',
   getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
 const LayoutPluginIndexRoute = LayoutPluginIndexRouteImport.update({
-  id: "/plugin/",
-  path: "/plugin/",
+  id: '/plugin/',
+  path: '/plugin/',
   getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
 const LayoutPluginPluginIdRoute = LayoutPluginPluginIdRouteImport.update({
-  id: "/plugin/$pluginId",
-  path: "/plugin/$pluginId",
+  id: '/plugin/$pluginId',
+  path: '/plugin/$pluginId',
   getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
 const LayoutFeedFeedIdRoute = LayoutFeedFeedIdRouteImport.update({
-  id: "/feed/$feedId",
-  path: "/feed/$feedId",
+  id: '/feed/$feedId',
+  path: '/feed/$feedId',
   getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
 const LayoutCreatePluginRoute = LayoutCreatePluginRouteImport.update({
-  id: "/create/plugin",
-  path: "/create/plugin",
+  id: '/create/plugin',
+  path: '/create/plugin',
   getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
 const LayoutCreateFeedRoute = LayoutCreateFeedRouteImport.update({
-  id: "/create/feed",
-  path: "/create/feed",
+  id: '/create/feed',
+  path: '/create/feed',
   getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
 const LayoutProfileSettingsRouteRoute =
   LayoutProfileSettingsRouteRouteImport.update({
-    id: "/profile/settings",
-    path: "/profile/settings",
+    id: '/profile/settings',
+    path: '/profile/settings',
     getParentRoute: () => LayoutRoute,
-  } as any);
+  } as any)
 const LayoutProfileSettingsIndexRoute =
   LayoutProfileSettingsIndexRouteImport.update({
-    id: "/",
-    path: "/",
+    id: '/',
+    path: '/',
     getParentRoute: () => LayoutProfileSettingsRouteRoute,
-  } as any);
+  } as any)
 const LayoutFeedFeedIdIndexRoute = LayoutFeedFeedIdIndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => LayoutFeedFeedIdRoute,
-} as any);
+} as any)
 const LayoutCreateFeedIndexRoute = LayoutCreateFeedIndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => LayoutCreateFeedRoute,
-} as any);
+} as any)
 const LayoutProfileSettingsPreferencesRoute =
   LayoutProfileSettingsPreferencesRouteImport.update({
-    id: "/preferences",
-    path: "/preferences",
+    id: '/preferences',
+    path: '/preferences',
     getParentRoute: () => LayoutProfileSettingsRouteRoute,
-  } as any);
+  } as any)
 const LayoutProfileSettingsNotificationsRoute =
   LayoutProfileSettingsNotificationsRouteImport.update({
-    id: "/notifications",
-    path: "/notifications",
+    id: '/notifications',
+    path: '/notifications',
     getParentRoute: () => LayoutProfileSettingsRouteRoute,
-  } as any);
+  } as any)
 const LayoutProfileSettingsConnectionsRoute =
   LayoutProfileSettingsConnectionsRouteImport.update({
-    id: "/connections",
-    path: "/connections",
+    id: '/connections',
+    path: '/connections',
     getParentRoute: () => LayoutProfileSettingsRouteRoute,
-  } as any);
+  } as any)
 const LayoutFeedWelcomeFeedIdRoute = LayoutFeedWelcomeFeedIdRouteImport.update({
-  id: "/feed/welcome/$feedId",
-  path: "/feed/welcome/$feedId",
+  id: '/feed/welcome/$feedId',
+  path: '/feed/welcome/$feedId',
   getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
 const LayoutFeedFeedIdTokenRoute = LayoutFeedFeedIdTokenRouteImport.update({
-  id: "/token",
-  path: "/token",
+  id: '/token',
+  path: '/token',
   getParentRoute: () => LayoutFeedFeedIdRoute,
-} as any);
+} as any)
 const LayoutFeedFeedIdProposalsRoute =
   LayoutFeedFeedIdProposalsRouteImport.update({
-    id: "/proposals",
-    path: "/proposals",
+    id: '/proposals',
+    path: '/proposals',
     getParentRoute: () => LayoutFeedFeedIdRoute,
-  } as any);
+  } as any)
 const LayoutFeedFeedIdPointsRoute = LayoutFeedFeedIdPointsRouteImport.update({
-  id: "/points",
-  path: "/points",
+  id: '/points',
+  path: '/points',
   getParentRoute: () => LayoutFeedFeedIdRoute,
-} as any);
+} as any)
 const LayoutFeedFeedIdMembersRoute = LayoutFeedFeedIdMembersRouteImport.update({
-  id: "/members",
-  path: "/members",
+  id: '/members',
+  path: '/members',
   getParentRoute: () => LayoutFeedFeedIdRoute,
-} as any);
+} as any)
 const LayoutFeedFeedIdCurationRoute =
   LayoutFeedFeedIdCurationRouteImport.update({
-    id: "/curation",
-    path: "/curation",
+    id: '/curation',
+    path: '/curation',
     getParentRoute: () => LayoutFeedFeedIdRoute,
-  } as any);
+  } as any)
 const LayoutEditFeedFeedIdRoute = LayoutEditFeedFeedIdRouteImport.update({
-  id: "/edit/feed/$feedId",
-  path: "/edit/feed/$feedId",
+  id: '/edit/feed/$feedId',
+  path: '/edit/feed/$feedId',
   getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
 const LayoutCreateFeedSettingsRoute =
   LayoutCreateFeedSettingsRouteImport.update({
-    id: "/settings",
-    path: "/settings",
+    id: '/settings',
+    path: '/settings',
     getParentRoute: () => LayoutCreateFeedRoute,
-  } as any);
+  } as any)
 const LayoutCreateFeedReviewRoute = LayoutCreateFeedReviewRouteImport.update({
-  id: "/review",
-  path: "/review",
+  id: '/review',
+  path: '/review',
   getParentRoute: () => LayoutCreateFeedRoute,
-} as any);
+} as any)
 const LayoutFeedFeedIdSettingsIndexRoute =
   LayoutFeedFeedIdSettingsIndexRouteImport.update({
-    id: "/settings/",
-    path: "/settings/",
+    id: '/settings/',
+    path: '/settings/',
     getParentRoute: () => LayoutFeedFeedIdRoute,
-  } as any);
+  } as any)
 const LayoutFeedFeedIdSettingsConnectedRoute =
   LayoutFeedFeedIdSettingsConnectedRouteImport.update({
-    id: "/settings/connected",
-    path: "/settings/connected",
+    id: '/settings/connected',
+    path: '/settings/connected',
     getParentRoute: () => LayoutFeedFeedIdRoute,
-  } as any);
+  } as any)
 
 export interface FileRoutesByFullPath {
-  "/leaderboard": typeof LayoutLeaderboardRoute;
-  "/": typeof LayoutIndexRoute;
-  "/profile/settings": typeof LayoutProfileSettingsRouteRouteWithChildren;
-  "/create/feed": typeof LayoutCreateFeedRouteWithChildren;
-  "/create/plugin": typeof LayoutCreatePluginRoute;
-  "/feed/$feedId": typeof LayoutFeedFeedIdRouteWithChildren;
-  "/plugin/$pluginId": typeof LayoutPluginPluginIdRoute;
-  "/plugin": typeof LayoutPluginIndexRoute;
-  "/profile": typeof LayoutProfileIndexRoute;
-  "/create/feed/review": typeof LayoutCreateFeedReviewRoute;
-  "/create/feed/settings": typeof LayoutCreateFeedSettingsRoute;
-  "/edit/feed/$feedId": typeof LayoutEditFeedFeedIdRoute;
-  "/feed/$feedId/curation": typeof LayoutFeedFeedIdCurationRoute;
-  "/feed/$feedId/members": typeof LayoutFeedFeedIdMembersRoute;
-  "/feed/$feedId/points": typeof LayoutFeedFeedIdPointsRoute;
-  "/feed/$feedId/proposals": typeof LayoutFeedFeedIdProposalsRoute;
-  "/feed/$feedId/token": typeof LayoutFeedFeedIdTokenRoute;
-  "/feed/welcome/$feedId": typeof LayoutFeedWelcomeFeedIdRoute;
-  "/profile/settings/connections": typeof LayoutProfileSettingsConnectionsRoute;
-  "/profile/settings/notifications": typeof LayoutProfileSettingsNotificationsRoute;
-  "/profile/settings/preferences": typeof LayoutProfileSettingsPreferencesRoute;
-  "/create/feed/": typeof LayoutCreateFeedIndexRoute;
-  "/feed/$feedId/": typeof LayoutFeedFeedIdIndexRoute;
-  "/profile/settings/": typeof LayoutProfileSettingsIndexRoute;
-  "/feed/$feedId/settings/connected": typeof LayoutFeedFeedIdSettingsConnectedRoute;
-  "/feed/$feedId/settings": typeof LayoutFeedFeedIdSettingsIndexRoute;
+  '/leaderboard': typeof LayoutLeaderboardRoute
+  '/': typeof LayoutIndexRoute
+  '/profile/settings': typeof LayoutProfileSettingsRouteRouteWithChildren
+  '/create/feed': typeof LayoutCreateFeedRouteWithChildren
+  '/create/plugin': typeof LayoutCreatePluginRoute
+  '/feed/$feedId': typeof LayoutFeedFeedIdRouteWithChildren
+  '/plugin/$pluginId': typeof LayoutPluginPluginIdRoute
+  '/plugin': typeof LayoutPluginIndexRoute
+  '/profile': typeof LayoutProfileIndexRoute
+  '/create/feed/review': typeof LayoutCreateFeedReviewRoute
+  '/create/feed/settings': typeof LayoutCreateFeedSettingsRoute
+  '/edit/feed/$feedId': typeof LayoutEditFeedFeedIdRoute
+  '/feed/$feedId/curation': typeof LayoutFeedFeedIdCurationRoute
+  '/feed/$feedId/members': typeof LayoutFeedFeedIdMembersRoute
+  '/feed/$feedId/points': typeof LayoutFeedFeedIdPointsRoute
+  '/feed/$feedId/proposals': typeof LayoutFeedFeedIdProposalsRoute
+  '/feed/$feedId/token': typeof LayoutFeedFeedIdTokenRoute
+  '/feed/welcome/$feedId': typeof LayoutFeedWelcomeFeedIdRoute
+  '/profile/settings/connections': typeof LayoutProfileSettingsConnectionsRoute
+  '/profile/settings/notifications': typeof LayoutProfileSettingsNotificationsRoute
+  '/profile/settings/preferences': typeof LayoutProfileSettingsPreferencesRoute
+  '/create/feed/': typeof LayoutCreateFeedIndexRoute
+  '/feed/$feedId/': typeof LayoutFeedFeedIdIndexRoute
+  '/profile/settings/': typeof LayoutProfileSettingsIndexRoute
+  '/feed/$feedId/settings/connected': typeof LayoutFeedFeedIdSettingsConnectedRoute
+  '/feed/$feedId/settings': typeof LayoutFeedFeedIdSettingsIndexRoute
 }
 export interface FileRoutesByTo {
-  "/leaderboard": typeof LayoutLeaderboardRoute;
-  "/": typeof LayoutIndexRoute;
-  "/create/plugin": typeof LayoutCreatePluginRoute;
-  "/plugin/$pluginId": typeof LayoutPluginPluginIdRoute;
-  "/plugin": typeof LayoutPluginIndexRoute;
-  "/profile": typeof LayoutProfileIndexRoute;
-  "/create/feed/review": typeof LayoutCreateFeedReviewRoute;
-  "/create/feed/settings": typeof LayoutCreateFeedSettingsRoute;
-  "/edit/feed/$feedId": typeof LayoutEditFeedFeedIdRoute;
-  "/feed/$feedId/curation": typeof LayoutFeedFeedIdCurationRoute;
-  "/feed/$feedId/members": typeof LayoutFeedFeedIdMembersRoute;
-  "/feed/$feedId/points": typeof LayoutFeedFeedIdPointsRoute;
-  "/feed/$feedId/proposals": typeof LayoutFeedFeedIdProposalsRoute;
-  "/feed/$feedId/token": typeof LayoutFeedFeedIdTokenRoute;
-  "/feed/welcome/$feedId": typeof LayoutFeedWelcomeFeedIdRoute;
-  "/profile/settings/connections": typeof LayoutProfileSettingsConnectionsRoute;
-  "/profile/settings/notifications": typeof LayoutProfileSettingsNotificationsRoute;
-  "/profile/settings/preferences": typeof LayoutProfileSettingsPreferencesRoute;
-  "/create/feed": typeof LayoutCreateFeedIndexRoute;
-  "/feed/$feedId": typeof LayoutFeedFeedIdIndexRoute;
-  "/profile/settings": typeof LayoutProfileSettingsIndexRoute;
-  "/feed/$feedId/settings/connected": typeof LayoutFeedFeedIdSettingsConnectedRoute;
-  "/feed/$feedId/settings": typeof LayoutFeedFeedIdSettingsIndexRoute;
+  '/leaderboard': typeof LayoutLeaderboardRoute
+  '/': typeof LayoutIndexRoute
+  '/create/plugin': typeof LayoutCreatePluginRoute
+  '/plugin/$pluginId': typeof LayoutPluginPluginIdRoute
+  '/plugin': typeof LayoutPluginIndexRoute
+  '/profile': typeof LayoutProfileIndexRoute
+  '/create/feed/review': typeof LayoutCreateFeedReviewRoute
+  '/create/feed/settings': typeof LayoutCreateFeedSettingsRoute
+  '/edit/feed/$feedId': typeof LayoutEditFeedFeedIdRoute
+  '/feed/$feedId/curation': typeof LayoutFeedFeedIdCurationRoute
+  '/feed/$feedId/members': typeof LayoutFeedFeedIdMembersRoute
+  '/feed/$feedId/points': typeof LayoutFeedFeedIdPointsRoute
+  '/feed/$feedId/proposals': typeof LayoutFeedFeedIdProposalsRoute
+  '/feed/$feedId/token': typeof LayoutFeedFeedIdTokenRoute
+  '/feed/welcome/$feedId': typeof LayoutFeedWelcomeFeedIdRoute
+  '/profile/settings/connections': typeof LayoutProfileSettingsConnectionsRoute
+  '/profile/settings/notifications': typeof LayoutProfileSettingsNotificationsRoute
+  '/profile/settings/preferences': typeof LayoutProfileSettingsPreferencesRoute
+  '/create/feed': typeof LayoutCreateFeedIndexRoute
+  '/feed/$feedId': typeof LayoutFeedFeedIdIndexRoute
+  '/profile/settings': typeof LayoutProfileSettingsIndexRoute
+  '/feed/$feedId/settings/connected': typeof LayoutFeedFeedIdSettingsConnectedRoute
+  '/feed/$feedId/settings': typeof LayoutFeedFeedIdSettingsIndexRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  "/_layout": typeof LayoutRouteWithChildren;
-  "/_layout/leaderboard": typeof LayoutLeaderboardRoute;
-  "/_layout/": typeof LayoutIndexRoute;
-  "/_layout/profile/settings": typeof LayoutProfileSettingsRouteRouteWithChildren;
-  "/_layout/create/feed": typeof LayoutCreateFeedRouteWithChildren;
-  "/_layout/create/plugin": typeof LayoutCreatePluginRoute;
-  "/_layout/feed/$feedId": typeof LayoutFeedFeedIdRouteWithChildren;
-  "/_layout/plugin/$pluginId": typeof LayoutPluginPluginIdRoute;
-  "/_layout/plugin/": typeof LayoutPluginIndexRoute;
-  "/_layout/profile/": typeof LayoutProfileIndexRoute;
-  "/_layout/create/feed/review": typeof LayoutCreateFeedReviewRoute;
-  "/_layout/create/feed/settings": typeof LayoutCreateFeedSettingsRoute;
-  "/_layout/edit/feed/$feedId": typeof LayoutEditFeedFeedIdRoute;
-  "/_layout/feed/$feedId/curation": typeof LayoutFeedFeedIdCurationRoute;
-  "/_layout/feed/$feedId/members": typeof LayoutFeedFeedIdMembersRoute;
-  "/_layout/feed/$feedId/points": typeof LayoutFeedFeedIdPointsRoute;
-  "/_layout/feed/$feedId/proposals": typeof LayoutFeedFeedIdProposalsRoute;
-  "/_layout/feed/$feedId/token": typeof LayoutFeedFeedIdTokenRoute;
-  "/_layout/feed/welcome/$feedId": typeof LayoutFeedWelcomeFeedIdRoute;
-  "/_layout/profile/settings/connections": typeof LayoutProfileSettingsConnectionsRoute;
-  "/_layout/profile/settings/notifications": typeof LayoutProfileSettingsNotificationsRoute;
-  "/_layout/profile/settings/preferences": typeof LayoutProfileSettingsPreferencesRoute;
-  "/_layout/create/feed/": typeof LayoutCreateFeedIndexRoute;
-  "/_layout/feed/$feedId/": typeof LayoutFeedFeedIdIndexRoute;
-  "/_layout/profile/settings/": typeof LayoutProfileSettingsIndexRoute;
-  "/_layout/feed/$feedId/settings/connected": typeof LayoutFeedFeedIdSettingsConnectedRoute;
-  "/_layout/feed/$feedId/settings/": typeof LayoutFeedFeedIdSettingsIndexRoute;
+  __root__: typeof rootRouteImport
+  '/_layout': typeof LayoutRouteWithChildren
+  '/_layout/leaderboard': typeof LayoutLeaderboardRoute
+  '/_layout/': typeof LayoutIndexRoute
+  '/_layout/profile/settings': typeof LayoutProfileSettingsRouteRouteWithChildren
+  '/_layout/create/feed': typeof LayoutCreateFeedRouteWithChildren
+  '/_layout/create/plugin': typeof LayoutCreatePluginRoute
+  '/_layout/feed/$feedId': typeof LayoutFeedFeedIdRouteWithChildren
+  '/_layout/plugin/$pluginId': typeof LayoutPluginPluginIdRoute
+  '/_layout/plugin/': typeof LayoutPluginIndexRoute
+  '/_layout/profile/': typeof LayoutProfileIndexRoute
+  '/_layout/create/feed/review': typeof LayoutCreateFeedReviewRoute
+  '/_layout/create/feed/settings': typeof LayoutCreateFeedSettingsRoute
+  '/_layout/edit/feed/$feedId': typeof LayoutEditFeedFeedIdRoute
+  '/_layout/feed/$feedId/curation': typeof LayoutFeedFeedIdCurationRoute
+  '/_layout/feed/$feedId/members': typeof LayoutFeedFeedIdMembersRoute
+  '/_layout/feed/$feedId/points': typeof LayoutFeedFeedIdPointsRoute
+  '/_layout/feed/$feedId/proposals': typeof LayoutFeedFeedIdProposalsRoute
+  '/_layout/feed/$feedId/token': typeof LayoutFeedFeedIdTokenRoute
+  '/_layout/feed/welcome/$feedId': typeof LayoutFeedWelcomeFeedIdRoute
+  '/_layout/profile/settings/connections': typeof LayoutProfileSettingsConnectionsRoute
+  '/_layout/profile/settings/notifications': typeof LayoutProfileSettingsNotificationsRoute
+  '/_layout/profile/settings/preferences': typeof LayoutProfileSettingsPreferencesRoute
+  '/_layout/create/feed/': typeof LayoutCreateFeedIndexRoute
+  '/_layout/feed/$feedId/': typeof LayoutFeedFeedIdIndexRoute
+  '/_layout/profile/settings/': typeof LayoutProfileSettingsIndexRoute
+  '/_layout/feed/$feedId/settings/connected': typeof LayoutFeedFeedIdSettingsConnectedRoute
+  '/_layout/feed/$feedId/settings/': typeof LayoutFeedFeedIdSettingsIndexRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | "/leaderboard"
-    | "/"
-    | "/profile/settings"
-    | "/create/feed"
-    | "/create/plugin"
-    | "/feed/$feedId"
-    | "/plugin/$pluginId"
-    | "/plugin"
-    | "/profile"
-    | "/create/feed/review"
-    | "/create/feed/settings"
-    | "/edit/feed/$feedId"
-    | "/feed/$feedId/curation"
-    | "/feed/$feedId/members"
-    | "/feed/$feedId/points"
-    | "/feed/$feedId/proposals"
-    | "/feed/$feedId/token"
-    | "/feed/welcome/$feedId"
-    | "/profile/settings/connections"
-    | "/profile/settings/notifications"
-    | "/profile/settings/preferences"
-    | "/create/feed/"
-    | "/feed/$feedId/"
-    | "/profile/settings/"
-    | "/feed/$feedId/settings/connected"
-    | "/feed/$feedId/settings";
-  fileRoutesByTo: FileRoutesByTo;
+    | '/leaderboard'
+    | '/'
+    | '/profile/settings'
+    | '/create/feed'
+    | '/create/plugin'
+    | '/feed/$feedId'
+    | '/plugin/$pluginId'
+    | '/plugin'
+    | '/profile'
+    | '/create/feed/review'
+    | '/create/feed/settings'
+    | '/edit/feed/$feedId'
+    | '/feed/$feedId/curation'
+    | '/feed/$feedId/members'
+    | '/feed/$feedId/points'
+    | '/feed/$feedId/proposals'
+    | '/feed/$feedId/token'
+    | '/feed/welcome/$feedId'
+    | '/profile/settings/connections'
+    | '/profile/settings/notifications'
+    | '/profile/settings/preferences'
+    | '/create/feed/'
+    | '/feed/$feedId/'
+    | '/profile/settings/'
+    | '/feed/$feedId/settings/connected'
+    | '/feed/$feedId/settings'
+  fileRoutesByTo: FileRoutesByTo
   to:
-    | "/leaderboard"
-    | "/"
-    | "/create/plugin"
-    | "/plugin/$pluginId"
-    | "/plugin"
-    | "/profile"
-    | "/create/feed/review"
-    | "/create/feed/settings"
-    | "/edit/feed/$feedId"
-    | "/feed/$feedId/curation"
-    | "/feed/$feedId/members"
-    | "/feed/$feedId/points"
-    | "/feed/$feedId/proposals"
-    | "/feed/$feedId/token"
-    | "/feed/welcome/$feedId"
-    | "/profile/settings/connections"
-    | "/profile/settings/notifications"
-    | "/profile/settings/preferences"
-    | "/create/feed"
-    | "/feed/$feedId"
-    | "/profile/settings"
-    | "/feed/$feedId/settings/connected"
-    | "/feed/$feedId/settings";
+    | '/leaderboard'
+    | '/'
+    | '/create/plugin'
+    | '/plugin/$pluginId'
+    | '/plugin'
+    | '/profile'
+    | '/create/feed/review'
+    | '/create/feed/settings'
+    | '/edit/feed/$feedId'
+    | '/feed/$feedId/curation'
+    | '/feed/$feedId/members'
+    | '/feed/$feedId/points'
+    | '/feed/$feedId/proposals'
+    | '/feed/$feedId/token'
+    | '/feed/welcome/$feedId'
+    | '/profile/settings/connections'
+    | '/profile/settings/notifications'
+    | '/profile/settings/preferences'
+    | '/create/feed'
+    | '/feed/$feedId'
+    | '/profile/settings'
+    | '/feed/$feedId/settings/connected'
+    | '/feed/$feedId/settings'
   id:
-    | "__root__"
-    | "/_layout"
-    | "/_layout/leaderboard"
-    | "/_layout/"
-    | "/_layout/profile/settings"
-    | "/_layout/create/feed"
-    | "/_layout/create/plugin"
-    | "/_layout/feed/$feedId"
-    | "/_layout/plugin/$pluginId"
-    | "/_layout/plugin/"
-    | "/_layout/profile/"
-    | "/_layout/create/feed/review"
-    | "/_layout/create/feed/settings"
-    | "/_layout/edit/feed/$feedId"
-    | "/_layout/feed/$feedId/curation"
-    | "/_layout/feed/$feedId/members"
-    | "/_layout/feed/$feedId/points"
-    | "/_layout/feed/$feedId/proposals"
-    | "/_layout/feed/$feedId/token"
-    | "/_layout/feed/welcome/$feedId"
-    | "/_layout/profile/settings/connections"
-    | "/_layout/profile/settings/notifications"
-    | "/_layout/profile/settings/preferences"
-    | "/_layout/create/feed/"
-    | "/_layout/feed/$feedId/"
-    | "/_layout/profile/settings/"
-    | "/_layout/feed/$feedId/settings/connected"
-    | "/_layout/feed/$feedId/settings/";
-  fileRoutesById: FileRoutesById;
+    | '__root__'
+    | '/_layout'
+    | '/_layout/leaderboard'
+    | '/_layout/'
+    | '/_layout/profile/settings'
+    | '/_layout/create/feed'
+    | '/_layout/create/plugin'
+    | '/_layout/feed/$feedId'
+    | '/_layout/plugin/$pluginId'
+    | '/_layout/plugin/'
+    | '/_layout/profile/'
+    | '/_layout/create/feed/review'
+    | '/_layout/create/feed/settings'
+    | '/_layout/edit/feed/$feedId'
+    | '/_layout/feed/$feedId/curation'
+    | '/_layout/feed/$feedId/members'
+    | '/_layout/feed/$feedId/points'
+    | '/_layout/feed/$feedId/proposals'
+    | '/_layout/feed/$feedId/token'
+    | '/_layout/feed/welcome/$feedId'
+    | '/_layout/profile/settings/connections'
+    | '/_layout/profile/settings/notifications'
+    | '/_layout/profile/settings/preferences'
+    | '/_layout/create/feed/'
+    | '/_layout/feed/$feedId/'
+    | '/_layout/profile/settings/'
+    | '/_layout/feed/$feedId/settings/connected'
+    | '/_layout/feed/$feedId/settings/'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  LayoutRoute: typeof LayoutRouteWithChildren;
+  LayoutRoute: typeof LayoutRouteWithChildren
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/_layout": {
-      id: "/_layout";
-      path: "";
-      fullPath: "";
-      preLoaderRoute: typeof LayoutRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_layout/": {
-      id: "/_layout/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof LayoutIndexRouteImport;
-      parentRoute: typeof LayoutRoute;
-    };
-    "/_layout/leaderboard": {
-      id: "/_layout/leaderboard";
-      path: "/leaderboard";
-      fullPath: "/leaderboard";
-      preLoaderRoute: typeof LayoutLeaderboardRouteImport;
-      parentRoute: typeof LayoutRoute;
-    };
-    "/_layout/profile/": {
-      id: "/_layout/profile/";
-      path: "/profile";
-      fullPath: "/profile";
-      preLoaderRoute: typeof LayoutProfileIndexRouteImport;
-      parentRoute: typeof LayoutRoute;
-    };
-    "/_layout/plugin/": {
-      id: "/_layout/plugin/";
-      path: "/plugin";
-      fullPath: "/plugin";
-      preLoaderRoute: typeof LayoutPluginIndexRouteImport;
-      parentRoute: typeof LayoutRoute;
-    };
-    "/_layout/plugin/$pluginId": {
-      id: "/_layout/plugin/$pluginId";
-      path: "/plugin/$pluginId";
-      fullPath: "/plugin/$pluginId";
-      preLoaderRoute: typeof LayoutPluginPluginIdRouteImport;
-      parentRoute: typeof LayoutRoute;
-    };
-    "/_layout/feed/$feedId": {
-      id: "/_layout/feed/$feedId";
-      path: "/feed/$feedId";
-      fullPath: "/feed/$feedId";
-      preLoaderRoute: typeof LayoutFeedFeedIdRouteImport;
-      parentRoute: typeof LayoutRoute;
-    };
-    "/_layout/create/plugin": {
-      id: "/_layout/create/plugin";
-      path: "/create/plugin";
-      fullPath: "/create/plugin";
-      preLoaderRoute: typeof LayoutCreatePluginRouteImport;
-      parentRoute: typeof LayoutRoute;
-    };
-    "/_layout/create/feed": {
-      id: "/_layout/create/feed";
-      path: "/create/feed";
-      fullPath: "/create/feed";
-      preLoaderRoute: typeof LayoutCreateFeedRouteImport;
-      parentRoute: typeof LayoutRoute;
-    };
-    "/_layout/profile/settings": {
-      id: "/_layout/profile/settings";
-      path: "/profile/settings";
-      fullPath: "/profile/settings";
-      preLoaderRoute: typeof LayoutProfileSettingsRouteRouteImport;
-      parentRoute: typeof LayoutRoute;
-    };
-    "/_layout/profile/settings/": {
-      id: "/_layout/profile/settings/";
-      path: "/";
-      fullPath: "/profile/settings/";
-      preLoaderRoute: typeof LayoutProfileSettingsIndexRouteImport;
-      parentRoute: typeof LayoutProfileSettingsRouteRoute;
-    };
-    "/_layout/feed/$feedId/": {
-      id: "/_layout/feed/$feedId/";
-      path: "/";
-      fullPath: "/feed/$feedId/";
-      preLoaderRoute: typeof LayoutFeedFeedIdIndexRouteImport;
-      parentRoute: typeof LayoutFeedFeedIdRoute;
-    };
-    "/_layout/create/feed/": {
-      id: "/_layout/create/feed/";
-      path: "/";
-      fullPath: "/create/feed/";
-      preLoaderRoute: typeof LayoutCreateFeedIndexRouteImport;
-      parentRoute: typeof LayoutCreateFeedRoute;
-    };
-    "/_layout/profile/settings/preferences": {
-      id: "/_layout/profile/settings/preferences";
-      path: "/preferences";
-      fullPath: "/profile/settings/preferences";
-      preLoaderRoute: typeof LayoutProfileSettingsPreferencesRouteImport;
-      parentRoute: typeof LayoutProfileSettingsRouteRoute;
-    };
-    "/_layout/profile/settings/notifications": {
-      id: "/_layout/profile/settings/notifications";
-      path: "/notifications";
-      fullPath: "/profile/settings/notifications";
-      preLoaderRoute: typeof LayoutProfileSettingsNotificationsRouteImport;
-      parentRoute: typeof LayoutProfileSettingsRouteRoute;
-    };
-    "/_layout/profile/settings/connections": {
-      id: "/_layout/profile/settings/connections";
-      path: "/connections";
-      fullPath: "/profile/settings/connections";
-      preLoaderRoute: typeof LayoutProfileSettingsConnectionsRouteImport;
-      parentRoute: typeof LayoutProfileSettingsRouteRoute;
-    };
-    "/_layout/feed/welcome/$feedId": {
-      id: "/_layout/feed/welcome/$feedId";
-      path: "/feed/welcome/$feedId";
-      fullPath: "/feed/welcome/$feedId";
-      preLoaderRoute: typeof LayoutFeedWelcomeFeedIdRouteImport;
-      parentRoute: typeof LayoutRoute;
-    };
-    "/_layout/feed/$feedId/token": {
-      id: "/_layout/feed/$feedId/token";
-      path: "/token";
-      fullPath: "/feed/$feedId/token";
-      preLoaderRoute: typeof LayoutFeedFeedIdTokenRouteImport;
-      parentRoute: typeof LayoutFeedFeedIdRoute;
-    };
-    "/_layout/feed/$feedId/proposals": {
-      id: "/_layout/feed/$feedId/proposals";
-      path: "/proposals";
-      fullPath: "/feed/$feedId/proposals";
-      preLoaderRoute: typeof LayoutFeedFeedIdProposalsRouteImport;
-      parentRoute: typeof LayoutFeedFeedIdRoute;
-    };
-    "/_layout/feed/$feedId/points": {
-      id: "/_layout/feed/$feedId/points";
-      path: "/points";
-      fullPath: "/feed/$feedId/points";
-      preLoaderRoute: typeof LayoutFeedFeedIdPointsRouteImport;
-      parentRoute: typeof LayoutFeedFeedIdRoute;
-    };
-    "/_layout/feed/$feedId/members": {
-      id: "/_layout/feed/$feedId/members";
-      path: "/members";
-      fullPath: "/feed/$feedId/members";
-      preLoaderRoute: typeof LayoutFeedFeedIdMembersRouteImport;
-      parentRoute: typeof LayoutFeedFeedIdRoute;
-    };
-    "/_layout/feed/$feedId/curation": {
-      id: "/_layout/feed/$feedId/curation";
-      path: "/curation";
-      fullPath: "/feed/$feedId/curation";
-      preLoaderRoute: typeof LayoutFeedFeedIdCurationRouteImport;
-      parentRoute: typeof LayoutFeedFeedIdRoute;
-    };
-    "/_layout/edit/feed/$feedId": {
-      id: "/_layout/edit/feed/$feedId";
-      path: "/edit/feed/$feedId";
-      fullPath: "/edit/feed/$feedId";
-      preLoaderRoute: typeof LayoutEditFeedFeedIdRouteImport;
-      parentRoute: typeof LayoutRoute;
-    };
-    "/_layout/create/feed/settings": {
-      id: "/_layout/create/feed/settings";
-      path: "/settings";
-      fullPath: "/create/feed/settings";
-      preLoaderRoute: typeof LayoutCreateFeedSettingsRouteImport;
-      parentRoute: typeof LayoutCreateFeedRoute;
-    };
-    "/_layout/create/feed/review": {
-      id: "/_layout/create/feed/review";
-      path: "/review";
-      fullPath: "/create/feed/review";
-      preLoaderRoute: typeof LayoutCreateFeedReviewRouteImport;
-      parentRoute: typeof LayoutCreateFeedRoute;
-    };
-    "/_layout/feed/$feedId/settings/": {
-      id: "/_layout/feed/$feedId/settings/";
-      path: "/settings";
-      fullPath: "/feed/$feedId/settings";
-      preLoaderRoute: typeof LayoutFeedFeedIdSettingsIndexRouteImport;
-      parentRoute: typeof LayoutFeedFeedIdRoute;
-    };
-    "/_layout/feed/$feedId/settings/connected": {
-      id: "/_layout/feed/$feedId/settings/connected";
-      path: "/settings/connected";
-      fullPath: "/feed/$feedId/settings/connected";
-      preLoaderRoute: typeof LayoutFeedFeedIdSettingsConnectedRouteImport;
-      parentRoute: typeof LayoutFeedFeedIdRoute;
-    };
+    '/_layout': {
+      id: '/_layout'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof LayoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_layout/': {
+      id: '/_layout/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof LayoutIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/leaderboard': {
+      id: '/_layout/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LayoutLeaderboardRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/profile/': {
+      id: '/_layout/profile/'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof LayoutProfileIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/plugin/': {
+      id: '/_layout/plugin/'
+      path: '/plugin'
+      fullPath: '/plugin'
+      preLoaderRoute: typeof LayoutPluginIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/plugin/$pluginId': {
+      id: '/_layout/plugin/$pluginId'
+      path: '/plugin/$pluginId'
+      fullPath: '/plugin/$pluginId'
+      preLoaderRoute: typeof LayoutPluginPluginIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/feed/$feedId': {
+      id: '/_layout/feed/$feedId'
+      path: '/feed/$feedId'
+      fullPath: '/feed/$feedId'
+      preLoaderRoute: typeof LayoutFeedFeedIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/create/plugin': {
+      id: '/_layout/create/plugin'
+      path: '/create/plugin'
+      fullPath: '/create/plugin'
+      preLoaderRoute: typeof LayoutCreatePluginRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/create/feed': {
+      id: '/_layout/create/feed'
+      path: '/create/feed'
+      fullPath: '/create/feed'
+      preLoaderRoute: typeof LayoutCreateFeedRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/profile/settings': {
+      id: '/_layout/profile/settings'
+      path: '/profile/settings'
+      fullPath: '/profile/settings'
+      preLoaderRoute: typeof LayoutProfileSettingsRouteRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/profile/settings/': {
+      id: '/_layout/profile/settings/'
+      path: '/'
+      fullPath: '/profile/settings/'
+      preLoaderRoute: typeof LayoutProfileSettingsIndexRouteImport
+      parentRoute: typeof LayoutProfileSettingsRouteRoute
+    }
+    '/_layout/feed/$feedId/': {
+      id: '/_layout/feed/$feedId/'
+      path: '/'
+      fullPath: '/feed/$feedId/'
+      preLoaderRoute: typeof LayoutFeedFeedIdIndexRouteImport
+      parentRoute: typeof LayoutFeedFeedIdRoute
+    }
+    '/_layout/create/feed/': {
+      id: '/_layout/create/feed/'
+      path: '/'
+      fullPath: '/create/feed/'
+      preLoaderRoute: typeof LayoutCreateFeedIndexRouteImport
+      parentRoute: typeof LayoutCreateFeedRoute
+    }
+    '/_layout/profile/settings/preferences': {
+      id: '/_layout/profile/settings/preferences'
+      path: '/preferences'
+      fullPath: '/profile/settings/preferences'
+      preLoaderRoute: typeof LayoutProfileSettingsPreferencesRouteImport
+      parentRoute: typeof LayoutProfileSettingsRouteRoute
+    }
+    '/_layout/profile/settings/notifications': {
+      id: '/_layout/profile/settings/notifications'
+      path: '/notifications'
+      fullPath: '/profile/settings/notifications'
+      preLoaderRoute: typeof LayoutProfileSettingsNotificationsRouteImport
+      parentRoute: typeof LayoutProfileSettingsRouteRoute
+    }
+    '/_layout/profile/settings/connections': {
+      id: '/_layout/profile/settings/connections'
+      path: '/connections'
+      fullPath: '/profile/settings/connections'
+      preLoaderRoute: typeof LayoutProfileSettingsConnectionsRouteImport
+      parentRoute: typeof LayoutProfileSettingsRouteRoute
+    }
+    '/_layout/feed/welcome/$feedId': {
+      id: '/_layout/feed/welcome/$feedId'
+      path: '/feed/welcome/$feedId'
+      fullPath: '/feed/welcome/$feedId'
+      preLoaderRoute: typeof LayoutFeedWelcomeFeedIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/feed/$feedId/token': {
+      id: '/_layout/feed/$feedId/token'
+      path: '/token'
+      fullPath: '/feed/$feedId/token'
+      preLoaderRoute: typeof LayoutFeedFeedIdTokenRouteImport
+      parentRoute: typeof LayoutFeedFeedIdRoute
+    }
+    '/_layout/feed/$feedId/proposals': {
+      id: '/_layout/feed/$feedId/proposals'
+      path: '/proposals'
+      fullPath: '/feed/$feedId/proposals'
+      preLoaderRoute: typeof LayoutFeedFeedIdProposalsRouteImport
+      parentRoute: typeof LayoutFeedFeedIdRoute
+    }
+    '/_layout/feed/$feedId/points': {
+      id: '/_layout/feed/$feedId/points'
+      path: '/points'
+      fullPath: '/feed/$feedId/points'
+      preLoaderRoute: typeof LayoutFeedFeedIdPointsRouteImport
+      parentRoute: typeof LayoutFeedFeedIdRoute
+    }
+    '/_layout/feed/$feedId/members': {
+      id: '/_layout/feed/$feedId/members'
+      path: '/members'
+      fullPath: '/feed/$feedId/members'
+      preLoaderRoute: typeof LayoutFeedFeedIdMembersRouteImport
+      parentRoute: typeof LayoutFeedFeedIdRoute
+    }
+    '/_layout/feed/$feedId/curation': {
+      id: '/_layout/feed/$feedId/curation'
+      path: '/curation'
+      fullPath: '/feed/$feedId/curation'
+      preLoaderRoute: typeof LayoutFeedFeedIdCurationRouteImport
+      parentRoute: typeof LayoutFeedFeedIdRoute
+    }
+    '/_layout/edit/feed/$feedId': {
+      id: '/_layout/edit/feed/$feedId'
+      path: '/edit/feed/$feedId'
+      fullPath: '/edit/feed/$feedId'
+      preLoaderRoute: typeof LayoutEditFeedFeedIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/create/feed/settings': {
+      id: '/_layout/create/feed/settings'
+      path: '/settings'
+      fullPath: '/create/feed/settings'
+      preLoaderRoute: typeof LayoutCreateFeedSettingsRouteImport
+      parentRoute: typeof LayoutCreateFeedRoute
+    }
+    '/_layout/create/feed/review': {
+      id: '/_layout/create/feed/review'
+      path: '/review'
+      fullPath: '/create/feed/review'
+      preLoaderRoute: typeof LayoutCreateFeedReviewRouteImport
+      parentRoute: typeof LayoutCreateFeedRoute
+    }
+    '/_layout/feed/$feedId/settings/': {
+      id: '/_layout/feed/$feedId/settings/'
+      path: '/settings'
+      fullPath: '/feed/$feedId/settings'
+      preLoaderRoute: typeof LayoutFeedFeedIdSettingsIndexRouteImport
+      parentRoute: typeof LayoutFeedFeedIdRoute
+    }
+    '/_layout/feed/$feedId/settings/connected': {
+      id: '/_layout/feed/$feedId/settings/connected'
+      path: '/settings/connected'
+      fullPath: '/feed/$feedId/settings/connected'
+      preLoaderRoute: typeof LayoutFeedFeedIdSettingsConnectedRouteImport
+      parentRoute: typeof LayoutFeedFeedIdRoute
+    }
   }
 }
 
 interface LayoutProfileSettingsRouteRouteChildren {
-  LayoutProfileSettingsConnectionsRoute: typeof LayoutProfileSettingsConnectionsRoute;
-  LayoutProfileSettingsNotificationsRoute: typeof LayoutProfileSettingsNotificationsRoute;
-  LayoutProfileSettingsPreferencesRoute: typeof LayoutProfileSettingsPreferencesRoute;
-  LayoutProfileSettingsIndexRoute: typeof LayoutProfileSettingsIndexRoute;
+  LayoutProfileSettingsConnectionsRoute: typeof LayoutProfileSettingsConnectionsRoute
+  LayoutProfileSettingsNotificationsRoute: typeof LayoutProfileSettingsNotificationsRoute
+  LayoutProfileSettingsPreferencesRoute: typeof LayoutProfileSettingsPreferencesRoute
+  LayoutProfileSettingsIndexRoute: typeof LayoutProfileSettingsIndexRoute
 }
 
 const LayoutProfileSettingsRouteRouteChildren: LayoutProfileSettingsRouteRouteChildren =
@@ -564,37 +564,37 @@ const LayoutProfileSettingsRouteRouteChildren: LayoutProfileSettingsRouteRouteCh
     LayoutProfileSettingsPreferencesRoute:
       LayoutProfileSettingsPreferencesRoute,
     LayoutProfileSettingsIndexRoute: LayoutProfileSettingsIndexRoute,
-  };
+  }
 
 const LayoutProfileSettingsRouteRouteWithChildren =
   LayoutProfileSettingsRouteRoute._addFileChildren(
     LayoutProfileSettingsRouteRouteChildren,
-  );
+  )
 
 interface LayoutCreateFeedRouteChildren {
-  LayoutCreateFeedReviewRoute: typeof LayoutCreateFeedReviewRoute;
-  LayoutCreateFeedSettingsRoute: typeof LayoutCreateFeedSettingsRoute;
-  LayoutCreateFeedIndexRoute: typeof LayoutCreateFeedIndexRoute;
+  LayoutCreateFeedReviewRoute: typeof LayoutCreateFeedReviewRoute
+  LayoutCreateFeedSettingsRoute: typeof LayoutCreateFeedSettingsRoute
+  LayoutCreateFeedIndexRoute: typeof LayoutCreateFeedIndexRoute
 }
 
 const LayoutCreateFeedRouteChildren: LayoutCreateFeedRouteChildren = {
   LayoutCreateFeedReviewRoute: LayoutCreateFeedReviewRoute,
   LayoutCreateFeedSettingsRoute: LayoutCreateFeedSettingsRoute,
   LayoutCreateFeedIndexRoute: LayoutCreateFeedIndexRoute,
-};
+}
 
 const LayoutCreateFeedRouteWithChildren =
-  LayoutCreateFeedRoute._addFileChildren(LayoutCreateFeedRouteChildren);
+  LayoutCreateFeedRoute._addFileChildren(LayoutCreateFeedRouteChildren)
 
 interface LayoutFeedFeedIdRouteChildren {
-  LayoutFeedFeedIdCurationRoute: typeof LayoutFeedFeedIdCurationRoute;
-  LayoutFeedFeedIdMembersRoute: typeof LayoutFeedFeedIdMembersRoute;
-  LayoutFeedFeedIdPointsRoute: typeof LayoutFeedFeedIdPointsRoute;
-  LayoutFeedFeedIdProposalsRoute: typeof LayoutFeedFeedIdProposalsRoute;
-  LayoutFeedFeedIdTokenRoute: typeof LayoutFeedFeedIdTokenRoute;
-  LayoutFeedFeedIdIndexRoute: typeof LayoutFeedFeedIdIndexRoute;
-  LayoutFeedFeedIdSettingsConnectedRoute: typeof LayoutFeedFeedIdSettingsConnectedRoute;
-  LayoutFeedFeedIdSettingsIndexRoute: typeof LayoutFeedFeedIdSettingsIndexRoute;
+  LayoutFeedFeedIdCurationRoute: typeof LayoutFeedFeedIdCurationRoute
+  LayoutFeedFeedIdMembersRoute: typeof LayoutFeedFeedIdMembersRoute
+  LayoutFeedFeedIdPointsRoute: typeof LayoutFeedFeedIdPointsRoute
+  LayoutFeedFeedIdProposalsRoute: typeof LayoutFeedFeedIdProposalsRoute
+  LayoutFeedFeedIdTokenRoute: typeof LayoutFeedFeedIdTokenRoute
+  LayoutFeedFeedIdIndexRoute: typeof LayoutFeedFeedIdIndexRoute
+  LayoutFeedFeedIdSettingsConnectedRoute: typeof LayoutFeedFeedIdSettingsConnectedRoute
+  LayoutFeedFeedIdSettingsIndexRoute: typeof LayoutFeedFeedIdSettingsIndexRoute
 }
 
 const LayoutFeedFeedIdRouteChildren: LayoutFeedFeedIdRouteChildren = {
@@ -607,23 +607,23 @@ const LayoutFeedFeedIdRouteChildren: LayoutFeedFeedIdRouteChildren = {
   LayoutFeedFeedIdSettingsConnectedRoute:
     LayoutFeedFeedIdSettingsConnectedRoute,
   LayoutFeedFeedIdSettingsIndexRoute: LayoutFeedFeedIdSettingsIndexRoute,
-};
+}
 
 const LayoutFeedFeedIdRouteWithChildren =
-  LayoutFeedFeedIdRoute._addFileChildren(LayoutFeedFeedIdRouteChildren);
+  LayoutFeedFeedIdRoute._addFileChildren(LayoutFeedFeedIdRouteChildren)
 
 interface LayoutRouteChildren {
-  LayoutLeaderboardRoute: typeof LayoutLeaderboardRoute;
-  LayoutIndexRoute: typeof LayoutIndexRoute;
-  LayoutProfileSettingsRouteRoute: typeof LayoutProfileSettingsRouteRouteWithChildren;
-  LayoutCreateFeedRoute: typeof LayoutCreateFeedRouteWithChildren;
-  LayoutCreatePluginRoute: typeof LayoutCreatePluginRoute;
-  LayoutFeedFeedIdRoute: typeof LayoutFeedFeedIdRouteWithChildren;
-  LayoutPluginPluginIdRoute: typeof LayoutPluginPluginIdRoute;
-  LayoutPluginIndexRoute: typeof LayoutPluginIndexRoute;
-  LayoutProfileIndexRoute: typeof LayoutProfileIndexRoute;
-  LayoutEditFeedFeedIdRoute: typeof LayoutEditFeedFeedIdRoute;
-  LayoutFeedWelcomeFeedIdRoute: typeof LayoutFeedWelcomeFeedIdRoute;
+  LayoutLeaderboardRoute: typeof LayoutLeaderboardRoute
+  LayoutIndexRoute: typeof LayoutIndexRoute
+  LayoutProfileSettingsRouteRoute: typeof LayoutProfileSettingsRouteRouteWithChildren
+  LayoutCreateFeedRoute: typeof LayoutCreateFeedRouteWithChildren
+  LayoutCreatePluginRoute: typeof LayoutCreatePluginRoute
+  LayoutFeedFeedIdRoute: typeof LayoutFeedFeedIdRouteWithChildren
+  LayoutPluginPluginIdRoute: typeof LayoutPluginPluginIdRoute
+  LayoutPluginIndexRoute: typeof LayoutPluginIndexRoute
+  LayoutProfileIndexRoute: typeof LayoutProfileIndexRoute
+  LayoutEditFeedFeedIdRoute: typeof LayoutEditFeedFeedIdRoute
+  LayoutFeedWelcomeFeedIdRoute: typeof LayoutFeedWelcomeFeedIdRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
@@ -638,14 +638,14 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutProfileIndexRoute: LayoutProfileIndexRoute,
   LayoutEditFeedFeedIdRoute: LayoutEditFeedFeedIdRoute,
   LayoutFeedWelcomeFeedIdRoute: LayoutFeedWelcomeFeedIdRoute,
-};
+}
 
 const LayoutRouteWithChildren =
-  LayoutRoute._addFileChildren(LayoutRouteChildren);
+  LayoutRoute._addFileChildren(LayoutRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()

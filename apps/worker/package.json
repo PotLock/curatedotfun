@@ -6,16 +6,20 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "bun run src/index.ts",
-    "build": "rspack build",
+    "build": "tsc -b",
     "lint": "eslint . --ext .ts",
     "test": "vitest run"
   },
   "dependencies": {
     "@curatedotfun/shared-db": "workspace:*",
+    "@curatedotfun/shared-queue": "workspace:*",
     "bullmq": "^5.56.0",
-    "hono": "latest"
+    "hono": "latest",
+    "drizzle-orm": "^0.43.1",
+    "pg": "^8.16.2"
   },
   "devDependencies": {
+    "@types/pg": "^8.15.4",
     "typescript": "^5.8.3"
   },
   "peerDependencies": {

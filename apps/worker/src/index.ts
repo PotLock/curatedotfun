@@ -1,24 +1,26 @@
-import { zValidator } from '@hono/zod-validator';
-import { Hono } from 'hono';
-import { logger } from 'hono/logger';
+import { Queue } from 'bullmq';
+import { createQueue } from '@curatedotfun/shared-queue';
+import { initializeWorkers, gracefulShutdown } from './worker-lifecycle';
+import { workerConfigurations } from './handlers';
 
-const app = new Hono();
+const allQueues: Queue<any>[] = workerConfigurations.map(config => createQueue(config.name));
 
-// --- Middleware ---
-app.use('*', logger());
+const allWorkers = initializeWorkers();
 
-app.post(
-  '/process',
-  zValidator('json',),
-  async (c) => {
-    // DO SOMETHING 
-  }
-);
+async function main() {
+  console.log('Application started. Workers are listening for jobs...');
 
-const port = parseInt(process.env.PORT || '3002', 10);
-console.log(`🟢 Bot Worker HTTP server listening on port ${port}...`);
+  // Handle graceful shutdown signals
+  process.on('SIGTERM', async () => {
+    await gracefulShutdown(allWorkers, allQueues);
+  });
 
-export default {
-  port: port,
-  fetch: app.fetch,
-};
+  process.on('SIGINT', async () => { // For Ctrl+C in development
+    await gracefulShutdown(allWorkers, allQueues);
+  });
+}
+
+main().catch(err => {
+  console.error('Application critical error:', err);
+  process.exit(1);
+});
