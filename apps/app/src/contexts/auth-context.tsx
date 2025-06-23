@@ -42,6 +42,8 @@ export function AuthProvider({
   const [currentAccountId, setCurrentAccountId] = useState<string | null>(null);
   const [isSignedIn, setIsSignedIn] = useState<boolean>(false);
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
+  const [nonce, setNonce] = useState<string | null>(null);
+  const [recipient, setRecipient] = useState<string | null>(null);
 
   const checkAuthorization = useCallback(async () => {
     try {
@@ -53,14 +55,30 @@ export function AuthProvider({
     }
   }, []);
 
+  const initiateLogin = useCallback(async (accountId: string) => {
+    try {
+      const { nonce, recipient } = await apiClient.makeRequest<{
+        nonce: string;
+        recipient: string;
+      }>("POST", "/auth/initiate-login", { accountId });
+      setNonce(nonce);
+      setRecipient(recipient);
+    } catch (error) {
+      console.error("Failed to initiate login:", error);
+      // TODO: Toast?? "Is the server down?"
+    }
+  }, []);
+
   useEffect(() => {
     const accountId = near.accountId();
     if (accountId) {
       setCurrentAccountId(accountId);
       setIsSignedIn(true);
-      checkAuthorization();
+      checkAuthorization().then(() => {
+        initiateLogin(accountId);
+      });
     }
-  }, [checkAuthorization]);
+  }, [checkAuthorization, initiateLogin]);
 
   const handleSignIn = async (): Promise<void> => {
     try {
@@ -83,17 +101,21 @@ export function AuthProvider({
       });
       return;
     }
+    if (!nonce || !recipient) {
+      toast({
+        title: "Authorization not ready",
+        description:
+          "Please wait a moment and try again. If the problem persists, please sign out and sign back in.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
-      const { nonce, recipient } = await apiClient.makeRequest<{
-        nonce: string;
-        recipient: string;
-      }>("POST", "/auth/initiate-login", { accountId: currentAccountId });
-
       const message = "Authorize Curate.fun";
 
       const authToken = await sign(message, {
         signer: near,
-        recipient,
+        recipient: recipient,
         nonce: fromHex(nonce),
       });
 
