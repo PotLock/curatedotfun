@@ -6,6 +6,7 @@
     { "path": "./apps/app" },
     { "path": "./packages/types" },
     { "path": "./packages/shared-db" },
+    { "path": "./packages/shared-queue" },
     { "path": "./packages/utils" }
   ],
   "compilerOptions": {

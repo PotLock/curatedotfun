@@ -62,15 +62,6 @@ importers:
       '@t3-oss/env-core':
         specifier: ^0.13.8
         version: 0.13.8(typescript@5.8.3)(zod@3.25.67)
-      '@types/async-retry':
-        specifier: ^1.4.9
-        version: 1.4.9
-      '@types/lodash':
-        specifier: ^4.17.18
-        version: 4.17.18
-      '@types/pg':
-        specifier: ^8.15.4
-        version: 8.15.4
       agent-twitter-client:
         specifier: ^0.0.16
         version: 0.0.16
@@ -147,9 +138,18 @@ importers:
       '@rspack/core':
         specifier: 1.2.8
         version: 1.2.8(@swc/helpers@0.5.17)
+      '@types/async-retry':
+        specifier: ^1.4.9
+        version: 1.4.9
+      '@types/lodash':
+        specifier: ^4.17.18
+        version: 4.17.18
       '@types/mustache':
         specifier: ^4.2.6
         version: 4.2.6
+      '@types/pg':
+        specifier: ^8.15.4
+        version: 8.15.4
       axios:
         specifier: ^1.10.0
         version: 1.10.0
@@ -367,13 +367,25 @@ importers:
       '@curatedotfun/shared-db':
         specifier: workspace:*
         version: link:../../packages/shared-db
+      '@curatedotfun/shared-queue':
+        specifier: workspace:*
+        version: link:../../packages/shared-queue
       bullmq:
         specifier: ^5.56.0
         version: 5.56.0
+      drizzle-orm:
+        specifier: ^0.43.1
+        version: 0.43.1(@types/pg@8.15.4)(bun-types@1.2.15)(pg@8.16.2)(postgres@3.4.7)
       hono:
         specifier: latest
         version: 4.8.2
+      pg:
+        specifier: ^8.16.2
+        version: 8.16.2
     devDependencies:
+      '@types/pg':
+        specifier: ^8.15.4
+        version: 8.15.4
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
