@@ -37,7 +37,7 @@ export const RecapsSection = memo(function RecapsSection({
           size="sm"
           onClick={() =>
             appendRecap({
-              id: `recap-${Date.now()}`,
+              id: `recap-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               name: "",
               enabled: false,
               schedule: "",

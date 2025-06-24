@@ -334,7 +334,6 @@ export const EditFeedForm = forwardRef<EditFeedFormRef, EditFeedFormProps>(
               sourceFields={sourceFields}
               appendSource={appendSource}
               removeSource={removeSource}
-              watch={form.watch}
             />
 
             <StreamSettingsSection
