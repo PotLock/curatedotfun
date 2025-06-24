@@ -118,7 +118,7 @@ export const createLogger = ({
         censor: "[REDACTED]",
       };
     }
-    transport = pino.destination({ fd: 1, sync: true }); // fd: 1 is stdout, sync is safer for containers
+    return pino(pinoOptions);
   } else {
     // For local development, use pino-pretty
     transport = pretty({
