@@ -42,12 +42,14 @@ export function AuthProvider({
   const [currentAccountId, setCurrentAccountId] = useState<string | null>(
     near.accountId() ?? null,
   );
-  const [isSignedIn, setIsSignedIn] = useState<boolean>(!!near.accountId());
+  const [isSignedIn, setIsSignedIn] = useState<boolean>(
+    near.authStatus() === "SignedIn",
+  );
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
   const [nonce, setNonce] = useState<string | null>(null);
   const [recipient, setRecipient] = useState<string | null>(null);
   const isSigningInRef = React.useRef(false);
-  const previousAccountIdRef = React.useRef<string | null>(null);
+  const previousAccountIdRef = React.useRef<string | null>(currentAccountId);
 
   const checkAuthorization = useCallback(async () => {
     try {
