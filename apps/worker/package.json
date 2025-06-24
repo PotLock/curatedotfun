@@ -2,12 +2,11 @@
   "name": "@curatedotfun/worker",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "node dist/index.js",
-    "build": "tsc -b",
+    "build": "rspack build",
     "lint": "eslint . --ext .ts",
     "test": "vitest run"
   },
@@ -23,6 +22,9 @@
     "pg": "^8.16.2"
   },
   "devDependencies": {
+    "@rspack/binding": "1.2.8",
+    "@rspack/cli": "1.2.8",
+    "@rspack/core": "1.2.8",
     "@types/pg": "^8.15.4",
     "typescript": "^5.8.3"
   },
