@@ -304,12 +304,23 @@ export class SubmissionService implements IBackgroundTaskService {
 
             // Attempt auto-approval
             if (submission && feed.config) {
-              await this.moderationService.attemptAutoApproval(
-                submission,
-                feed.config,
-                curatorTweet.username!,
-                tx,
-              );
+              try {
+                await this.moderationService.attemptAutoApproval(
+                  submission,
+                  feed.config,
+                  curatorTweet.username!,
+                  tx,
+                );
+              } catch (autoApprovalError) {
+                this.logger.warn(
+                  {
+                    error: autoApprovalError,
+                    submissionId: originalTweet.id,
+                    feedId: feed.id,
+                  },
+                  "Auto-approval failed, but submission was still processed successfully",
+                );
+              }
             } else {
               this.logger.error(
                 {

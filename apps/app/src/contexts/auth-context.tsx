@@ -1,3 +1,4 @@
+import { fromHex } from "@fastnear/utils";
 import { sign } from "near-sign-verify";
 import React, {
   createContext,
@@ -10,7 +11,6 @@ import React, {
 import { toast } from "../hooks/use-toast";
 import { apiClient } from "../lib/api-client";
 import { near } from "../lib/near";
-import { fromHex } from "@fastnear/utils";
 
 interface IAuthContext {
   currentAccountId: string | null;
@@ -65,19 +65,30 @@ export function AuthProvider({
       setRecipient(recipient);
     } catch (error) {
       console.error("Failed to initiate login:", error);
-      // TODO: Toast?? "Is the server down?"
+      toast({
+        title: "Connection Error",
+        description:
+          "Unable to connect to authentication server. Please try again.",
+        variant: "destructive",
+      });
     }
   }, []);
 
   useEffect(() => {
+    let isCancelled = false;
     const accountId = near.accountId();
     if (accountId) {
       setCurrentAccountId(accountId);
       setIsSignedIn(true);
       checkAuthorization().then(() => {
-        initiateLogin(accountId);
+        if (!isCancelled) {
+          initiateLogin(accountId);
+        }
       });
     }
+    return () => {
+      isCancelled = true;
+    };
   }, [checkAuthorization, initiateLogin]);
 
   const handleSignIn = async (): Promise<void> => {

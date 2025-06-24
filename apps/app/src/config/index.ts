@@ -25,9 +25,9 @@ const evmWalletChains: EVMWalletChains = {
 };
 
 export const NETWORK_ID =
-  process.env.NODE_ENV === "production" // TODO: strange
-    ? "mainnet"
-    : process.env.PUBLIC_NETWORK || "testnet";
+  process.env.PUBLIC_NETWORK ||
+  (process.env.NODE_ENV === "production" ? "mainnet" : "testnet");
+
 export const EVMWalletChain = evmWalletChains[NETWORK_ID];
 
 // API Configuration
