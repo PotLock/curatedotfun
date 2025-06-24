@@ -1,13 +1,12 @@
 import pino, {
   DestinationStream,
+  LogDescriptor,
   LoggerOptions,
   stdTimeFunctions,
-  LogDescriptor,
 } from "pino";
 import pretty from "pino-pretty";
 
 const env = process.env.NODE_ENV;
-const useJsonLogging = env === "production" || env === "staging";
 
 const errorSerializer = (err: any) => {
   if (!err) return err;
@@ -100,43 +99,38 @@ export const createLogger = ({
 
   let transport: DestinationStream;
 
-  if (useJsonLogging) {
-    pinoOptions.timestamp = stdTimeFunctions.isoTime;
-    pinoOptions.formatters = {
-      level: (label) => ({ level: label }),
+  pinoOptions.timestamp = stdTimeFunctions.isoTime;
+  pinoOptions.formatters = {
+    level: (label) => ({ level: label }),
+  };
+  if (env === "production") {
+    pinoOptions.redact = {
+      paths: [
+        "*.password",
+        "*.token",
+        "*.key",
+        "*.secret",
+        "req.headers.authorization",
+        "Authorization",
+      ],
+      censor: "[REDACTED]",
     };
-    if (env === "production") {
-      pinoOptions.redact = {
-        paths: [
-          "*.password",
-          "*.token",
-          "*.key",
-          "*.secret",
-          "req.headers.authorization",
-          "Authorization",
-        ],
-        censor: "[REDACTED]",
-      };
-    }
-    return pino(pinoOptions);
-  } else {
-    // For local development, use pino-pretty
-    transport = pretty({
-      colorize: true,
-      translateTime: "HH:MM:ss",
-      ignore: "pid,hostname,service,component", // pid,hostname,service are in base, component is per-log
-      messageFormat: (log: LogDescriptor, messageKey: string) => {
-        const currentService = log.service as string;
-        const currentComponent = log.component as string | undefined;
-        const message = (log[messageKey] || log.msg || "") as string;
-
-        if (currentComponent) {
-          return `[${currentService}] (${currentComponent}) ${message}`;
-        }
-        return `[${currentService}] ${message}`;
-      },
-    });
   }
+  transport = pretty({
+    colorize: true,
+    translateTime: "HH:MM:ss",
+    ignore: "pid,hostname,service,component", // pid,hostname,service are in base, component is per-log
+    messageFormat: (log: LogDescriptor, messageKey: string) => {
+      const currentService = log.service as string;
+      const currentComponent = log.component as string | undefined;
+      const message = (log[messageKey] || log.msg || "") as string;
+
+      if (currentComponent) {
+        return `[${currentService}] (${currentComponent}) ${message}`;
+      }
+      return `[${currentService}] ${message}`;
+    },
+  });
 
   return pino(pinoOptions, transport);
 };
