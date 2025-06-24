@@ -29,6 +29,9 @@ COPY --from=pruner /app/turbo.json ./turbo.json
 COPY --from=pruner /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=pruner /app/tsconfig.json ./tsconfig.json
 
+# Install build dependencies for native modules
+RUN apk add --no-cache python3 make g++
+
 # Install ALL dependencies for the pruned monorepo subset (including devDependencies for build processes)
 RUN pnpm install --frozen-lockfile
 
