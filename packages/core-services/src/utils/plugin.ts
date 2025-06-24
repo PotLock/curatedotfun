@@ -2,7 +2,7 @@ import { createHash } from "crypto";
 import { PluginType } from "@curatedotfun/types";
 import { z } from "zod";
 import { logger } from "@curatedotfun/utils";
-import { PluginConfig } from "@/services/plugin.service";
+import { PluginConfig } from "../services/plugin.service";
 
 /**
  * Creates a deterministic cache key for a plugin instance by combining and hashing

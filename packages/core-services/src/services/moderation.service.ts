@@ -147,79 +147,81 @@ export class ModerationService implements IBaseService {
       }
 
       // --- Permission Check ---
-      const moderatorNearId = payload.moderatorAccountId;
+      const moderatorAccountId = payload.moderatorAccountId;
       const feedId = payload.feedId;
+      const isAutoApproval = payload.source === "auto_approval";
 
-      const submissionPlatform = "twitter"; // TODO: dynamic, tied to source
+      if (!isAutoApproval) {
+        const submissionPlatform = "twitter"; // TODO: dynamic, tied to source
 
-      const feedConfig: FeedConfig | null =
-        await this.feedRepository.getFeedConfig(feedId);
+        const feedConfig: FeedConfig | null =
+          await this.feedRepository.getFeedConfig(feedId);
 
-      if (
-        !feedConfig ||
-        !feedConfig.moderation ||
-        !feedConfig.moderation.approvers
-      ) {
-        this.logger.warn(
-          { feedId },
-          "Feed config, moderation settings, or approvers not found for permission check.",
+        if (
+          !feedConfig ||
+          !feedConfig.moderation ||
+          !feedConfig.moderation.approvers
+        ) {
+          this.logger.warn(
+            { feedId },
+            "Feed config, moderation settings, or approvers not found for permission check.",
+          );
+          throw new AuthorizationError(
+            "Moderation not configured for this feed.",
+            403,
+          );
+        }
+
+        const configuredApproverPlatformIds =
+          feedConfig.moderation.approvers[submissionPlatform];
+
+        if (
+          !configuredApproverPlatformIds ||
+          configuredApproverPlatformIds.length === 0
+        ) {
+          this.logger.warn(
+            { feedId, platform: submissionPlatform },
+            "No approvers configured for this platform on the feed.",
+          );
+          throw new AuthorizationError(
+            `No approvers configured for platform '${submissionPlatform}' on this feed.`,
+            403,
+          );
+        }
+
+        const isAuthorized = await this.checkModerationAuthorization(
+          moderatorAccountId,
+          submissionPlatform,
+          configuredApproverPlatformIds,
         );
-        throw new AuthorizationError(
-          "Moderation not configured for this feed.",
-          403,
-        );
-      }
 
-      const configuredApproverPlatformIds =
-        feedConfig.moderation.approvers[submissionPlatform];
-
-      if (
-        !configuredApproverPlatformIds ||
-        configuredApproverPlatformIds.length === 0
-      ) {
-        this.logger.warn(
-          { feedId, platform: submissionPlatform },
-          "No approvers configured for this platform on the feed.",
-        );
-        throw new AuthorizationError(
-          `No approvers configured for platform '${submissionPlatform}' on this feed.`,
-          403,
-        );
-      }
-
-      const isAuthorized = await this.checkModerationAuthorization(
-        moderatorNearId,
-        submissionPlatform,
-        configuredApproverPlatformIds,
-      );
-
-      if (!isAuthorized) {
-        this.logger.warn(
-          {
-            actingAccountId: moderatorNearId,
-            feedId,
-            platform: submissionPlatform,
-          },
-          "User not authorized to moderate this submission.",
-        );
-        throw new AuthorizationError(
-          "You are not authorized to moderate this submission.",
-          403,
-        );
+        if (!isAuthorized) {
+          this.logger.warn(
+            {
+              actingAccountId: moderatorAccountId,
+              feedId,
+              platform: submissionPlatform,
+            },
+            "User not authorized to moderate this submission.",
+          );
+          throw new AuthorizationError(
+            "You are not authorized to moderate this submission.",
+            403,
+          );
+        }
       }
       // --- End Permission Check ---
 
-      const moderationSource = isSuperAdmin(
-        moderatorNearId,
-        this.superAdminAccounts,
-      )
-        ? "super_admin_direct"
-        : payload.source;
+      const moderationSource =
+        !isAutoApproval &&
+        isSuperAdmin(moderatorAccountId, this.superAdminAccounts)
+          ? "super_admin_direct"
+          : payload.source;
 
       const moderationActionData: InsertModerationHistory = {
         submissionId: payload.submissionId,
         feedId: payload.feedId,
-        moderatorAccountId: moderatorNearId,
+        moderatorAccountId: moderatorAccountId,
         moderatorAccountIdType: payload.moderatorAccountIdType,
         source: moderationSource,
         action: payload.action,
@@ -237,7 +239,7 @@ export class ModerationService implements IBaseService {
             submission,
             feedEntry,
             submissionStatusZodEnum.Enum.approved,
-            moderatorNearId,
+            moderatorAccountId,
             tx,
           );
         } else if (payload.action === "reject") {
@@ -245,7 +247,7 @@ export class ModerationService implements IBaseService {
             submission,
             feedEntry,
             submissionStatusZodEnum.Enum.rejected,
-            moderatorNearId,
+            moderatorAccountId,
             tx,
           );
         }
@@ -256,7 +258,7 @@ export class ModerationService implements IBaseService {
           submissionId: payload.submissionId,
           feedId: payload.feedId,
           action: payload.action,
-          moderatorAccountId: moderatorNearId,
+          moderatorAccountId: moderatorAccountId,
         },
         "Moderation action processed successfully via API.",
       );

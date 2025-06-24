@@ -3,7 +3,7 @@
 // import { z } from "zod";
 // import { AppContext } from "../../types/app";
 // import { RecapConfig } from "../../types/recap";
-// import { logger } from "../../utils/logger";
+// import { logger } from "@curatedotfun/utils";
 
 // // Create a router for recap API endpoints
 // export const recapRouter = new Hono<{ Variables: { context: AppContext } }>();

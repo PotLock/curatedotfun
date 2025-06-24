@@ -1,6 +1,6 @@
 import { config } from "dotenv";
 import path from "path";
-import { logger } from "./logger";
+import { logger } from "@curatedotfun/utils";
 
 const isTest = process.env.NODE_ENV === "test";
 /**

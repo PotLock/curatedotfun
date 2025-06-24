@@ -16,7 +16,7 @@ import type { Logger } from "pino";
 import { logPluginError } from "../utils/error";
 import { isProduction } from "./config.service";
 import { IBaseService } from "./interfaces/base-service.interface";
-import { createPluginInstanceKey } from "@/utils/plugin";
+import { createPluginInstanceKey } from "../utils/plugin";
 
 export interface PluginConfig<T extends string = string> {
   type: T;

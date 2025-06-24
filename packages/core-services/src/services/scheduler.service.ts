@@ -8,7 +8,7 @@
 // } from "@crosspost/scheduler-sdk";
 // import { FeedRepository } from "./db/repositories/feed.repository";
 // import { ProcessorService } from "./processor.service";
-// import { logger } from "../utils/logger";
+// import { logger } from "@curatedotfun/utils";
 // import { RecapConfig, RecapState } from "../types/recap";
 
 // /**
