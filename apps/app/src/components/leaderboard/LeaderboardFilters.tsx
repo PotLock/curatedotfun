@@ -46,7 +46,7 @@ export function LeaderboardFilters({
   timeDropdownRef,
 }: LeaderboardFiltersProps) {
   return (
-    <div className="flex flex-col md:flex-row max-w-[400px] md:max-w-screen-xl md:w-full mx-auto justify-between items-center mb-6 gap-4 px-4 py-8">
+    <div className="flex flex-col md:flex-row max-w-[400px] md:max-w-screen-xl md:w-full mx-auto justify-between items-center mb-6 gap-4 py-8">
       <div className="relative w-full md:w-auto">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#a3a3a3] h-4 w-4" />
         <input
