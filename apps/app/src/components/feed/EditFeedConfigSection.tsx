@@ -1,9 +1,9 @@
 import type { FeedConfig } from "@curatedotfun/types";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { JsonEditor } from "../content-progress/JsonEditor";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
-import { EditFeedForm } from "./EditFeedForm";
+import { EditFeedForm, type EditFeedFormRef } from "./EditFeedForm";
 
 interface EditFeedConfigSectionProps {
   jsonString: string;
@@ -19,11 +19,20 @@ export function EditFeedConfigSection({
   onConfigChange,
 }: EditFeedConfigSectionProps) {
   const [isJsonMode, setIsJsonMode] = useState(false);
+  const formRef = useRef<EditFeedFormRef>(null);
 
   const handleConfigChange = (config: FeedConfig) => {
     onConfigChange(config);
     // Also update the JSON string to keep them in sync
     onJsonChange(JSON.stringify(config, null, 2));
+  };
+
+  const handleSwitchToFormMode = () => {
+    setIsJsonMode(false);
+    // Trigger form update after switching to form mode
+    setTimeout(() => {
+      formRef.current?.updateFromConfig();
+    }, 0);
   };
 
   return (
@@ -42,7 +51,7 @@ export function EditFeedConfigSection({
             <Button
               variant={!isJsonMode ? "default" : "outline"}
               size="sm"
-              onClick={() => setIsJsonMode(false)}
+              onClick={handleSwitchToFormMode}
             >
               Form View
             </Button>
@@ -66,6 +75,7 @@ export function EditFeedConfigSection({
           </div>
         ) : (
           <EditFeedForm
+            ref={formRef}
             currentConfig={currentConfig}
             onConfigChange={handleConfigChange}
           />
