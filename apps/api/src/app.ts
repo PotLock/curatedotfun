@@ -7,12 +7,13 @@ import { AppInstance, Env } from "./types/app";
 import { getAllowedOrigins } from "./utils/config";
 import { errorHandler } from "./utils/error";
 import { ServiceProvider } from "@curatedotfun/core-services";
-import { logger } from "@curatedotfun/utils";
+import { createLogger } from "@curatedotfun/utils";
 import { createAuthMiddleware } from "./middlewares/auth.middleware";
 
 const ALLOWED_ORIGINS = getAllowedOrigins();
 
 export async function createApp(): Promise<AppInstance> {
+  const logger = createLogger({ service: "api" });
   const sp = ServiceProvider.getInstance({
     db,
     logger,

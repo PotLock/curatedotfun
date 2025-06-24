@@ -1,4 +1,4 @@
-import pino from "pino";
+import pino, { LoggerOptions, DestinationStream } from "pino";
 import pretty from "pino-pretty";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -75,27 +75,47 @@ const errorSerializer = (err: any) => {
   return serialized;
 };
 
-const prettyTransport = pretty({
-  colorize: true,
-  translateTime: "HH:MM:ss",
-  ignore: "pid,hostname,service",
-  messageFormat: (log, messageKey) => {
-    const service = log.service;
-    const msg = log[messageKey];
-    return `[${service}] ${msg}`;
-  },
-});
+interface CreateLoggerOptions {
+  service: string;
+  level?: "fatal" | "error" | "warn" | "info" | "debug" | "trace";
+}
 
-export const logger = pino(
-  {
-    level: isProduction ? "warn" : "info",
+export const createLogger = ({
+  service,
+  level,
+}: CreateLoggerOptions): pino.Logger => {
+  const prettyTransport = pretty({
+    colorize: true,
+    translateTime: "HH:MM:ss",
+    ignore: "pid,hostname,service,component",
+    messageFormat: (log, messageKey) => {
+      const serviceName = log.service;
+      const componentName = log.component;
+      const msg = log[messageKey];
+      if (componentName) {
+        return `[${serviceName}] (${componentName}) ${msg}`;
+      }
+      return `[${serviceName}] ${msg}`;
+    },
+  });
+
+  const options: LoggerOptions = {
+    level: level ?? (isProduction ? "warn" : "info"),
     serializers: {
       err: errorSerializer,
       error: errorSerializer,
     },
+    base: {
+      service,
+    },
     ...(isProduction && {
       redact: ["*.password", "*.token", "*.key", "*.secret"],
     }),
-  },
-  prettyTransport,
-);
+  };
+
+  const transport: DestinationStream = isProduction
+    ? pino.destination(1)
+    : prettyTransport;
+
+  return pino(options, transport);
+};

@@ -47,7 +47,6 @@ export default function BasicInformationForm() {
   });
 
   const onSubmit = (data: FormValues) => {
-    console.log("Form submitted:", data);
     setBasicInfo({
       ...data,
       createdAt: new Date(),

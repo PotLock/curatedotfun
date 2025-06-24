@@ -80,21 +80,21 @@ export class ServiceProvider {
       pluginRepository,
       db,
       pluginsEnv,
-      logger,
+      logger.child({ component: "PluginService" }),
     );
     const transformationService = new TransformationService(
       pluginService,
-      logger,
+      logger.child({ component: "TransformationService" }),
     );
     const distributionService = new DistributionService(
       pluginService,
       configService,
-      logger,
+      logger.child({ component: "DistributionService" }),
     );
     const processorService = new ProcessorService(
       transformationService,
       distributionService,
-      logger,
+      logger.child({ component: "ProcessorService" }),
     );
 
     const userRepository = new UserRepository(db);
@@ -106,7 +106,7 @@ export class ServiceProvider {
         parentKeyPair: env.MASTER_KEYPAIR || "",
         networkId: "mainnet",
       },
-      logger,
+      logger.child({ component: "UserService" }),
     );
     this.services.set("userService", userService);
 
@@ -118,7 +118,7 @@ export class ServiceProvider {
       feedRepository,
       processorService,
       db,
-      logger,
+      logger.child({ component: "FeedService" }),
       this.superAdminAccountsList,
     );
 
@@ -152,7 +152,7 @@ export class ServiceProvider {
       feedService,
       this.superAdminAccountsList,
       db,
-      logger,
+      logger.child({ component: "ModerationService" }),
     );
     this.services.set("moderationService", moderationService);
 
@@ -163,7 +163,7 @@ export class ServiceProvider {
       db,
       feedService,
       moderationService,
-      logger,
+      logger.child({ component: "SubmissionService" }),
     );
 
     submissionService.initialize(); // TODO: remove
@@ -178,7 +178,7 @@ export class ServiceProvider {
       moderationService,
       this.getUserService(),
       db,
-      logger,
+      logger.child({ component: "ActivityService" }),
     );
     this.services.set("activityService", activityService);
   }

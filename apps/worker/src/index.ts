@@ -1,6 +1,6 @@
 import { ServiceProvider } from "@curatedotfun/core-services";
 import { createQueue, QUEUE_NAMES } from "@curatedotfun/shared-queue";
-import { logger } from "@curatedotfun/utils";
+import { createLogger } from "@curatedotfun/utils";
 import { Queue } from "bullmq";
 import "dotenv/config";
 import { db } from "./db";
@@ -16,6 +16,7 @@ const allQueues: Queue<any>[] = Array.from(queueNames).map((name) =>
 );
 
 async function main() {
+  const logger = createLogger({ service: "worker" });
   logger.info("Starting Curate.fun Worker...");
 
   const sp = ServiceProvider.getInstance({
