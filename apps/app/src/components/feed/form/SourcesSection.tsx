@@ -128,7 +128,11 @@ export const SourcesSection = memo(function SourcesSection({
               plugin: "",
               config: {},
               search: [
-                { searchId: `search-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, type: "", query: "" },
+                {
+                  searchId: `search-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  type: "",
+                  query: "",
+                },
               ],
             })
           }
