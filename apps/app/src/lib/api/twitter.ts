@@ -15,12 +15,9 @@ interface UpdateTweetIdResponse {
 type UpdateTweetIdVariables = { tweetId: string };
 
 export function useUpdateLastTweetId() {
-  return useApiMutation<UpdateTweetIdResponse, Error, UpdateTweetIdVariables>(
-    {
-      method: "POST",
-      path: `/twitter/last-tweet-id`,
-      message: "updateLastTweetId",
-    },
-    {},
-  );
+  return useApiMutation<UpdateTweetIdResponse, Error, UpdateTweetIdVariables>({
+    method: "POST",
+    path: `/twitter/last-tweet-id`,
+    message: "updateLastTweetId",
+  });
 }

@@ -11,7 +11,7 @@ import {
   createSection,
   logger,
 } from "./utils/logger";
-import { ServiceProvider } from "./utils/service-provider";
+import { ServiceProvider } from "@curatedotfun/core-services";
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -21,8 +21,6 @@ async function startServer() {
 
     const { app } = await createApp();
     const sp = ServiceProvider.getInstance();
-
-    await sp.init();
 
     app.get("/health", (c) => {
       const health = {

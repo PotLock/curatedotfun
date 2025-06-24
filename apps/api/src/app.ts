@@ -1,20 +1,33 @@
+import { ServiceProvider } from "@curatedotfun/core-services";
+import { createLogger } from "@curatedotfun/utils";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import { db } from "./db";
+import { createAuthMiddleware } from "./middlewares/auth.middleware";
 import { apiRoutes } from "./routes/api";
 import { AppInstance, Env } from "./types/app";
 import { getAllowedOrigins } from "./utils/config";
 import { errorHandler } from "./utils/error";
-import { ServiceProvider } from "./utils/service-provider";
-import { logger } from "utils/logger";
-import { createAuthMiddleware } from "./middlewares/auth.middleware";
 
 const ALLOWED_ORIGINS = getAllowedOrigins();
 
 export async function createApp(): Promise<AppInstance> {
-  ServiceProvider.initialize();
-  const sp = ServiceProvider.getInstance();
+  const logger = createLogger({ service: "api" });
+  const sp = ServiceProvider.getInstance({
+    db,
+    logger,
+    env: {
+      NODE_ENV: process.env.NODE_ENV || "development",
+      SUPER_ADMIN_ACCOUNTS: process.env.SUPER_ADMIN_ACCOUNTS,
+      TWITTER_USERNAME: process.env.TWITTER_USERNAME,
+      TWITTER_PASSWORD: process.env.TWITTER_PASSWORD,
+      TWITTER_EMAIL: process.env.TWITTER_EMAIL,
+      TWITTER_2FA_SECRET: process.env.TWITTER_2FA_SECRET,
+      MASTER_KEYPAIR: process.env.MASTER_KEYPAIR,
+    },
+  });
+  await sp.init();
 
   const app = new Hono<Env>();
 
@@ -26,11 +39,9 @@ export async function createApp(): Promise<AppInstance> {
     "*",
     cors({
       origin: (origin) => {
-        // Check if origin is in the allowed list
         if (ALLOWED_ORIGINS.includes(origin)) {
           return origin;
         }
-        // Otherwise, allow same-origin requests (frontend)
         return origin;
       },
       allowMethods: ["GET", "POST"],

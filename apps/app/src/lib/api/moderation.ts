@@ -58,7 +58,10 @@ const useModerateSubmission = (
   );
 
   const mutate = (
-    payload: Omit<CreateModerationRequest, "action" | "moderatorAccountId">,
+    payload: Omit<
+      CreateModerationRequest,
+      "action" | "moderatorAccountId" | "moderatorAccountIdType" | "source"
+    >,
   ) => {
     if (!auth.isSignedIn || !auth.currentAccountId) {
       console.error(
@@ -75,6 +78,8 @@ const useModerateSubmission = (
       ...payload,
       action: moderationAction,
       moderatorAccountId: auth.currentAccountId,
+      moderatorAccountIdType: "near",
+      source: "ui",
     };
     actualMutate(internalPayload);
   };

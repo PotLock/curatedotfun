@@ -1,6 +1,6 @@
 import type {
-  PluginErrorInterface,
   PluginErrorContext,
+  PluginErrorInterface,
 } from "@curatedotfun/types";
 
 export enum PluginErrorCode {
@@ -221,7 +221,27 @@ export class ConflictError extends AppError {
   }
 }
 
+export class AuthorizationError extends AppError {
+  constructor(
+    message: string,
+    statusCode: number = 403,
+    options?: { cause?: Error; details?: unknown },
+  ) {
+    super(message, AppErrorCode.FORBIDDEN, statusCode, options);
+  }
+}
+
 // --- Application/Plugin Specific Errors ---
+export class ModerationServiceError extends ServiceError {
+  constructor(
+    message: string,
+    statusCode: number = 500,
+    options?: { cause?: Error },
+  ) {
+    super(message, AppErrorCode.SERVICE_ERROR, statusCode, options);
+  }
+}
+
 export class SubmissionServiceError extends ServiceError {
   constructor(
     message: string,
@@ -229,6 +249,11 @@ export class SubmissionServiceError extends ServiceError {
     options?: { cause?: Error },
   ) {
     super(message, AppErrorCode.SUBMISSION_SERVICE_ERROR, statusCode, options);
+  }
+}
+export class ForbiddenError extends ServiceError {
+  constructor(message = "Forbidden", statusCode: number = 403) {
+    super(message, AppErrorCode.FORBIDDEN, statusCode);
   }
 }
 

@@ -11,6 +11,14 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    profiles: ["dev"]
+
   # Dev-specific postgres config
   postgres_dev:
     extends: postgres
@@ -70,4 +78,5 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
   node_modules_cache: # Add persistent volume for node_modules

@@ -6,23 +6,22 @@ import {
   UserNearAccountIdParamSchema,
   UserProfileWrappedResponseSchema,
 } from "@curatedotfun/types";
-import { zValidator } from "@hono/zod-validator";
-import { Hono } from "hono";
-import { ContentfulStatusCode } from "hono/utils/http-status";
-import { Env } from "../../types/app";
 import {
   NearAccountError,
   NotFoundError,
   UserServiceError,
-} from "../../types/errors";
-import { logger } from "../../utils/logger";
-import { ServiceProvider } from "../../utils/service-provider";
+} from "@curatedotfun/utils";
+import { zValidator } from "@hono/zod-validator";
+import { Hono } from "hono";
+import { ContentfulStatusCode } from "hono/utils/http-status";
+import { Env } from "../../types/app";
 
 const usersRoutes = new Hono<Env>();
 
 // --- GET /api/users/me ---
 usersRoutes.get("/me", async (c) => {
   const accountId = c.get("accountId");
+  const sp = c.var.sp;
 
   if (!accountId) {
     return c.json(
@@ -36,7 +35,7 @@ usersRoutes.get("/me", async (c) => {
   }
 
   try {
-    const userService = ServiceProvider.getInstance().getUserService();
+    const userService = sp.getUserService();
     const user = await userService.findUserByNearAccountId(accountId);
 
     if (!user) {
@@ -60,7 +59,7 @@ usersRoutes.get("/me", async (c) => {
       }),
     );
   } catch (error) {
-    logger.error({ error }, "Error in usersRoutes.get('/me')");
+    c.var.sp.getLogger().error({ error }, "Error in usersRoutes.get('/me')");
     return c.json(
       ApiErrorResponseSchema.parse({
         statusCode: 500,
@@ -80,7 +79,8 @@ usersRoutes.post(
     const apiData = c.req.valid("json");
 
     try {
-      const userService = ServiceProvider.getInstance().getUserService();
+      const sp = c.var.sp;
+      const userService = sp.getUserService();
 
       const newUser = await userService.createUser(apiData);
 
@@ -93,7 +93,7 @@ usersRoutes.post(
         201,
       );
     } catch (error: unknown) {
-      logger.error({ error }, "Error in usersRoutes.post('/')");
+      c.var.sp.getLogger().error({ error }, "Error in usersRoutes.post('/')");
 
       if (
         error instanceof NearAccountError ||
@@ -128,6 +128,7 @@ usersRoutes.put(
   async (c) => {
     const apiData = c.req.valid("json");
     const accountId = c.get("accountId");
+    const sp = c.var.sp;
 
     if (!accountId) {
       return c.json(
@@ -141,7 +142,7 @@ usersRoutes.put(
     }
 
     try {
-      const userService = ServiceProvider.getInstance().getUserService();
+      const userService = sp.getUserService();
       const updatedUser = await userService.updateUserByNearAccountId(
         accountId,
         apiData,
@@ -166,7 +167,7 @@ usersRoutes.put(
         }),
       );
     } catch (error) {
-      logger.error({ error }, "Error in usersRoutes.put('/me')");
+      c.var.sp.getLogger().error({ error }, "Error in usersRoutes.put('/me')");
 
       if (error instanceof NotFoundError || error instanceof UserServiceError) {
         return c.json(
@@ -207,7 +208,8 @@ usersRoutes.delete("/me", async (c) => {
   }
 
   try {
-    const userService = ServiceProvider.getInstance().getUserService();
+    const sp = c.var.sp;
+    const userService = sp.getUserService();
     const success = await userService.deleteUserByNearAccountId(accountId);
 
     if (success) {
@@ -229,7 +231,7 @@ usersRoutes.delete("/me", async (c) => {
       );
     }
   } catch (error: unknown) {
-    logger.error({ error }, "Error in usersRoutes.delete('/me')");
+    c.var.sp.getLogger().error({ error }, "Error in usersRoutes.delete('/me')");
 
     if (
       error instanceof NotFoundError ||
@@ -263,6 +265,7 @@ usersRoutes.get(
   zValidator("param", UserNearAccountIdParamSchema),
   async (c) => {
     const { nearAccountId } = c.req.param();
+    const sp = c.var.sp;
 
     if (!nearAccountId) {
       return c.json(
@@ -276,7 +279,7 @@ usersRoutes.get(
     }
 
     try {
-      const userService = ServiceProvider.getInstance().getUserService();
+      const userService = sp.getUserService();
       const user = await userService.findUserByNearAccountId(nearAccountId);
 
       if (!user) {
@@ -300,10 +303,12 @@ usersRoutes.get(
         }),
       );
     } catch (error) {
-      logger.error(
-        { error },
-        `Error in usersRoutes.get('/by-near/${nearAccountId}')`,
-      );
+      c.var.sp
+        .getLogger()
+        .error(
+          { error },
+          `Error in usersRoutes.get('/by-near/${nearAccountId}')`,
+        );
 
       if (error instanceof NotFoundError) {
         return c.json(

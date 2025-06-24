@@ -1,3 +1,4 @@
+import { fromHex } from "@fastnear/utils";
 import { sign } from "near-sign-verify";
 import React, {
   createContext,
@@ -10,7 +11,6 @@ import React, {
 import { toast } from "../hooks/use-toast";
 import { apiClient } from "../lib/api-client";
 import { near } from "../lib/near";
-import { fromHex } from "@fastnear/utils";
 
 interface IAuthContext {
   currentAccountId: string | null;
@@ -39,9 +39,17 @@ interface AuthProviderProps {
 export function AuthProvider({
   children,
 }: AuthProviderProps): React.ReactElement {
-  const [currentAccountId, setCurrentAccountId] = useState<string | null>(null);
-  const [isSignedIn, setIsSignedIn] = useState<boolean>(false);
+  const [currentAccountId, setCurrentAccountId] = useState<string | null>(
+    near.accountId() ?? null,
+  );
+  const [isSignedIn, setIsSignedIn] = useState<boolean>(
+    near.authStatus() === "SignedIn",
+  );
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
+  const [nonce, setNonce] = useState<string | null>(null);
+  const [recipient, setRecipient] = useState<string | null>(null);
+  const isSigningInRef = React.useRef(false);
+  const previousAccountIdRef = React.useRef<string | null>(currentAccountId);
 
   const checkAuthorization = useCallback(async () => {
     try {
@@ -53,19 +61,72 @@ export function AuthProvider({
     }
   }, []);
 
-  useEffect(() => {
-    const accountId = near.accountId();
-    if (accountId) {
-      setCurrentAccountId(accountId);
-      setIsSignedIn(true);
-      checkAuthorization();
+  const initiateLogin = useCallback(async (accountId: string) => {
+    try {
+      const { nonce, recipient } = await apiClient.makeRequest<{
+        nonce: string;
+        recipient: string;
+      }>("POST", "/auth/initiate-login", { accountId });
+      setNonce(nonce);
+      setRecipient(recipient);
+    } catch (error) {
+      console.error("Failed to initiate login:", error);
+      toast({
+        title: "Connection Error",
+        description:
+          "Unable to connect to authentication server. Please try again.",
+        variant: "destructive",
+      });
     }
-  }, [checkAuthorization]);
+  }, []);
+
+  useEffect(() => {
+    const accountListener = near.event.onAccount((newAccountId) => {
+      setCurrentAccountId(newAccountId);
+      setIsSignedIn(!!newAccountId);
+
+      if (!newAccountId) {
+        toast({
+          title: "Signed out",
+          description: "You have been signed out successfully.",
+          variant: "success",
+        });
+        setIsAuthorized(false);
+        setNonce(null);
+        setRecipient(null);
+      }
+    });
+
+    return () => {
+      near.event.offAccount(accountListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (currentAccountId && currentAccountId !== previousAccountIdRef.current) {
+      if (isSigningInRef.current) {
+        toast({
+          title: "Success!",
+          description: `Connected as: ${currentAccountId}`,
+          variant: "success",
+        });
+        isSigningInRef.current = false;
+      }
+      checkAuthorization().then(() => {
+        if (currentAccountId) {
+          initiateLogin(currentAccountId);
+        }
+      });
+    }
+    previousAccountIdRef.current = currentAccountId;
+  }, [currentAccountId, checkAuthorization, initiateLogin]);
 
   const handleSignIn = async (): Promise<void> => {
+    isSigningInRef.current = true;
     try {
       await near.requestSignIn();
     } catch (e: unknown) {
+      isSigningInRef.current = false;
       toast({
         title: "Sign-in failed",
         description: e instanceof Error ? e.message : String(e),
@@ -83,17 +144,21 @@ export function AuthProvider({
       });
       return;
     }
+    if (!nonce || !recipient) {
+      toast({
+        title: "Authorization not ready",
+        description:
+          "Please wait a moment and try again. If the problem persists, please sign out and sign back in.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
-      const { nonce, recipient } = await apiClient.makeRequest<{
-        nonce: string;
-        recipient: string;
-      }>("POST", "/auth/initiate-login", { accountId: currentAccountId });
-
       const message = "Authorize Curate.fun";
 
       const authToken = await sign(message, {
         signer: near,
-        recipient,
+        recipient: recipient,
         nonce: fromHex(nonce),
       });
 
@@ -128,14 +193,6 @@ export function AuthProvider({
       );
     }
     near.signOut();
-    setCurrentAccountId(null);
-    setIsSignedIn(false);
-    setIsAuthorized(false);
-    toast({
-      title: "Signed out",
-      description: "You have been signed out successfully.",
-      variant: "success",
-    });
   };
 
   const contextValue: IAuthContext = {

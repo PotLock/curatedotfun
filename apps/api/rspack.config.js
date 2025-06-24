@@ -13,6 +13,8 @@ module.exports = {
   externals: {
     bufferutil: "commonjs bufferutil",
     "pg-native": "commonjs pg-native",
+    "@roamhq/wrtc": "commonjs @roamhq/wrtc",
+    "utf-8-validate": "commonjs utf-8-validate",
   },
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -35,11 +37,7 @@ module.exports = {
   resolve: {
     extensions: [".ts", ".ts", ".js"],
     alias: {
-      services: path.resolve(__dirname, "src/services"),
-      utils: path.resolve(__dirname, "src/utils"),
-      types: path.resolve(__dirname, "src/types"),
-      routes: path.resolve(__dirname, "src/routes"),
-      validation: path.resolve(__dirname, "src/validation"),
+      "@": path.resolve(__dirname, "./src"),
     },
   },
   plugins: [

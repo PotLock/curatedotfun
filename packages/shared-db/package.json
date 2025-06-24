@@ -19,16 +19,16 @@
     "drizzle-orm": "^0.43.1",
     "drizzle-zod": "^0.7.1",
     "postgres": "^3.4.7",
-    "zod": "^3.25.42"
+    "zod": "^3.25.67"
   },
   "devDependencies": {
-    "@types/async-retry": "^1.4.9",
     "@curatedotfun/types": "workspace:*",
+    "@types/async-retry": "^1.4.9",
     "dotenv": "^16.5.0",
-    "drizzle-kit": "^0.31.1",
-    "eslint": "^9.28.0",
-    "pg": "^8.15.6",
-    "pg-connection-string": "^2.9.0",
+    "drizzle-kit": "^0.31.2",
+    "eslint": "^9.29.0",
+    "pg": "^8.16.2",
+    "pg-connection-string": "^2.9.1",
     "typescript": "^5.8.3"
   },
   "peerDependencies": {

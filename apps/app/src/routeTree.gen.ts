@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from "./routes/__root";
 import { Route as LayoutRouteImport } from "./routes/_layout";
 import { Route as LayoutIndexRouteImport } from "./routes/_layout/index";
 import { Route as LayoutLeaderboardRouteImport } from "./routes/_layout/leaderboard";
+import { Route as LayoutTestIndexRouteImport } from "./routes/_layout/test/index";
 import { Route as LayoutProfileIndexRouteImport } from "./routes/_layout/profile/index";
 import { Route as LayoutPluginIndexRouteImport } from "./routes/_layout/plugin/index";
 import { Route as LayoutPluginPluginIdRouteImport } from "./routes/_layout/plugin/$pluginId";
@@ -49,6 +50,11 @@ const LayoutIndexRoute = LayoutIndexRouteImport.update({
 const LayoutLeaderboardRoute = LayoutLeaderboardRouteImport.update({
   id: "/leaderboard",
   path: "/leaderboard",
+  getParentRoute: () => LayoutRoute,
+} as any);
+const LayoutTestIndexRoute = LayoutTestIndexRouteImport.update({
+  id: "/test/",
+  path: "/test/",
   getParentRoute: () => LayoutRoute,
 } as any);
 const LayoutProfileIndexRoute = LayoutProfileIndexRouteImport.update({
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   "/plugin/$pluginId": typeof LayoutPluginPluginIdRoute;
   "/plugin": typeof LayoutPluginIndexRoute;
   "/profile": typeof LayoutProfileIndexRoute;
+  "/test": typeof LayoutTestIndexRoute;
   "/create/feed/review": typeof LayoutCreateFeedReviewRoute;
   "/create/feed/settings": typeof LayoutCreateFeedSettingsRoute;
   "/edit/feed/$feedId": typeof LayoutEditFeedFeedIdRoute;
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   "/plugin/$pluginId": typeof LayoutPluginPluginIdRoute;
   "/plugin": typeof LayoutPluginIndexRoute;
   "/profile": typeof LayoutProfileIndexRoute;
+  "/test": typeof LayoutTestIndexRoute;
   "/create/feed/review": typeof LayoutCreateFeedReviewRoute;
   "/create/feed/settings": typeof LayoutCreateFeedSettingsRoute;
   "/edit/feed/$feedId": typeof LayoutEditFeedFeedIdRoute;
@@ -247,6 +255,7 @@ export interface FileRoutesById {
   "/_layout/plugin/$pluginId": typeof LayoutPluginPluginIdRoute;
   "/_layout/plugin/": typeof LayoutPluginIndexRoute;
   "/_layout/profile/": typeof LayoutProfileIndexRoute;
+  "/_layout/test/": typeof LayoutTestIndexRoute;
   "/_layout/create/feed/review": typeof LayoutCreateFeedReviewRoute;
   "/_layout/create/feed/settings": typeof LayoutCreateFeedSettingsRoute;
   "/_layout/edit/feed/$feedId": typeof LayoutEditFeedFeedIdRoute;
@@ -277,6 +286,7 @@ export interface FileRouteTypes {
     | "/plugin/$pluginId"
     | "/plugin"
     | "/profile"
+    | "/test"
     | "/create/feed/review"
     | "/create/feed/settings"
     | "/edit/feed/$feedId"
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | "/plugin/$pluginId"
     | "/plugin"
     | "/profile"
+    | "/test"
     | "/create/feed/review"
     | "/create/feed/settings"
     | "/edit/feed/$feedId"
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | "/_layout/plugin/$pluginId"
     | "/_layout/plugin/"
     | "/_layout/profile/"
+    | "/_layout/test/"
     | "/_layout/create/feed/review"
     | "/_layout/create/feed/settings"
     | "/_layout/edit/feed/$feedId"
@@ -375,6 +387,13 @@ declare module "@tanstack/react-router" {
       path: "/leaderboard";
       fullPath: "/leaderboard";
       preLoaderRoute: typeof LayoutLeaderboardRouteImport;
+      parentRoute: typeof LayoutRoute;
+    };
+    "/_layout/test/": {
+      id: "/_layout/test/";
+      path: "/test";
+      fullPath: "/test";
+      preLoaderRoute: typeof LayoutTestIndexRouteImport;
       parentRoute: typeof LayoutRoute;
     };
     "/_layout/profile/": {
@@ -622,6 +641,7 @@ interface LayoutRouteChildren {
   LayoutPluginPluginIdRoute: typeof LayoutPluginPluginIdRoute;
   LayoutPluginIndexRoute: typeof LayoutPluginIndexRoute;
   LayoutProfileIndexRoute: typeof LayoutProfileIndexRoute;
+  LayoutTestIndexRoute: typeof LayoutTestIndexRoute;
   LayoutEditFeedFeedIdRoute: typeof LayoutEditFeedFeedIdRoute;
   LayoutFeedWelcomeFeedIdRoute: typeof LayoutFeedWelcomeFeedIdRoute;
 }
@@ -636,6 +656,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutPluginPluginIdRoute: LayoutPluginPluginIdRoute,
   LayoutPluginIndexRoute: LayoutPluginIndexRoute,
   LayoutProfileIndexRoute: LayoutProfileIndexRoute,
+  LayoutTestIndexRoute: LayoutTestIndexRoute,
   LayoutEditFeedFeedIdRoute: LayoutEditFeedFeedIdRoute,
   LayoutFeedWelcomeFeedIdRoute: LayoutFeedWelcomeFeedIdRoute,
 };

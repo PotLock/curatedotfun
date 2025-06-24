@@ -3,7 +3,6 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { Env } from "../../types/app";
 import { serviceUnavailable } from "../../utils/error";
-import { logger } from "../../utils/logger";
 
 // Create Twitter routes
 const twitterRoutes = new Hono<Env>();
@@ -12,17 +11,18 @@ const twitterRoutes = new Hono<Env>();
  * Get the last checked tweet ID
  */
 twitterRoutes.get("/last-tweet-id", (c) => {
-  const context = c.get("context");
+  const sp = c.get("sp");
+  const twitterService = sp.getTwitterService();
 
-  if (!context.twitterService) {
+  if (!twitterService) {
     throw serviceUnavailable("Twitter");
   }
 
   try {
-    const lastTweetId = context.twitterService.getLastCheckedTweetId();
+    const lastTweetId = twitterService.getLastCheckedTweetId();
     return c.json({ lastTweetId });
   } catch (error) {
-    logger.error(`Failed to get last tweet ID: ${error}`);
+    c.var.sp.getLogger().error(`Failed to get last tweet ID: ${error}`);
     return c.json(
       { success: false, message: "Failed to retrieve last tweet ID" },
       500,
@@ -42,18 +42,19 @@ twitterRoutes.post(
     }),
   ),
   async (c) => {
-    const context = c.get("context");
+    const sp = c.get("sp");
+    const twitterService = sp.getTwitterService();
 
-    if (!context.twitterService) {
+    if (!twitterService) {
       throw serviceUnavailable("Twitter");
     }
 
     const { tweetId } = c.req.valid("json");
     try {
-      context.twitterService.setLastCheckedTweetId(tweetId);
+      twitterService.setLastCheckedTweetId(tweetId);
       return c.json({ success: true });
     } catch (error) {
-      logger.error(`Failed to set last tweet ID: ${error}`);
+      c.var.sp.getLogger().error(`Failed to set last tweet ID: ${error}`);
       return c.json(
         { success: false, message: "Failed to update tweet ID" },
         500,

@@ -5,13 +5,15 @@
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
-      "*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests"],
   "references": [
+    { "path": "../../packages/core-services" },
     { "path": "../../packages/shared-db" },
+    { "path": "../../packages/shared-queue" },
     { "path": "../../packages/types" },
     { "path": "../../packages/utils" }
   ]

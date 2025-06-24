@@ -1,10 +1,10 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useFeed } from "../../../../lib/api";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "../../../../utils/datetime";
-import { ScrollText, Sparkles } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { ScrollText, Sparkles } from "lucide-react";
+import { useFeed } from "../../../../lib/api";
+import { formatDate } from "../../../../utils/datetime";
 
 export const Route = createFileRoute("/_layout/feed/welcome/$feedId")({
   component: FeedWelcomePage,
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_layout/feed/welcome/$feedId")({
 function FeedWelcomePage() {
   const { feedId } = Route.useParams();
   const navigate = useNavigate();
-  const { data: feed, isLoading, isError } = useFeed(feedId);
+  const { data: feed, isLoading, isError, refetch } = useFeed(feedId);
 
   const steps = [
     {
@@ -42,8 +42,7 @@ function FeedWelcomePage() {
     {
       icon: <ScrollText size={24} />,
       title: "Set Up Content Publishing",
-      description:
-        "Configure AI to automatically generate content from your sources.",
+      description: "Set up automated publishing to share your curated content.",
     },
   ];
 
@@ -63,7 +62,7 @@ function FeedWelcomePage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <p className="text-red-600 mb-4">Failed to load feed</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
+          <Button onClick={() => refetch()}>Retry</Button>
         </div>
       </div>
     );
@@ -150,5 +149,3 @@ function FeedWelcomePage() {
     </div>
   );
 }
-
-export default FeedWelcomePage;

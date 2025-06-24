@@ -1,6 +1,6 @@
+import type { ServiceProvider } from "@curatedotfun/core-services";
 import { Hono } from "hono";
 import { db } from "../db";
-import { ServiceProvider } from "../utils/service-provider";
 
 export type Env = {
   Variables: {
