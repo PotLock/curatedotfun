@@ -15,8 +15,9 @@ const allQueues: Queue<any>[] = Array.from(queueNames).map((name) =>
   createQueue(name),
 );
 
+const logger = createLogger({ service: "worker" });
+
 async function main() {
-  const logger = createLogger({ service: "worker" });
   logger.info("Starting Curate.fun Worker...");
 
   const sp = ServiceProvider.getInstance({

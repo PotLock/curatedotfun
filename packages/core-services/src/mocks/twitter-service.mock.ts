@@ -1,8 +1,9 @@
-import { logger } from "@curatedotfun/utils";
+import { createLogger } from "@curatedotfun/utils";
 import { SearchMode, Tweet } from "agent-twitter-client";
 import { TwitterCookie } from "../services/twitter/client";
 import { ITwitterService } from "../services/twitter/twitter.interface";
 
+const logger = createLogger({ service: "core-services" });
 export class MockTwitterService implements ITwitterService {
   private mockTweets: Tweet[] = [];
   private mockUserIds: Map<string, string> = new Map();

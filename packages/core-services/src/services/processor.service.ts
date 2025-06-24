@@ -1,6 +1,10 @@
 import { RichSubmission } from "@curatedotfun/shared-db";
 import { DistributorConfig, TransformConfig } from "@curatedotfun/types";
-import { ProcessorError, TransformError, logger } from "@curatedotfun/utils";
+import {
+  ProcessorError,
+  TransformError,
+  createLogger,
+} from "@curatedotfun/utils";
 import { Logger } from "pino";
 import { sanitizeJson } from "../utils/sanitize";
 import { DistributionService } from "./distribution.service";
@@ -43,7 +47,7 @@ export class ProcessorService implements IBaseService {
           processed = sanitizeJson(processed);
         } catch (error) {
           if (error instanceof TransformError) {
-            logger.error("Global transform failed:", error);
+            this.logger.error("Global transform failed:", error);
             // Continue with original content on global transform error
             processed = content;
           } else {
@@ -75,7 +79,7 @@ export class ProcessorService implements IBaseService {
               distributorContent = sanitizeJson(distributorContent);
             } catch (error) {
               if (error instanceof TransformError) {
-                logger.error(
+                this.logger.error(
                   `Distributor transform failed for ${distributor.plugin}:`,
                   error,
                 );
@@ -97,7 +101,7 @@ export class ProcessorService implements IBaseService {
           errors.push(
             error instanceof Error ? error : new Error(String(error)),
           );
-          logger.error(
+          this.logger.error(
             `Failed to process distributor ${distributor.plugin}:`,
             error,
           );
@@ -149,7 +153,7 @@ export class ProcessorService implements IBaseService {
             }
             return processed;
           } catch (error) {
-            logger.error("Item processing failed:", error);
+            this.logger.error("Item processing failed:", error);
             return item; // Continue with original item on error
           }
         }),
@@ -159,7 +163,7 @@ export class ProcessorService implements IBaseService {
       let batchResult = results;
       if (config.batchTransform?.length) {
         try {
-          logger.info("Applying batch transforms");
+          this.logger.info("Applying batch transforms");
           batchResult = await this.transformationService.applyTransforms(
             results,
             config.batchTransform,
@@ -169,7 +173,7 @@ export class ProcessorService implements IBaseService {
           batchResult = sanitizeJson(batchResult);
         } catch (error) {
           if (error instanceof TransformError) {
-            logger.error("Batch transform failed:", error);
+            this.logger.error("Batch transform failed:", error);
             batchResult = results; // Continue with untransformed batch on error
           } else {
             throw error;
@@ -207,7 +211,7 @@ export class ProcessorService implements IBaseService {
           errors.push(
             error instanceof Error ? error : new Error(String(error)),
           );
-          logger.error(
+          this.logger.error(
             `Failed to process distributor ${distributor.plugin}:`,
             error,
           );

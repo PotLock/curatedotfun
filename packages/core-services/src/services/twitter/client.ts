@@ -1,6 +1,6 @@
 import { Scraper, SearchMode, Tweet } from "agent-twitter-client";
 import { TwitterRepository } from "@curatedotfun/shared-db";
-import { logger } from "@curatedotfun/utils";
+import { createLogger } from "@curatedotfun/utils";
 import { ITwitterService } from "./twitter.interface";
 
 export interface TwitterConfig {
@@ -23,6 +23,7 @@ export class TwitterService implements ITwitterService {
   private client: Scraper;
   private lastCheckedTweetId: string | null = null;
   private twitterUsername: string;
+  private logger = createLogger({ service: "core-services" });
 
   constructor(
     private readonly config: {
@@ -58,13 +59,13 @@ export class TwitterService implements ITwitterService {
       // Verify the cookies are still valid
       return await this.client.isLoggedIn();
     } catch (error) {
-      logger.error("Error loading cached cookies:", error);
+      this.logger.error("Error loading cached cookies:", error);
       return false;
     }
   }
 
   private async performLogin(): Promise<boolean> {
-    logger.info("Performing fresh Twitter login...");
+    this.logger.info("Performing fresh Twitter login...");
     try {
       await this.client.login(
         this.config.username,
@@ -89,19 +90,19 @@ export class TwitterService implements ITwitterService {
           this.config.username,
           formattedCookies,
         );
-        logger.info("Successfully logged in to Twitter");
+        this.logger.info("Successfully logged in to Twitter");
         return true;
       }
       return false;
     } catch (error) {
-      logger.error("Login attempt failed:", error);
+      this.logger.error("Login attempt failed:", error);
       return false;
     }
   }
 
   async setCookies(cookies: TwitterCookie[]) {
     try {
-      logger.info("Setting Twitter cookies...");
+      this.logger.info("Setting Twitter cookies...");
       // Convert cookies to the format expected by the client
       const cookieStrings = cookies.map(
         (cookie) =>
@@ -123,7 +124,7 @@ export class TwitterService implements ITwitterService {
       }
       return true;
     } catch (error) {
-      logger.error("Failed to set Twitter cookies:", error);
+      this.logger.error("Failed to set Twitter cookies:", error);
       throw error;
     }
   }
@@ -147,7 +148,7 @@ export class TwitterService implements ITwitterService {
     try {
       // First try to use cached cookies
       if (await this.loadCachedCookies()) {
-        logger.info("Successfully initialized using cached cookies");
+        this.logger.info("Successfully initialized using cached cookies");
         this.lastCheckedTweetId =
           await this.twitterRepository.getTwitterCacheValue("last_tweet_id");
         return;
@@ -162,14 +163,14 @@ export class TwitterService implements ITwitterService {
         }
 
         if (attempt < 2) {
-          logger.info(`Retrying login (attempt ${attempt + 1}/3)...`);
+          this.logger.info(`Retrying login (attempt ${attempt + 1}/3)...`);
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
       }
 
       throw new Error("Failed to initialize Twitter client after 3 attempts");
     } catch (error) {
-      logger.error("Failed to initialize Twitter client:", error);
+      this.logger.error("Failed to initialize Twitter client:", error);
       throw error;
     }
   }
@@ -191,7 +192,7 @@ export class TwitterService implements ITwitterService {
         responseData?.data?.create_tweet?.tweet_results?.result?.rest_id;
       return replyTweetId || null;
     } catch (error) {
-      logger.error("Error replying to tweet:", error);
+      this.logger.error("Error replying to tweet:", error);
       return null;
     }
   }
@@ -200,7 +201,7 @@ export class TwitterService implements ITwitterService {
     try {
       await this.client.likeTweet(tweetId);
     } catch (error) {
-      logger.error("Error liking tweet:", error);
+      this.logger.error("Error liking tweet:", error);
     }
   }
 
@@ -223,7 +224,7 @@ export class TwitterService implements ITwitterService {
       ).tweets;
 
       if (batch.length === 0) {
-        logger.info("No tweets found");
+        this.logger.info("No tweets found");
         return [];
       }
 
@@ -251,7 +252,7 @@ export class TwitterService implements ITwitterService {
 
       return allNewTweets;
     } catch (error) {
-      logger.error("Error fetching mentions:", error);
+      this.logger.error("Error fetching mentions:", error);
       return [];
     }
   }
@@ -259,7 +260,7 @@ export class TwitterService implements ITwitterService {
   setLastCheckedTweetId(tweetId: string) {
     this.lastCheckedTweetId = tweetId;
     this.twitterRepository.setTwitterCacheValue("last_tweet_id", tweetId);
-    logger.info(`Last checked tweet ID updated to: ${tweetId}`);
+    this.logger.info(`Last checked tweet ID updated to: ${tweetId}`);
   }
 
   getLastCheckedTweetId(): string | null {

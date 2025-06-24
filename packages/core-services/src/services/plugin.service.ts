@@ -8,7 +8,11 @@ import type {
   SourcePlugin,
   TransformerPlugin,
 } from "@curatedotfun/types";
-import { PluginError, PluginErrorCode, logger } from "@curatedotfun/utils";
+import {
+  PluginError,
+  PluginErrorCode,
+  createLogger,
+} from "@curatedotfun/utils";
 import { performReload } from "@module-federation/node/utils";
 import { init, loadRemote } from "@module-federation/runtime";
 import Mustache from "mustache";
@@ -280,7 +284,7 @@ export class PluginService implements IBaseService {
 
           // If we have more retries, wait and try again
           if (attempt < this.retryDelays.length) {
-            logger.warn(
+            this.logger.warn(
               `Plugin ${name} initialization failed, retrying in ${this.retryDelays[attempt]}ms`,
               { error },
             );
@@ -306,7 +310,7 @@ export class PluginService implements IBaseService {
       logPluginError(error, this.logger);
       throw error;
     } catch (error) {
-      logger.error(`Plugin error: ${name}`, { error });
+      this.logger.error(`Plugin error: ${name}`, { error });
       throw error instanceof PluginError
         ? error
         : new PluginError(
@@ -384,7 +388,7 @@ export class PluginService implements IBaseService {
       remote.status = "active";
       remote.lastError = undefined;
 
-      logger.info(`Loaded module for remote ${remote.config.name}`, {
+      this.logger.info(`Loaded module for remote ${remote.config.name}`, {
         activeRemotes: Array.from(this.remotes.keys()),
       });
     } catch (error) {
@@ -420,7 +424,7 @@ export class PluginService implements IBaseService {
             },
           );
           errors.push(pluginError);
-          logger.error(`Shutdown error`, {
+          this.logger.error(`Shutdown error`, {
             error: pluginError,
             config: state.config,
           });
@@ -454,7 +458,7 @@ export class PluginService implements IBaseService {
     if (!instance || typeof instance !== "object") return false;
     if (typeof instance.initialize !== "function") return false;
     if (instance.type !== type) {
-      logger.warn(
+      this.logger.warn(
         `Plugin instance type mismatch: expected ${type}, got ${instance.type}`,
         { name: (instance as any)?.constructor?.name },
       );
@@ -482,7 +486,9 @@ export class PluginService implements IBaseService {
       default:
         // This case should ideally not be reached if PluginType is a comprehensive union
         // and all cases are handled.
-        logger.warn(`Unknown plugin type encountered in validation: ${type}`);
+        this.logger.warn(
+          `Unknown plugin type encountered in validation: ${type}`,
+        );
         return false;
     }
   }
@@ -506,7 +512,7 @@ export class PluginService implements IBaseService {
     // Force module federation reload
     await performReload(true);
 
-    logger.info("All plugins reloaded");
+    this.logger.info("All plugins reloaded");
   }
 
   /**
