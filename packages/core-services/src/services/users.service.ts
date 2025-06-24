@@ -16,10 +16,9 @@ import {
   UserServiceError,
 } from "@curatedotfun/utils";
 import { connect, KeyPair, keyStores, transactions } from "near-api-js";
-import { KeyPairString } from "near-api-js/lib/utils";
+import type { KeyPairString } from "near-api-js/lib/utils/key_pair";
 import { Logger } from "pino";
 import { IBaseService } from "./interfaces/base-service.interface";
-import { logger } from "../utils/logger";
 
 export class UserService implements IBaseService {
   public readonly logger: Logger;
@@ -95,11 +94,11 @@ export class UserService implements IBaseService {
       ) {
         throw error;
       }
-      logger.error({ error }, "Error inserting user into database");
+      this.logger.error({ error }, "Error inserting user into database");
       throw new UserServiceError(
-        error.message || "Failed to save user profile",
-        error.statusCode || 500,
-        error,
+        (error as Error).message || "Failed to save user profile",
+        (error as any).statusCode || 500,
+        { cause: error as Error },
       );
     }
   }
@@ -129,17 +128,21 @@ export class UserService implements IBaseService {
       if (error instanceof UserServiceError || error instanceof NotFoundError) {
         throw error;
       }
-      if (error.message?.startsWith("User not found with NEAR account ID:")) {
+      if (
+        (error as Error).message?.startsWith(
+          "User not found with NEAR account ID:",
+        )
+      ) {
         throw new NotFoundError("User", nearAccountId);
       }
-      logger.error(
+      this.logger.error(
         { error },
         `Error updating user by NEAR account ID ${nearAccountId}`,
       );
       throw new UserServiceError(
-        error.message || "Failed to update user profile",
-        error.statusCode || 500,
-        error,
+        (error as Error).message || "Failed to update user profile",
+        (error as any).statusCode || 500,
+        { cause: error as Error },
       );
     }
   }
@@ -163,11 +166,11 @@ export class UserService implements IBaseService {
       if (error instanceof UserServiceError || error instanceof NotFoundError) {
         throw error;
       }
-      logger.error({ error }, "Error updating user");
+      this.logger.error({ error }, "Error updating user");
       throw new UserServiceError(
-        error.message || "Failed to update user profile",
-        error.statusCode || 500,
-        error,
+        (error as Error).message || "Failed to update user profile",
+        (error as any).statusCode || 500,
+        { cause: error as Error },
       );
     }
   }
@@ -211,7 +214,7 @@ export class UserService implements IBaseService {
       const nearConnection = await connect(connectionConfig);
       const parentAccount = await nearConnection.account(parentAccountId);
 
-      logger.info(
+      this.logger.info(
         `Attempting to delete NEAR account: ${nearAccountId} with beneficiary ${parentAccountId}`,
       );
 
@@ -222,24 +225,29 @@ export class UserService implements IBaseService {
         actions,
       });
 
-      logger.info(`Successfully deleted NEAR account: ${nearAccountId}`);
-    } catch (nearerror: unknown) {
-      logger.error(
+      this.logger.info(`Successfully deleted NEAR account: ${nearAccountId}`);
+    } catch (nearError: unknown) {
+      this.logger.error(
         { error: nearError },
         `Error deleting NEAR account ${nearAccountId}`,
       );
       if (
-        nearError.message?.includes("Account ID #") &&
-        nearError.message?.includes("doesn't exist")
+        (nearError as Error).message?.includes("Account ID #") &&
+        (nearError as Error).message?.includes("doesn't exist")
       ) {
-        logger.warn(
+        this.logger.warn(
           `NEAR account ${nearAccountId} might have been already deleted or never existed. Proceeding with DB deletion.`,
         );
       } else {
         throw new NearAccountError(
           `Failed to delete NEAR account ${nearAccountId}`,
           500,
-          nearError,
+          {
+            cause:
+              nearError instanceof Error
+                ? nearError
+                : new Error(String(nearError)),
+          },
         );
       }
     }
@@ -253,11 +261,11 @@ export class UserService implements IBaseService {
       });
 
       if (dbDeletionResult) {
-        logger.info(
+        this.logger.info(
           `Successfully deleted user from database (nearAccountId: ${nearAccountIdToDelete})`,
         );
       } else {
-        logger.warn(
+        this.logger.warn(
           `User (nearAccountId: ${nearAccountIdToDelete}) was not found in the database for deletion, or was already deleted.`,
         );
       }
@@ -270,14 +278,14 @@ export class UserService implements IBaseService {
       ) {
         throw error;
       }
-      logger.error(
+      this.logger.error(
         { error },
         `Error deleting user (nearAccountId: ${nearAccountIdToDelete}) from database`,
       );
       throw new UserServiceError(
-        error.message || "Failed to delete user from database",
-        error.statusCode || 500,
-        error,
+        (error as Error).message || "Failed to delete user from database",
+        (error as any).statusCode || 500,
+        { cause: error as Error },
       );
     }
   }
@@ -316,7 +324,7 @@ export class UserService implements IBaseService {
       const nearConnection = await connect(connectionConfig);
       const parentAccount = await nearConnection.account(parentAccountId);
 
-      logger.info(
+      this.logger.info(
         `Attempting to delete NEAR account: ${nearAccountId} with beneficiary ${parentAccountId}`,
       );
 
@@ -327,24 +335,29 @@ export class UserService implements IBaseService {
         actions,
       });
 
-      logger.info(`Successfully deleted NEAR account: ${nearAccountId}`);
-    } catch (nearerror: unknown) {
-      logger.error(
+      this.logger.info(`Successfully deleted NEAR account: ${nearAccountId}`);
+    } catch (nearError: unknown) {
+      this.logger.error(
         { error: nearError },
         `Error deleting NEAR account ${nearAccountId}`,
       );
       if (
-        nearError.message?.includes("Account ID #") &&
-        nearError.message?.includes("doesn't exist")
+        (nearError as Error).message?.includes("Account ID #") &&
+        (nearError as Error).message?.includes("doesn't exist")
       ) {
-        logger.warn(
+        this.logger.warn(
           `NEAR account ${nearAccountId} might have been already deleted or never existed. Proceeding with DB deletion.`,
         );
       } else {
         throw new NearAccountError(
           `Failed to delete NEAR account ${nearAccountId}`,
           500,
-          nearError,
+          {
+            cause:
+              nearError instanceof Error
+                ? nearError
+                : new Error(String(nearError)),
+          },
         );
       }
     }
@@ -355,11 +368,11 @@ export class UserService implements IBaseService {
       });
 
       if (dbDeletionResult) {
-        logger.info(
+        this.logger.info(
           `Successfully deleted user from database: ${authProviderId}`,
         );
       } else {
-        logger.warn(
+        this.logger.warn(
           `User ${authProviderId} was not found in the database for deletion, or was already deleted during the transaction.`,
         );
       }
@@ -372,14 +385,14 @@ export class UserService implements IBaseService {
       ) {
         throw error;
       }
-      logger.error(
+      this.logger.error(
         { error },
         `Error deleting user ${authProviderId} from database`,
       );
       throw new UserServiceError(
-        error.message || "Failed to delete user from database",
-        error.statusCode || 500,
-        error,
+        (error as Error).message || "Failed to delete user from database",
+        (error as any).statusCode || 500,
+        { cause: error as Error },
       );
     }
   }

@@ -11,9 +11,10 @@ import {
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { ContentfulStatusCode } from "hono/utils/http-status";
-import { ModerationService } from "../../services/moderation.service";
+import { ModerationService } from "@curatedotfun/core-services";
 import { Env } from "../../types/app";
 import { NotFoundError, ServiceError } from "@curatedotfun/utils";
+import { createQueue, QUEUE_NAMES } from "@curatedotfun/shared-queue";
 
 export const moderationRoutes = new Hono<Env>();
 
@@ -23,19 +24,24 @@ moderationRoutes.post(
   zValidator("json", CreateModerationRequestSchema),
   async (c) => {
     const payload = c.req.valid("json");
-    const sp = c.var.sp;
-    const moderationService =
-      sp.getService<ModerationService>("moderationService");
 
     try {
-      await moderationService.createModerationAction(payload);
+      const moderationQueue = createQueue(QUEUE_NAMES.MODERATION);
+
+      await moderationQueue.add(QUEUE_NAMES.MODERATION, {
+        ...payload,
+        source: "ui",
+        moderatorAccountIdType: "near",
+      });
+
+      // Return a 202 Accepted response
       return c.json(
         ModerationActionCreatedWrappedResponseSchema.parse({
-          statusCode: 201,
+          statusCode: 202,
           success: true,
-          data: { message: "Moderation action created successfully." },
+          data: { message: "Moderation action accepted for processing." },
         }),
-        201,
+        202,
       );
     } catch (error: unknown) {
       console.error("Error in moderationRoutes.post('/'):", error);

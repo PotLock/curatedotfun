@@ -3,23 +3,25 @@ import {
   FeedRepository,
   InsertSubmission,
   InsertSubmissionFeed,
+  RichSubmission,
   SelectFeed,
   SubmissionRepository,
   submissionStatusZodEnum,
 } from "@curatedotfun/shared-db";
+import { createQueue, QUEUE_NAMES } from "@curatedotfun/shared-queue";
 import { Tweet } from "agent-twitter-client";
 import { Logger } from "pino";
 import { FeedService } from "./feed.service";
 import { IBackgroundTaskService } from "./interfaces/background-task.interface";
 import { ModerationService } from "./moderation.service";
-import { TwitterService } from "./twitter/client";
+import { ITwitterService } from "./twitter/twitter.interface";
 
 export class SubmissionService implements IBackgroundTaskService {
   public readonly logger: Logger;
   private checkInterval: NodeJS.Timeout | null = null;
 
   constructor(
-    private readonly twitterService: TwitterService,
+    private readonly twitterService: ITwitterService,
     private readonly feedRepository: FeedRepository,
     private readonly submissionRepository: SubmissionRepository,
     private readonly db: DB,
@@ -47,6 +49,10 @@ export class SubmissionService implements IBackgroundTaskService {
       this.checkInterval = null;
     }
     this.logger.info("SubmissionService stopped.");
+  }
+
+  public async getSubmission(tweetId: string): Promise<RichSubmission | null> {
+    return this.submissionRepository.getSubmission(tweetId);
   }
 
   private async checkMentions(): Promise<void> {
@@ -163,7 +169,7 @@ export class SubmissionService implements IBackgroundTaskService {
       curatorTweet,
     );
 
-    let feedSlugsFromHashtags = (curatorTweet.hashtags || []).map((h) =>
+    let feedSlugsFromHashtags = (curatorTweet.hashtags || []).map((h: string) =>
       h.toLowerCase(),
     );
 
@@ -304,23 +310,24 @@ export class SubmissionService implements IBackgroundTaskService {
 
             // Attempt auto-approval
             if (submission && feed.config) {
-              try {
-                await this.moderationService.attemptAutoApproval(
-                  submission,
-                  feed.config,
-                  curatorTweet.username!,
-                  tx,
-                );
-              } catch (autoApprovalError) {
-                this.logger.warn(
-                  {
-                    error: autoApprovalError,
-                    submissionId: originalTweet.id,
-                    feedId: feed.id,
-                  },
-                  "Auto-approval failed, but submission was still processed successfully",
-                );
-              }
+              const moderationQueue = createQueue(QUEUE_NAMES.MODERATION);
+              await moderationQueue.add(QUEUE_NAMES.MODERATION, {
+                submissionId: submission.tweetId,
+                feedId: feed.id,
+                action: "approve",
+                moderatorAccountId: curatorTweet.username!,
+                moderatorAccountIdType: "platform_username",
+                source: "auto_approval",
+                note: submission.curatorNotes,
+              });
+              this.logger.info(
+                {
+                  submissionId: submission.tweetId,
+                  feedId: feed.id,
+                  curator: curatorTweet.username!,
+                },
+                "Enqueued auto-approval moderation task.",
+              );
             } else {
               this.logger.error(
                 {

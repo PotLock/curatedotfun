@@ -1,9 +1,25 @@
 import { Scraper, SearchMode, Tweet } from "agent-twitter-client";
-import { TwitterCookie } from "types/twitter";
-import { logger } from "../../utils/logger";
 import { TwitterRepository } from "@curatedotfun/shared-db";
+import { logger } from "@curatedotfun/utils";
+import { ITwitterService } from "./twitter.interface";
 
-export class TwitterService {
+export interface TwitterConfig {
+  username: string;
+  password: string;
+  email: string;
+}
+
+export interface TwitterCookie {
+  name: string;
+  value: string;
+  domain: string;
+  path: string;
+  expires?: number;
+  httpOnly?: boolean;
+  secure?: boolean;
+  sameSite?: "Strict" | "Lax" | "None";
+}
+export class TwitterService implements ITwitterService {
   private client: Scraper;
   private lastCheckedTweetId: string | null = null;
   private twitterUsername: string;

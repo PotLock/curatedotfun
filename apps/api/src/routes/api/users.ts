@@ -15,14 +15,14 @@ import {
   NotFoundError,
   UserServiceError,
 } from "@curatedotfun/utils";
-import { logger } from "../../utils/logger";
-import { ServiceProvider } from "../../utils/service-provider";
+import { logger } from "@curatedotfun/utils";
 
 const usersRoutes = new Hono<Env>();
 
 // --- GET /api/users/me ---
 usersRoutes.get("/me", async (c) => {
   const accountId = c.get("accountId");
+  const sp = c.var.sp;
 
   if (!accountId) {
     return c.json(
@@ -36,7 +36,7 @@ usersRoutes.get("/me", async (c) => {
   }
 
   try {
-    const userService = ServiceProvider.getInstance().getUserService();
+    const userService = sp.getUserService();
     const user = await userService.findUserByNearAccountId(accountId);
 
     if (!user) {
@@ -80,7 +80,8 @@ usersRoutes.post(
     const apiData = c.req.valid("json");
 
     try {
-      const userService = ServiceProvider.getInstance().getUserService();
+      const sp = c.var.sp;
+      const userService = sp.getUserService();
 
       const newUser = await userService.createUser(apiData);
 
@@ -128,6 +129,7 @@ usersRoutes.put(
   async (c) => {
     const apiData = c.req.valid("json");
     const accountId = c.get("accountId");
+    const sp = c.var.sp;
 
     if (!accountId) {
       return c.json(
@@ -141,7 +143,7 @@ usersRoutes.put(
     }
 
     try {
-      const userService = ServiceProvider.getInstance().getUserService();
+      const userService = sp.getUserService();
       const updatedUser = await userService.updateUserByNearAccountId(
         accountId,
         apiData,
@@ -207,7 +209,8 @@ usersRoutes.delete("/me", async (c) => {
   }
 
   try {
-    const userService = ServiceProvider.getInstance().getUserService();
+    const sp = c.var.sp;
+    const userService = sp.getUserService();
     const success = await userService.deleteUserByNearAccountId(accountId);
 
     if (success) {
@@ -263,6 +266,7 @@ usersRoutes.get(
   zValidator("param", UserNearAccountIdParamSchema),
   async (c) => {
     const { nearAccountId } = c.req.param();
+    const sp = c.var.sp;
 
     if (!nearAccountId) {
       return c.json(
@@ -276,7 +280,7 @@ usersRoutes.get(
     }
 
     try {
-      const userService = ServiceProvider.getInstance().getUserService();
+      const userService = sp.getUserService();
       const user = await userService.findUserByNearAccountId(nearAccountId);
 
       if (!user) {

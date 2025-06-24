@@ -1,11 +1,7 @@
-import {
-  DistributorConfig,
-  RichSubmission,
-  TransformConfig,
-} from "@curatedotfun/shared-db";
-import { ProcessorError, TransformError } from "@curatedotfun/utils";
+import { RichSubmission } from "@curatedotfun/shared-db";
+import { DistributorConfig, TransformConfig } from "@curatedotfun/types";
+import { ProcessorError, TransformError, logger } from "@curatedotfun/utils";
 import { Logger } from "pino";
-import { logger } from "../utils/logger";
 import { sanitizeJson } from "../utils/sanitize";
 import { DistributionService } from "./distribution.service";
 import { IBaseService } from "./interfaces/base-service.interface";

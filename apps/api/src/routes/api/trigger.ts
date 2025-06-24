@@ -1,8 +1,8 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import { logger } from "../../utils/logger";
-import { Env } from "types/app";
+import { logger } from "@curatedotfun/utils";
+import { Env } from "@/types/app";
 
 // Define validation schema for the recap job payload
 const recapJobSchema = z.object({

@@ -1,4 +1,4 @@
-import { PluginRepository } from "@curatedotfun/shared-db";
+import { PluginRepository, type DB } from "@curatedotfun/shared-db";
 import type {
   BotPlugin,
   DistributorPlugin,
@@ -8,19 +8,21 @@ import type {
   SourcePlugin,
   TransformerPlugin,
 } from "@curatedotfun/types";
-import { PluginError, PluginErrorCode } from "@curatedotfun/utils";
+import { PluginError, PluginErrorCode, logger } from "@curatedotfun/utils";
 import { performReload } from "@module-federation/node/utils";
 import { init, loadRemote } from "@module-federation/runtime";
-import type { Logger } from "pino";
 import Mustache from "mustache";
-import { PluginConfig } from "types/config";
-import { env } from "../env";
-import { db } from "../db";
+import type { Logger } from "pino";
 import { logPluginError } from "../utils/error";
-import { logger } from "../utils/logger";
-import { createPluginInstanceKey } from "../utils/plugin";
 import { isProduction } from "./config.service";
 import { IBaseService } from "./interfaces/base-service.interface";
+import { createPluginInstanceKey } from "@/utils/plugin";
+
+export interface PluginConfig<T extends string = string> {
+  type: T;
+  url: string;
+  config?: Record<string, unknown>;
+}
 
 /**
  * Cache entry for a loaded plugin
@@ -75,7 +77,6 @@ type PluginContainer<
 export class PluginService implements IBaseService {
   private remotes: Map<string, RemoteState> = new Map();
   private instances: Map<string, InstanceState<PluginType>> = new Map();
-  private pluginRepository: PluginRepository;
 
   // Time in milliseconds before cached items are considered stale
   private readonly instanceCacheTimeout: number = 7 * 24 * 60 * 60 * 1000; // 7 days (instance of a plugin with config)
@@ -86,9 +87,13 @@ export class PluginService implements IBaseService {
   private readonly retryDelays: number[] = [1000, 5000]; // Delays between retries in ms
 
   public readonly logger: Logger;
-  constructor(logger: Logger) {
+  constructor(
+    private pluginRepository: PluginRepository,
+    private db: DB,
+    private env: { [key: string]: any },
+    logger: Logger,
+  ) {
     this.logger = logger;
-    this.pluginRepository = new PluginRepository(db);
   }
 
   /**
@@ -217,7 +222,10 @@ export class PluginService implements IBaseService {
 
           // Hydrate config with environment variables
           const stringifiedConfig = JSON.stringify(config.config);
-          const populatedConfigString = Mustache.render(stringifiedConfig, env); // TODO: Whitelist values
+          const populatedConfigString = Mustache.render(
+            stringifiedConfig,
+            this.env,
+          ); // TODO: Whitelist values
           const hydratedConfig = JSON.parse(populatedConfigString) as TConfig;
 
           await newInstance.initialize(hydratedConfig);

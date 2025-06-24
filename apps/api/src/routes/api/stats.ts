@@ -1,7 +1,6 @@
 import { SubmissionRepository } from "@curatedotfun/shared-db";
 import { Hono } from "hono";
-import { Env } from "types/app";
-import { ServiceProvider } from "../../utils/service-provider";
+import { Env } from "@/types/app";
 
 export const statsRoutes = new Hono<Env>();
 
@@ -10,6 +9,7 @@ export const statsRoutes = new Hono<Env>();
  */
 statsRoutes.get("/", async (c) => {
   const db = c.get("db");
+  const sp = c.var.sp;
   const submissionRepository = new SubmissionRepository(db);
   // Get posts count from database
   const postsCount = await submissionRepository.getPostsCount();
@@ -18,7 +18,7 @@ statsRoutes.get("/", async (c) => {
   const curatorsCount = await submissionRepository.getCuratorsCount();
 
   // Get other stats from config
-  const feedService = ServiceProvider.getInstance().getFeedService();
+  const feedService = sp.getFeedService();
   const allFeeds = await feedService.getAllFeeds(); // TODO: Optimize query (get count)
   const feedsCount = allFeeds.length;
 

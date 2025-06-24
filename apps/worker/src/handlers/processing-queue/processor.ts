@@ -1,8 +1,12 @@
+import {
+  FeedService,
+  ProcessorService,
+  ServiceProvider,
+  SubmissionService,
+} from "@curatedotfun/core-services";
+import { JobData, QUEUE_NAMES } from "@curatedotfun/shared-queue";
+import { logger, NotFoundError } from "@curatedotfun/utils";
 import { Job } from "bullmq";
-import { QUEUE_NAMES, JobData } from "@curatedotfun/shared-queue";
-import { ServiceProvider } from "@curatedotfun/core-services";
-import { logger } from "@curatedotfun/utils";
-import { NotFoundError } from "@curatedotfun/utils"; // Assuming error types are in utils
 
 export const processingProcessor = async (
   job: Job<JobData<typeof QUEUE_NAMES.SUBMISSION_PROCESSING>, any, string>,
@@ -15,21 +19,20 @@ export const processingProcessor = async (
   );
 
   try {
-    const submissionRepository = sp.getService<any>("submissionRepository"); // TODO: Get actual repository type if available
-    const feedRepository = sp.getService<any>("feedRepository"); // TODO: Get actual repository type if available
-    const processorService = sp.getProcessorService();
+    const feedService: FeedService = sp.getFeedService();
+    const submissionService: SubmissionService = sp.getSubmissionService();
+    const processorService: ProcessorService = sp.getProcessorService();
 
-    const submission = await submissionRepository.getSubmission(submissionId);
+    const submission = await submissionService.getSubmission(submissionId);
     if (!submission) {
       throw new NotFoundError("Submission", submissionId);
     }
 
-    const feed = await feedRepository.getFeedById(feedId); // Or getFeedWithConfig
+    const feed = await feedService.getFeedById(feedId);
     if (!feed || !feed.config) {
       throw new NotFoundError("Feed or FeedConfig", feedId);
     }
 
-    // Assuming feed.config.outputs.stream is the correct config path
     if (feed.config.outputs?.stream?.enabled) {
       await processorService.process(submission, feed.config.outputs.stream);
       logger.info(

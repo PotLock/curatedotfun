@@ -1,38 +1,10 @@
-import { MockTwitterService } from "../../__test__/mocks/twitter-service.mock";
 import { zValidator } from "@hono/zod-validator";
-import { Tweet } from "agent-twitter-client";
 import { Hono } from "hono";
-import { Env } from "types/app";
 import { z } from "zod";
-import { defaultQueue } from "../../queue";
-import { QUEUE_NAMES } from "@curatedotfun/shared-queue";
-
-// Create a single mock instance to maintain state
-const mockTwitterService = new MockTwitterService();
-
-// Helper to create a tweet object
-const createTweet = (
-  id: string,
-  text: string,
-  username: string,
-  inReplyToStatusId?: string,
-  hashtags?: string[],
-): Tweet => {
-  return {
-    id,
-    text,
-    username,
-    userId: `mock-user-id-${username}`,
-    timeParsed: new Date(),
-    hashtags: hashtags ?? [],
-    mentions: [],
-    photos: [],
-    urls: [],
-    videos: [],
-    thread: [],
-    inReplyToStatusId,
-  };
-};
+import { Env } from "../../types/app";
+import { MockTwitterService } from "@curatedotfun/core-services";
+import { Tweet } from "agent-twitter-client";
+import { logger } from "@curatedotfun/utils";
 
 const testRoutes = new Hono<Env>();
 
@@ -44,55 +16,102 @@ testRoutes.use("*", async (c, next) => {
   await next();
 });
 
+/**
+ * Mock a tweet submission. This is a protected endpoint.
+ */
+testRoutes.post(
+  "/mock-submission",
+  zValidator(
+    "json",
+    z.object({
+      text: z.string(),
+      user: z.object({
+        id: z.string(),
+        name: z.string(),
+        username: z.string(),
+      }),
+    }),
+  ),
+  async (c) => {
+    const sp = c.get("sp");
+    const accountId = c.get("accountId");
+    const twitterService = sp.getTwitterService();
+
+    if (!accountId) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const { text, user } = c.req.valid("json");
+
+    try {
+      const mockTweet: Partial<Tweet> = {
+        id: Date.now().toString(),
+        text,
+        username: user.username,
+        userId: user.id,
+      };
+
+      if (twitterService instanceof MockTwitterService) {
+        twitterService.addMockTweet(mockTweet);
+        return c.json({ success: true, message: "Mock tweet submitted." });
+      } else {
+        return c.json(
+          {
+            success: false,
+            message: "Mock submission only available in test environment.",
+          },
+          400,
+        );
+      }
+    } catch (error) {
+      logger.error(`Failed to mock tweet submission: ${error}`);
+      return c.json(
+        { success: false, message: "Failed to mock tweet submission" },
+        500,
+      );
+    }
+  },
+);
+
 // POST /api/test/tweets
 testRoutes.post(
   "/tweets",
   zValidator(
     "json",
     z.object({
-      id: z.string(),
-      inReplyToStatusId: z.string().optional(),
       text: z.string(),
       username: z.string(),
-      timeParsed: z.string().optional(),
-      userId: z.string().optional(),
+      inReplyToStatusId: z.string().optional(),
       hashtags: z.array(z.string()).optional(),
     }),
   ),
   async (c) => {
-    const { id, text, username, inReplyToStatusId, hashtags } =
-      c.req.valid("json");
+    const sp = c.get("sp");
+    const twitterService = sp.getTwitterService();
+    const { text, username, inReplyToStatusId, hashtags } = c.req.valid("json");
 
-    const tweet = createTweet(id, text, username, inReplyToStatusId, hashtags);
-    mockTwitterService.addMockTweet(tweet);
-    return c.json(tweet);
+    if (twitterService instanceof MockTwitterService) {
+      const tweet = twitterService.addMockTweet({
+        text,
+        username,
+        inReplyToStatusId,
+        hashtags,
+      });
+      return c.json(tweet);
+    }
+    return c.json({ error: "Not a mock service" }, 400);
   },
 );
 
 // POST /api/test/reset
 testRoutes.post("/reset", (c) => {
-  mockTwitterService.clearMockTweets();
-  return c.json({ success: true });
+  const sp = c.get("sp");
+  const twitterService = sp.getTwitterService();
+  if (twitterService instanceof MockTwitterService) {
+    twitterService.clearMockTweets();
+    return c.json({ success: true });
+  }
+  return c.json({ error: "Not a mock service" }, 400);
 });
 
-// POST /api/test/enqueue
-testRoutes.post(
-  "/enqueue",
-  zValidator(
-    "json",
-    z.object({
-      message: z.string(),
-    }),
-  ),
-  async (c) => {
-    const { message } = c.req.valid("json");
-    const job = await defaultQueue.add(QUEUE_NAMES.DEFAULT, {
-      message,
-      timestamp: Date.now(),
-    });
-    return c.json({ success: true, jobId: job.id });
-  },
-);
-
-// Export for use in tests and for replacing the real service
-export { mockTwitterService, testRoutes };
+export { testRoutes };
