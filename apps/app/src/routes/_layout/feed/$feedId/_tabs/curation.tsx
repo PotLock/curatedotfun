@@ -1,32 +1,28 @@
-import { FileRouteTypes, useSearch } from "@tanstack/react-router";
-import { SubmissionFilters, useAllSubmissions, useFeedItems } from "../lib/api";
-import FilterControls from "./FilterControls";
-import InfiniteFeed from "./InfiniteFeed";
-import SubmissionList from "./SubmissionList";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
+import {
+  submissionSearchSchema,
+  useFeedItems,
+  SubmissionFilters,
+} from "@/lib/api";
+import FilterControls from "@/components/FilterControls";
+import InfiniteFeed from "@/components/InfiniteFeed";
+import SubmissionList from "@/components/SubmissionList";
+import type { FeedContextSubmission } from "@curatedotfun/types";
 
-interface SubmissionFeedProps {
-  parentRouteId: FileRouteTypes["id"];
-  feedId?: string;
-  title?: string;
-}
+export const Route = createFileRoute("/_layout/feed/$feedId/_tabs/curation")({
+  validateSearch: (search) => submissionSearchSchema.parse(search),
+  component: FeedCurationPage,
+});
 
-export default function SubmissionFeed({
-  parentRouteId,
-  feedId,
-  title,
-}: SubmissionFeedProps) {
-  const searchParams = useSearch({ from: parentRouteId }) as SubmissionFilters;
-
+function FeedCurationPage() {
+  const { feedId } = Route.useParams();
+  const searchParams = useSearch({ from: Route.id });
   const apiFilters: SubmissionFilters = {
     status: searchParams.status,
     sortOrder: searchParams.sortOrder || "newest",
     q: searchParams.q || "",
   };
-
-  const feedItemsResult = useFeedItems(feedId!, apiFilters);
-  const allSubmissionsResult = useAllSubmissions(apiFilters);
-
-  const queryResult = feedId ? feedItemsResult : allSubmissionsResult;
+  const queryResult = useFeedItems(feedId, apiFilters);
 
   const {
     data,
@@ -36,14 +32,13 @@ export default function SubmissionFeed({
     status: fetchStatus,
   } = queryResult;
 
-  const items = data?.items || [];
+  const items = data?.pages.flatMap((page) => page.items) ?? [];
   const lastPageData =
     data?.pages && data.pages.length > 0
       ? data.pages[data.pages.length - 1]
       : null;
   const totalItems = lastPageData?.pagination?.totalCount ?? items.length;
-  const displayTitle =
-    title || (feedId ? `Submissions for ${feedId}` : "All Submissions");
+  const displayTitle = "Recent Curation";
 
   return (
     <div className="flex flex-col gap-6 w-full py-4">
@@ -54,13 +49,13 @@ export default function SubmissionFeed({
       </div>
 
       <FilterControls
-        parentRouteId={parentRouteId}
+        parentRouteId={Route.id}
         totalItems={totalItems}
         isSearchActive={!!searchParams.q && searchParams.q.trim() !== ""}
       />
 
       <InfiniteFeed
-        items={items}
+        items={items as FeedContextSubmission[]}
         fetchNextPage={fetchNextPage}
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
@@ -79,3 +74,5 @@ export default function SubmissionFeed({
     </div>
   );
 }
+
+export default FeedCurationPage;

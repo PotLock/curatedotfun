@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_layout/feed/$feedId/points")({
+export const Route = createFileRoute("/_layout/feed/$feedId/_tabs/points")({
   component: FeedPointsPage,
 });
 

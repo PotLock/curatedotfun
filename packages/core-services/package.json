@@ -34,7 +34,7 @@
   "devDependencies": {
     "@types/lodash": "^4.17.18",
     "@types/pg": "^8.15.4",
-    "eslint": "^9.7.0",
-    "typescript": "^5.5.3"
+    "eslint": "^9.29.0",
+    "typescript": "^5.8.3"
   }
 }
