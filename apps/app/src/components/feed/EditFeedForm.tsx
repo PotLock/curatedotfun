@@ -283,10 +283,10 @@ export const EditFeedForm = forwardRef<EditFeedFormRef, EditFeedFormProps>(
           if (JSON.stringify(updatedConfig) !== JSON.stringify(config)) {
             isUpdatingFromForm.current = true;
             onConfigChange(updatedConfig);
-            // Reset the flag after a brief delay to allow config update to complete
-            setTimeout(() => {
+            // Reset the flag in the next tick to ensure state updates have propagated
+            Promise.resolve().then(() => {
               isUpdatingFromForm.current = false;
-            }, 100);
+            });
           }
         }, 300); // 300ms debounce
       },

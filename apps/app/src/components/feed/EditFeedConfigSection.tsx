@@ -4,6 +4,7 @@ import { JsonEditor } from "../content-progress/JsonEditor";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { EditFeedForm, type EditFeedFormRef } from "./EditFeedForm";
+import { toast } from "@/hooks/use-toast";
 
 interface EditFeedConfigSectionProps {
   jsonString: string;
@@ -23,8 +24,17 @@ export function EditFeedConfigSection({
 
   const handleConfigChange = (config: FeedConfig) => {
     onConfigChange(config);
-    // Also update the JSON string to keep them in sync
-    onJsonChange(JSON.stringify(config, null, 2));
+    try {
+      onJsonChange(JSON.stringify(config, null, 2));
+    } catch (error) {
+      console.error("Failed to stringify config:", error);
+      toast({
+        title: "Error",
+        description:
+          "Failed to update JSON configuration. Please check the console for details.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSwitchToFormMode = () => {

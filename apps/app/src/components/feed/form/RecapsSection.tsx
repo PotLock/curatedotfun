@@ -5,6 +5,7 @@ import { Button } from "../../ui/button";
 import { Checkbox } from "../../ui/checkbox";
 import {
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -85,8 +86,14 @@ export const RecapsSection = memo(function RecapsSection({
                 <FormItem>
                   <FormLabel>Schedule (Cron)</FormLabel>
                   <FormControl>
-                    <Input placeholder="0 0 * * 0" {...field} />
+                    <Input
+                      placeholder="0 0 * * 0 (Weekly on Sunday at midnight)"
+                      {...field}
+                    />
                   </FormControl>
+                  <FormDescription>
+                    Enter a cron expression for the recap schedule
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

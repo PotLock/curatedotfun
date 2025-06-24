@@ -74,6 +74,11 @@ export function useEditFeed(feedId: string): {
       setCurrentConfig(parsedConfig);
     } catch (e) {
       console.error("Invalid JSON:", e);
+      toast({
+        title: "Invalid JSON",
+        description: "Please check your JSON syntax and try again.",
+        variant: "destructive",
+      });
     }
   };
 
