@@ -32,6 +32,9 @@ importers:
       '@crosspost/types':
         specifier: ^0.3.1
         version: 0.3.1
+      '@curatedotfun/core-services':
+        specifier: workspace:*
+        version: link:../../packages/core-services
       '@curatedotfun/shared-db':
         specifier: workspace:*
         version: link:../../packages/shared-db
@@ -128,13 +131,13 @@ importers:
     devDependencies:
       '@module-federation/node':
         specifier: ^2.7.7
-        version: 2.7.7(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.9)
+        version: 2.7.7(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.9(esbuild@0.25.5))
       '@rspack/binding':
         specifier: 1.2.8
         version: 1.2.8
       '@rspack/cli':
         specifier: 1.2.8
-        version: 1.2.8(@rspack/core@1.2.8(@swc/helpers@0.5.17))(@types/express@4.17.23)(webpack@5.99.9)
+        version: 1.2.8(@rspack/core@1.2.8(@swc/helpers@0.5.17))(@types/express@4.17.23)(webpack@5.99.9(esbuild@0.25.5))
       '@rspack/core':
         specifier: 1.2.8
         version: 1.2.8(@swc/helpers@0.5.17)
@@ -364,12 +367,18 @@ importers:
 
   apps/worker:
     dependencies:
+      '@curatedotfun/core-services':
+        specifier: workspace:*
+        version: link:../../packages/core-services
       '@curatedotfun/shared-db':
         specifier: workspace:*
         version: link:../../packages/shared-db
       '@curatedotfun/shared-queue':
         specifier: workspace:*
         version: link:../../packages/shared-queue
+      '@curatedotfun/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       bullmq:
         specifier: ^5.56.0
         version: 5.56.0
@@ -391,6 +400,37 @@ importers:
         version: 8.15.4
       typescript:
         specifier: ^5.8.3
+        version: 5.8.3
+
+  packages/core-services:
+    dependencies:
+      '@crosspost/sdk':
+        specifier: ^0.3.1
+        version: 0.3.1
+      '@crosspost/types':
+        specifier: ^0.3.1
+        version: 0.3.1
+      '@curatedotfun/shared-db':
+        specifier: workspace:*
+        version: link:../shared-db
+      '@curatedotfun/shared-queue':
+        specifier: workspace:*
+        version: link:../shared-queue
+      '@curatedotfun/types':
+        specifier: workspace:*
+        version: link:../types
+      '@curatedotfun/utils':
+        specifier: workspace:*
+        version: link:../utils
+      pino:
+        specifier: ^9.2.0
+        version: 9.7.0
+    devDependencies:
+      eslint:
+        specifier: ^9.7.0
+        version: 9.29.0(jiti@1.21.7)
+      typescript:
+        specifier: ^5.5.3
         version: 5.8.3
 
   packages/shared-db:
@@ -460,6 +500,19 @@ importers:
         version: 5.8.3
 
   packages/utils:
+    dependencies:
+      ora:
+        specifier: ^8.2.0
+        version: 8.2.0
+      pino:
+        specifier: ^9.7.0
+        version: 9.7.0
+      pino-pretty:
+        specifier: ^13.0.0
+        version: 13.0.0
+      string-width:
+        specifier: ^7.2.0
+        version: 7.2.0
     devDependencies:
       '@curatedotfun/types':
         specifier: workspace:*
@@ -6175,7 +6228,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@module-federation/enhanced@0.15.0(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.9)':
+  '@module-federation/enhanced@0.15.0(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.9(esbuild@0.25.5))':
     dependencies:
       '@module-federation/bridge-react-webpack-plugin': 0.15.0
       '@module-federation/cli': 0.15.0(typescript@5.8.3)
@@ -6193,7 +6246,7 @@ snapshots:
       upath: 2.0.1
     optionalDependencies:
       typescript: 5.8.3
-      webpack: 5.99.9
+      webpack: 5.99.9(esbuild@0.25.5)
     transitivePeerDependencies:
       - '@rspack/core'
       - bufferutil
@@ -6234,15 +6287,15 @@ snapshots:
       - utf-8-validate
       - vue-tsc
 
-  '@module-federation/node@2.7.7(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.9)':
+  '@module-federation/node@2.7.7(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.9(esbuild@0.25.5))':
     dependencies:
-      '@module-federation/enhanced': 0.15.0(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.9)
+      '@module-federation/enhanced': 0.15.0(@rspack/core@1.2.8(@swc/helpers@0.5.17))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)(webpack@5.99.9(esbuild@0.25.5))
       '@module-federation/runtime': 0.15.0
       '@module-federation/sdk': 0.15.0
       btoa: 1.2.1
       encoding: 0.1.13
       node-fetch: 2.7.0(encoding@0.1.13)
-      webpack: 5.99.9
+      webpack: 5.99.9(esbuild@0.25.5)
     optionalDependencies:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -7127,11 +7180,11 @@ snapshots:
       '@rspack/binding-win32-ia32-msvc': 1.2.8
       '@rspack/binding-win32-x64-msvc': 1.2.8
 
-  '@rspack/cli@1.2.8(@rspack/core@1.2.8(@swc/helpers@0.5.17))(@types/express@4.17.23)(webpack@5.99.9)':
+  '@rspack/cli@1.2.8(@rspack/core@1.2.8(@swc/helpers@0.5.17))(@types/express@4.17.23)(webpack@5.99.9(esbuild@0.25.5))':
     dependencies:
       '@discoveryjs/json-ext': 0.5.7
       '@rspack/core': 1.2.8(@swc/helpers@0.5.17)
-      '@rspack/dev-server': 1.0.10(@rspack/core@1.2.8(@swc/helpers@0.5.17))(@types/express@4.17.23)(webpack@5.99.9)
+      '@rspack/dev-server': 1.0.10(@rspack/core@1.2.8(@swc/helpers@0.5.17))(@types/express@4.17.23)(webpack@5.99.9(esbuild@0.25.5))
       colorette: 2.0.20
       exit-hook: 4.0.0
       interpret: 3.1.1
@@ -7165,7 +7218,7 @@ snapshots:
     optionalDependencies:
       '@swc/helpers': 0.5.17
 
-  '@rspack/dev-server@1.0.10(@rspack/core@1.2.8(@swc/helpers@0.5.17))(@types/express@4.17.23)(webpack@5.99.9)':
+  '@rspack/dev-server@1.0.10(@rspack/core@1.2.8(@swc/helpers@0.5.17))(@types/express@4.17.23)(webpack@5.99.9(esbuild@0.25.5))':
     dependencies:
       '@rspack/core': 1.2.8(@swc/helpers@0.5.17)
       chokidar: 3.6.0
@@ -7174,8 +7227,8 @@ snapshots:
       http-proxy-middleware: 2.0.9(@types/express@4.17.23)
       mime-types: 2.1.35
       p-retry: 4.6.2
-      webpack-dev-middleware: 7.4.2(webpack@5.99.9)
-      webpack-dev-server: 5.0.4(webpack@5.99.9)
+      webpack-dev-middleware: 7.4.2(webpack@5.99.9(esbuild@0.25.5))
+      webpack-dev-server: 5.0.4(webpack@5.99.9(esbuild@0.25.5))
       ws: 8.18.2
     transitivePeerDependencies:
       - '@types/express'
@@ -10165,6 +10218,17 @@ snapshots:
 
   tapable@2.2.2: {}
 
+  terser-webpack-plugin@5.3.14(esbuild@0.25.5)(webpack@5.99.9(esbuild@0.25.5)):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.25
+      jest-worker: 27.5.1
+      schema-utils: 4.3.2
+      serialize-javascript: 6.0.2
+      terser: 5.43.1
+      webpack: 5.99.9(esbuild@0.25.5)
+    optionalDependencies:
+      esbuild: 0.25.5
+
   terser-webpack-plugin@5.3.14(webpack@5.99.9):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.25
@@ -10173,6 +10237,7 @@ snapshots:
       serialize-javascript: 6.0.2
       terser: 5.43.1
       webpack: 5.99.9
+    optional: true
 
   terser@5.43.1:
     dependencies:
@@ -10435,7 +10500,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  webpack-dev-middleware@7.4.2(webpack@5.99.9):
+  webpack-dev-middleware@7.4.2(webpack@5.99.9(esbuild@0.25.5)):
     dependencies:
       colorette: 2.0.20
       memfs: 4.17.2
@@ -10444,9 +10509,9 @@ snapshots:
       range-parser: 1.2.1
       schema-utils: 4.3.2
     optionalDependencies:
-      webpack: 5.99.9
+      webpack: 5.99.9(esbuild@0.25.5)
 
-  webpack-dev-server@5.0.4(webpack@5.99.9):
+  webpack-dev-server@5.0.4(webpack@5.99.9(esbuild@0.25.5)):
     dependencies:
       '@types/bonjour': 3.5.13
       '@types/connect-history-api-fallback': 1.5.4
@@ -10476,10 +10541,10 @@ snapshots:
       serve-index: 1.9.1
       sockjs: 0.3.24
       spdy: 4.0.2
-      webpack-dev-middleware: 7.4.2(webpack@5.99.9)
+      webpack-dev-middleware: 7.4.2(webpack@5.99.9(esbuild@0.25.5))
       ws: 8.18.2
     optionalDependencies:
-      webpack: 5.99.9
+      webpack: 5.99.9(esbuild@0.25.5)
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -10514,6 +10579,38 @@ snapshots:
       schema-utils: 4.3.2
       tapable: 2.2.2
       terser-webpack-plugin: 5.3.14(webpack@5.99.9)
+      watchpack: 2.4.4
+      webpack-sources: 3.3.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+    optional: true
+
+  webpack@5.99.9(esbuild@0.25.5):
+    dependencies:
+      '@types/eslint-scope': 3.7.7
+      '@types/estree': 1.0.8
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      acorn: 8.15.0
+      browserslist: 4.25.0
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.18.1
+      es-module-lexer: 1.7.0
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.0
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 4.3.2
+      tapable: 2.2.2
+      terser-webpack-plugin: 5.3.14(esbuild@0.25.5)(webpack@5.99.9(esbuild@0.25.5))
       watchpack: 2.4.4
       webpack-sources: 3.3.3
     transitivePeerDependencies:
