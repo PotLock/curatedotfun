@@ -43,7 +43,7 @@
     "@hono/node-server": "^1.14.4",
     "@hono/zod-validator": "^0.5.0",
     "@module-federation/runtime": "^0.11.4",
-    "@roamhq/wrtc": "^0.9.0",
+    "agent-twitter-client": "0.0.16",
     "bullmq": "^5.56.0",
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.43.1",

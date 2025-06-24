@@ -21,7 +21,7 @@
     "@module-federation/runtime": "^0.11.4",
     "@t3-oss/env-core": "^0.13.8",
     "@types/mustache": "^4.2.6",
-    "agent-twitter-client": "^0.0.18",
+    "agent-twitter-client": "0.0.16",
     "drizzle-orm": "^0.43.1",
     "hono": "^4.8.2",
     "lodash": "^4.17.21",
@@ -29,7 +29,6 @@
     "near-api-js": "^5.1.1",
     "near-sign-verify": "^0.4.1",
     "pino": "^9.7.0",
-    "utils": "link:@module-federation/node/utils",
     "zod": "^3.25.67"
   },
   "devDependencies": {

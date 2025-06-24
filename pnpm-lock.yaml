@@ -56,9 +56,9 @@ importers:
       '@module-federation/runtime':
         specifier: ^0.11.4
         version: 0.11.4
-      '@roamhq/wrtc':
-        specifier: ^0.9.0
-        version: 0.9.0
+      agent-twitter-client:
+        specifier: 0.0.16
+        version: 0.0.16
       bullmq:
         specifier: ^5.56.0
         version: 5.56.0
@@ -387,8 +387,8 @@ importers:
         specifier: ^4.2.6
         version: 4.2.6
       agent-twitter-client:
-        specifier: ^0.0.18
-        version: 0.0.18
+        specifier: 0.0.16
+        version: 0.0.16
       drizzle-orm:
         specifier: ^0.43.1
         version: 0.43.1(@types/pg@8.15.4)(bun-types@1.2.15)(pg@8.16.2)(postgres@3.4.7)
@@ -410,9 +410,6 @@ importers:
       pino:
         specifier: ^9.7.0
         version: 9.7.0
-      utils:
-        specifier: link:@module-federation/node/utils
-        version: link:@module-federation/node/utils
       zod:
         specifier: ^3.25.67
         version: 3.25.67
@@ -1963,62 +1960,6 @@ packages:
   '@radix-ui/rect@1.1.1':
     resolution: {integrity: sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw==}
 
-  '@roamhq/wrtc-darwin-arm64@0.8.0':
-    resolution: {integrity: sha512-OtV2KWO7zOG3L8TF3KCt9aucynVCD/ww2xeXXgg+FLkya3ca0uzehN8EQJ3BL4tkInksbFJ2ssyu9cehfJ3ZuA==}
-    cpu: [arm64]
-    os: [darwin]
-
-  '@roamhq/wrtc-darwin-arm64@0.9.0':
-    resolution: {integrity: sha512-bVbyI3Xm3ZlTPYnKz7gnLkxt1kZ8ZMW5QBwJpF/kS227O71pqUhicX/V5RRGqUmaER3JtXt0naR86ZPDfgTQBg==}
-    cpu: [arm64]
-    os: [darwin]
-
-  '@roamhq/wrtc-darwin-x64@0.8.0':
-    resolution: {integrity: sha512-VY7Vzt/SDDDCpW//h8GW9bOZrOr8gWXPZVD9473ypl4jyBIoO57yyLbHzd1G0vBUkS6szsHlQCz1WwpI30YL+g==}
-    cpu: [x64]
-    os: [darwin]
-
-  '@roamhq/wrtc-darwin-x64@0.9.0':
-    resolution: {integrity: sha512-99FFbFcIIqRR+H4ylkQgbgM8L5dx72hP5/GeJHB2h2f62Mb51bi30KokyOeBKH3X5R8bNi8LKnf7tV8d4kaGlA==}
-    cpu: [x64]
-    os: [darwin]
-
-  '@roamhq/wrtc-linux-arm64@0.8.1':
-    resolution: {integrity: sha512-FBJLLazlWkGQUXaokC/rTbrUQbb0CNFYry52fZGstufrGLTWu+g4HcwXdVvxh1tnVtVMvkQGk+mlOL52sCxw0A==}
-    cpu: [arm64]
-    os: [linux]
-
-  '@roamhq/wrtc-linux-arm64@0.9.0':
-    resolution: {integrity: sha512-JUtrPFGvp+/5YWz9L5eW9e4XPQ5lRFQR5/BlGQJQOutrkBYqvME8NvAHKhyNWm+b3Sgk0w6yZ1g1nSttPHFY6g==}
-    cpu: [arm64]
-    os: [linux]
-
-  '@roamhq/wrtc-linux-x64@0.8.1':
-    resolution: {integrity: sha512-I9oWG7b4uvWO1IOR/aF34n+ID6TKVuSs0jd19h5KdhfRtw7FFh9xxuwN9rONPxLVa6fS0q+MCZgAf8Scz89L8Q==}
-    cpu: [x64]
-    os: [linux]
-
-  '@roamhq/wrtc-linux-x64@0.9.0':
-    resolution: {integrity: sha512-ve6pIqeadUn6Jypb73A76041zdvGg/Bl0JU+T2+K8Zjw4aASebBFF4NX213dAS5viWUcNULzKV/s2PcpLDCyXQ==}
-    cpu: [x64]
-    os: [linux]
-
-  '@roamhq/wrtc-win32-x64@0.8.0':
-    resolution: {integrity: sha512-R2fxl41BLWPiP4eaTHGLzbbVvRjx1mV/OsgINCvawO7Hwz5Zx9I45+Fhrw3hd4n5amIeSG9VIF7Kz8eeTFXTGQ==}
-    cpu: [x64]
-    os: [win32]
-
-  '@roamhq/wrtc-win32-x64@0.9.0':
-    resolution: {integrity: sha512-QoVe5KKP1IjIRGDZfMUJV0OgTCK3noc79P2uuLeR5iJqf+bLcgyNr818ljB7frxPMSZNwWC5eVQTGmclrIIOIg==}
-    cpu: [x64]
-    os: [win32]
-
-  '@roamhq/wrtc@0.8.0':
-    resolution: {integrity: sha512-C0V/nqc4/2xzORI5qa4mIeN/8UO3ywN1kInrJ9u6GljFx0D18JMUJEqe8yYHa61RrEeoWN3PKdW++k8TocSx/A==}
-
-  '@roamhq/wrtc@0.9.0':
-    resolution: {integrity: sha512-b61ld6g0hHDh/K1y0Lckxg5HBunaESNW6N23ewviW5IvwBfZiIYPUxQFWxqprMTr/6ODHmw5B2xvqvLyuAL5Xw==}
-
   '@rolldown/pluginutils@1.0.0-beta.19':
     resolution: {integrity: sha512-3FL3mnMbPu0muGOCaKAhhFEYmqv9eTfPSJRJmANrCwtgK8VuxpsZDGK+m0LYAGoyO8+0j5uRe4PeyPDK1yA/hA==}
 
@@ -2694,8 +2635,8 @@ packages:
     resolution: {integrity: sha512-TGw5yVi4saajsSEgz25grObGHEUaDrniwvA2qwSC060KfqGPdglhvPMA2lPIoxs3PQIItj2iag35fONcQqgUaQ==}
     engines: {node: '>=12.0'}
 
-  agent-twitter-client@0.0.18:
-    resolution: {integrity: sha512-HncH5mlFcGYLEl5wNEkwtdolcmdxqEMIsqO4kTqiTp5P19O25Zr4P6LNJZz1UTjPRyXDxj+BLmmk/Ou7O0QzEg==}
+  agent-twitter-client@0.0.16:
+    resolution: {integrity: sha512-Clgb/N2LXoGMlId6GDUaaR05eJ0PqSifM6wikl/FiQ2+3+6I2ZhZB7KRulc8R4xvYFe6h0wNWe6FZiF48r124w==}
     deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   ajv-formats@2.1.1:
@@ -3158,11 +3099,6 @@ packages:
   dns-packet@5.6.1:
     resolution: {integrity: sha512-l4gcSouhcgIKRvyy99RNVOgxXiicE+2jZoNmaNmZ6JXiGajBOJAesk1OBlJuM5k2c+eudGdLxDqXuPCKIj6kpw==}
     engines: {node: '>=6'}
-
-  domexception@4.0.0:
-    resolution: {integrity: sha512-A2is4PLG+eeSfoTMA95/s4pvAoSo2mKtiM5jlHkAVewmiO8ISFTFKZjH7UAM1Atli/OT/7JHOrJRJiMKUZKYBw==}
-    engines: {node: '>=12'}
-    deprecated: Use your platform's native DOMException instead
 
   dotenv@16.5.0:
     resolution: {integrity: sha512-m/C+AwOAr9/W1UOIZUo232ejMNnJAJtYQjUbHoNTBNTJSvqzzDh7vnrei3o3r3m9blf6ZoDkvcw0VmozNRFJxg==}
@@ -5225,10 +5161,6 @@ packages:
   undici-types@7.8.0:
     resolution: {integrity: sha512-9UJ2xGDvQ43tYyVMpuHlsgApydB8ZKfVYTsLDhXkFL/6gfkp+U8xTGdh8pMJv1SpZna0zxG1DwsKZsreLbXBxw==}
 
-  undici@7.10.0:
-    resolution: {integrity: sha512-u5otvFBOBZvmdjWLVW+5DAc9Nkq8f24g0O9oY7qw2JVIF1VocIFoyz9JFkuVOS2j41AufeO0xnlweJ2RLT8nGw==}
-    engines: {node: '>=20.18.1'}
-
   universalify@0.1.2:
     resolution: {integrity: sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg==}
     engines: {node: '>= 4.0.0'}
@@ -5367,10 +5299,6 @@ packages:
 
   webidl-conversions@3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
-
-  webidl-conversions@7.0.0:
-    resolution: {integrity: sha512-VwddBukDzu71offAQR975unBIGqfKZpM+8ZX6ySk8nYhVoo5CYaZyzt3YBvYtRtO+aoGlqxPg/B87NGVZ/fu6g==}
-    engines: {node: '>=12'}
 
   webpack-bundle-analyzer@4.6.1:
     resolution: {integrity: sha512-oKz9Oz9j3rUciLNfpGFjOb49/jEpXNmWdVH8Ls//zNcnLlQdTGXQQMsBbb/gR7Zl8WNLxVCq+0Hqbx3zv6twBw==}
@@ -7021,54 +6949,6 @@ snapshots:
 
   '@radix-ui/rect@1.1.1': {}
 
-  '@roamhq/wrtc-darwin-arm64@0.8.0':
-    optional: true
-
-  '@roamhq/wrtc-darwin-arm64@0.9.0':
-    optional: true
-
-  '@roamhq/wrtc-darwin-x64@0.8.0':
-    optional: true
-
-  '@roamhq/wrtc-darwin-x64@0.9.0':
-    optional: true
-
-  '@roamhq/wrtc-linux-arm64@0.8.1':
-    optional: true
-
-  '@roamhq/wrtc-linux-arm64@0.9.0':
-    optional: true
-
-  '@roamhq/wrtc-linux-x64@0.8.1':
-    optional: true
-
-  '@roamhq/wrtc-linux-x64@0.9.0':
-    optional: true
-
-  '@roamhq/wrtc-win32-x64@0.8.0':
-    optional: true
-
-  '@roamhq/wrtc-win32-x64@0.9.0':
-    optional: true
-
-  '@roamhq/wrtc@0.8.0':
-    optionalDependencies:
-      '@roamhq/wrtc-darwin-arm64': 0.8.0
-      '@roamhq/wrtc-darwin-x64': 0.8.0
-      '@roamhq/wrtc-linux-arm64': 0.8.1
-      '@roamhq/wrtc-linux-x64': 0.8.1
-      '@roamhq/wrtc-win32-x64': 0.8.0
-      domexception: 4.0.0
-
-  '@roamhq/wrtc@0.9.0':
-    optionalDependencies:
-      '@roamhq/wrtc-darwin-arm64': 0.9.0
-      '@roamhq/wrtc-darwin-x64': 0.9.0
-      '@roamhq/wrtc-linux-arm64': 0.9.0
-      '@roamhq/wrtc-linux-x64': 0.9.0
-      '@roamhq/wrtc-win32-x64': 0.9.0
-      domexception: 4.0.0
-
   '@rolldown/pluginutils@1.0.0-beta.19': {}
 
   '@rollup/rollup-android-arm-eabi@4.44.0':
@@ -7811,9 +7691,8 @@ snapshots:
 
   adm-zip@0.5.16: {}
 
-  agent-twitter-client@0.0.18:
+  agent-twitter-client@0.0.16:
     dependencies:
-      '@roamhq/wrtc': 0.8.0
       '@sinclair/typebox': 0.32.35
       headers-polyfill: 3.3.0
       json-stable-stringify: 1.3.0
@@ -7823,11 +7702,6 @@ snapshots:
       tough-cookie: 4.1.4
       tslib: 2.8.1
       twitter-api-v2: 1.23.2
-      undici: 7.10.0
-      ws: 8.18.2
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
 
   ajv-formats@2.1.1(ajv@8.17.1):
     optionalDependencies:
@@ -8264,11 +8138,6 @@ snapshots:
   dns-packet@5.6.1:
     dependencies:
       '@leichtgewicht/ip-codec': 2.0.5
-
-  domexception@4.0.0:
-    dependencies:
-      webidl-conversions: 7.0.0
-    optional: true
 
   dotenv@16.5.0: {}
 
@@ -10397,8 +10266,6 @@ snapshots:
 
   undici-types@7.8.0: {}
 
-  undici@7.10.0: {}
-
   universalify@0.1.2: {}
 
   universalify@0.2.0: {}
@@ -10497,9 +10364,6 @@ snapshots:
   web-streams-polyfill@3.3.3: {}
 
   webidl-conversions@3.0.1: {}
-
-  webidl-conversions@7.0.0:
-    optional: true
 
   webpack-bundle-analyzer@4.6.1:
     dependencies:
