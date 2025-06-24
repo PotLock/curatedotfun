@@ -1,7 +1,6 @@
 import { Job, Queue, Worker, Processor } from "bullmq";
 
 export const QUEUE_NAMES = {
-  DEFAULT: "default",
   MODERATION: "moderation",
   SUBMISSION_PROCESSING: "submission-processing",
 } as const;
@@ -9,7 +8,6 @@ export const QUEUE_NAMES = {
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
 
 export interface JobPayloads {
-  [QUEUE_NAMES.DEFAULT]: { message: string; timestamp: number };
   [QUEUE_NAMES.MODERATION]: {
     submissionId: string;
     feedId: string;

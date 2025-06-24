@@ -9,5 +9,7 @@ export const moderationWorkerConfig: AppWorkerConfig<
   processor: moderationProcessor,
   opts: {
     concurrency: 1,
+    maxStalledCount: 2,
+    stalledInterval: 30000, // 30 second
   },
 };

@@ -1,6 +1,8 @@
 import pino from "pino";
 import pretty from "pino-pretty";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 // Helper function to serialize error objects properly
 const errorSerializer = (err: any) => {
   if (!err) return err;
@@ -86,11 +88,14 @@ const prettyTransport = pretty({
 
 export const logger = pino(
   {
-    level: "info",
+    level: isProduction ? "warn" : "info",
     serializers: {
       err: errorSerializer,
       error: errorSerializer,
     },
+    ...(isProduction && {
+      redact: ["*.password", "*.token", "*.key", "*.secret"],
+    }),
   },
   prettyTransport,
 );

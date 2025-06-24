@@ -45,7 +45,7 @@ export class MockTwitterService implements ITwitterService {
       sendTweet: async (message: string, replyToId?: string) => {
         const newTweet = this.addMockTweet({
           text: message,
-          username: "test_bot",
+          username: "curatedotfun",
           inReplyToStatusId: replyToId,
         });
         return {
@@ -177,7 +177,7 @@ export class MockTwitterService implements ITwitterService {
   async replyToTweet(tweetId: string, message: string): Promise<string | null> {
     const newTweet = this.addMockTweet({
       text: message,
-      username: "test_bot",
+      username: "curatedotfun",
       inReplyToStatusId: tweetId,
     });
     return newTweet.id ?? null;

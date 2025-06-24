@@ -3,7 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { Env } from "../../types/app";
 import { setCookie } from "hono/cookie";
-import { AuthService } from "@curatedotfun/core-services";
+import type { AuthService } from "@curatedotfun/core-services";
 
 export const authRoutes = new Hono<Env>();
 

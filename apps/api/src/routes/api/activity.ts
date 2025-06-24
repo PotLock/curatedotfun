@@ -254,11 +254,9 @@ activityRoutes.get("/feeds/curated-by/me", async (c) => {
   }
 
   try {
-    // Get services from the service provider
     const sp = c.var.sp;
-
-    const userService = serviceProvider.getUserService();
-    const activityService = serviceProvider.getActivityService();
+    const userService = sp.getUserService();
+    const activityService = sp.getActivityService();
 
     const user = await userService.findUserByNearAccountId(accountId);
 
@@ -332,11 +330,9 @@ activityRoutes.get("/feeds/approved-by/me", async (c) => {
   }
 
   try {
-    // Get services from the service provider
     const sp = c.var.sp;
-
-    const userService = serviceProvider.getUserService();
-    const activityService = serviceProvider.getActivityService();
+    const userService = sp.getUserService();
+    const activityService = sp.getActivityService();
 
     const user = await userService.findUserByNearAccountId(accountId);
 
@@ -415,11 +411,9 @@ activityRoutes.get(
     try {
       const { feedId } = c.req.valid("param");
 
-      // Get services from the service provider
       const sp = c.var.sp;
-
-      const userService = serviceProvider.getUserService();
-      const activityService = serviceProvider.getActivityService();
+      const userService = sp.getUserService();
+      const activityService = sp.getActivityService();
 
       const user = await userService.findUserByNearAccountId(accountId);
 
