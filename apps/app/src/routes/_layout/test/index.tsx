@@ -18,6 +18,7 @@ function TestComponent() {
     createTestTweetMutation.mutate({
       text,
       username,
+      hashtags: ["test"],
     });
   };
 

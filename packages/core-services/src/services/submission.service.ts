@@ -248,12 +248,16 @@ export class SubmissionService implements IBackgroundTaskService {
     } = submissionDetails;
 
     try {
-      await this.db.transaction(async (tx) => {
-        let submission = await this.submissionRepository.getSubmission(
-          originalTweet.id!,
-        );
+      const moderationTasksToEnqueue: {
+        feedId: string;
+        note: string | null;
+      }[] = [];
 
-        if (!submission) {
+      await this.db.transaction(async (tx) => {
+        const submissionExists =
+          !!(await this.submissionRepository.getSubmission(originalTweet.id!));
+
+        if (!submissionExists) {
           const newSubmissionData: InsertSubmission = {
             userId: originalTweet.userId!,
             tweetId: originalTweet.id!,
@@ -266,9 +270,6 @@ export class SubmissionService implements IBackgroundTaskService {
             submittedAt: curatorTweet.timeParsed || new Date(),
           };
           await this.submissionRepository.saveSubmission(newSubmissionData, tx);
-          submission = await this.submissionRepository.getSubmission(
-            originalTweet.id!,
-          );
           this.logger.info(
             {
               originalTweetId: originalTweet.id,
@@ -276,7 +277,6 @@ export class SubmissionService implements IBackgroundTaskService {
             },
             "New submission successfully created.",
           );
-          // await this.submissionRepository.incrementDailySubmissionCount(curatorUserId, tx);
         } else {
           this.logger.info(
             { originalTweetId: originalTweet.id },
@@ -285,14 +285,13 @@ export class SubmissionService implements IBackgroundTaskService {
         }
 
         for (const feed of targetFeeds) {
-          // Check if the submission is already linked to this feed.
           const existingFeedLinks =
             await this.feedRepository.getFeedsBySubmission(originalTweet.id!);
-          const existingFeedEntry = existingFeedLinks.find(
+          const isAlreadyAssociated = existingFeedLinks.some(
             (link) => link.feedId === feed.id,
           );
 
-          if (!existingFeedEntry) {
+          if (!isAlreadyAssociated) {
             const newSfEntryData: InsertSubmissionFeed = {
               submissionId: originalTweet.id!,
               feedId: feed.id,
@@ -308,33 +307,24 @@ export class SubmissionService implements IBackgroundTaskService {
               "Submission associated with new feed.",
             );
 
-            // Attempt auto-approval
-            if (submission && feed.config) {
-              const moderationQueue = createQueue(QUEUE_NAMES.MODERATION);
-              await moderationQueue.add(QUEUE_NAMES.MODERATION, {
-                submissionId: submission.tweetId,
+            const isCuratorAnApprover =
+              feed.config?.moderation?.approvers?.twitter?.includes(
+                curatorTweet.username!,
+              );
+
+            if (isCuratorAnApprover) {
+              moderationTasksToEnqueue.push({
                 feedId: feed.id,
-                action: "approve",
-                moderatorAccountId: curatorTweet.username!,
-                moderatorAccountIdType: "platform_username",
-                source: "auto_approval",
-                note: submission.curatorNotes,
+                note: curatorNotes,
               });
+            } else {
               this.logger.info(
                 {
-                  submissionId: submission.tweetId,
+                  submissionId: originalTweet.id,
                   feedId: feed.id,
                   curator: curatorTweet.username!,
                 },
-                "Enqueued auto-approval moderation task.",
-              );
-            } else {
-              this.logger.error(
-                {
-                  submissionId: originalTweet.id!,
-                  feedId: feed.id,
-                },
-                "Could not attempt auto-approval due to missing submission or feed config.",
+                "Submission pending manual moderation; curator is not a designated approver for this feed.",
               );
             }
           } else {
@@ -342,13 +332,35 @@ export class SubmissionService implements IBackgroundTaskService {
               {
                 submissionId: originalTweet.id,
                 feedId: feed.id,
-                status: existingFeedEntry.status,
               },
-              "Submission already associated with this feed.",
+              "Submission already associated with this feed. No action taken.",
             );
           }
         }
-      }); // End of transaction
+      });
+
+      if (moderationTasksToEnqueue.length > 0) {
+        const moderationQueue = createQueue(QUEUE_NAMES.MODERATION);
+        for (const task of moderationTasksToEnqueue) {
+          await moderationQueue.add(QUEUE_NAMES.MODERATION, {
+            submissionId: originalTweet.id!,
+            feedId: task.feedId,
+            action: "approve",
+            moderatorAccountId: curatorTweet.username!,
+            moderatorAccountIdType: "platform_username",
+            source: "auto_approval",
+            note: task.note,
+          });
+          this.logger.info(
+            {
+              submissionId: originalTweet.id,
+              feedId: task.feedId,
+              curator: curatorTweet.username!,
+            },
+            "Enqueued auto-approval moderation task because curator is a designated approver.",
+          );
+        }
+      }
 
       await this.handleAcknowledgement(curatorTweetCmd);
       this.logger.info(

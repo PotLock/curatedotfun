@@ -1,11 +1,11 @@
-import "dotenv/config";
-import { Queue } from "bullmq";
-import { createQueue, QUEUE_NAMES } from "@curatedotfun/shared-queue"; // Added QUEUE_NAMES
-import { initializeWorkers, gracefulShutdown } from "./worker-lifecycle";
-import { workerConfigurations } from "./handlers"; // This will be updated later
 import { ServiceProvider } from "@curatedotfun/core-services";
-import { db } from "./db";
+import { createQueue, QUEUE_NAMES } from "@curatedotfun/shared-queue";
 import { logger } from "@curatedotfun/utils";
+import { Queue } from "bullmq";
+import "dotenv/config";
+import { db } from "./db";
+import { workerConfigurations } from "./handlers";
+import { gracefulShutdown, initializeWorkers } from "./worker-lifecycle";
 
 const queueNames = new Set(workerConfigurations.map((config) => config.name));
 queueNames.add(QUEUE_NAMES.MODERATION);
@@ -18,7 +18,7 @@ const allQueues: Queue<any>[] = Array.from(queueNames).map((name) =>
 async function main() {
   logger.info("Starting Curate.fun Worker...");
 
-  const sp = new ServiceProvider({
+  const sp = ServiceProvider.getInstance({
     db,
     logger,
     env: {

@@ -1,7 +1,7 @@
-import { SearchMode, Tweet } from "agent-twitter-client";
 import { logger } from "@curatedotfun/utils";
-import { ITwitterService } from "../services/twitter/twitter.interface";
+import { SearchMode, Tweet } from "agent-twitter-client";
 import { TwitterCookie } from "../services/twitter/client";
+import { ITwitterService } from "../services/twitter/twitter.interface";
 
 export class MockTwitterService implements ITwitterService {
   private mockTweets: Tweet[] = [];
@@ -22,7 +22,7 @@ export class MockTwitterService implements ITwitterService {
         count: number,
         mode: SearchMode,
       ) => {
-        // Filter tweets that match the query (mentions @test_bot)
+        // Filter tweets that match the query (mentions @curatedotfun)
         const matchingTweets = this.mockTweets.filter((tweet) =>
           tweet.text?.includes("@curatedotfun"),
         );
@@ -70,7 +70,23 @@ export class MockTwitterService implements ITwitterService {
     return this.tweetIdCounter.toString();
   }
 
-  public addMockTweet(tweet: Partial<Tweet> & { inReplyToStatusId?: string }) {
+  public addMockTweet(tweet: Partial<Tweet>) {
+    const originalTweetId = new Date().toISOString();
+    const originalTweet: Tweet = {
+      id: originalTweetId,
+      text: "This is a mock original tweet.",
+      username: `original_author_${originalTweetId.slice(-4)}`,
+      userId: `mock-user-id-original-${originalTweetId.slice(-4)}`,
+      timeParsed: new Date(),
+      hashtags: [],
+      mentions: [],
+      photos: [],
+      urls: [],
+      videos: [],
+      thread: [],
+    };
+    this.mockTweets.push(originalTweet);
+
     const fullTweet: Tweet = {
       id: tweet.id || this.getNextTweetId(),
       text: tweet.text || "",
@@ -83,11 +99,11 @@ export class MockTwitterService implements ITwitterService {
       urls: tweet.urls || [],
       videos: tweet.videos || [],
       thread: [],
-      inReplyToStatusId: tweet.inReplyToStatusId,
+      inReplyToStatusId: originalTweetId,
     };
     this.mockTweets.push(fullTweet);
     logger.info(
-      `[MOCK]: Added tweet "${fullTweet.text}" from @${fullTweet.username}${tweet.inReplyToStatusId ? ` as reply to ${tweet.inReplyToStatusId}` : ""}`,
+      `[MOCK]: Added tweet "${fullTweet.text}" from @${fullTweet.username}${originalTweetId ? ` as reply to ${originalTweetId}` : ""}`,
     );
     return fullTweet;
   }
@@ -121,8 +137,8 @@ export class MockTwitterService implements ITwitterService {
 
     const allMentions = this.mockTweets.filter(
       (tweet) =>
-        tweet.text?.includes("@test_bot") ||
-        tweet.mentions?.some((m) => m.username === "test_bot"),
+        tweet.text?.includes("@curatedotfun") ||
+        tweet.mentions?.some((m) => m.username === "curatedotfun"),
     );
 
     const newMentions = allMentions
@@ -136,11 +152,6 @@ export class MockTwitterService implements ITwitterService {
         return aId > bId ? 1 : aId < bId ? -1 : 0;
       })
       .slice(0, BATCH_SIZE);
-
-    if (newMentions.length === 0) {
-      logger.info("No new mentions found");
-      return [];
-    }
 
     const latestTweet = newMentions[newMentions.length - 1];
     if (latestTweet?.id) {

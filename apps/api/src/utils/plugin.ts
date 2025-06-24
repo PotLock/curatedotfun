@@ -1,8 +1,13 @@
 import { createHash } from "crypto";
 import { PluginType } from "@curatedotfun/types";
-import { PluginConfig } from "../types/config";
 import { z } from "zod";
-import { logger } from "./logger";
+import { logger } from "@curatedotfun/utils";
+
+export interface PluginConfig<T extends string = string> {
+  type: T;
+  url: string;
+  config?: Record<string, unknown>;
+}
 
 /**
  * Creates a deterministic cache key for a plugin instance by combining and hashing
