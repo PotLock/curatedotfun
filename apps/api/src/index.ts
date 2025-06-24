@@ -9,11 +9,12 @@ import {
   cleanup,
   createHighlightBox,
   createSection,
-  logger,
-} from "./utils/logger";
+  createLogger,
+} from "@curatedotfun/utils";
 import { ServiceProvider } from "@curatedotfun/core-services";
 
 const PORT = Number(process.env.PORT) || 3000;
+const logger = createLogger({ service: "api" });
 
 async function startServer() {
   try {
