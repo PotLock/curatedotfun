@@ -1,15 +1,15 @@
-import { Job } from "bullmq";
-import { QUEUE_NAMES, JobData } from "@curatedotfun/shared-queue";
 import {
   ModerationService,
   ServiceProvider,
 } from "@curatedotfun/core-services";
-import { logger } from "@curatedotfun/utils";
+import { JobData, QUEUE_NAMES } from "@curatedotfun/shared-queue";
+import { Job } from "bullmq";
 
 export const moderationProcessor = async (
   job: Job<JobData<typeof QUEUE_NAMES.MODERATION>, any, string>,
   sp: ServiceProvider,
 ): Promise<void> => {
+  const logger = sp.getLogger().child({ component: "ModerationProcessor" });
   const {
     submissionId,
     feedId,
@@ -21,7 +21,7 @@ export const moderationProcessor = async (
   } = job.data;
   logger.info(
     { jobData: job.data },
-    `[Processor:${QUEUE_NAMES.MODERATION}] Received job ${job.id} to ${action} submission ${submissionId} for feed ${feedId}.`,
+    `Received job ${job.id} to ${action} submission ${submissionId} for feed ${feedId}.`,
   );
 
   try {
@@ -36,13 +36,11 @@ export const moderationProcessor = async (
       note,
     });
 
-    logger.info(
-      `[Processor:${QUEUE_NAMES.MODERATION}] Successfully processed job ${job.id}.`,
-    );
+    logger.info(`Successfully processed job ${job.id}.`);
   } catch (error) {
     logger.error(
       { err: error, jobId: job.id, jobData: job.data },
-      `[Processor:${QUEUE_NAMES.MODERATION}] Failed to process job ${job.id}.`,
+      `Failed to process job ${job.id}.`,
     );
     throw error; // Re-throw to let BullMQ handle retry/failure logic
   }

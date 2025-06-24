@@ -12,7 +12,6 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import { Env } from "../../types/app";
-import { logger } from "@curatedotfun/utils";
 
 const feedsRoutes = new Hono<Env>();
 
@@ -37,7 +36,7 @@ feedsRoutes.get("/", async (c) => {
       }),
     );
   } catch (error) {
-    logger.error({ error }, "Error fetching all feeds");
+    c.var.sp.getLogger().error({ error }, "Error fetching all feeds");
     return c.json(
       ApiErrorResponseSchema.parse({
         statusCode: 500,
@@ -84,7 +83,7 @@ feedsRoutes.post(
         201,
       );
     } catch (error) {
-      logger.error({ error, accountId }, "Error creating feed");
+      c.var.sp.getLogger().error({ error, accountId }, "Error creating feed");
       return c.json(
         ApiErrorResponseSchema.parse({
           statusCode: 500,
@@ -119,7 +118,7 @@ feedsRoutes.get(
         }),
       );
     } catch (error) {
-      logger.error({ error }, `Error fetching feed`);
+      c.var.sp.getLogger().error({ error }, `Error fetching feed`);
       if (error instanceof NotFoundError) {
         return c.json(
           ApiErrorResponseSchema.parse({
@@ -183,7 +182,7 @@ feedsRoutes.put(
         }),
       );
     } catch (error) {
-      logger.error({ error, accountId }, "Error updating feed");
+      c.var.sp.getLogger().error({ error, accountId }, "Error updating feed");
       if (error instanceof NotFoundError) {
         return c.json(
           ApiErrorResponseSchema.parse({
@@ -240,7 +239,7 @@ feedsRoutes.delete(
       await feedService.deleteFeed(feedId, accountId);
       return c.body(null, 204);
     } catch (error: unknown) {
-      logger.error({ error, accountId }, "Error deleting feed");
+      c.var.sp.getLogger().error({ error, accountId }, "Error deleting feed");
       if (error instanceof NotFoundError) {
         return c.json(
           ApiErrorResponseSchema.parse({
@@ -299,10 +298,9 @@ feedsRoutes.get(
         );
       return c.json(CanModerateResponseSchema.parse({ canModerate }));
     } catch (error: unknown) {
-      logger.error(
-        { error, actingAccountId },
-        "Error in /:feedId/can-moderate",
-      );
+      c.var.sp
+        .getLogger()
+        .error({ error, actingAccountId }, "Error in /:feedId/can-moderate");
       return c.json(
         CanModerateResponseSchema.parse({
           canModerate: false,

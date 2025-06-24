@@ -1,7 +1,7 @@
 import {
-  DB,
   ActivityRepository,
   AuthRequestRepository,
+  DB,
   FeedRepository,
   LeaderboardRepository,
   ModerationRepository,
@@ -12,7 +12,6 @@ import {
 } from "@curatedotfun/shared-db";
 import { Logger } from "pino";
 import { env as pluginsEnv } from "./env";
-import { SubmissionService } from "./services/submission.service";
 import { MockTwitterService } from "./mocks/twitter-service.mock";
 import { ActivityService } from "./services/activity.service";
 import { AuthService } from "./services/auth.service";
@@ -23,11 +22,12 @@ import { IBackgroundTaskService } from "./services/interfaces/background-task.in
 import { ModerationService } from "./services/moderation.service";
 import { PluginService } from "./services/plugin.service";
 import { ProcessorService } from "./services/processor.service";
+import { SubmissionService } from "./services/submission.service";
 import { TransformationService } from "./services/transformation.service";
 import { TwitterService } from "./services/twitter/client";
+import { ITwitterService } from "./services/twitter/twitter.interface";
 import { UserService } from "./services/users.service";
 import { getSuperAdminAccounts } from "./utils/auth";
-import { ITwitterService } from "./services/twitter/twitter.interface";
 
 interface ServiceProviderConfig {
   db: DB;
@@ -263,6 +263,10 @@ export class ServiceProvider {
    */
   public getBackgroundTaskServices(): IBackgroundTaskService[] {
     return this.backgroundTaskServices;
+  }
+
+  public getLogger(): Logger {
+    return this.config.logger;
   }
 
   public static getInstance(config?: ServiceProviderConfig): ServiceProvider {

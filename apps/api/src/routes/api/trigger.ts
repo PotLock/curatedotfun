@@ -1,8 +1,7 @@
+import { Env } from "@/types/app";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import { logger } from "@curatedotfun/utils";
-import { Env } from "@/types/app";
 
 // Define validation schema for the recap job payload
 const recapJobSchema = z.object({
@@ -30,6 +29,7 @@ export const triggerRoutes = new Hono<Env>();
 // Endpoint for the scheduler to trigger recap jobs
 triggerRoutes.post("/recap", zValidator("json", recapJobSchema), async (c) => {
   const { feedId, recapId } = c.req.valid("json");
+  const logger = c.var.sp.getLogger().child({ component: "TriggerRoutes" });
 
   logger.info(`Received request to run recap: ${feedId}/${recapId}`);
 

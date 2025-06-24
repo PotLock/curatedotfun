@@ -1,16 +1,17 @@
-import pino, { LoggerOptions, DestinationStream } from "pino";
+import pino, {
+  DestinationStream,
+  LoggerOptions,
+  stdTimeFunctions,
+  LogDescriptor,
+} from "pino";
 import pretty from "pino-pretty";
 
-const isProduction = process.env.NODE_ENV === "production";
+const env = process.env.NODE_ENV;
+const useJsonLogging = env === "production" || env === "staging";
 
-// Helper function to serialize error objects properly
 const errorSerializer = (err: any) => {
   if (!err) return err;
-
-  // If it's not an object, just return it
   if (typeof err !== "object") return err;
-
-  // Handle ZodError specifically for more compact logging
   if (err.issues && Array.isArray(err.issues)) {
     const zodIssues = err.issues
       .map((issue: any) => {
@@ -22,18 +23,14 @@ const errorSerializer = (err: any) => {
       message: `ZodError: ${zodIssues}`,
       name: err.name,
       stack: err.stack,
-      issues: err.issues, // Keep original issues for full context if needed
+      issues: err.issues,
     };
   }
-
-  // Create a base serialized error
   const serialized: Record<string, any> = {
     message: err.message || "Unknown error",
     name: err.name,
     stack: err.stack,
   };
-
-  // Add all enumerable properties
   for (const key in err) {
     if (
       Object.prototype.hasOwnProperty.call(err, key) &&
@@ -44,13 +41,9 @@ const errorSerializer = (err: any) => {
       serialized[key] = err[key];
     }
   }
-
-  // Handle nested error objects
   if (err.original) {
     serialized.original = errorSerializer(err.original);
   }
-
-  // Handle PostgreSQL specific properties
   const pgProps = [
     "code",
     "detail",
@@ -71,7 +64,6 @@ const errorSerializer = (err: any) => {
       serialized[prop] = err[prop];
     }
   }
-
   return serialized;
 };
 
@@ -84,38 +76,67 @@ export const createLogger = ({
   service,
   level,
 }: CreateLoggerOptions): pino.Logger => {
-  const prettyTransport = pretty({
-    colorize: true,
-    translateTime: "HH:MM:ss",
-    ignore: "pid,hostname,service,component",
-    messageFormat: (log, messageKey) => {
-      const serviceName = log.service;
-      const componentName = log.component;
-      const msg = log[messageKey];
-      if (componentName) {
-        return `[${serviceName}] (${componentName}) ${msg}`;
-      }
-      return `[${serviceName}] ${msg}`;
-    },
-  });
+  let defaultLogLevel: string;
+  if (env === "production") {
+    defaultLogLevel = "warn";
+  } else if (env === "staging") {
+    defaultLogLevel = "info";
+  } else {
+    defaultLogLevel = "info";
+  }
 
-  const options: LoggerOptions = {
-    level: level ?? (isProduction ? "warn" : "info"),
+  const pinoOptions: LoggerOptions = {
+    level: level ?? defaultLogLevel,
     serializers: {
       err: errorSerializer,
       error: errorSerializer,
     },
     base: {
+      pid: undefined, // Railway adds its own identifiers
+      hostname: undefined, // Railway adds its own identifiers
       service,
     },
-    ...(isProduction && {
-      redact: ["*.password", "*.token", "*.key", "*.secret"],
-    }),
   };
 
-  const transport: DestinationStream = isProduction
-    ? pino.destination(1)
-    : prettyTransport;
+  let transport: DestinationStream;
 
-  return pino(options, transport);
+  if (useJsonLogging) {
+    pinoOptions.timestamp = stdTimeFunctions.isoTime;
+    pinoOptions.formatters = {
+      level: (label) => ({ level: label }),
+    };
+    if (env === "production") {
+      pinoOptions.redact = {
+        paths: [
+          "*.password",
+          "*.token",
+          "*.key",
+          "*.secret",
+          "req.headers.authorization",
+          "Authorization",
+        ],
+        censor: "[REDACTED]",
+      };
+    }
+    transport = pino.destination({ fd: 1, sync: true }); // fd: 1 is stdout, sync is safer for containers
+  } else {
+    // For local development, use pino-pretty
+    transport = pretty({
+      colorize: true,
+      translateTime: "HH:MM:ss",
+      ignore: "pid,hostname,service,component", // pid,hostname,service are in base, component is per-log
+      messageFormat: (log: LogDescriptor, messageKey: string) => {
+        const currentService = log.service as string;
+        const currentComponent = log.component as string | undefined;
+        const message = (log[messageKey] || log.msg || "") as string;
+
+        if (currentComponent) {
+          return `[${currentService}] (${currentComponent}) ${message}`;
+        }
+        return `[${currentService}] ${message}`;
+      },
+    });
+  }
+
+  return pino(pinoOptions, transport);
 };

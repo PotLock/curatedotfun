@@ -1,10 +1,9 @@
+import { MockTwitterService } from "@curatedotfun/core-services";
 import { zValidator } from "@hono/zod-validator";
+import { Tweet } from "agent-twitter-client";
 import { Hono } from "hono";
 import { z } from "zod";
 import { Env } from "../../types/app";
-import { MockTwitterService } from "@curatedotfun/core-services";
-import { Tweet } from "agent-twitter-client";
-import { logger } from "@curatedotfun/utils";
 
 const testRoutes = new Hono<Env>();
 
@@ -64,7 +63,7 @@ testRoutes.post(
         );
       }
     } catch (error) {
-      logger.error(`Failed to mock tweet submission: ${error}`);
+      c.var.sp.getLogger().error(`Failed to mock tweet submission: ${error}`);
       return c.json(
         { success: false, message: "Failed to mock tweet submission" },
         500,

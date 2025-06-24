@@ -1,14 +1,14 @@
+import { ServiceProvider } from "@curatedotfun/core-services";
+import { createLogger } from "@curatedotfun/utils";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import { db } from "./db";
+import { createAuthMiddleware } from "./middlewares/auth.middleware";
 import { apiRoutes } from "./routes/api";
 import { AppInstance, Env } from "./types/app";
 import { getAllowedOrigins } from "./utils/config";
 import { errorHandler } from "./utils/error";
-import { ServiceProvider } from "@curatedotfun/core-services";
-import { createLogger } from "@curatedotfun/utils";
-import { createAuthMiddleware } from "./middlewares/auth.middleware";
 
 const ALLOWED_ORIGINS = getAllowedOrigins();
 

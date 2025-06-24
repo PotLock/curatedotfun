@@ -5,17 +5,18 @@ import {
   SubmissionService,
 } from "@curatedotfun/core-services";
 import { JobData, QUEUE_NAMES } from "@curatedotfun/shared-queue";
-import { logger, NotFoundError } from "@curatedotfun/utils";
+import { NotFoundError } from "@curatedotfun/utils";
 import { Job } from "bullmq";
 
 export const processingProcessor = async (
   job: Job<JobData<typeof QUEUE_NAMES.SUBMISSION_PROCESSING>, any, string>,
   sp: ServiceProvider,
 ): Promise<void> => {
+  const logger = sp.getLogger().child({ component: "ProcessingProcessor" });
   const { submissionId, feedId } = job.data;
   logger.info(
     { jobData: job.data },
-    `[Processor:${QUEUE_NAMES.SUBMISSION_PROCESSING}] Received job ${job.id} to process submission ${submissionId} for feed ${feedId}.`,
+    `Received job ${job.id} to process submission ${submissionId} for feed ${feedId}.`,
   );
 
   try {
@@ -35,18 +36,16 @@ export const processingProcessor = async (
 
     if (feed.config.outputs?.stream?.enabled) {
       await processorService.process(submission, feed.config.outputs.stream);
-      logger.info(
-        `[Processor:${QUEUE_NAMES.SUBMISSION_PROCESSING}] Successfully processed job ${job.id}.`,
-      );
+      logger.info(`Successfully processed job ${job.id}.`);
     } else {
       logger.info(
-        `[Processor:${QUEUE_NAMES.SUBMISSION_PROCESSING}] Stream processing not enabled for feed ${feedId}. Job ${job.id} considered complete.`,
+        `Stream processing not enabled for feed ${feedId}. Job ${job.id} considered complete.`,
       );
     }
   } catch (error) {
     logger.error(
       { err: error, jobId: job.id, jobData: job.data },
-      `[Processor:${QUEUE_NAMES.SUBMISSION_PROCESSING}] Failed to process job ${job.id}.`,
+      `Failed to process job ${job.id}.`,
     );
     throw error; // Re-throw to let BullMQ handle retry/failure logic
   }

@@ -1,6 +1,6 @@
-import { Scraper, SearchMode, Tweet } from "agent-twitter-client";
 import { TwitterRepository } from "@curatedotfun/shared-db";
 import { createLogger } from "@curatedotfun/utils";
+import { Scraper, SearchMode, Tweet } from "agent-twitter-client";
 import { ITwitterService } from "./twitter.interface";
 
 export interface TwitterConfig {

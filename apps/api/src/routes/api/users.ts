@@ -6,16 +6,15 @@ import {
   UserNearAccountIdParamSchema,
   UserProfileWrappedResponseSchema,
 } from "@curatedotfun/types";
-import { zValidator } from "@hono/zod-validator";
-import { Hono } from "hono";
-import { ContentfulStatusCode } from "hono/utils/http-status";
-import { Env } from "../../types/app";
 import {
   NearAccountError,
   NotFoundError,
   UserServiceError,
 } from "@curatedotfun/utils";
-import { logger } from "@curatedotfun/utils";
+import { zValidator } from "@hono/zod-validator";
+import { Hono } from "hono";
+import { ContentfulStatusCode } from "hono/utils/http-status";
+import { Env } from "../../types/app";
 
 const usersRoutes = new Hono<Env>();
 
@@ -60,7 +59,7 @@ usersRoutes.get("/me", async (c) => {
       }),
     );
   } catch (error) {
-    logger.error({ error }, "Error in usersRoutes.get('/me')");
+    c.var.sp.getLogger().error({ error }, "Error in usersRoutes.get('/me')");
     return c.json(
       ApiErrorResponseSchema.parse({
         statusCode: 500,
@@ -94,7 +93,7 @@ usersRoutes.post(
         201,
       );
     } catch (error: unknown) {
-      logger.error({ error }, "Error in usersRoutes.post('/')");
+      c.var.sp.getLogger().error({ error }, "Error in usersRoutes.post('/')");
 
       if (
         error instanceof NearAccountError ||
@@ -168,7 +167,7 @@ usersRoutes.put(
         }),
       );
     } catch (error) {
-      logger.error({ error }, "Error in usersRoutes.put('/me')");
+      c.var.sp.getLogger().error({ error }, "Error in usersRoutes.put('/me')");
 
       if (error instanceof NotFoundError || error instanceof UserServiceError) {
         return c.json(
@@ -232,7 +231,7 @@ usersRoutes.delete("/me", async (c) => {
       );
     }
   } catch (error: unknown) {
-    logger.error({ error }, "Error in usersRoutes.delete('/me')");
+    c.var.sp.getLogger().error({ error }, "Error in usersRoutes.delete('/me')");
 
     if (
       error instanceof NotFoundError ||
@@ -304,10 +303,12 @@ usersRoutes.get(
         }),
       );
     } catch (error) {
-      logger.error(
-        { error },
-        `Error in usersRoutes.get('/by-near/${nearAccountId}')`,
-      );
+      c.var.sp
+        .getLogger()
+        .error(
+          { error },
+          `Error in usersRoutes.get('/by-near/${nearAccountId}')`,
+        );
 
       if (error instanceof NotFoundError) {
         return c.json(

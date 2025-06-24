@@ -8,19 +8,15 @@ import type {
   SourcePlugin,
   TransformerPlugin,
 } from "@curatedotfun/types";
-import {
-  PluginError,
-  PluginErrorCode,
-  createLogger,
-} from "@curatedotfun/utils";
+import { PluginError, PluginErrorCode } from "@curatedotfun/utils";
 import { performReload } from "@module-federation/node/utils";
 import { init, loadRemote } from "@module-federation/runtime";
 import Mustache from "mustache";
 import type { Logger } from "pino";
 import { logPluginError } from "../utils/error";
+import { createPluginInstanceKey } from "../utils/plugin";
 import { isProduction } from "./config.service";
 import { IBaseService } from "./interfaces/base-service.interface";
-import { createPluginInstanceKey } from "../utils/plugin";
 
 export interface PluginConfig<T extends string = string> {
   type: T;
