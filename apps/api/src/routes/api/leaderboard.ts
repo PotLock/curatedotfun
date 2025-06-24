@@ -1,6 +1,6 @@
 import { LeaderboardRepository } from "@curatedotfun/shared-db";
 import { Hono } from "hono";
-import { Env } from "types/app";
+import { Env } from "@/types/app";
 
 // TODO: depreciate and combine with activity routes
 const leaderboardRoutes = new Hono<Env>();

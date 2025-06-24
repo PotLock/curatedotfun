@@ -4,8 +4,10 @@
     // Remember to add reference here when adding a new app or package
     { "path": "./apps/api" },
     { "path": "./apps/app" },
+    { "path": "./packages/core-services" },
     { "path": "./packages/types" },
     { "path": "./packages/shared-db" },
+    { "path": "./packages/shared-queue" },
     { "path": "./packages/utils" }
   ],
   "compilerOptions": {

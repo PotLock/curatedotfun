@@ -4,6 +4,7 @@ export * from "./leaderboard";
 export * from "./moderation";
 export * from "./plugins";
 export * from "./submission";
+export * from "./test";
 export * from "./twitter";
 export * from "./users";
 export * from "./types";

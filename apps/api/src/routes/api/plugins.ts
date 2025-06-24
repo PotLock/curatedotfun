@@ -11,6 +11,7 @@ import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { db } from "../../db";
 import { Env } from "../../types/app";
+import { ServiceError } from "@curatedotfun/utils";
 
 const pluginsRoutes = new Hono<Env>();
 const pluginRepository = new PluginRepository(db);
@@ -30,7 +31,10 @@ pluginsRoutes.post(
       return c.json(newPlugin, 201);
     } catch (error: unknown) {
       console.error("Error registering plugin:", { error, pluginData });
-      if (error.code === "PLUGIN_ALREADY_EXISTS") {
+      if (
+        error instanceof ServiceError &&
+        error.code === "PLUGIN_ALREADY_EXISTS"
+      ) {
         throw new HTTPException(409, { message: error.message });
       }
       throw new HTTPException(500, { message: "Failed to register plugin" });

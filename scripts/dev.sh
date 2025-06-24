@@ -55,9 +55,9 @@ else
     echo "💾 Preserving existing database data."
   fi
 
-  # Step 2: Start PostgreSQL container
-  echo "🚀 Starting PostgreSQL container (postgres_dev)..."
-  docker-compose --profile dev up -d postgres_dev
+  # Step 2: Start PostgreSQL and Redis containers
+  echo "🚀 Starting dev containers (postgres_dev, redis)..."
+  docker-compose --profile dev up -d
 
   # Step 3: Run migrations
   echo "⏳ Running database migrations..."
@@ -90,10 +90,11 @@ fi
 
 # Run the dev command for the applications
 echo ""
-echo "🚀 Starting development servers (apps and api)..."
+echo "🚀 Starting development servers (apps, api, and worker)..."
 echo "📝 Press Ctrl+C to stop all services and clean up containers"
 echo "🌐 Frontend will be available at: http://localhost:5173"
 echo "🔌 Backend will be available at: http://localhost:3000"
+echo "👷 Worker is running in the background"
 echo ""
 
 turbo run dev

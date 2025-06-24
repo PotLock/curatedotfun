@@ -1,4 +1,4 @@
-import { DistributorConfig, TransformConfig } from "./config";
+import { DistributorConfig, TransformConfig } from "@curatedotfun/types";
 
 /**
  * Configuration for a recap job

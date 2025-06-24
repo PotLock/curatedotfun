@@ -429,13 +429,13 @@ export function createMockCuratorTweet(
   const id = Date.now().toString();
   return {
     id,
-    text: `@test_bot !submit ${feedIds.map((id) => `#${id}`).join(" ")}`,
+    text: `@curatedotfun !submit ${feedIds.map((id) => `#${id}`).join(" ")}`,
     username: "curator",
     userId: "curator_id",
     inReplyToStatusId: originalTweetId,
     timeParsed: new Date(),
     hashtags: feedIds,
-    mentions: [{ username: "test_bot", id: "test_bot_id" }],
+    mentions: [{ username: "curatedotfun", id: "curatedotfun_id" }],
     photos: [],
     urls: [],
     videos: [],

@@ -44,6 +44,8 @@ export const CreateModerationRequestSchema = z.object({
   submissionId: z.string().min(1),
   feedId: z.string().min(1),
   moderatorAccountId: z.string().min(1),
+  moderatorAccountIdType: ModeratorAccountIdTypeEnum,
+  source: ModerationSourceEnum,
   action: ModerationActionEnum,
   note: z.string().optional().nullable(),
 });

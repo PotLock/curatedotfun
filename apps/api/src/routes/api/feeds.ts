@@ -1,3 +1,4 @@
+import { FeedService } from "@curatedotfun/core-services";
 import {
   ApiErrorResponseSchema,
   CanModerateResponseSchema,
@@ -6,13 +7,12 @@ import {
   FeedWrappedResponseSchema,
   UpdateFeedRequestSchema,
 } from "@curatedotfun/types";
+import { ForbiddenError, NotFoundError } from "@curatedotfun/utils";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import { Env } from "../../types/app";
-import { ForbiddenError, NotFoundError } from "../../types/errors";
-import { logger } from "../../utils/logger";
-import { ServiceProvider } from "../../utils/service-provider";
+import { logger } from "@curatedotfun/utils";
 
 const feedsRoutes = new Hono<Env>();
 
@@ -23,7 +23,8 @@ const feedIdParamSchema = z.object({
 // GET /api/feeds - Get all feeds
 feedsRoutes.get("/", async (c) => {
   try {
-    const feedService = ServiceProvider.getInstance().getFeedService();
+    const sp = c.var.sp;
+    const feedService: FeedService = sp.getFeedService();
     const feeds = await feedService.getAllFeeds();
     return c.json(
       FeedsWrappedResponseSchema.parse({
@@ -67,7 +68,8 @@ feedsRoutes.post(
 
     try {
       const feedConfig = c.req.valid("json");
-      const feedService = ServiceProvider.getInstance().getFeedService();
+      const sp = c.var.sp;
+      const feedService = sp.getFeedService();
       const newFeed = await feedService.createFeed(feedConfig, accountId);
 
       return c.json(
@@ -102,7 +104,8 @@ feedsRoutes.get(
   async (c) => {
     try {
       const { feedId } = c.req.valid("param");
-      const feedService = ServiceProvider.getInstance().getFeedService();
+      const sp = c.var.sp;
+      const feedService = sp.getFeedService();
       const feed = await feedService.getFeedById(feedId);
 
       return c.json(
@@ -160,7 +163,8 @@ feedsRoutes.put(
     try {
       const { feedId } = c.req.valid("param");
       const feedConfig = c.req.valid("json");
-      const feedService = ServiceProvider.getInstance().getFeedService();
+      const sp = c.var.sp;
+      const feedService = sp.getFeedService();
 
       const updatedFeed = await feedService.updateFeed(
         feedId,
@@ -231,7 +235,8 @@ feedsRoutes.delete(
 
     try {
       const { feedId } = c.req.valid("param");
-      const feedService = ServiceProvider.getInstance().getFeedService();
+      const sp = c.var.sp;
+      const feedService = sp.getFeedService();
       await feedService.deleteFeed(feedId, accountId);
       return c.body(null, 204);
     } catch (error: unknown) {
@@ -285,8 +290,8 @@ feedsRoutes.get(
 
     try {
       const { feedId } = c.req.valid("param");
-      const moderationService =
-        ServiceProvider.getInstance().getModerationService();
+      const sp = c.var.sp;
+      const moderationService = sp.getModerationService();
       const canModerate =
         await moderationService.checkUserFeedModerationPermission(
           feedId,
