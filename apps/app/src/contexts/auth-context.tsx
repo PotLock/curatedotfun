@@ -39,11 +39,15 @@ interface AuthProviderProps {
 export function AuthProvider({
   children,
 }: AuthProviderProps): React.ReactElement {
-  const [currentAccountId, setCurrentAccountId] = useState<string | null>(null);
-  const [isSignedIn, setIsSignedIn] = useState<boolean>(false);
+  const [currentAccountId, setCurrentAccountId] = useState<string | null>(
+    near.accountId() ?? null,
+  );
+  const [isSignedIn, setIsSignedIn] = useState<boolean>(!!near.accountId());
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
   const [nonce, setNonce] = useState<string | null>(null);
   const [recipient, setRecipient] = useState<string | null>(null);
+  const isSigningInRef = React.useRef(false);
+  const previousAccountIdRef = React.useRef<string | null>(null);
 
   const checkAuthorization = useCallback(async () => {
     try {
@@ -75,26 +79,52 @@ export function AuthProvider({
   }, []);
 
   useEffect(() => {
-    let isCancelled = false;
-    const accountId = near.accountId();
-    if (accountId) {
-      setCurrentAccountId(accountId);
-      setIsSignedIn(true);
+    const accountListener = near.event.onAccount((newAccountId) => {
+      setCurrentAccountId(newAccountId);
+      setIsSignedIn(!!newAccountId);
+
+      if (!newAccountId) {
+        toast({
+          title: "Signed out",
+          description: "You have been signed out successfully.",
+          variant: "success",
+        });
+        setIsAuthorized(false);
+        setNonce(null);
+        setRecipient(null);
+      }
+    });
+
+    return () => {
+      near.event.offAccount(accountListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (currentAccountId && currentAccountId !== previousAccountIdRef.current) {
+      if (isSigningInRef.current) {
+        toast({
+          title: "Success!",
+          description: `Connected as: ${currentAccountId}`,
+          variant: "success",
+        });
+        isSigningInRef.current = false;
+      }
       checkAuthorization().then(() => {
-        if (!isCancelled) {
-          initiateLogin(accountId);
+        if (currentAccountId) {
+          initiateLogin(currentAccountId);
         }
       });
     }
-    return () => {
-      isCancelled = true;
-    };
-  }, [checkAuthorization, initiateLogin]);
+    previousAccountIdRef.current = currentAccountId;
+  }, [currentAccountId, checkAuthorization, initiateLogin]);
 
   const handleSignIn = async (): Promise<void> => {
+    isSigningInRef.current = true;
     try {
       await near.requestSignIn();
     } catch (e: unknown) {
+      isSigningInRef.current = false;
       toast({
         title: "Sign-in failed",
         description: e instanceof Error ? e.message : String(e),
@@ -161,14 +191,6 @@ export function AuthProvider({
       );
     }
     near.signOut();
-    setCurrentAccountId(null);
-    setIsSignedIn(false);
-    setIsAuthorized(false);
-    toast({
-      title: "Signed out",
-      description: "You have been signed out successfully.",
-      variant: "success",
-    });
   };
 
   const contextValue: IAuthContext = {
