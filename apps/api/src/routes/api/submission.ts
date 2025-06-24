@@ -5,11 +5,11 @@ import {
   RichSubmission,
 } from "@curatedotfun/shared-db";
 import {
-  Submission as DomainSubmission,
   FeedContextSubmission,
-  SubmissionStatus as DomainSubmissionStatus,
-  SubmissionStatusEnum as DomainSubmissionStatusEnum,
-  SubmissionFeed as DomainSubmissionFeed,
+  Submission,
+  SubmissionFeed,
+  SubmissionStatus,
+  SubmissionStatusSchema,
 } from "@curatedotfun/types";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
@@ -47,9 +47,8 @@ submissionRoutes.get(
         limit,
       );
 
-    const domainItems: DomainSubmission[] = repoResult.items.map((rs) => {
-      let overallStatus: DomainSubmissionStatus =
-        DomainSubmissionStatusEnum.PENDING;
+    const domainItems: Submission[] = repoResult.items.map((rs) => {
+      let overallStatus: SubmissionStatus = SubmissionStatusSchema.enum.pending;
       if (rs.moderationHistory && rs.moderationHistory.length > 0) {
         // Prefer direct moderation history for overall status if available
         const approvedAction = rs.moderationHistory.find(
@@ -59,16 +58,17 @@ submissionRoutes.get(
           (mh) => mh.action === "reject",
         );
 
-        if (approvedAction) overallStatus = DomainSubmissionStatusEnum.APPROVED;
+        if (approvedAction)
+          overallStatus = SubmissionStatusSchema.enum.approved;
         else if (rejectedAction)
-          overallStatus = DomainSubmissionStatusEnum.REJECTED;
+          overallStatus = SubmissionStatusSchema.enum.rejected;
         // If only pending or other actions, it remains PENDING by default
       } else if (rs.feeds && rs.feeds.length > 0) {
         // Fallback to feed statuses if no direct moderation history
         if (rs.feeds.some((f) => f.status === "approved")) {
-          overallStatus = DomainSubmissionStatusEnum.APPROVED;
+          overallStatus = SubmissionStatusSchema.enum.approved;
         } else if (rs.feeds.every((f) => f.status === "rejected")) {
-          overallStatus = DomainSubmissionStatusEnum.REJECTED;
+          overallStatus = SubmissionStatusSchema.enum.rejected;
         }
         // If feeds are all pending, it remains PENDING
       }
@@ -82,9 +82,9 @@ submissionRoutes.get(
         content: rs.content,
         curatorNotes: rs.curatorNotes,
         curatorTweetId: rs.curatorTweetId!,
-        createdAt: rs.createdAt,
-        submittedAt: rs.submittedAt,
-        updatedAt: rs.updatedAt,
+        createdAt: rs.createdAt.toISOString(),
+        submittedAt: rs.submittedAt ? rs.submittedAt.toISOString() : null,
+        updatedAt: rs.updatedAt ? rs.updatedAt.toISOString() : null,
         moderationHistory: (rs.moderationHistory ?? []).map((mh) => ({
           id: mh.id,
           moderatorAccountId: mh.moderatorAccountId,
@@ -104,16 +104,16 @@ submissionRoutes.get(
             ({
               submissionId: sf.submissionId,
               feedId: sf.feedId,
-              status: sf.status as DomainSubmissionStatus,
-              createdAt: sf.createdAt,
-              updatedAt: sf.updatedAt,
-            }) as DomainSubmissionFeed,
+              status: sf.status as SubmissionStatus,
+              createdAt: sf.createdAt.toISOString(),
+              updatedAt: sf.updatedAt ? sf.updatedAt.toISOString() : null,
+            }) as SubmissionFeed,
         ),
         status: overallStatus,
       };
     });
 
-    const response: PaginatedResponse<DomainSubmission> = {
+    const response: PaginatedResponse<Submission> = {
       items: domainItems,
       pagination: repoResult.pagination,
     };
@@ -135,8 +135,8 @@ submissionRoutes.get("/single/:submissionId", async (c) => {
     return c.notFound();
   }
 
-  let overallStatusSingle: DomainSubmissionStatus =
-    DomainSubmissionStatusEnum.PENDING;
+  let overallStatusSingle: SubmissionStatus =
+    SubmissionStatusSchema.enum.pending;
   if (
     richSubmission.moderationHistory &&
     richSubmission.moderationHistory.length > 0
@@ -149,18 +149,18 @@ submissionRoutes.get("/single/:submissionId", async (c) => {
     );
 
     if (approvedAction)
-      overallStatusSingle = DomainSubmissionStatusEnum.APPROVED;
+      overallStatusSingle = SubmissionStatusSchema.enum.approved;
     else if (rejectedAction)
-      overallStatusSingle = DomainSubmissionStatusEnum.REJECTED;
+      overallStatusSingle = SubmissionStatusSchema.enum.rejected;
   } else if (richSubmission.feeds && richSubmission.feeds.length > 0) {
     if (richSubmission.feeds.some((f) => f.status === "approved")) {
-      overallStatusSingle = DomainSubmissionStatusEnum.APPROVED;
+      overallStatusSingle = SubmissionStatusSchema.enum.approved;
     } else if (richSubmission.feeds.every((f) => f.status === "rejected")) {
-      overallStatusSingle = DomainSubmissionStatusEnum.REJECTED;
+      overallStatusSingle = SubmissionStatusSchema.enum.rejected;
     }
   }
 
-  const domainSubmission: DomainSubmission = {
+  const domainSubmission: Submission = {
     tweetId: richSubmission.tweetId,
     userId: richSubmission.userId,
     username: richSubmission.username,
@@ -169,9 +169,13 @@ submissionRoutes.get("/single/:submissionId", async (c) => {
     content: richSubmission.content,
     curatorNotes: richSubmission.curatorNotes,
     curatorTweetId: richSubmission.curatorTweetId!,
-    createdAt: richSubmission.createdAt,
-    submittedAt: richSubmission.submittedAt,
-    updatedAt: richSubmission.updatedAt,
+    createdAt: richSubmission.createdAt.toISOString(),
+    submittedAt: richSubmission.submittedAt
+      ? richSubmission.submittedAt.toISOString()
+      : null,
+    updatedAt: richSubmission.updatedAt
+      ? richSubmission.updatedAt.toISOString()
+      : null,
     moderationHistory: (richSubmission.moderationHistory ?? []).map((mh) => ({
       id: mh.id,
       moderatorAccountId: mh.moderatorAccountId,
@@ -191,10 +195,10 @@ submissionRoutes.get("/single/:submissionId", async (c) => {
         ({
           submissionId: sf.submissionId,
           feedId: sf.feedId,
-          status: sf.status as DomainSubmissionStatus,
-          createdAt: sf.createdAt,
-          updatedAt: sf.updatedAt,
-        }) as DomainSubmissionFeed,
+          status: sf.status as SubmissionStatus,
+          createdAt: sf.createdAt.toISOString(),
+          updatedAt: sf.updatedAt ? sf.updatedAt.toISOString() : null,
+        }) as SubmissionFeed,
     ),
     status: overallStatusSingle,
   };
@@ -236,9 +240,9 @@ submissionRoutes.get(
     const domainItems: FeedContextSubmission[] = repoResult.items.map((rs) => {
       const specificFeedLink = rs.feeds.find((f) => f.feedId === feedIdParam);
 
-      const statusInFeed: DomainSubmissionStatus = specificFeedLink
-        ? (specificFeedLink.status as DomainSubmissionStatus)
-        : DomainSubmissionStatusEnum.PENDING;
+      const statusInFeed: SubmissionStatus = specificFeedLink
+        ? (specificFeedLink.status as SubmissionStatus)
+        : SubmissionStatusSchema.enum.pending;
 
       return {
         tweetId: rs.tweetId,
@@ -249,9 +253,9 @@ submissionRoutes.get(
         content: rs.content,
         curatorNotes: rs.curatorNotes,
         curatorTweetId: rs.curatorTweetId!,
-        createdAt: rs.createdAt,
-        submittedAt: rs.submittedAt,
-        updatedAt: rs.updatedAt,
+        createdAt: rs.createdAt.toISOString(),
+        submittedAt: rs.submittedAt ? rs.submittedAt.toISOString() : null,
+        updatedAt: rs.updatedAt ? rs.updatedAt.toISOString() : null,
         status: statusInFeed,
         moderationHistory: (rs.moderationHistory ?? []).map((mh) => ({
           id: mh.id,

@@ -1,11 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import FeedList from "../../components/FeedList";
 import { Hero } from "../../components/Hero";
-import SubmissionFeed from "../../components/SubmissionFeed";
 import TopCurators from "../../components/TopCurators";
-import { submissionSearchSchema } from "../../lib/api";
+import {
+  submissionSearchSchema,
+  useAllSubmissions,
+  SubmissionFilters,
+} from "../../lib/api";
+import FilterControls from "../../components/FilterControls";
+import InfiniteFeed from "../../components/InfiniteFeed";
+import SubmissionList from "../../components/SubmissionList";
 
 export const Route = createFileRoute("/_layout/")({
   validateSearch: (search) => submissionSearchSchema.parse(search),
@@ -15,6 +21,28 @@ export const Route = createFileRoute("/_layout/")({
 function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileCuratorsOpen, setMobileCuratorsOpen] = useState(false);
+  const searchParams = useSearch({ from: Route.id }) as SubmissionFilters;
+  const apiFilters: SubmissionFilters = {
+    status: searchParams.status,
+    sortOrder: searchParams.sortOrder || "newest",
+    q: searchParams.q || "",
+  };
+  const queryResult = useAllSubmissions(apiFilters);
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status: fetchStatus,
+  } = queryResult;
+
+  const items = data?.pages.flatMap((page) => page.items) ?? [];
+  const lastPageData =
+    data?.pages && data.pages.length > 0
+      ? data.pages[data.pages.length - 1]
+      : null;
+  const totalItems = lastPageData?.pagination?.totalCount ?? items.length;
+  const displayTitle = "All Submissions";
 
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
   const toggleCurators = () => setMobileCuratorsOpen(!mobileCuratorsOpen);
@@ -104,7 +132,37 @@ function HomePage() {
 
         {/* Main Content Area */}
         <div className="col-span-2">
-          <SubmissionFeed title="All Submissions" parentRouteId={Route.id} />
+          <div className="flex flex-col gap-6 w-full py-4">
+            <div className="flex md:flex-row flex-col justify-between items-center gap-6">
+              <h1 className="text-[24px] md:text-[32px] leading-[63px] font-normal">
+                {displayTitle}
+              </h1>
+            </div>
+
+            <FilterControls
+              parentRouteId={Route.id}
+              totalItems={totalItems}
+              isSearchActive={!!searchParams.q && searchParams.q.trim() !== ""}
+            />
+
+            <InfiniteFeed
+              items={items}
+              fetchNextPage={fetchNextPage}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              status={fetchStatus}
+              loadingMessage="Loading more submissions..."
+              noMoreItemsMessage="No more submissions to load"
+              initialLoadingMessage="Loading submissions..."
+              renderItems={(renderableItems) => (
+                <SubmissionList
+                  items={renderableItems}
+                  // feedId is not applicable for "All Submissions"
+                  allowModerationControls={false} // Or based on some other logic if needed
+                />
+              )}
+            />
+          </div>
         </div>
 
         {/* Right Panel - Feed Details */}
@@ -122,7 +180,36 @@ function HomePage() {
 
       {/* Mobile Content */}
       <div className="md:hidden px-4">
-        <SubmissionFeed title="All Submissions" parentRouteId={Route.id} />
+        <div className="flex flex-col gap-6 w-full py-4">
+          <div className="flex md:flex-row flex-col justify-between items-center gap-6">
+            <h1 className="text-[24px] md:text-[32px] leading-[63px] font-normal">
+              {displayTitle}
+            </h1>
+          </div>
+
+          <FilterControls
+            parentRouteId={Route.id}
+            totalItems={totalItems}
+            isSearchActive={!!searchParams.q && searchParams.q.trim() !== ""}
+          />
+
+          <InfiniteFeed
+            items={items}
+            fetchNextPage={fetchNextPage}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            status={fetchStatus}
+            loadingMessage="Loading more submissions..."
+            noMoreItemsMessage="No more submissions to load"
+            initialLoadingMessage="Loading submissions..."
+            renderItems={(renderableItems) => (
+              <SubmissionList
+                items={renderableItems}
+                allowModerationControls={false}
+              />
+            )}
+          />
+        </div>
       </div>
     </>
   );

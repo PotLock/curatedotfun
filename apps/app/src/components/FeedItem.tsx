@@ -1,5 +1,6 @@
 import type { FeedContextSubmission } from "@curatedotfun/types";
 import { useAuth } from "../contexts/auth-context";
+import { useSubmission } from "../lib/api";
 import {
   useApproveSubmission,
   useRejectSubmission,
@@ -137,14 +138,38 @@ const truncateText = (text: string, maxLength: number): string => {
 };
 
 export const FeedItem = ({
-  submission,
+  submission: initialSubmission,
   feedId,
   allowModerationControls,
 }: FeedItemProps) => {
   const auth = useAuth();
+  const { data: submissionData, isLoading } = useSubmission(
+    initialSubmission.tweetId,
+  );
+
+  const submission: FeedContextSubmission = {
+    ...initialSubmission,
+    ...(submissionData || {}),
+    status: submissionData?.status ?? initialSubmission.status,
+    moderationHistory:
+      submissionData?.moderationHistory ??
+      initialSubmission.moderationHistory ??
+      [],
+  };
+
   const canModerateQuery = useCanModerateFeed(feedId);
   const lastModeration =
     submission.moderationHistory?.[submission.moderationHistory.length - 1];
+
+  if (isLoading && !submissionData) {
+    return (
+      <div className="flex gap-3 flex-col p-4 w-full items-center justify-between border rounded-lg border-neutral-300 animate-pulse">
+        <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+        <div className="h-4 bg-gray-200 rounded w-full mt-2"></div>
+        <div className="h-4 bg-gray-200 rounded w-5/6 mt-1"></div>
+      </div>
+    );
+  }
 
   return (
     <div
