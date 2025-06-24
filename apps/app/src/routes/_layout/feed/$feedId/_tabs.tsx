@@ -4,7 +4,7 @@ import {
   createFileRoute,
   useParams,
 } from "@tanstack/react-router";
-import { ListFilter, Settings2, type LucideIcon } from "lucide-react";
+import { ListFilter, type LucideIcon } from "lucide-react";
 
 interface TabDefinition {
   to: string;
@@ -38,11 +38,11 @@ const TABS: TabDefinition[] = [
   //   label: "Members",
   //   icon: UsersRound,
   // },
-  {
-    to: "/feed/$feedId/settings",
-    label: "Settings",
-    icon: Settings2,
-  },
+  // {
+  //   to: "/feed/$feedId/settings",
+  //   label: "Settings",
+  //   icon: Settings2,
+  // },
 ];
 
 export const Route = createFileRoute("/_layout/feed/$feedId/_tabs")({
