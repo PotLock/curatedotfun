@@ -7,9 +7,6 @@ import { ServiceProvider } from "@curatedotfun/core-services";
 import { db } from "./db";
 import { logger } from "@curatedotfun/utils";
 
-// Create queues for all registered worker configurations and any other necessary queues
-// For now, this includes the default queue from existing handlers,
-// and we'll add MODERATION and SUBMISSION_PROCESSING queues explicitly.
 const queueNames = new Set(workerConfigurations.map((config) => config.name));
 queueNames.add(QUEUE_NAMES.MODERATION);
 queueNames.add(QUEUE_NAMES.SUBMISSION_PROCESSING);
@@ -34,9 +31,9 @@ async function main() {
       MASTER_KEYPAIR: process.env.MASTER_KEYPAIR,
     },
   });
-  await sp.init(); // Initialize services
+  await sp.init();
 
-  const allWorkers = initializeWorkers(sp); // Pass ServiceProvider to initializeWorkers
+  const allWorkers = initializeWorkers(sp);
 
   logger.info("Application started. Workers are listening for jobs...");
 

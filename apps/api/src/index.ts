@@ -22,8 +22,6 @@ async function startServer() {
     const { app } = await createApp();
     const sp = ServiceProvider.getInstance();
 
-    await sp.init();
-
     app.get("/health", (c) => {
       const health = {
         status: "OK",

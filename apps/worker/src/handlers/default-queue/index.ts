@@ -1,5 +1,5 @@
 import { QUEUE_NAMES } from "@curatedotfun/shared-queue";
-import { AppWorkerConfig } from "../../worker-lifecycle"; // Import AppWorkerConfig
+import { AppWorkerConfig } from "../../worker-lifecycle";
 import { defaultProcessor } from "./processor";
 
 export const defaultQueueConfig: AppWorkerConfig<typeof QUEUE_NAMES.DEFAULT> = {

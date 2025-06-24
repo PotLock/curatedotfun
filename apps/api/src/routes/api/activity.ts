@@ -1,21 +1,20 @@
+import { ActivityServiceError } from "@curatedotfun/utils";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { Env } from "../../types/app";
-import { ActivityServiceError } from "@curatedotfun/utils";
-import { ServiceProvider } from "../../utils/service-provider";
 
 import {
   ActivityFeedPathParamsSchema,
+  ActivityListResponseSchema,
   ActivityUserPathParamsSchema,
+  ApiErrorResponseSchema,
+  FeedInfoListResponseSchema,
   GetLeaderboardApiQuerySchema,
   GetUserActivitiesApiQuerySchema,
-  ActivityListResponseSchema,
-  LeaderboardResponseSchema,
   GlobalStatsResponseSchema,
-  FeedInfoListResponseSchema,
+  LeaderboardResponseSchema,
   UserFeedRankResponseSchema,
-  ApiErrorResponseSchema,
 } from "@curatedotfun/types";
 
 const activityRoutes = new Hono<Env>();
@@ -31,8 +30,8 @@ activityRoutes.get(
     try {
       const options = c.req.valid("query");
 
-      const activityService =
-        ServiceProvider.getInstance().getActivityService();
+      const sp = c.var.sp;
+      const activityService = sp.getActivityService();
       const leaderboard =
         await activityService.getUserRankingLeaderboard(options);
 
@@ -81,7 +80,8 @@ activityRoutes.get(
  */
 activityRoutes.get("/stats", async (c) => {
   try {
-    const activityService = ServiceProvider.getInstance().getActivityService();
+    const sp = c.var.sp;
+    const activityService = sp.getActivityService();
     const stats = await activityService.getGlobalStats();
 
     return c.json(
@@ -138,8 +138,8 @@ activityRoutes.get("/user/me", async (c) => {
 
   try {
     // Get services from the service provider
-    const serviceProvider = ServiceProvider.getInstance();
-    const activityService = serviceProvider.getActivityService();
+    const sp = c.var.sp;
+    const activityService = sp.getActivityService();
 
     const activities = await activityService.getUserActivities(accountId);
 
@@ -187,9 +187,8 @@ activityRoutes.get(
     try {
       const { accountId } = c.req.valid("param");
       const options = c.req.valid("query");
-
-      const activityService =
-        ServiceProvider.getInstance().getActivityService();
+      const sp = c.var.sp;
+      const activityService = sp.getActivityService();
       const activities = await activityService.getUserActivities(
         accountId,
         options,
@@ -256,7 +255,8 @@ activityRoutes.get("/feeds/curated-by/me", async (c) => {
 
   try {
     // Get services from the service provider
-    const serviceProvider = ServiceProvider.getInstance();
+    const sp = c.var.sp;
+
     const userService = serviceProvider.getUserService();
     const activityService = serviceProvider.getActivityService();
 
@@ -333,7 +333,8 @@ activityRoutes.get("/feeds/approved-by/me", async (c) => {
 
   try {
     // Get services from the service provider
-    const serviceProvider = ServiceProvider.getInstance();
+    const sp = c.var.sp;
+
     const userService = serviceProvider.getUserService();
     const activityService = serviceProvider.getActivityService();
 
@@ -415,7 +416,8 @@ activityRoutes.get(
       const { feedId } = c.req.valid("param");
 
       // Get services from the service provider
-      const serviceProvider = ServiceProvider.getInstance();
+      const sp = c.var.sp;
+
       const userService = serviceProvider.getUserService();
       const activityService = serviceProvider.getActivityService();
 

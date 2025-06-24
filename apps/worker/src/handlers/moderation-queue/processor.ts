@@ -1,20 +1,31 @@
 import { Job } from "bullmq";
 import { QUEUE_NAMES, JobData } from "@curatedotfun/shared-queue";
-import { ServiceProvider } from "@curatedotfun/core-services";
+import {
+  ModerationService,
+  ServiceProvider,
+} from "@curatedotfun/core-services";
 import { logger } from "@curatedotfun/utils";
 
 export const moderationProcessor = async (
   job: Job<JobData<typeof QUEUE_NAMES.MODERATION>, any, string>,
   sp: ServiceProvider,
 ): Promise<void> => {
-  const { submissionId, feedId, action, moderatorAccountId, moderatorAccountIdType, source, note } = job.data;
+  const {
+    submissionId,
+    feedId,
+    action,
+    moderatorAccountId,
+    moderatorAccountIdType,
+    source,
+    note,
+  } = job.data;
   logger.info(
     { jobData: job.data },
     `[Processor:${QUEUE_NAMES.MODERATION}] Received job ${job.id} to ${action} submission ${submissionId} for feed ${feedId}.`,
   );
 
   try {
-    const moderationService = sp.getModerationService();
+    const moderationService: ModerationService = sp.getModerationService();
     await moderationService.createModerationAction({
       submissionId,
       feedId,

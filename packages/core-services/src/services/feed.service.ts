@@ -13,7 +13,7 @@ import {
 } from "@curatedotfun/types";
 import { Logger } from "pino";
 import { ForbiddenError, NotFoundError } from "@curatedotfun/utils";
-import { isSuperAdmin } from "../utils/auth.utils";
+import { isSuperAdmin } from "../utils/auth";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { ProcessorService } from "./processor.service";
 import { merge } from "lodash";

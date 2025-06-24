@@ -24,7 +24,7 @@ import {
 } from "@curatedotfun/utils";
 import { Logger } from "pino";
 import { createQueue, QUEUE_NAMES } from "@curatedotfun/shared-queue"; // Added
-import { isSuperAdmin } from "../utils/auth.utils";
+import { isSuperAdmin } from "../utils/auth";
 import { FeedService } from "./feed.service";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { ProcessorService } from "./processor.service";
@@ -214,13 +214,13 @@ export class ModerationService implements IBaseService {
         this.superAdminAccounts,
       )
         ? "super_admin_direct"
-        : "ui";
+        : payload.source;
 
       const moderationActionData: InsertModerationHistory = {
         submissionId: payload.submissionId,
         feedId: payload.feedId,
         moderatorAccountId: moderatorNearId,
-        moderatorAccountIdType: "near",
+        moderatorAccountIdType: payload.moderatorAccountIdType,
         source: moderationSource,
         action: payload.action,
         note: payload.note || null,

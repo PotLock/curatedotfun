@@ -1,5 +1,5 @@
-import { DistributorConfig, RichSubmission } from "@curatedotfun/shared-db";
-import type { ActionArgs } from "@curatedotfun/types";
+import { RichSubmission } from "@curatedotfun/shared-db";
+import type { ActionArgs, DistributorConfig } from "@curatedotfun/types";
 import { PluginError, PluginErrorCode } from "@curatedotfun/utils";
 import type { Logger } from "pino";
 import type { ConfigService } from "./config.service";

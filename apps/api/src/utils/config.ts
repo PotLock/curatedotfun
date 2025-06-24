@@ -1,8 +1,8 @@
 import { config } from "dotenv";
 import path from "path";
-import { isTest } from "../services/config.service";
 import { logger } from "./logger";
 
+const isTest = process.env.NODE_ENV === "test";
 /**
  * Loads environment variables from the appropriate .env file
  */

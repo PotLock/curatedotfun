@@ -13,7 +13,7 @@ import { createAuthMiddleware } from "./middlewares/auth.middleware";
 const ALLOWED_ORIGINS = getAllowedOrigins();
 
 export async function createApp(): Promise<AppInstance> {
-  const sp = new ServiceProvider({
+  const sp = ServiceProvider.getInstance({
     db,
     logger,
     env: {

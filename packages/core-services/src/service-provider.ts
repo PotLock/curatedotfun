@@ -5,26 +5,28 @@ import {
   FeedRepository,
   LeaderboardRepository,
   ModerationRepository,
+  PluginRepository,
   SubmissionRepository,
   TwitterRepository,
   UserRepository,
 } from "@curatedotfun/shared-db";
 import { Logger } from "pino";
-import { SubmissionService } from "@/services/submission.service";
-import { MockTwitterService } from "@/mocks/twitter-service.mock";
-import { ActivityService } from "@/services/activity.service";
-import { AuthService } from "@/services/auth.service";
-import { ConfigService } from "@/services/config.service";
-import { DistributionService } from "@/services/distribution.service";
-import { FeedService } from "@/services/feed.service";
-import { IBackgroundTaskService } from "@/services/interfaces/background-task.interface";
-import { ModerationService } from "@/services/moderation.service";
-import { PluginService } from "@/services/plugin.service";
-import { ProcessorService } from "@/services/processor.service";
-import { TransformationService } from "@/services/transformation.service";
-import { TwitterService } from "@/services/twitter/client";
-import { UserService } from "@/services/users.service";
-import { getSuperAdminAccounts } from "@/utils/auth.utils";
+import { SubmissionService } from "./services/submission.service";
+import { MockTwitterService } from "./mocks/twitter-service.mock";
+import { ActivityService } from "./services/activity.service";
+import { AuthService } from "./services/auth.service";
+import { ConfigService } from "./services/config.service";
+import { DistributionService } from "./services/distribution.service";
+import { FeedService } from "./services/feed.service";
+import { IBackgroundTaskService } from "./services/interfaces/background-task.interface";
+import { ModerationService } from "./services/moderation.service";
+import { PluginService } from "./services/plugin.service";
+import { ProcessorService } from "./services/processor.service";
+import { TransformationService } from "./services/transformation.service";
+import { TwitterService } from "./services/twitter/client";
+import { UserService } from "./services/users.service";
+import { getSuperAdminAccounts } from "./utils/auth";
+import { ITwitterService } from "./services/twitter/twitter.interface";
 
 interface ServiceProviderConfig {
   db: DB;
@@ -41,11 +43,12 @@ interface ServiceProviderConfig {
 }
 
 export class ServiceProvider {
+  private static instance: ServiceProvider;
   private services: Map<string, any> = new Map();
   private backgroundTaskServices: IBackgroundTaskService[] = [];
   private readonly superAdminAccountsList: string[];
 
-  constructor(private config: ServiceProviderConfig) {
+  private constructor(private config: ServiceProviderConfig) {
     const { db, logger, env } = config;
     this.superAdminAccountsList = getSuperAdminAccounts(
       env.SUPER_ADMIN_ACCOUNTS,
@@ -53,10 +56,11 @@ export class ServiceProvider {
 
     const feedRepository = new FeedRepository(db);
     const twitterRespository = new TwitterRepository(db);
+    const pluginRepository = new PluginRepository(db);
 
     const configService = new ConfigService();
 
-    let twitterService: TwitterService | MockTwitterService;
+    let twitterService: ITwitterService;
     if (env.NODE_ENV === "production") {
       twitterService = new TwitterService(
         {
@@ -71,7 +75,7 @@ export class ServiceProvider {
       twitterService = new MockTwitterService();
     }
 
-    const pluginService = new PluginService(logger);
+    const pluginService = new PluginService(pluginRepository, db, env, logger);
     const transformationService = new TransformationService(
       pluginService,
       logger,
@@ -124,7 +128,8 @@ export class ServiceProvider {
   async init() {
     const { db, logger } = this.config;
     const twitterService = this.getService<TwitterService>("twitterService");
-    const processorService = this.getService<ProcessorService>("processorService");
+    const processorService =
+      this.getService<ProcessorService>("processorService");
     const feedService = this.getService<FeedService>("feedService");
 
     await twitterService.initialize();
@@ -156,6 +161,7 @@ export class ServiceProvider {
     );
 
     submissionService.initialize(); // TODO: remove
+    this.services.set("submissionService", submissionService);
     this.backgroundTaskServices.push(submissionService);
 
     const activityRepository = new ActivityRepository(db);
@@ -237,11 +243,31 @@ export class ServiceProvider {
     return this.getService<ModerationService>("moderationService");
   }
 
+  public getSubmissionService(): SubmissionService {
+    return this.getService<SubmissionService>("submissionService");
+  }
+
+  public getTwitterService(): ITwitterService {
+    return this.getService<ITwitterService>("twitterService");
+  }
+
   /**
    * Get all services that implement IBackgroundTaskService
    * @returns An array of background task services
    */
   public getBackgroundTaskServices(): IBackgroundTaskService[] {
     return this.backgroundTaskServices;
+  }
+
+  public static getInstance(config?: ServiceProviderConfig): ServiceProvider {
+    if (!ServiceProvider.instance) {
+      if (!config) {
+        throw new Error(
+          "ServiceProvider has not been initialized. Call getInstance with config first.",
+        );
+      }
+      ServiceProvider.instance = new ServiceProvider(config);
+    }
+    return ServiceProvider.instance;
   }
 }

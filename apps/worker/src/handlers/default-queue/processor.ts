@@ -1,14 +1,13 @@
-import { Job } from "bullmq"; // Import Job
-import { QUEUE_NAMES, JobData } from "@curatedotfun/shared-queue"; // Import JobData
-import { ServiceProvider } from "@curatedotfun/core-services"; // Import ServiceProvider
-import { logger } from "@curatedotfun/utils"; // Import logger
+import { Job } from "bullmq";
+import { QUEUE_NAMES, JobData } from "@curatedotfun/shared-queue";
+import { ServiceProvider } from "@curatedotfun/core-services";
+import { logger } from "@curatedotfun/utils";
 
 // Processor for the DEFAULT queue
 export const defaultProcessor = async (
-  job: Job<JobData<typeof QUEUE_NAMES.DEFAULT>, any, string>, // Use JobData
-  sp: ServiceProvider, // Add ServiceProvider
+  job: Job<JobData<typeof QUEUE_NAMES.DEFAULT>, any, string>,
+  sp: ServiceProvider,
 ) => {
-  // Use logger instead of console.log
   logger.info(
     { jobData: job.data },
     `[Processor:DEFAULT] Received message: "${job.data.message}" at ${new Date(job.data.timestamp).toISOString()}`,

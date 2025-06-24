@@ -1,10 +1,9 @@
-import { TransformConfig } from "@curatedotfun/shared-db";
-import type { ActionArgs } from "@curatedotfun/types";
+import type { ActionArgs, TransformConfig } from "@curatedotfun/types";
 import { PluginError, PluginErrorCode } from "@curatedotfun/utils";
 import { merge } from "lodash";
 import type { Logger } from "pino";
 import { logPluginError } from "../utils/error";
-import { logger } from "../utils/logger";
+import { logger } from "@curatedotfun/utils";
 import { sanitizeJson } from "../utils/sanitize";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { PluginService } from "./plugin.service";

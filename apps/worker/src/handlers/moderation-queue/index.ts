@@ -1,5 +1,5 @@
 import { QUEUE_NAMES } from "@curatedotfun/shared-queue";
-import { AppWorkerConfig } from "../../worker-lifecycle"; // Adjusted path
+import { AppWorkerConfig } from "../../worker-lifecycle";
 import { moderationProcessor } from "./processor";
 
 export const moderationWorkerConfig: AppWorkerConfig<
@@ -8,7 +8,6 @@ export const moderationWorkerConfig: AppWorkerConfig<
   name: QUEUE_NAMES.MODERATION,
   processor: moderationProcessor,
   opts: {
-    // Example: Concurrency setting for this specific worker
-    // concurrency: 5,
+    concurrency: 1,
   },
 };

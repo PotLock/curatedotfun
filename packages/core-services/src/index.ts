@@ -13,3 +13,4 @@ export * from "./services/users.service";
 export * from "./services/twitter/client";
 export * from "./services/interfaces/background-task.interface";
 export * from "./services/interfaces/base-service.interface";
+export * from "./mocks/twitter-service.mock";
