@@ -335,7 +335,7 @@ importers:
         specifier: ^0.43.1
         version: 0.43.1(@types/pg@8.15.4)(bun-types@1.2.15)(pg@8.16.2)(postgres@3.4.7)
       hono:
-        specifier: latest
+        specifier: ^4.8.2
         version: 4.8.2
       pg:
         specifier: ^8.16.2
