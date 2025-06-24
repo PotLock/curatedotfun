@@ -3,7 +3,7 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import FeedList from "../../components/FeedList";
 import { Hero } from "../../components/Hero";
-import TopCurators from "../../components/TopCurators";
+import TopCurators from "../../components/feed/top-curators";
 import {
   submissionSearchSchema,
   useAllSubmissions,

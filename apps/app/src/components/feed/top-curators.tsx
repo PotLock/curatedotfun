@@ -1,6 +1,6 @@
-import { useLeaderboard } from "../lib/api";
-import { UserLink } from "./FeedItem";
-import { Badge } from "./ui/badge";
+import { useLeaderboard } from "../../lib/api";
+import { UserLink } from "../FeedItem";
+import { Badge } from "../ui/badge";
 
 interface TopCuratorsProps {
   feedId?: string;

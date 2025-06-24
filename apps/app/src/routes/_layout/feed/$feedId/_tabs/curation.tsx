@@ -3,13 +3,13 @@ import {
   submissionSearchSchema,
   useFeedItems,
   SubmissionFilters,
-} from "../../../../lib/api";
-import FilterControls from "../../../../components/FilterControls";
-import InfiniteFeed from "../../../../components/InfiniteFeed";
-import SubmissionList from "../../../../components/SubmissionList";
+} from "@/lib/api";
+import FilterControls from "@/components/FilterControls";
+import InfiniteFeed from "@/components/InfiniteFeed";
+import SubmissionList from "@/components/SubmissionList";
 import type { FeedContextSubmission } from "@curatedotfun/types";
 
-export const Route = createFileRoute("/_layout/feed/$feedId/curation")({
+export const Route = createFileRoute("/_layout/feed/$feedId/_tabs/curation")({
   validateSearch: (search) => submissionSearchSchema.parse(search),
   component: FeedCurationPage,
 });
@@ -55,7 +55,7 @@ function FeedCurationPage() {
       />
 
       <InfiniteFeed
-        items={items as FeedContextSubmission[]} // Cast items to the correct type
+        items={items as FeedContextSubmission[]}
         fetchNextPage={fetchNextPage}
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
@@ -67,7 +67,7 @@ function FeedCurationPage() {
           <SubmissionList
             items={renderableItems}
             feedId={feedId}
-            allowModerationControls={!!feedId} // Moderation controls are allowed here
+            allowModerationControls={!!feedId}
           />
         )}
       />
