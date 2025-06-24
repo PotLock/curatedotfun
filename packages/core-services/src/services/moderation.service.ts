@@ -23,6 +23,7 @@ import {
   NotFoundError,
 } from "@curatedotfun/utils";
 import { Logger } from "pino";
+import { createQueue, QUEUE_NAMES } from "@curatedotfun/shared-queue"; // Added
 import { isSuperAdmin } from "../utils/auth.utils";
 import { FeedService } from "./feed.service";
 import { IBaseService } from "./interfaces/base-service.interface";
@@ -328,12 +329,15 @@ export class ModerationService implements IBaseService {
       ) {
         this.logger.info(
           { submissionId: submission.tweetId, feedId: feedEntry.feedId },
-          "Processing approved submission for stream.",
+          "Enqueueing approved submission for stream processing.",
         );
-        await this.processorService.process(
-          submission,
-          feedConfig.outputs.stream,
-        );
+        // Enqueue to SUBMISSION_PROCESSING_QUEUE instead of direct call
+        const processingQueue = createQueue(QUEUE_NAMES.SUBMISSION_PROCESSING);
+        await processingQueue.add(QUEUE_NAMES.SUBMISSION_PROCESSING, {
+          submissionId: submission.tweetId,
+          feedId: feedEntry.feedId,
+        });
+        // The actual call to processorService.process will be done by the worker for SUBMISSION_PROCESSING_QUEUE
       }
     } catch (error: unknown) {
       if (
@@ -395,13 +399,22 @@ export class ModerationService implements IBaseService {
       tx,
     );
 
-    await this.updateStatusAndProcess(
-      submission,
-      feedEntry,
-      submissionStatusZodEnum.Enum.approved,
-      curatorUsername,
-      tx,
-    );
+    // Instead of calling updateStatusAndProcess directly,
+    // enqueue a job to the MODERATION_QUEUE.
+    // The transaction `tx` here is only for saving the moderation history.
+    // The actual moderation action (approve/reject and subsequent processing)
+    // will be handled by the MODERATION_QUEUE worker.
+
+    const moderationQueue = createQueue(QUEUE_NAMES.MODERATION);
+    await moderationQueue.add(QUEUE_NAMES.MODERATION, {
+      submissionId: submission.tweetId,
+      feedId: feedConfig.id,
+      action: "approve",
+      moderatorAccountId: curatorUsername,
+      moderatorAccountIdType: "platform_username",
+      source: "auto_approval",
+      note: "Auto-approved by curator.", // Or some other relevant note
+    });
 
     this.logger.info(
       {

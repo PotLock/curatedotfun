@@ -43,6 +43,7 @@
     "@crosspost/types": "^0.3.1",
     "@curatedotfun/shared-db": "workspace:*",
     "@curatedotfun/shared-queue": "workspace:*",
+    "@curatedotfun/core-services": "workspace:*",
     "@curatedotfun/types": "workspace:*",
     "@curatedotfun/utils": "workspace:*",
     "@fastnear/utils": "^0.9.7",

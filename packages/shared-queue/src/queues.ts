@@ -2,12 +2,27 @@ import { Job, Queue, Worker, Processor } from "bullmq";
 
 export const QUEUE_NAMES = {
   DEFAULT: "default",
+  MODERATION: "moderation",
+  SUBMISSION_PROCESSING: "submission-processing",
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
 
 export interface JobPayloads {
   [QUEUE_NAMES.DEFAULT]: { message: string; timestamp: number };
+  [QUEUE_NAMES.MODERATION]: {
+    submissionId: string;
+    feedId: string;
+    action: "approve" | "reject";
+    moderatorAccountId: string;
+    moderatorAccountIdType: "near" | "platform_username";
+    source: "ui" | "auto_approval" | "super_admin_direct";
+    note?: string | null;
+  };
+  [QUEUE_NAMES.SUBMISSION_PROCESSING]: {
+    submissionId: string;
+    feedId: string;
+  };
 }
 
 export type JobName = keyof JobPayloads;

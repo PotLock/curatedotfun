@@ -1,15 +1,40 @@
 import { Worker, Queue } from "bullmq";
-import { workerConfigurations } from "./handlers";
-import { createWorkerInstance } from "@curatedotfun/shared-queue";
+import { workerConfigurations } from "./handlers"; // This will need to be updated later
+import {
+  createWorkerInstance,
+  WorkerConfig,
+  JobName,
+  JobData,
+} from "@curatedotfun/shared-queue";
+import { ServiceProvider } from "@curatedotfun/core-services";
+import { db } from "./db";
+import { logger } from "@curatedotfun/utils";
+import { Job, WorkerOptions } from "bullmq"; // Import Job and WorkerOptions
 
-export function initializeWorkers(): Worker<any>[] {
+// Define a new type for our application-specific worker configurations
+export interface AppWorkerConfig<T extends JobName> {
+  name: T;
+  processor: (job: Job<JobData<T>, any, string>, sp: ServiceProvider) => Promise<void>;
+  opts?: Omit<WorkerOptions, "connection">; // Use Omit<WorkerOptions, "connection"> directly
+}
+
+export function initializeWorkers(sp: ServiceProvider): Worker<any>[] {
   const workers: Worker<any>[] = [];
 
-  for (const config of workerConfigurations) {
+  // workerConfigurations will be an array of AppWorkerConfig
+  // The casting here will be removed once workerConfigurations is updated
+  for (const config of workerConfigurations as AppWorkerConfig<any>[]) {
+    // Adapt the AppWorkerConfig processor to the signature expected by createWorkerInstance
+    const adaptedProcessor = (
+      job: Job<JobData<any>, any, string>,
+    ): Promise<void> => {
+      return config.processor(job, sp);
+    };
+
     const worker = createWorkerInstance(
       config.name,
-      config.processor,
-      config.opts,
+      adaptedProcessor,
+      config.opts as WorkerOptions | undefined,
     );
 
     // --- Common BullMQ Worker Event Listeners ---
