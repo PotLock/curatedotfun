@@ -11,6 +11,7 @@ import {
   UserRepository,
 } from "@curatedotfun/shared-db";
 import { Logger } from "pino";
+import { env as pluginsEnv } from "./env";
 import { SubmissionService } from "./services/submission.service";
 import { MockTwitterService } from "./mocks/twitter-service.mock";
 import { ActivityService } from "./services/activity.service";
@@ -75,7 +76,12 @@ export class ServiceProvider {
       twitterService = new MockTwitterService();
     }
 
-    const pluginService = new PluginService(pluginRepository, db, env, logger);
+    const pluginService = new PluginService(
+      pluginRepository,
+      db,
+      pluginsEnv,
+      logger,
+    );
     const transformationService = new TransformationService(
       pluginService,
       logger,
