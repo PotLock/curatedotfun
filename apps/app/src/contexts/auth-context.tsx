@@ -65,27 +65,24 @@ export function AuthProvider({
     }
   }, [currentAccountId]);
 
-  const initiateLogin = useCallback(
-    async (accountId: string) => {
-      try {
-        const { nonce, recipient } = await apiClient.makeRequest<{
-          nonce: string;
-          recipient: string;
-        }>("POST", "/auth/initiate-login", { accountId });
-        setNonce(nonce);
-        setRecipient(recipient);
-      } catch (error) {
-        console.error("Failed to initiate login:", error);
-        toast({
-          title: "Connection Error",
-          description:
-            "Unable to connect to authentication server. Please try again.",
-          variant: "destructive",
-        });
-      }
-    },
-    [setNonce, setRecipient],
-  );
+  const initiateLogin = useCallback(async (accountId: string) => {
+    try {
+      const { nonce, recipient } = await apiClient.makeRequest<{
+        nonce: string;
+        recipient: string;
+      }>("POST", "/auth/initiate-login", { accountId });
+      setNonce(nonce);
+      setRecipient(recipient);
+    } catch (error) {
+      console.error("Failed to initiate login:", error);
+      toast({
+        title: "Connection Error",
+        description:
+          "Unable to connect to authentication server. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, []);
 
   useEffect(() => {
     const handleAccountChange = async (newAccountId: string | null) => {
@@ -102,8 +99,7 @@ export function AuthProvider({
           description: `Connected as: ${newAccountId}`,
           variant: "success",
         });
-        await checkAuthorization();
-        await initiateLogin(newAccountId);
+        await Promise.all([checkAuthorization(), initiateLogin(newAccountId)]);
       } else {
         toast({
           title: "Wallet Disconnected",

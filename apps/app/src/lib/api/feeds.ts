@@ -7,8 +7,6 @@ import type {
   FeedWrappedResponse,
   UpdateFeedRequest,
 } from "@curatedotfun/types";
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { useAuth } from "../../contexts/auth-context";
 import {
   useApiInfiniteQuery,
@@ -89,7 +87,6 @@ export function useDeleteFeed(feedId: string) {
 
 export function useFeedItems(feedId: string, filters: SubmissionFilters = {}) {
   const { limit = 20, status, sortOrder, q } = filters;
-  const queryClient = useQueryClient();
 
   const pathFn = (pageParam: number) => {
     const params = new URLSearchParams();
@@ -134,17 +131,6 @@ export function useFeedItems(feedId: string, filters: SubmissionFilters = {}) {
     refetchOnReconnect: true,
     enabled: !!feedId,
   });
-
-  const { data } = queryResult;
-
-  useEffect(() => {
-    if (data) {
-      queryClient.setQueryData(
-        ["submissions"],
-        data.pages.flatMap((page) => page.items),
-      );
-    }
-  }, [data, queryClient]);
 
   return queryResult;
 }

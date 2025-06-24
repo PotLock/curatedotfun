@@ -1,6 +1,7 @@
 import type { FeedContextSubmission } from "@curatedotfun/types";
 import { useAuth } from "../contexts/auth-context";
 import { useSubmission } from "../lib/api";
+import { useMemo } from "react";
 import {
   useApproveSubmission,
   useRejectSubmission,
@@ -147,15 +148,18 @@ export const FeedItem = ({
     initialSubmission.tweetId,
   );
 
-  const submission: FeedContextSubmission = {
-    ...initialSubmission,
-    ...(submissionData || {}),
-    status: submissionData?.status ?? initialSubmission.status,
-    moderationHistory:
-      submissionData?.moderationHistory ??
-      initialSubmission.moderationHistory ??
-      [],
-  };
+  const submission: FeedContextSubmission = useMemo(
+    () => ({
+      ...initialSubmission,
+      ...(submissionData || {}),
+      status: submissionData?.status ?? initialSubmission.status,
+      moderationHistory:
+        submissionData?.moderationHistory ??
+        initialSubmission.moderationHistory ??
+        [],
+    }),
+    [initialSubmission, submissionData],
+  );
 
   const canModerateQuery = useCanModerateFeed(feedId);
   const lastModeration =
