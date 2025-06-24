@@ -39,34 +39,30 @@ export interface WorkerConfig<T extends JobName> {
 }
 
 export const getRedisConnection = (): RedisOptions => {
+  const connectionOptions: RedisOptions = {
+    family: 0,
+  };
+
   // Check for a Redis URL, common in environments like Railway
   if (process.env.REDIS_URL) {
     const redisUrl = new URL(process.env.REDIS_URL);
-    const connectionOptions: RedisOptions = {
-      host: redisUrl.hostname,
-      port: parseInt(redisUrl.port, 10),
-    };
-
+    connectionOptions.host = redisUrl.hostname;
+    connectionOptions.port = parseInt(redisUrl.port, 10);
+    if (redisUrl.username) {
+      connectionOptions.username = redisUrl.username;
+    }
     if (redisUrl.password) {
       connectionOptions.password = redisUrl.password;
     }
-
-    // Enable TLS if the protocol is rediss://
     if (redisUrl.protocol === "rediss:") {
       connectionOptions.tls = {};
     }
-
-    return connectionOptions;
-  }
-
-  // Fallback for local development or environments using individual variables
-  const connectionOptions: RedisOptions = {
-    host: process.env.REDIS_HOST || "localhost",
-    port: parseInt(process.env.REDIS_PORT || "6379", 10),
-  };
-
-  if (process.env.REDIS_PASSWORD) {
-    connectionOptions.password = process.env.REDIS_PASSWORD;
+  } else {
+    connectionOptions.host = process.env.REDIS_HOST || "localhost";
+    connectionOptions.port = parseInt(process.env.REDIS_PORT || "6379", 10);
+    if (process.env.REDIS_PASSWORD) {
+      connectionOptions.password = process.env.REDIS_PASSWORD;
+    }
   }
 
   return connectionOptions;
