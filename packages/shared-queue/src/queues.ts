@@ -20,6 +20,7 @@ export interface JobPayloads {
   [QUEUE_NAMES.SUBMISSION_PROCESSING]: {
     submissionId: string;
     feedId: string;
+    retryOfJobId?: string;
   };
 }
 

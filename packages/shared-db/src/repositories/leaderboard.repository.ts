@@ -33,6 +33,7 @@ export class LeaderboardRepository {
    * and rejection counts, along with feed-specific submission details.
    *
    * @param timeRange The time range for the leaderboard (default: "all")
+   *                  Valid values: "all", "month", "week", "today"
    * @returns Array of curator leaderboard entries
    */
   async getCuratorStatsLeaderboard(

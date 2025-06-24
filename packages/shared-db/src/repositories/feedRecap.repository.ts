@@ -13,6 +13,12 @@ export class FeedRecapRepository {
     this.db = db;
   }
 
+  /**
+   * Get a feed recap state by feed ID and recap ID
+   * @param feedId The feed ID
+   * @param recapId The recap ID
+   * @returns The feed recap state or null if not found
+   */
   async getRecapState(
     feedId: string,
     recapId: string,
@@ -40,6 +46,11 @@ export class FeedRecapRepository {
     );
   }
 
+  /**
+   * Get all recap states for a feed
+   * @param feedId The feed ID
+   * @returns Array of feed recap states
+   */
   async getAllRecapStatesForFeed(
     feedId: string,
   ): Promise<SelectFeedRecapState[]> {
@@ -59,6 +70,12 @@ export class FeedRecapRepository {
     );
   }
 
+  /**
+   * Create or update a feed recap state
+   * @param data The feed recap state data to insert or update
+   * @param txDb Transaction DB instance
+   * @returns The created or updated feed recap state
+   */
   async upsertRecapState(
     data: InsertFeedRecapState,
     txDb: DB,
@@ -108,6 +125,12 @@ export class FeedRecapRepository {
     );
   }
 
+  /**
+   * Delete a feed recap state
+   * @param feedId The feed ID
+   * @param recapId The recap ID
+   * @param txDb Transaction DB instance
+   */
   async deleteRecapState(
     feedId: string,
     recapId: string,
@@ -131,6 +154,11 @@ export class FeedRecapRepository {
     );
   }
 
+  /**
+   * Delete all recap states for a feed
+   * @param feedId The feed ID
+   * @param txDb Transaction DB instance
+   */
   async deleteRecapStatesForFeed(feedId: string, txDb: DB): Promise<void> {
     return withErrorHandling(
       async () => {
@@ -145,6 +173,13 @@ export class FeedRecapRepository {
     );
   }
 
+  /**
+   * Update the completion timestamp for a feed recap
+   * @param feedId The feed ID
+   * @param recapId The recap ID
+   * @param timestamp The completion timestamp
+   * @param txDb Transaction DB instance
+   */
   async updateRecapCompletion(
     feedId: string,
     recapId: string,
@@ -174,6 +209,13 @@ export class FeedRecapRepository {
     );
   }
 
+  /**
+   * Update the error message for a feed recap
+   * @param feedId The feed ID
+   * @param recapId The recap ID
+   * @param errorMsg The error message
+   * @param txDb Transaction DB instance
+   */
   async updateRecapError(
     feedId: string,
     recapId: string,

@@ -19,6 +19,7 @@
     "drizzle-orm": "^0.43.1",
     "drizzle-zod": "^0.7.1",
     "postgres": "^3.4.7",
+    "uuid": "^11.1.0",
     "zod": "^3.25.67"
   },
   "devDependencies": {

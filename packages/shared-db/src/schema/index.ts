@@ -7,3 +7,4 @@ export * from "./users";
 export * from "./plugins";
 export * from "./moderation";
 export * from "./auth";
+export * from "./processing";

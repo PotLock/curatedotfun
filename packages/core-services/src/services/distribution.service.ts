@@ -1,4 +1,4 @@
-import { RichSubmission } from "@curatedotfun/shared-db";
+import { DistributionResult, RichSubmission } from "@curatedotfun/shared-db";
 import type { ActionArgs, DistributorConfig } from "@curatedotfun/types";
 import { PluginError, PluginErrorCode } from "@curatedotfun/utils";
 import type { Logger } from "pino";
@@ -19,15 +19,14 @@ export class DistributionService implements IBaseService {
     this.logger = logger;
   }
 
-  async distributeContent<T = RichSubmission>(
+  async distributeContent(
     distributor: DistributorConfig,
-    input: T,
-  ): Promise<void> {
-    const sanitizedInput = sanitizeJson(input) as T;
-
+    input: unknown,
+  ): Promise<DistributionResult> {
+    const sanitizedInput = sanitizeJson(input);
     const { plugin: pluginName, config: pluginConfig } = distributor;
     try {
-      const plugin = await this.pluginService.getPlugin<"distributor", T>(
+      const plugin = await this.pluginService.getPlugin<"distributor", unknown>(
         pluginName,
         {
           type: "distributor",
@@ -36,13 +35,14 @@ export class DistributionService implements IBaseService {
       );
 
       try {
-        const args: ActionArgs<T, Record<string, unknown>> = {
+        const args: ActionArgs<unknown, Record<string, unknown>> = {
           input: sanitizedInput,
           config: pluginConfig,
         };
         if (this.configService.getFeatureFlag("enableDistribution")) {
           await plugin.distribute(args);
         }
+        return { success: true };
       } catch (error) {
         const pluginError = new PluginError(
           error instanceof Error ? error.message : "Distribution failed",
