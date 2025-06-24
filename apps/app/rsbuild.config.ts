@@ -15,7 +15,7 @@ export default defineConfig({
     template: "./index.html",
     templateParameters: {
       // near
-      networkId: isProduction ? "mainnet" : network,
+      networkId: network,
       fastintear:
         isProduction || isStaging
           ? "https://unpkg.com/fastintear@latest/dist/umd/browser.global.js"
