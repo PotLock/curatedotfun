@@ -28,11 +28,12 @@ const FeedList = () => {
               >
                 <div className="flex items-center border border-1 border-neutral-200 rounded-md justify-center gap-3 py-2 px-3">
                   <img
-                    src={feed?.config.image}
-                    alt={feed?.config.name}
+                    src={feed?.config.image || "/images/feed-image.png"}
+                    alt={feed?.config.name || "Feed image"}
                     className="w-[50px] h-[50px] aspect-square object-cover"
-                    width={40}
-                    height={40}
+                    onError={(e) => {
+                      e.currentTarget.src = "/images/feed-image.png";
+                    }}
                   />
                   <div className="flex flex-col w-full">
                     <span className="text-[16px] ">{feed.name}</span>
