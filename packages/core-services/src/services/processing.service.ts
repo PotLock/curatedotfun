@@ -1,4 +1,5 @@
 import {
+  Json,
   ProcessingRepository,
   ProcessingStepStage,
   RichSubmission,
@@ -183,9 +184,9 @@ export class ProcessingService implements IBaseService {
         stage,
         pluginName: transform.plugin,
         stepName: transform.plugin,
-        config: transform.config,
+        config: transform.config as Json,
         status: "processing",
-        input: currentContent,
+        input: currentContent as Json,
         startedAt: new Date(),
       });
 
@@ -196,7 +197,7 @@ export class ProcessingService implements IBaseService {
         );
         await this.processingRepository.updateStep(step.id, {
           status: "success",
-          output,
+          output: output as Json,
           completedAt: new Date(),
         });
         currentContent = output;
@@ -211,7 +212,7 @@ export class ProcessingService implements IBaseService {
         };
         await this.processingRepository.updateStep(step.id, {
           status: "failed",
-          error: stepError,
+          error: stepError as Json,
           completedAt: new Date(),
         });
         this.logger.error(
@@ -238,9 +239,9 @@ export class ProcessingService implements IBaseService {
       stage: "distributor",
       pluginName: distributor.plugin,
       stepName: distributor.plugin,
-      config: distributor.config,
+      config: distributor.config as Json,
       status: "processing",
-      input,
+      input: input as Json,
       startedAt: new Date(),
     });
 
@@ -251,7 +252,7 @@ export class ProcessingService implements IBaseService {
       );
       await this.processingRepository.updateStep(step.id, {
         status: "success",
-        output,
+        output: output as Json,
         completedAt: new Date(),
       });
     } catch (error) {
@@ -262,7 +263,7 @@ export class ProcessingService implements IBaseService {
       };
       await this.processingRepository.updateStep(step.id, {
         status: "failed",
-        error: stepError,
+        error: stepError as Json,
         completedAt: new Date(),
       });
       throw error;

@@ -10,7 +10,7 @@ import {
   processingJobs,
   processingSteps,
 } from "../schema/processing";
-import type { DB } from "../types";
+import type { DB, Json } from "../types";
 import { executeWithRetry, withErrorHandling } from "../utils";
 
 export class ProcessingRepository {
@@ -157,10 +157,14 @@ export class ProcessingRepository {
    * @returns The created step
    */
   async createStep(
-    data: Omit<InsertProcessingStep, "id" | "input" | "output" | "error"> & {
-      input?: any;
-      output?: any;
-      error?: any;
+    data: Omit<
+      InsertProcessingStep,
+      "id" | "input" | "output" | "error" | "config"
+    > & {
+      input?: Json;
+      output?: Json;
+      error?: Json;
+      config?: Json;
     },
     txDb?: DB,
   ): Promise<SelectProcessingStep> {
@@ -246,10 +250,14 @@ export class ProcessingRepository {
    */
   async updateStep(
     id: string,
-    data: Omit<UpdateProcessingStep, "input" | "output" | "error"> & {
-      input?: any;
-      output?: any;
-      error?: any;
+    data: Omit<
+      UpdateProcessingStep,
+      "input" | "output" | "error" | "config"
+    > & {
+      input?: Json;
+      output?: Json;
+      error?: Json;
+      config?: Json;
     },
     txDb?: DB,
   ): Promise<SelectProcessingStep> {
