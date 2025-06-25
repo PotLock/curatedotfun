@@ -18,8 +18,7 @@ import {
 import { z } from "zod";
 import { timestamps } from "./common";
 import { feeds } from "./feeds";
-import { plugins } from "./plugins";
-import { RichSubmissionSchema, submissions } from "../schema";
+import { RichSubmissionSchema, submissions } from "./submissions";
 
 /**
  * Type for the input of a processing step.
@@ -27,8 +26,8 @@ import { RichSubmissionSchema, submissions } from "../schema";
  * depending on the plugin and stage of processing.
  */
 export const StepInputSchema = z.union([
-  RichSubmissionSchema,
-  z.array(RichSubmissionSchema),
+  z.lazy(() => RichSubmissionSchema),
+  z.lazy(() => z.array(RichSubmissionSchema)),
   z.record(z.string(), z.unknown()),
   z.string(),
 ]);
@@ -40,8 +39,8 @@ export type StepInput = z.infer<typeof StepInputSchema>;
  * depending on the plugin and stage of processing.
  */
 export const StepOutputSchema = z.union([
-  RichSubmissionSchema,
-  z.array(RichSubmissionSchema),
+  z.lazy(() => RichSubmissionSchema),
+  z.lazy(() => z.array(RichSubmissionSchema)),
   z.record(z.string(), z.unknown()),
   z.string(),
 ]);

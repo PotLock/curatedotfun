@@ -127,11 +127,6 @@ export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
 export type UpdateSubmission = z.infer<typeof updateSubmissionSchema>;
 export type SelectSubmission = z.infer<typeof selectSubmissionSchema>;
 
-export type RichSubmission = SelectSubmission & {
-  feeds: SelectSubmissionFeed[];
-  moderationHistory: SelectModerationHistory[];
-};
-
 // SubmissionFeed Schemas and Types
 export const insertSubmissionFeedSchema = createInsertSchema(submissionFeeds, {
   createdAt: z.undefined(),
@@ -142,6 +137,15 @@ export const selectSubmissionFeedSchema = createSelectSchema(submissionFeeds);
 export type InsertSubmissionFeed = z.infer<typeof insertSubmissionFeedSchema>;
 export type UpdateSubmissionFeed = z.infer<typeof updateSubmissionFeedSchema>;
 export type SelectSubmissionFeed = z.infer<typeof selectSubmissionFeedSchema>;
+
+export const RichSubmissionSchema = selectSubmissionSchema.extend({
+  feeds: z.array(selectSubmissionFeedSchema),
+});
+
+export type RichSubmission = SelectSubmission & {
+  feeds: SelectSubmissionFeed[];
+  moderationHistory: SelectModerationHistory[];
+};
 
 // SubmissionCounts Schemas and Types
 export const insertSubmissionCountSchema = createInsertSchema(
@@ -156,7 +160,3 @@ export const selectSubmissionCountSchema = createSelectSchema(submissionCounts);
 export type InsertSubmissionCount = z.infer<typeof insertSubmissionCountSchema>;
 export type UpdateSubmissionCount = z.infer<typeof updateSubmissionCountSchema>;
 export type SelectSubmissionCount = z.infer<typeof selectSubmissionCountSchema>;
-
-export const RichSubmissionSchema = selectSubmissionSchema.extend({
-  feeds: z.array(selectSubmissionFeedSchema),
-});

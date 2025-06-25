@@ -8,7 +8,7 @@ module.exports = {
   entry: "./src/index.ts",
   mode: isProduction ? "production" : "development",
   target: "async-node",
-  devtool: "source-map",
+  devtool: isProduction ? false : "source-map",
   watch: !isProduction,
   output: {
     path: path.resolve(__dirname, "dist"),
