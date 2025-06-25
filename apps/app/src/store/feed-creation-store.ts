@@ -45,7 +45,7 @@ const feedCreationStateCreator: StateCreator<
             plugin: "@curatedotfun/object-transform",
             config: {
               mappings: {
-                notes: "{{curator.notes}}",
+                notes: "{{curatorNotes}}",
                 author: "{{username}}",
                 source: "https://x.com/{{username}}/status/{{tweetId}}",
                 content: "{{content}}",

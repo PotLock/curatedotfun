@@ -266,9 +266,6 @@ export class FeedService implements IBaseService {
             );
           }
         }
-
-        // The enqueueing is now handled by the moderation service
-        // await this.processingService.process(submission, streamConfig);
         processedCount++;
       } catch (error) {
         this.logger.error(

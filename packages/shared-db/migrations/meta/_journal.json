@@ -141,6 +141,13 @@
       "when": 1750818021026,
       "tag": "0019_neat_paladin",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1750823128574,
+      "tag": "0020_purple_rictor",
+      "breakpoints": true
     }
   ]
 }

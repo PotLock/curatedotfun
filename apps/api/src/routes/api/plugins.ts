@@ -5,13 +5,13 @@ import {
   selectPluginSchema,
   updatePluginSchema,
 } from "@curatedotfun/shared-db";
+import { AppErrorCode, ServiceError } from "@curatedotfun/utils";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { db } from "../../db";
 import { Env } from "../../types/app";
-import { ServiceError } from "@curatedotfun/utils";
 
 const pluginsRoutes = new Hono<Env>();
 const pluginRepository = new PluginRepository(db);
@@ -33,7 +33,7 @@ pluginsRoutes.post(
       console.error("Error registering plugin:", { error, pluginData });
       if (
         error instanceof ServiceError &&
-        error.code === "PLUGIN_ALREADY_EXISTS"
+        error.errorCode === AppErrorCode.RESOURCE_CONFLICT
       ) {
         throw new HTTPException(409, { message: error.message });
       }

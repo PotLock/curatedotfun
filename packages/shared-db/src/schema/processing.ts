@@ -16,35 +16,10 @@ import {
   createUpdateSchema,
 } from "drizzle-zod";
 import { z } from "zod";
+import { Json } from "../types";
 import { timestamps } from "./common";
 import { feeds } from "./feeds";
-import { RichSubmissionSchema, submissions } from "./submissions";
-
-/**
- * Type for the input of a processing step.
- * This is intentionally generic as the input can vary widely
- * depending on the plugin and stage of processing.
- */
-export const StepInputSchema = z.union([
-  z.lazy(() => RichSubmissionSchema),
-  z.lazy(() => z.array(RichSubmissionSchema)),
-  z.record(z.string(), z.unknown()),
-  z.string(),
-]);
-export type StepInput = z.infer<typeof StepInputSchema>;
-
-/**
- * Type for the output of a processing step.
- * This is intentionally generic as the output can vary widely
- * depending on the plugin and stage of processing.
- */
-export const StepOutputSchema = z.union([
-  z.lazy(() => RichSubmissionSchema),
-  z.lazy(() => z.array(RichSubmissionSchema)),
-  z.record(z.string(), z.unknown()),
-  z.string(),
-]);
-export type StepOutput = z.infer<typeof StepOutputSchema>;
+import { submissions } from "./submissions";
 
 /**
  * Schema and type for error information in a processing step.
@@ -175,11 +150,13 @@ export const processingSteps = table(
     stepOrder: integer("step_order").notNull(),
     type: processingStepTypeEnum("type").notNull(),
     stage: processingStepStageEnum("stage").notNull(),
+    pluginName: text("plugin_name"),
     stepName: text("step_name"),
+    config: jsonb("config").$type<Json>(),
     status: processingStepStatusEnum("status").notNull().default("pending"),
-    input: jsonb("input").$type<StepInput>(),
-    output: jsonb("output").$type<StepOutput>(),
-    error: jsonb("error").$type<StepError>(),
+    input: jsonb("input").$type<Json>(),
+    output: jsonb("output").$type<Json>(),
+    error: jsonb("error").$type<Json>(),
     version: integer("version").notNull().default(1),
     startedAt: timestamp("started_at", {
       mode: "date",
@@ -193,7 +170,7 @@ export const processingSteps = table(
   },
   (table) => [
     index("processing_steps_job_idx").on(table.jobId),
-    index("processing_steps_plugin_name_idx").on(table.stepName),
+    index("processing_steps_plugin_name_idx").on(table.pluginName),
     index("processing_steps_status_idx").on(table.status),
     uniqueIndex("processing_steps_job_order_idx").on(
       table.jobId,
@@ -269,11 +246,13 @@ export const insertProcessingStepSchema = createInsertSchema(processingSteps, {
   stepOrder: z.number().int().positive(),
   type: processingStepTypeZodEnum,
   stage: processingStepStageZodEnum,
+  pluginName: z.string().optional().nullable(),
   stepName: z.string().optional().nullable(),
+  config: z.custom<Json>().optional().nullable(),
   status: processingStepStatusZodEnum.optional(),
-  input: StepInputSchema.optional(),
-  output: StepOutputSchema.optional(),
-  error: z.lazy(() => StepErrorSchema).optional(),
+  input: z.custom<Json>().optional(),
+  output: z.custom<Json>().optional(),
+  error: z.custom<Json>().optional(),
   version: z.number().int().positive().optional(),
   startedAt: z.date().optional(),
   completedAt: z.date().optional(),
@@ -283,8 +262,8 @@ export const insertProcessingStepSchema = createInsertSchema(processingSteps, {
 
 export const updateProcessingStepSchema = createUpdateSchema(processingSteps, {
   status: processingStepStatusZodEnum.optional(),
-  output: StepOutputSchema.optional(),
-  error: z.lazy(() => StepErrorSchema).optional(),
+  output: z.custom<Json>().optional(),
+  error: z.custom<Json>().optional(),
   startedAt: z.date().optional(),
   completedAt: z.date().optional(),
 });

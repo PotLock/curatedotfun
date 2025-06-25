@@ -58,6 +58,7 @@ export const ProcessingJobSchema = z.object({
       }
       return arg;
     }, z.string())
+    .nullable()
     .optional(),
   completedAt: z
     .preprocess((arg) => {
@@ -66,6 +67,7 @@ export const ProcessingJobSchema = z.object({
       }
       return arg;
     }, z.string())
+    .nullable()
     .optional(),
   createdAt: z.preprocess((arg) => {
     if (typeof arg === "string" || arg instanceof Date) {
@@ -80,6 +82,7 @@ export const ProcessingJobSchema = z.object({
       }
       return arg;
     }, z.string())
+    .nullable()
     .optional(),
 });
 
@@ -92,7 +95,9 @@ export const ProcessingStepSchema = z.object({
   stepOrder: z.number(),
   type: ProcessingStepTypeSchema,
   stage: ProcessingStepStageSchema,
-  stepName: z.string(),
+  pluginName: z.string().nullable(),
+  stepName: z.string().nullable(),
+  config: z.any().optional(),
   status: ProcessingStepStatusSchema,
   input: z.any().optional(),
   output: z.any().optional(),
@@ -104,6 +109,7 @@ export const ProcessingStepSchema = z.object({
       }
       return arg;
     }, z.string())
+    .nullable()
     .optional(),
   completedAt: z
     .preprocess((arg) => {
@@ -112,6 +118,7 @@ export const ProcessingStepSchema = z.object({
       }
       return arg;
     }, z.string())
+    .nullable()
     .optional(),
   createdAt: z.preprocess((arg) => {
     if (typeof arg === "string" || arg instanceof Date) {
@@ -126,6 +133,7 @@ export const ProcessingStepSchema = z.object({
       }
       return arg;
     }, z.string())
+    .nullable()
     .optional(),
 });
 

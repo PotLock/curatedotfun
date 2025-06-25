@@ -122,7 +122,7 @@ export class ModerationService implements IBaseService {
     payload: CreateModerationRequest,
   ): Promise<void> {
     try {
-      const submission = await this.submissionRepository.getSubmission(
+      const submission = await this.submissionRepository.getRichSubmission(
         payload.submissionId,
       );
       if (!submission) {

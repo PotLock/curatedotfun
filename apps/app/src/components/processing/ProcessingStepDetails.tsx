@@ -1,5 +1,4 @@
 import { ProcessingStep } from "@curatedotfun/types";
-import { Link } from "@tanstack/react-router";
 import {
   Dialog,
   DialogContent,
@@ -57,16 +56,7 @@ export function ProcessingStepDetails({
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              Processing Step:{" "}
-              <Link
-                to="/plugin/$pluginId"
-                params={{
-                  pluginId: step.plugin.id,
-                }}
-                className="text-blue-600 hover:underline"
-              >
-                {step.plugin.name}
-              </Link>
+              Processing Step: {step.stepName}
               <Badge
                 variant={
                   step.status === "success"
@@ -135,6 +125,7 @@ export function ProcessingStepDetails({
           <TabsList>
             <TabsTrigger value="input">Input</TabsTrigger>
             <TabsTrigger value="output">Output</TabsTrigger>
+            {step.config && <TabsTrigger value="config">Config</TabsTrigger>}
             {step.error && <TabsTrigger value="error">Error</TabsTrigger>}
           </TabsList>
           <TabsContent value="input" className="flex-1 overflow-hidden">
@@ -149,6 +140,13 @@ export function ProcessingStepDetails({
               </pre>
             </div>
           </TabsContent>
+          {step.config && (
+            <TabsContent value="config" className="flex-1 overflow-hidden">
+              <div className="h-[300px] w-full rounded-md border p-4 overflow-auto">
+                <pre className="text-sm">{formatJson(step.config)}</pre>
+              </div>
+            </TabsContent>
+          )}
           {step.error && (
             <TabsContent value="error" className="flex-1 overflow-hidden">
               <div className="h-[300px] w-full rounded-md border p-4 bg-red-50 dark:bg-red-950 overflow-auto">
