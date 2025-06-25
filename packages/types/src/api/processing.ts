@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PluginSchema } from "./plugins";
 
 // Processing job status
 export const ProcessingJobStatusSchema = z.enum([
@@ -92,7 +93,7 @@ export const ProcessingStepSchema = z.object({
   stepOrder: z.number(),
   type: ProcessingStepTypeSchema,
   stage: ProcessingStepStageSchema,
-  pluginName: z.string(),
+  plugin: PluginSchema,
   status: ProcessingStepStatusSchema,
   input: z.any().optional(),
   output: z.any().optional(),

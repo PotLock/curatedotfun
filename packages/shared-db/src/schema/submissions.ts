@@ -9,6 +9,7 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
+import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import { timestamps } from "./common";
@@ -107,3 +108,6 @@ export const submissionFeedsRelations = relations(
     }),
   }),
 );
+
+export const selectSubmissionSchema = createSelectSchema(submissions);
+export const selectSubmissionFeedSchema = createSelectSchema(submissionFeeds);

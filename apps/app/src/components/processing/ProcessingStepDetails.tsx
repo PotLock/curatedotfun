@@ -1,4 +1,5 @@
-import { ProcessingStep } from "@/types/processing";
+import { ProcessingStep } from "@curatedotfun/types";
+import { Link } from "@tanstack/react-router";
 import {
   Dialog,
   DialogContent,
@@ -56,7 +57,16 @@ export function ProcessingStepDetails({
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              Processing Step: {step.pluginName}
+              Processing Step:{" "}
+              <Link
+                to="/plugin/$pluginId"
+                params={{
+                  pluginId: step.plugin.id,
+                }}
+                className="text-blue-600 hover:underline"
+              >
+                {step.plugin.name}
+              </Link>
               <Badge
                 variant={
                   step.status === "success"

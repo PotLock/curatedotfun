@@ -39,9 +39,14 @@ export class DistributionService implements IBaseService {
           input: sanitizedInput,
           config: pluginConfig,
         };
-        if (this.configService.getFeatureFlag("enableDistribution")) {
-          await plugin.distribute(args);
+        if (!this.configService.getFeatureFlag("enableDistribution")) {
+          this.logger.info("Distribution skipped");
+          return {
+            success: true,
+          };
         }
+
+        await plugin.distribute(args);
         return { success: true };
       } catch (error) {
         const pluginError = new PluginError(

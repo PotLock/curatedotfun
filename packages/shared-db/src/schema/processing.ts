@@ -18,21 +18,42 @@ import {
 import { z } from "zod";
 import { timestamps } from "./common";
 import { feeds } from "./feeds";
-import { submissions } from "./submissions";
+import { plugins } from "./plugins";
+import {
+  selectSubmissionSchema,
+  selectSubmissionFeedSchema,
+  submissions,
+} from "./submissions";
+
+const RichSubmissionSchema = selectSubmissionSchema.extend({
+  feeds: z.array(selectSubmissionFeedSchema),
+});
 
 /**
  * Type for the input of a processing step.
  * This is intentionally generic as the input can vary widely
  * depending on the plugin and stage of processing.
  */
-export type StepInput = unknown;
+export const StepInputSchema = z.union([
+  RichSubmissionSchema,
+  z.array(RichSubmissionSchema),
+  z.record(z.string(), z.unknown()),
+  z.string(),
+]);
+export type StepInput = z.infer<typeof StepInputSchema>;
 
 /**
  * Type for the output of a processing step.
  * This is intentionally generic as the output can vary widely
  * depending on the plugin and stage of processing.
  */
-export type StepOutput = unknown;
+export const StepOutputSchema = z.union([
+  RichSubmissionSchema,
+  z.array(RichSubmissionSchema),
+  z.record(z.string(), z.unknown()),
+  z.string(),
+]);
+export type StepOutput = z.infer<typeof StepOutputSchema>;
 
 /**
  * Schema and type for error information in a processing step.
@@ -43,6 +64,8 @@ export const StepErrorSchema = z.object({
   stack: z.string().optional(),
   pluginName: z.string().optional(),
   details: z.record(z.unknown()).optional(),
+  pluginErrorCode: z.string().optional(),
+  retryable: z.boolean().optional(),
 });
 
 export type StepError = z.infer<typeof StepErrorSchema>;
@@ -158,7 +181,12 @@ export const processingSteps = table(
     stepOrder: integer("step_order").notNull(),
     type: processingStepTypeEnum("type").notNull(),
     stage: processingStepStageEnum("stage").notNull(),
-    pluginName: text("plugin_name").notNull(),
+    pluginName: text("plugin_name")
+      .notNull()
+      .references(() => plugins.name, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
     status: processingStepStatusEnum("status").notNull().default("pending"),
     input: jsonb("input").$type<StepInput>(),
     output: jsonb("output").$type<StepOutput>(),
@@ -221,6 +249,11 @@ export const processingStepsRelations = relations(
         references: [processingJobs.id],
         relationName: "ProcessingStepJob",
       }),
+      plugin: one(plugins, {
+        fields: [processingSteps.pluginName],
+        references: [plugins.name],
+        relationName: "ProcessingStepPlugin",
+      }),
     };
   },
 );
@@ -254,8 +287,8 @@ export const insertProcessingStepSchema = createInsertSchema(processingSteps, {
   stage: processingStepStageZodEnum,
   pluginName: z.string(),
   status: processingStepStatusZodEnum.optional(),
-  input: z.unknown().optional(),
-  output: z.unknown().optional(),
+  input: StepInputSchema.optional(),
+  output: StepOutputSchema.optional(),
   error: z.lazy(() => StepErrorSchema).optional(),
   version: z.number().int().positive().optional(),
   startedAt: z.date().optional(),
@@ -266,7 +299,7 @@ export const insertProcessingStepSchema = createInsertSchema(processingSteps, {
 
 export const updateProcessingStepSchema = createUpdateSchema(processingSteps, {
   status: processingStepStatusZodEnum.optional(),
-  output: z.unknown().optional(),
+  output: StepOutputSchema.optional(),
   error: z.lazy(() => StepErrorSchema).optional(),
   startedAt: z.date().optional(),
   completedAt: z.date().optional(),
