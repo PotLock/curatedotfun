@@ -2,11 +2,10 @@ import {
   Json,
   ProcessingRepository,
   ProcessingStepStage,
-  RichSubmission,
+  SelectFeed,
   SelectProcessingJob,
   SelectProcessingStep,
-  StepError,
-  SelectFeed,
+  StepError
 } from "@curatedotfun/shared-db";
 import { DistributorConfig, TransformConfig } from "@curatedotfun/types";
 import {
@@ -191,18 +190,33 @@ export class ProcessingService implements IBaseService {
       });
 
       try {
-        this.logger.info(`transforming: ${currentContent} with transform: ${transform}`);
+        this.logger.info(
+          {
+            jobId,
+            stepOrder,
+            plugin: transform.plugin,
+            input: currentContent,
+          },
+          "Applying transformation",
+        );
         const output = await this.transformationService.applyTransforms(
           currentContent,
           [transform],
         );
-        this.logger.info(`into: ${output}`);
+        this.logger.info(
+          {
+            jobId,
+            stepOrder,
+            plugin: transform.plugin,
+            output,
+          },
+          "Transformation complete",
+        );
         await this.processingRepository.updateStep(step.id, {
           status: "success",
           output: output as Json,
           completedAt: new Date(),
         });
-        this.logger.info(`into: ${output}`);
         currentContent = output;
       } catch (error) {
         const stepError: StepError = {
