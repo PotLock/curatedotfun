@@ -129,7 +129,8 @@ submissionRoutes.get("/single/:submissionId", async (c) => {
   const db = c.get("db");
   const submissionRepository = new SubmissionRepository(db);
   const submissionId = c.req.param("submissionId");
-  const richSubmission = await submissionRepository.getSubmission(submissionId);
+  const richSubmission =
+    await submissionRepository.getRichSubmission(submissionId);
 
   if (!richSubmission) {
     return c.notFound();

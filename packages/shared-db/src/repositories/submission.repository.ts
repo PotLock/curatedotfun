@@ -77,7 +77,27 @@ export class SubmissionRepository {
     );
   }
 
-  async getSubmission(tweetId: string): Promise<RichSubmission | null> {
+  async getSubmission(tweetId: string): Promise<SelectSubmission | null> {
+    return withErrorHandling(
+      async () => {
+        const result = await executeWithRetry(
+          (retryDb) =>
+            retryDb.query.submissions.findFirst({
+              where: eq(schema.submissions.tweetId, tweetId),
+            }),
+          this.db,
+        );
+        return result ?? null;
+      },
+      {
+        operationName: "get submission",
+        additionalContext: { tweetId },
+      },
+      null,
+    );
+  }
+
+  async getRichSubmission(tweetId: string): Promise<RichSubmission | null> {
     return withErrorHandling(
       async () => {
         const result = await executeWithRetry(
@@ -145,7 +165,7 @@ export class SubmissionRepository {
         return richSubmissionData;
       },
       {
-        operationName: "get submission",
+        operationName: "get rich submission",
         additionalContext: { tweetId },
       },
       null,
@@ -153,6 +173,28 @@ export class SubmissionRepository {
   }
 
   async getSubmissionByCuratorTweetId(
+    curatorTweetId: string,
+  ): Promise<SelectSubmission | null> {
+    return withErrorHandling(
+      async () => {
+        const result = await executeWithRetry(
+          (retryDb) =>
+            retryDb.query.submissions.findFirst({
+              where: eq(schema.submissions.curatorTweetId, curatorTweetId),
+            }),
+          this.db,
+        );
+        return result ?? null;
+      },
+      {
+        operationName: "get submission by curator tweet ID",
+        additionalContext: { curatorTweetId },
+      },
+      null,
+    );
+  }
+
+  async getRichSubmissionByCuratorTweetId(
     curatorTweetId: string,
   ): Promise<RichSubmission | null> {
     return withErrorHandling(
@@ -222,7 +264,7 @@ export class SubmissionRepository {
         return richSubmissionData;
       },
       {
-        operationName: "get submission by curator tweet ID",
+        operationName: "get rich submission by curator tweet ID",
         additionalContext: { curatorTweetId },
       },
       null,

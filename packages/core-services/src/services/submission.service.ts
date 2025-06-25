@@ -5,6 +5,7 @@ import {
   InsertSubmissionFeed,
   RichSubmission,
   SelectFeed,
+  SelectSubmission,
   SubmissionRepository,
   submissionStatusZodEnum,
 } from "@curatedotfun/shared-db";
@@ -51,8 +52,16 @@ export class SubmissionService implements IBackgroundTaskService {
     this.logger.info("SubmissionService stopped.");
   }
 
-  public async getSubmission(tweetId: string): Promise<RichSubmission | null> {
+  public async getSubmission(
+    tweetId: string,
+  ): Promise<SelectSubmission | null> {
     return this.submissionRepository.getSubmission(tweetId);
+  }
+
+  public async getRichSubmission(
+    tweetId: string,
+  ): Promise<RichSubmission | null> {
+    return this.submissionRepository.getRichSubmission(tweetId);
   }
 
   private async checkMentions(): Promise<void> {
