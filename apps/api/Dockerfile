@@ -71,4 +71,4 @@ EXPOSE 3000
 WORKDIR /app/apps/api
 
 # Start the application.
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/main.cjs"]

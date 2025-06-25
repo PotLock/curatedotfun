@@ -66,4 +66,4 @@ USER app
 WORKDIR /app/apps/worker
 
 # Start the application.
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/index.cjs"]
