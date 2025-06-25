@@ -55,7 +55,7 @@ export class TransformationService implements IBaseService {
           config: transform.config,
         };
 
-        this.logger.info(
+        this.logger.debug(
           `Applying transform #${i + 1} (${transform.plugin}), args: ${JSON.stringify(args)}`,
         );
         const transformResult = await plugin.transform(args);
