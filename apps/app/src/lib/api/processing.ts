@@ -56,7 +56,7 @@ export function useRetryProcessingJob() {
   >(
     {
       method: "POST",
-      path: "/processing/jobs/:jobId/retry",
+      path: ({ jobId }) => `/processing/jobs/${jobId}/retry`,
       message: "retryProcessingJob",
     },
     {
@@ -79,7 +79,7 @@ export function useRetryProcessingStep() {
   >(
     {
       method: "POST",
-      path: "/processing/steps/:stepId/retry",
+      path: ({ stepId }) => `/processing/steps/${stepId}/retry`,
       message: "retryProcessingStep",
     },
     {

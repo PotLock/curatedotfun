@@ -54,7 +54,7 @@ export function useApiMutation<
 >(
   mutationConfig: {
     method: "POST" | "PUT" | "DELETE" | "PATCH";
-    path: string; // The API path. For dynamic paths (e.g., /items/:id), construct the full path before calling this hook.
+    path: string | ((variables: TVariables) => string); // The API path. Can be a string or a function that returns a string.
     message?: string; // Descriptive message for signing (e.g., "createItem")
   },
   options?: Omit<
@@ -71,9 +71,14 @@ export function useApiMutation<
       throw new ApiError("User not authenticated or account ID missing.", 401);
     }
 
+    const path =
+      typeof mutationConfig.path === "function"
+        ? mutationConfig.path(variables)
+        : mutationConfig.path;
+
     return apiClient.makeRequest<TData, TVariables>(
       mutationConfig.method,
-      mutationConfig.path,
+      path,
       variables, // Pass 'variables' from mutate() as requestData
     );
   };
