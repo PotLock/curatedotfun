@@ -88,6 +88,11 @@ export const insertModerationHistorySchema = createInsertSchema(
 export const selectModerationHistorySchema = createSelectSchema(
   moderationHistory,
   {
+    id: z.preprocess(
+      // or coerce
+      (val) => (typeof val === "string" ? parseInt(val, 10) : val),
+      z.number(),
+    ),
     createdAt: z.date(),
     updatedAt: z.date().nullable(),
     moderatorAccountIdType: moderatorAccountIdTypeSchema,
