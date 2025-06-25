@@ -22,6 +22,21 @@ import { feeds } from "./feeds";
 import { submissions } from "./submissions";
 
 /**
+ * Schema and type for error information in a processing step.
+ * This provides a structured way to store error details.
+ */
+export const StepErrorSchema = z.object({
+  message: z.string(),
+  stack: z.string().optional(),
+  stepName: z.string().optional(),
+  details: z.record(z.unknown()).optional(),
+  pluginErrorCode: z.string().optional(),
+  retryable: z.boolean().optional(),
+});
+
+export type StepError = z.infer<typeof StepErrorSchema>;
+
+/**
  * Result of a distribution operation.
  * This provides a standardized structure for distribution results.
  */
