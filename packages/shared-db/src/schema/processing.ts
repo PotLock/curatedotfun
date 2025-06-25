@@ -175,7 +175,9 @@ export const processingSteps = table(
     stepOrder: integer("step_order").notNull(),
     type: processingStepTypeEnum("type").notNull(),
     stage: processingStepStageEnum("stage").notNull(),
+    pluginName: text("plugin_name"),
     stepName: text("step_name"),
+    config: jsonb("config"),
     status: processingStepStatusEnum("status").notNull().default("pending"),
     input: jsonb("input").$type<StepInput>(),
     output: jsonb("output").$type<StepOutput>(),
@@ -193,7 +195,7 @@ export const processingSteps = table(
   },
   (table) => [
     index("processing_steps_job_idx").on(table.jobId),
-    index("processing_steps_plugin_name_idx").on(table.stepName),
+    index("processing_steps_plugin_name_idx").on(table.pluginName),
     index("processing_steps_status_idx").on(table.status),
     uniqueIndex("processing_steps_job_order_idx").on(
       table.jobId,
@@ -269,7 +271,9 @@ export const insertProcessingStepSchema = createInsertSchema(processingSteps, {
   stepOrder: z.number().int().positive(),
   type: processingStepTypeZodEnum,
   stage: processingStepStageZodEnum,
+  pluginName: z.string().optional().nullable(),
   stepName: z.string().optional().nullable(),
+  config: z.record(z.unknown()).optional().nullable(),
   status: processingStepStatusZodEnum.optional(),
   input: StepInputSchema.optional(),
   output: StepOutputSchema.optional(),

@@ -3,7 +3,7 @@ import {
   useProcessingSteps,
   useRetryProcessingJob,
 } from "@/lib/api";
-import { ProcessingJob, ProcessingStep } from "@/types/processing";
+import { ProcessingJob, ProcessingStep } from "@curatedotfun/types";
 import {
   createColumnHelper,
   flexRender,
