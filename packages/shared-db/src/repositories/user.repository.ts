@@ -91,46 +91,50 @@ export class UserRepository {
   /**
    * Create a new user
    * @param userData The user data to insert
+   * @param txDb Optional transaction DB instance
    * @returns The created user
    * @throws DatabaseError if the user could not be created
    */
-  async createUser(userData: InsertUser, txDb: DB) {
+  async createUser(userData: InsertUser, txDb?: DB) {
     return withErrorHandling(
       async () => {
-        try {
-          const insertResult = await txDb
-            .insert(users)
-            .values(userData)
-            .returning();
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
+          try {
+            const insertResult = await dbInstance
+              .insert(users)
+              .values(userData)
+              .returning();
 
-          const newUser = insertResult[0];
-          if (!newUser) {
-            throw new Error("Failed to insert user into database");
+            const newUser = insertResult[0];
+            if (!newUser) {
+              throw new Error("Failed to insert user into database");
+            }
+
+            return newUser;
+          } catch (error: unknown) {
+            // Handle unique constraint violations
+            if (
+              error &&
+              typeof error === "object" &&
+              "code" in error &&
+              error.code === "23505"
+            ) {
+              // Extract the constraint name to provide a more specific error message
+              const detail =
+                "detail" in error && typeof error.detail === "string"
+                  ? error.detail
+                  : "";
+              const constraintMatch = detail.match(/Key \((.*?)\)=/);
+              const field = constraintMatch ? constraintMatch[1] : "unknown";
+
+              throw new Error(`A user with this ${field} already exists`, {
+                cause: error,
+              });
+            }
+            throw error;
           }
-
-          return newUser;
-        } catch (error: unknown) {
-          // Handle unique constraint violations
-          if (
-            error &&
-            typeof error === "object" &&
-            "code" in error &&
-            error.code === "23505"
-          ) {
-            // Extract the constraint name to provide a more specific error message
-            const detail =
-              "detail" in error && typeof error.detail === "string"
-                ? error.detail
-                : "";
-            const constraintMatch = detail.match(/Key \((.*?)\)=/);
-            const field = constraintMatch ? constraintMatch[1] : "unknown";
-
-            throw new Error(`A user with this ${field} already exists`, {
-              cause: error,
-            });
-          }
-          throw error;
-        }
+        }, dbToUse);
       },
       {
         operationName: "create user",
@@ -143,33 +147,37 @@ export class UserRepository {
    * Update a user by their NEAR account ID
    * @param nearAccountId The NEAR account ID of the user to update
    * @param userData The user data to update
+   * @param txDb Optional transaction DB instance
    * @returns The updated user
    * @throws NotFoundError if the user does not exist
    */
   async updateByNearAccountId(
     nearAccountId: string,
     userData: UpdateUser,
-    txDb: DB,
+    txDb?: DB,
   ) {
     return withErrorHandling(
       async () => {
-        const updateResult = await txDb
-          .update(users)
-          .set({
-            ...userData,
-            updatedAt: sql`NOW()`,
-          })
-          .where(eq(users.nearAccountId, nearAccountId))
-          .returning();
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
+          const updateResult = await dbInstance
+            .update(users)
+            .set({
+              ...userData,
+              updatedAt: sql`NOW()`,
+            })
+            .where(eq(users.nearAccountId, nearAccountId))
+            .returning();
 
-        const updatedUser = updateResult[0];
-        if (!updatedUser) {
-          throw new Error(
-            `User not found with NEAR account ID: ${nearAccountId}`,
-          );
-        }
+          const updatedUser = updateResult[0];
+          if (!updatedUser) {
+            throw new Error(
+              `User not found with NEAR account ID: ${nearAccountId}`,
+            );
+          }
 
-        return updatedUser;
+          return updatedUser;
+        }, dbToUse);
       },
       {
         operationName: "update user by NEAR account ID",
@@ -182,24 +190,28 @@ export class UserRepository {
    * Update a user
    * @param authProviderId The provider ID of the user to update
    * @param userData The user data to update
+   * @param txDb Optional transaction DB instance
    * @returns The updated user
    * @throws NotFoundError if the user does not exist
    */
-  async updateUser(authProviderId: string, userData: UpdateUser, txDb: DB) {
+  async updateUser(authProviderId: string, userData: UpdateUser, txDb?: DB) {
     return withErrorHandling(
       async () => {
-        const updateResult = await txDb
-          .update(users)
-          .set({ ...userData, updatedAt: sql`NOW()` })
-          .where(eq(users.authProviderId, authProviderId))
-          .returning();
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
+          const updateResult = await dbInstance
+            .update(users)
+            .set({ ...userData, updatedAt: sql`NOW()` })
+            .where(eq(users.authProviderId, authProviderId))
+            .returning();
 
-        const updatedUser = updateResult[0];
-        if (!updatedUser) {
-          throw new Error(`User not found: ${authProviderId}`);
-        }
+          const updatedUser = updateResult[0];
+          if (!updatedUser) {
+            throw new Error(`User not found: ${authProviderId}`);
+          }
 
-        return updatedUser;
+          return updatedUser;
+        }, dbToUse);
       },
       {
         operationName: "update user",
@@ -211,20 +223,24 @@ export class UserRepository {
   /**
    * Delete a user by their NEAR account ID
    * @param nearAccountId The NEAR account ID of the user to delete
+   * @param txDb Optional transaction DB instance
    * @returns True if the user was deleted, false otherwise
    */
   async deleteByNearAccountId(
     nearAccountId: string,
-    txDb: DB,
+    txDb?: DB,
   ): Promise<boolean> {
     return withErrorHandling(
       async () => {
-        const deleteResult = await txDb
-          .delete(users)
-          .where(eq(users.nearAccountId, nearAccountId))
-          .returning();
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
+          const deleteResult = await dbInstance
+            .delete(users)
+            .where(eq(users.nearAccountId, nearAccountId))
+            .returning();
 
-        return deleteResult.length > 0;
+          return deleteResult.length > 0;
+        }, dbToUse);
       },
       {
         operationName: "delete user by NEAR account ID",
@@ -237,17 +253,21 @@ export class UserRepository {
   /**
    * Delete a user
    * @param authProviderId The provider ID of the user to delete
+   * @param txDb Optional transaction DB instance
    * @returns True if the user was deleted, false otherwise
    */
-  async deleteUser(authProviderId: string, txDb: DB): Promise<boolean> {
+  async deleteUser(authProviderId: string, txDb?: DB): Promise<boolean> {
     return withErrorHandling(
       async () => {
-        const deleteResult = await txDb
-          .delete(users)
-          .where(eq(users.authProviderId, authProviderId))
-          .returning();
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
+          const deleteResult = await dbInstance
+            .delete(users)
+            .where(eq(users.authProviderId, authProviderId))
+            .returning();
 
-        return deleteResult.length > 0;
+          return deleteResult.length > 0;
+        }, dbToUse);
       },
       {
         operationName: "delete user",

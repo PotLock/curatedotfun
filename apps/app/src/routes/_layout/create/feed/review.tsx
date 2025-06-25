@@ -27,7 +27,7 @@ function FeedReviewComponent() {
         variant: "default",
       });
       navigate({
-        to: "/feed/welcome/$feedId",
+        to: "/feed/$feedId",
         params: { feedId: feedConfig.id! },
       });
     } catch (error) {

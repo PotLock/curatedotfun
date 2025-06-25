@@ -6,6 +6,7 @@ import {
   LeaderboardRepository,
   ModerationRepository,
   PluginRepository,
+  ProcessingRepository,
   SubmissionRepository,
   TwitterRepository,
   UserRepository,
@@ -21,7 +22,7 @@ import { FeedService } from "./services/feed.service";
 import { IBackgroundTaskService } from "./services/interfaces/background-task.interface";
 import { ModerationService } from "./services/moderation.service";
 import { PluginService } from "./services/plugin.service";
-import { ProcessorService } from "./services/processor.service";
+import { ProcessingService } from "./services/processing.service";
 import { SubmissionService } from "./services/submission.service";
 import { TransformationService } from "./services/transformation.service";
 import { TwitterService } from "./services/twitter/client";
@@ -91,10 +92,13 @@ export class ServiceProvider {
       configService,
       logger.child({ component: "DistributionService" }),
     );
-    const processorService = new ProcessorService(
+    const processingRepository = new ProcessingRepository(db);
+
+    const processingService = new ProcessingService(
       transformationService,
       distributionService,
-      logger.child({ component: "ProcessorService" }),
+      processingRepository,
+      logger.child({ component: "ProcessingService" }),
     );
 
     const userRepository = new UserRepository(db);
@@ -116,7 +120,7 @@ export class ServiceProvider {
 
     const feedService = new FeedService(
       feedRepository,
-      processorService,
+      processingService,
       db,
       logger.child({ component: "FeedService" }),
       this.superAdminAccountsList,
@@ -126,7 +130,7 @@ export class ServiceProvider {
     this.services.set("pluginService", pluginService);
     this.services.set("transformationService", transformationService);
     this.services.set("distributionService", distributionService);
-    this.services.set("processorService", processorService);
+    this.services.set("processingService", processingService);
     this.services.set("feedService", feedService);
     this.services.set("twitterService", twitterService);
   }
@@ -134,8 +138,8 @@ export class ServiceProvider {
   async init() {
     const { db, logger } = this.config;
     const twitterService = this.getService<TwitterService>("twitterService");
-    const processorService =
-      this.getService<ProcessorService>("processorService");
+    const processingService =
+      this.getService<ProcessingService>("processingService");
     const feedService = this.getService<FeedService>("feedService");
 
     await twitterService.initialize();
@@ -148,7 +152,7 @@ export class ServiceProvider {
       feedRepository,
       moderationRepository,
       submissionRepository,
-      processorService,
+      processingService,
       feedService,
       this.superAdminAccountsList,
       db,
@@ -237,8 +241,8 @@ export class ServiceProvider {
     return this.getService<DistributionService>("distributionService");
   }
 
-  public getProcessorService(): ProcessorService {
-    return this.getService<ProcessorService>("processorService");
+  public getProcessingService(): ProcessingService {
+    return this.getService<ProcessingService>("processingService");
   }
 
   public getFeedService(): FeedService {

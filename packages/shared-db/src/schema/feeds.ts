@@ -15,6 +15,7 @@ import { z } from "zod";
 import { submissionFeeds } from "./submissions";
 import { moderationHistory } from "./moderation";
 import { users } from "./users";
+import { processingJobs } from "./processing";
 import {
   createInsertSchema,
   createSelectSchema,
@@ -51,6 +52,9 @@ export const feedsRelations = relations(feeds, ({ one, many }) => ({
   }),
   moderationHistoryEntries: many(moderationHistory, {
     relationName: "ModerationHistoryFeedReference",
+  }),
+  processingJobs: many(processingJobs, {
+    relationName: "FeedProcessingJobs",
   }),
 }));
 

@@ -20,24 +20,31 @@ export class ModerationRepository {
 
   /**
    * Saves a moderation action to the database.
+   * @param moderation The moderation data to insert
+   * @param txDb Optional transaction DB instance
+   * @returns The created moderation history entry
    */
   async saveModerationAction(
     moderation: InsertModerationHistory,
-    txDb?: DB, // Optional transaction DB
+    txDb?: DB,
   ): Promise<SelectModerationHistory> {
-    const dbInstance = txDb || this.db;
     return withErrorHandling(
       async () => {
-        const insertResult = await dbInstance
-          .insert(moderationHistory)
-          .values(moderation)
-          .returning();
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
+          const insertResult = await dbInstance
+            .insert(moderationHistory)
+            .values(moderation)
+            .returning();
 
-        const newModeration = insertResult[0];
-        if (!newModeration) {
-          throw new Error("Failed to insert moderation history into database");
-        }
-        return selectModerationHistorySchema.parse(newModeration);
+          const newModeration = insertResult[0];
+          if (!newModeration) {
+            throw new Error(
+              "Failed to insert moderation history into database",
+            );
+          }
+          return selectModerationHistorySchema.parse(newModeration);
+        }, dbToUse);
       },
       {
         operationName: "save moderation action",

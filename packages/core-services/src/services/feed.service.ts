@@ -15,7 +15,7 @@ import { Logger } from "pino";
 import { ForbiddenError, NotFoundError } from "@curatedotfun/utils";
 import { isSuperAdmin } from "../utils/auth";
 import { IBaseService } from "./interfaces/base-service.interface";
-import { ProcessorService } from "./processor.service";
+import { ProcessingService } from "./processing.service";
 import { merge } from "lodash";
 
 export type FeedAction = "update" | "delete" | "manage_admins";
@@ -26,7 +26,7 @@ export class FeedService implements IBaseService {
 
   constructor(
     private feedRepository: FeedRepository,
-    private processorService: ProcessorService,
+    private processingService: ProcessingService,
     private db: DB,
     logger: Logger,
     superAdminAccounts: string[],
@@ -267,7 +267,8 @@ export class FeedService implements IBaseService {
           }
         }
 
-        await this.processorService.process(submission, streamConfig);
+        // The enqueueing is now handled by the moderation service
+        // await this.processingService.process(submission, streamConfig);
         processedCount++;
       } catch (error) {
         this.logger.error(
