@@ -34,5 +34,8 @@ module.exports = {
     new rspack.IgnorePlugin({
       resourceRegExp: /^pg-native$|^cloudflare:sockets$/,
     }),
+    new rspack.container.ModuleFederationPlugin({
+      name: "host",
+    }),
   ].filter(Boolean),
 };

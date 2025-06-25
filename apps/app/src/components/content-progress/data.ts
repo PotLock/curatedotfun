@@ -38,8 +38,8 @@ export const templateElements: TemplateElement[] = [
   {
     id: "curatorNotes",
     title: "Curator Notes",
-    description: "Notes from the curator ({{curator.notes}})",
-    template: "💬 Curator notes: {{curator.notes}}",
+    description: "Notes from the curator ({{curatorNotes}})",
+    template: "💬 Curator notes: {{curatorNotes}}",
   },
 ];
 

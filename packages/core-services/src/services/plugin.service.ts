@@ -1,16 +1,11 @@
 import { PluginRepository, type DB } from "@curatedotfun/shared-db";
-import type {
-  BotPlugin,
-  DistributorPlugin,
-  PluginType,
-  PluginTypeMap,
-  SourceItem,
-  SourcePlugin,
-  TransformerPlugin,
-} from "@curatedotfun/types";
+import type { BotPlugin, PluginType, PluginTypeMap } from "@curatedotfun/types";
 import { PluginError, PluginErrorCode } from "@curatedotfun/utils";
-import { performReload } from "@module-federation/node/utils";
-import { init, loadRemote } from "@module-federation/runtime";
+import {
+  init,
+  loadRemote,
+  registerRemotes,
+} from "@module-federation/enhanced/runtime";
 import Mustache from "mustache";
 import type { Logger } from "pino";
 import { logPluginError } from "../utils/error";
@@ -94,6 +89,10 @@ export class PluginService implements IBaseService {
     logger: Logger,
   ) {
     this.logger = logger;
+    init({
+      name: "host",
+      remotes: [],
+    });
   }
 
   /**
@@ -220,12 +219,29 @@ export class PluginService implements IBaseService {
             TConfig
           >[T];
 
-          // Hydrate config with environment variables
+          // Hydrate config with environment variables, preserving unresolved tags
           const stringifiedConfig = JSON.stringify(config.config);
+          const tokens = Mustache.parse(stringifiedConfig);
+          const tags = new Set(
+            tokens
+              .filter((token) => token[0] === "name")
+              .map((token) => token[1]),
+          );
+
+          const view: Record<string, any> = {};
+          for (const tag of tags) {
+            if (Object.prototype.hasOwnProperty.call(this.env, tag)) {
+              view[tag] = this.env[tag];
+            } else {
+              // If the tag is not in the environment variables, preserve it
+              view[tag] = `{{${tag}}}`;
+            }
+          }
+
           const populatedConfigString = Mustache.render(
             stringifiedConfig,
-            this.env,
-          ); // TODO: Whitelist values
+            view,
+          );
           const hydratedConfig = JSON.parse(populatedConfigString) as TConfig;
 
           await newInstance.initialize(hydratedConfig);
@@ -332,12 +348,7 @@ export class PluginService implements IBaseService {
   ): Promise<void> {
     try {
       // Initialize Module Federation with all active remotes
-      await performReload(true);
-      init({
-        name: "host",
-        remotes: Array.from(this.remotes.values()).map((r) => r.config),
-      });
-
+      registerRemotes([remote.config]);
       const container = await loadRemote<PluginContainer<T>>(
         `${remote.config.name}/plugin`,
       );
@@ -440,56 +451,6 @@ export class PluginService implements IBaseService {
   }
 
   /**
-   * Validates that a plugin instance implements the required interface
-   */
-  private validatePluginInterface<
-    T extends PluginType,
-    TInput = unknown,
-    TOutput = unknown,
-    TConfig extends Record<string, unknown> = Record<string, unknown>,
-  >(
-    instance: BotPlugin<TConfig>,
-    type: T,
-  ): instance is PluginTypeMap<TInput, TOutput, TConfig>[T] {
-    if (!instance || typeof instance !== "object") return false;
-    if (typeof instance.initialize !== "function") return false;
-    if (instance.type !== type) {
-      this.logger.warn(
-        `Plugin instance type mismatch: expected ${type}, got ${instance.type}`,
-        { name: (instance as any)?.constructor?.name },
-      );
-      return false;
-    }
-
-    switch (type) {
-      case "distributor":
-        return (
-          typeof (instance as DistributorPlugin<TInput, TConfig>).distribute ===
-          "function"
-        );
-      case "transformer": {
-        const transformer = instance as TransformerPlugin<
-          TInput,
-          TOutput,
-          TConfig
-        >;
-        return typeof transformer.transform === "function";
-      }
-      case "source": {
-        const source = instance as SourcePlugin<SourceItem, TConfig>;
-        return typeof source.search === "function";
-      }
-      default:
-        // This case should ideally not be reached if PluginType is a comprehensive union
-        // and all cases are handled.
-        this.logger.warn(
-          `Unknown plugin type encountered in validation: ${type}`,
-        );
-        return false;
-    }
-  }
-
-  /**
    * Checks if a cached item is stale
    */
   private isStale(loadedAt: Date | undefined, timeout: number): boolean {
@@ -504,9 +465,6 @@ export class PluginService implements IBaseService {
   public async reloadAllPlugins(): Promise<void> {
     // Clean up existing instances
     await this.cleanup();
-
-    // Force module federation reload
-    await performReload(true);
 
     this.logger.info("All plugins reloaded");
   }
