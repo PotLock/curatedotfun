@@ -6,7 +6,7 @@ import {
   plugins,
 } from "../schema/plugins";
 import { executeWithRetry, withErrorHandling } from "../utils";
-import { DB } from "../validators";
+import type { DB } from "../types";
 
 export interface IPluginRepository {
   getPlugin: (pluginId: string) => Promise<RegisteredPlugin | undefined>;

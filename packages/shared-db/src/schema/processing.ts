@@ -19,15 +19,7 @@ import { z } from "zod";
 import { timestamps } from "./common";
 import { feeds } from "./feeds";
 import { plugins } from "./plugins";
-import {
-  selectSubmissionSchema,
-  selectSubmissionFeedSchema,
-  submissions,
-} from "./submissions";
-
-const RichSubmissionSchema = selectSubmissionSchema.extend({
-  feeds: z.array(selectSubmissionFeedSchema),
-});
+import { RichSubmissionSchema, submissions } from "../schema";
 
 /**
  * Type for the input of a processing step.

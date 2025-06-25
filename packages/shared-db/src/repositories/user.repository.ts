@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { InsertUser, UpdateUser, users } from "../schema";
 import { executeWithRetry, withErrorHandling } from "../utils";
-import { DB } from "../validators";
+import type { DB } from "../types";
 
 export class UserRepository {
   private readonly db: DB;

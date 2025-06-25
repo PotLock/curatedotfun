@@ -1,7 +1,7 @@
 import { and, eq, desc, gte, lt } from "drizzle-orm";
 import { InsertAuthRequest, authRequests } from "../schema";
 import { executeWithRetry, withErrorHandling } from "../utils";
-import { DB } from "../validators";
+import type { DB } from "../types";
 
 export class AuthRequestRepository {
   private readonly db: DB;

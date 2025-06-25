@@ -1,0 +1,1 @@
+ALTER TABLE "processing_steps" ADD CONSTRAINT "processing_steps_plugin_name_plugins_name_fk" FOREIGN KEY ("plugin_name") REFERENCES "public"."plugins"("name") ON DELETE cascade ON UPDATE cascade;

@@ -1,3 +1,4 @@
+import type { FeedConfig } from "@curatedotfun/types";
 import {
   and,
   asc,
@@ -11,18 +12,18 @@ import {
   SQL,
 } from "drizzle-orm";
 import * as schema from "../schema";
-import { SubmissionStatus, submissionStatusZodEnum } from "../schema";
-import { executeWithRetry, withErrorHandling } from "../utils";
 import {
-  DB,
   InsertSubmissionFeed,
   RichSubmission,
   SelectSubmissionFeed,
-} from "../validators";
+  SubmissionStatus,
+  submissionStatusZodEnum,
+} from "../schema";
 import type { InsertFeed, SelectFeed, UpdateFeed } from "../schema/feeds";
 import { SelectModerationHistory } from "../schema/moderation";
+import type { DB } from "../types";
+import { executeWithRetry, withErrorHandling } from "../utils";
 import { PaginatedResponse } from "./submission.repository";
-import type { FeedConfig } from "@curatedotfun/types";
 
 /**
  * Repository for feed-related database operations

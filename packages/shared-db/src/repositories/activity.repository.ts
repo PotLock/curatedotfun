@@ -8,7 +8,7 @@ import type {
 } from "../schema/activity";
 import { activityTypeZodEnum } from "../schema/activity";
 import { executeWithRetry, withErrorHandling } from "../utils";
-import { DB } from "../validators";
+import type { DB } from "../types";
 
 export class ActivityRepository {
   private readonly db: DB;

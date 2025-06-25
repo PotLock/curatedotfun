@@ -9,12 +9,16 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
-import { createSelectSchema } from "drizzle-zod";
+import {
+  createInsertSchema,
+  createSelectSchema,
+  createUpdateSchema,
+} from "drizzle-zod";
 import { z } from "zod";
 
 import { timestamps } from "./common";
 import { feeds } from "./feeds";
-import { moderationHistory } from "./moderation";
+import { moderationHistory, SelectModerationHistory } from "./moderation";
 import { processingJobs } from "./processing";
 
 export const submissionStatusValues = [
@@ -109,5 +113,50 @@ export const submissionFeedsRelations = relations(
   }),
 );
 
-export const selectSubmissionSchema = createSelectSchema(submissions);
+// Submission Schemas and Types
+export const insertSubmissionSchema = createInsertSchema(submissions, {
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
+export const updateSubmissionSchema = createUpdateSchema(submissions);
+export const selectSubmissionSchema = createSelectSchema(submissions, {
+  createdAt: z.date(),
+  updatedAt: z.date().nullable(),
+});
+export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
+export type UpdateSubmission = z.infer<typeof updateSubmissionSchema>;
+export type SelectSubmission = z.infer<typeof selectSubmissionSchema>;
+
+export type RichSubmission = SelectSubmission & {
+  feeds: SelectSubmissionFeed[];
+  moderationHistory: SelectModerationHistory[];
+};
+
+// SubmissionFeed Schemas and Types
+export const insertSubmissionFeedSchema = createInsertSchema(submissionFeeds, {
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
+export const updateSubmissionFeedSchema = createUpdateSchema(submissionFeeds);
 export const selectSubmissionFeedSchema = createSelectSchema(submissionFeeds);
+export type InsertSubmissionFeed = z.infer<typeof insertSubmissionFeedSchema>;
+export type UpdateSubmissionFeed = z.infer<typeof updateSubmissionFeedSchema>;
+export type SelectSubmissionFeed = z.infer<typeof selectSubmissionFeedSchema>;
+
+// SubmissionCounts Schemas and Types
+export const insertSubmissionCountSchema = createInsertSchema(
+  submissionCounts,
+  {
+    createdAt: z.undefined(),
+    updatedAt: z.undefined(),
+  },
+);
+export const updateSubmissionCountSchema = createUpdateSchema(submissionCounts);
+export const selectSubmissionCountSchema = createSelectSchema(submissionCounts);
+export type InsertSubmissionCount = z.infer<typeof insertSubmissionCountSchema>;
+export type UpdateSubmissionCount = z.infer<typeof updateSubmissionCountSchema>;
+export type SelectSubmissionCount = z.infer<typeof selectSubmissionCountSchema>;
+
+export const RichSubmissionSchema = selectSubmissionSchema.extend({
+  feeds: z.array(selectSubmissionFeedSchema),
+});

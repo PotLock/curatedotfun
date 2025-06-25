@@ -6,7 +6,7 @@ import {
   selectModerationHistorySchema,
 } from "../schema";
 import { executeWithRetry, withErrorHandling } from "../utils";
-import { DB } from "../validators";
+import type { DB } from "../types";
 
 /**
  * Repository for moderation-related database operations.

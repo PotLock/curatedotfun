@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import * as schema from "../schema";
-import { DB } from "../validators";
+import type { DB } from "../types";
 import { executeWithRetry, withErrorHandling } from "../utils";
 
 export interface TwitterConfig {

@@ -1,7 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import * as schema from "../schema";
+import { InsertFeedRecapState, SelectFeedRecapState } from "../schema";
+import type { DB } from "../types";
 import { executeWithRetry, withErrorHandling } from "../utils";
-import { DB, InsertFeedRecapState, SelectFeedRecapState } from "../validators";
 
 /**
  * Repository for feed recap state-related database operations

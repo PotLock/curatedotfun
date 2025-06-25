@@ -1,5 +1,5 @@
-import crypto from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
+import crypto from "node:crypto";
 import {
   InsertProcessingJob,
   InsertProcessingStep,
@@ -10,8 +10,8 @@ import {
   processingJobs,
   processingSteps,
 } from "../schema/processing";
+import type { DB } from "../types";
 import { executeWithRetry, withErrorHandling } from "../utils";
-import { DB } from "../validators";
 
 export class ProcessingRepository {
   private readonly db: DB;
@@ -164,7 +164,6 @@ export class ProcessingRepository {
     },
     txDb?: DB,
   ): Promise<SelectProcessingStep> {
-    // @ts-expect-error doesn't know how to handle unknown type
     return withErrorHandling(
       async () => {
         const dbToUse = txDb || this.db;
@@ -195,7 +194,6 @@ export class ProcessingRepository {
    * @returns Array of processing steps
    */
   async getStepsByJobId(jobId: string): Promise<SelectProcessingStep[]> {
-    // @ts-expect-error doesn't know how to handle unknown type
     return withErrorHandling(
       async () => {
         return executeWithRetry(async (dbInstance) => {
@@ -220,7 +218,6 @@ export class ProcessingRepository {
    * @returns The step if found, null otherwise
    */
   async getStepById(id: string): Promise<SelectProcessingStep | null> {
-    // @ts-expect-error doesn't know how to handle unknown type
     return withErrorHandling(
       async () => {
         return executeWithRetry(async (dbInstance) => {
@@ -249,10 +246,13 @@ export class ProcessingRepository {
    */
   async updateStep(
     id: string,
-    data: UpdateProcessingStep,
+    data: Omit<UpdateProcessingStep, "input" | "output" | "error"> & {
+      input?: any;
+      output?: any;
+      error?: any;
+    },
     txDb?: DB,
   ): Promise<SelectProcessingStep> {
-    // @ts-expect-error doesn't know how to handle unknown type
     return withErrorHandling(
       async () => {
         const dbToUse = txDb || this.db;
@@ -290,7 +290,6 @@ export class ProcessingRepository {
     jobData: Omit<InsertProcessingJob, "id">,
     stepsData: Omit<InsertProcessingStep, "id" | "jobId">[],
   ): Promise<{ job: SelectProcessingJob; steps: SelectProcessingStep[] }> {
-    // @ts-expect-error doesn't know how to handle unknown type
     return withErrorHandling(
       async () => {
         return executeWithRetry(async (dbInstance) => {
