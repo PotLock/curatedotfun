@@ -12,7 +12,7 @@ module.exports = {
   watch: !isProduction,
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "index.js",
+    filename: "index.cjs",
     clean: true,
   },
   module: {

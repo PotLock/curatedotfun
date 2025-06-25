@@ -4,8 +4,8 @@
   "scripts": {
     "schemas:generate": "bun ./scripts/generate-json-schemas.ts",
     "build": "rspack build",
-    "start": "node dist/main.js",
-    "dev": "NODE_ENV=development concurrently --kill-others-on-fail \"rspack build --watch\" \"wait-on -d 500 dist/main.js && node scripts/dev-server.js\"",
+    "start": "node dist/main.cjs",
+    "dev": "NODE_ENV=development concurrently --kill-others-on-fail \"rspack build --watch\" \"wait-on -d 500 dist/main.cjs && node scripts/dev-server.js\"",
     "clean": "rm -rf dist coverage .turbo"
   },
   "browserslist": {
