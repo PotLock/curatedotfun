@@ -191,15 +191,18 @@ export class ProcessingService implements IBaseService {
       });
 
       try {
+        this.logger.info(`transforming: ${currentContent} with transform: ${transform}`);
         const output = await this.transformationService.applyTransforms(
           currentContent,
           [transform],
         );
+        this.logger.info(`into: ${output}`);
         await this.processingRepository.updateStep(step.id, {
           status: "success",
           output: output as Json,
           completedAt: new Date(),
         });
+        this.logger.info(`into: ${output}`);
         currentContent = output;
       } catch (error) {
         const stepError: StepError = {
