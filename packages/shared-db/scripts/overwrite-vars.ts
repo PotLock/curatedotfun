@@ -8,7 +8,7 @@ import { feeds } from "../src/schema/feeds";
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 // Define your list of transformations
-const replacements = [{ oldValue: "OLD", newValue: "{{NEW}}" }];
+const replacements = [{ oldValue: "curator.notes", newValue: "curatorNotes" }];
 
 async function performUpOperation(db: NodePgDatabase) {
   for (const { oldValue, newValue } of replacements) {
