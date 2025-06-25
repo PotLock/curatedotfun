@@ -190,27 +190,9 @@ export class ProcessingService implements IBaseService {
       });
 
       try {
-        this.logger.info(
-          {
-            jobId,
-            stepOrder,
-            plugin: transform.plugin,
-            input: currentContent,
-          },
-          "Applying transformation",
-        );
         const output = await this.transformationService.applyTransforms(
           currentContent,
           [transform],
-        );
-        this.logger.info(
-          {
-            jobId,
-            stepOrder,
-            plugin: transform.plugin,
-            output,
-          },
-          "Transformation complete",
         );
         await this.processingRepository.updateStep(step.id, {
           status: "success",
