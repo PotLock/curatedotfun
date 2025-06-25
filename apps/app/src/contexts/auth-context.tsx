@@ -118,16 +118,6 @@ export function AuthProvider({
           variant: "success",
           duration: 1000,
         });
-        await Promise.all([checkAuthorization(), initiateLogin(newAccountId)]);
-      } else {
-        toast({
-          title: "Wallet Disconnected",
-          description: "You have been signed out successfully.",
-          variant: "destructive",
-        });
-        setIsAuthorized(false);
-        setNonce(null);
-        setRecipient(null);
       }
     };
 

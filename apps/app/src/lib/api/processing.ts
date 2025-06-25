@@ -1,4 +1,9 @@
-import { ProcessingJob, ProcessingStep } from "@curatedotfun/types";
+import {
+  ProcessingJob,
+  ProcessingJobsResponse,
+  ProcessingStep,
+  ProcessingStepsResponse,
+} from "@curatedotfun/types";
 import { useApiQuery, useApiMutation } from "../../hooks/api-client";
 
 /**
@@ -9,7 +14,7 @@ export function useProcessingJobs(
   feedId: string | null,
   options?: { enabled?: boolean },
 ) {
-  return useApiQuery<{ jobs: ProcessingJob[] }, Error, ProcessingJob[]>(
+  return useApiQuery<ProcessingJobsResponse, Error, ProcessingJob[]>(
     ["processingJobs", submissionId, feedId],
     `/processing/jobs/${submissionId}?feedId=${feedId}`,
     {
@@ -17,7 +22,7 @@ export function useProcessingJobs(
         options?.enabled !== undefined
           ? options.enabled && !!submissionId && !!feedId
           : !!submissionId && !!feedId,
-      select: (data) => data.jobs,
+      select: (data) => data.data.jobs,
     },
   );
 }
@@ -29,13 +34,13 @@ export function useProcessingSteps(
   jobId: string | null,
   options?: { enabled?: boolean },
 ) {
-  return useApiQuery<{ steps: ProcessingStep[] }, Error, ProcessingStep[]>(
+  return useApiQuery<ProcessingStepsResponse, Error, ProcessingStep[]>(
     ["processingSteps", jobId],
     `/processing/jobs/${jobId}/steps`,
     {
       enabled:
         options?.enabled !== undefined ? options.enabled && !!jobId : !!jobId,
-      select: (data) => data.steps,
+      select: (data) => data.data.steps,
     },
   );
 }
