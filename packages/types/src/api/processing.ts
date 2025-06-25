@@ -50,11 +50,37 @@ export const ProcessingJobSchema = z.object({
   feedId: z.string(),
   status: ProcessingJobStatusSchema,
   idempotencyKey: z.string().optional(),
-  retryOfJobId: z.string().optional(),
-  startedAt: z.string().optional(),
-  completedAt: z.string().optional(),
-  createdAt: z.string(),
-  updatedAt: z.string().optional(),
+  retryOfJobId: z.string().nullable().optional(),
+  startedAt: z
+    .preprocess((arg) => {
+      if (typeof arg === "string" || arg instanceof Date) {
+        return new Date(arg).toISOString();
+      }
+      return arg;
+    }, z.string())
+    .optional(),
+  completedAt: z
+    .preprocess((arg) => {
+      if (typeof arg === "string" || arg instanceof Date) {
+        return new Date(arg).toISOString();
+      }
+      return arg;
+    }, z.string())
+    .optional(),
+  createdAt: z.preprocess((arg) => {
+    if (typeof arg === "string" || arg instanceof Date) {
+      return new Date(arg).toISOString();
+    }
+    return arg;
+  }, z.string()),
+  updatedAt: z
+    .preprocess((arg) => {
+      if (typeof arg === "string" || arg instanceof Date) {
+        return new Date(arg).toISOString();
+      }
+      return arg;
+    }, z.string())
+    .optional(),
 });
 
 export type ProcessingJob = z.infer<typeof ProcessingJobSchema>;
@@ -71,10 +97,36 @@ export const ProcessingStepSchema = z.object({
   input: z.any().optional(),
   output: z.any().optional(),
   error: z.any().optional(),
-  startedAt: z.string().optional(),
-  completedAt: z.string().optional(),
-  createdAt: z.string(),
-  updatedAt: z.string().optional(),
+  startedAt: z
+    .preprocess((arg) => {
+      if (typeof arg === "string" || arg instanceof Date) {
+        return new Date(arg).toISOString();
+      }
+      return arg;
+    }, z.string())
+    .optional(),
+  completedAt: z
+    .preprocess((arg) => {
+      if (typeof arg === "string" || arg instanceof Date) {
+        return new Date(arg).toISOString();
+      }
+      return arg;
+    }, z.string())
+    .optional(),
+  createdAt: z.preprocess((arg) => {
+    if (typeof arg === "string" || arg instanceof Date) {
+      return new Date(arg).toISOString();
+    }
+    return arg;
+  }, z.string()),
+  updatedAt: z
+    .preprocess((arg) => {
+      if (typeof arg === "string" || arg instanceof Date) {
+        return new Date(arg).toISOString();
+      }
+      return arg;
+    }, z.string())
+    .optional(),
 });
 
 export type ProcessingStep = z.infer<typeof ProcessingStepSchema>;
