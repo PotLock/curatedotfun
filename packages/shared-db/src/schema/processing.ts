@@ -5,6 +5,7 @@ import {
   integer,
   jsonb,
   pgEnum,
+  sql,
   pgTable as table,
   text,
   timestamp,
@@ -158,6 +159,9 @@ export const processingJobs = table(
       foreignColumns: [table.id],
       name: "processing_jobs_retry_of_job_id_fkey",
     }),
+    index("processing_jobs_retry_check")
+      .on(table.id, table.retryOfJobId)
+      .where(sql`id != retry_of_job_id OR retry_of_job_id IS NULL`),
   ],
 );
 

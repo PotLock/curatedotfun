@@ -5,8 +5,8 @@ import {
   SelectProcessingJob,
   SelectProcessingStep,
   StepError,
+  SelectFeed,
 } from "@curatedotfun/shared-db";
-import { SelectFeed } from "@curatedotfun/shared-db/src/schema/feeds";
 import { DistributorConfig, TransformConfig } from "@curatedotfun/types";
 import {
   NotFoundError,
