@@ -16,6 +16,9 @@ import { useAuth } from "@/contexts/auth-context";
 import { useFeedCreationStore } from "@/store/feed-creation-store";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
+import { useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api-client";
+import type { FeedWrappedResponse } from "@curatedotfun/types";
 
 const BasicInformationFormSchema = z.object({
   name: z.string().min(3, "Feed name must be at least 3 characters").optional(),
@@ -39,6 +42,7 @@ function BasicInformationComponent() {
   const navigate = useNavigate({ from: Route.fullPath });
   const search = Route.useSearch();
   const { feedConfig, setValues } = useFeedCreationStore();
+  const queryClient = useQueryClient();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(BasicInformationFormSchema),
@@ -55,6 +59,31 @@ function BasicInformationComponent() {
     navigate({
       to: "/create/feed/settings",
     });
+  };
+
+  const checkFeedId = async (id: string) => {
+    if (!id) {
+      form.clearErrors("id");
+      return;
+    }
+    try {
+      const data = await queryClient.fetchQuery({
+        queryKey: ["feed-details", id],
+        queryFn: () =>
+          apiClient.makeRequest<FeedWrappedResponse>("GET", `/feeds/${id}`),
+        retry: false,
+      });
+      if (data?.data) {
+        form.setError("id", {
+          type: "manual",
+          message: "This hashtag is already taken.",
+        });
+      } else {
+        form.clearErrors("id");
+      }
+    } catch {
+      form.clearErrors("id");
+    }
   };
 
   return (
@@ -123,7 +152,18 @@ function BasicInformationComponent() {
                 <FormItem>
                   <FormLabel>Hashtag (without #)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Tag" required {...field} />
+                    <Input
+                      placeholder="Tag"
+                      required
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e.target.value.toLowerCase());
+                      }}
+                      onBlur={(e) => {
+                        field.onBlur();
+                        checkFeedId(e.target.value);
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                   <p className="text-sm font-normal text-[#64748b]">

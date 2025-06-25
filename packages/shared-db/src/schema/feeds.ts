@@ -1,5 +1,7 @@
 import type { FeedConfig } from "@curatedotfun/types";
+import { relations, sql } from "drizzle-orm";
 import {
+  check,
   index,
   jsonb,
   primaryKey,
@@ -9,36 +11,39 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { relations, sql } from "drizzle-orm";
-import { timestamps } from "./common";
-import { z } from "zod";
-import { submissionFeeds } from "./submissions";
-import { moderationHistory } from "./moderation";
-import { users } from "./users";
-import { processingJobs } from "./processing";
 import {
   createInsertSchema,
   createSelectSchema,
   createUpdateSchema,
 } from "drizzle-zod";
+import { z } from "zod";
+import { timestamps } from "./common";
+import { moderationHistory } from "./moderation";
+import { processingJobs } from "./processing";
+import { submissionFeeds } from "./submissions";
+import { users } from "./users";
 
 // Feeds Table
 // Stores the entire feed configuration as JSONB
-export const feeds = table("feeds", {
-  id: text("id").primaryKey(), // (hashtag)
-  // Store the entire configuration as JSONB
-  config: jsonb("config").$type<FeedConfig>().notNull(), // This should be FeedConfig
-  // Keep these fields for backward compatibility and quick lookups
-  name: text("name").notNull(),
-  description: text("description"),
-  created_by: text("created_by")
-    // .notNull() // for now
-    .references(() => users.nearAccountId, { onDelete: "cascade" }),
-  admins: jsonb("admins")
-    .$type<string[]>()
-    .default(sql`'[]'::jsonb`),
-  ...timestamps,
-});
+export const feeds = table(
+  "feeds",
+  {
+    id: text("id").primaryKey(), // (hashtag)
+    // Store the entire configuration as JSONB
+    config: jsonb("config").$type<FeedConfig>().notNull(), // This should be FeedConfig
+    // Keep these fields for backward compatibility and quick lookups
+    name: text("name").notNull(),
+    description: text("description"),
+    created_by: text("created_by")
+      // .notNull() // for now
+      .references(() => users.nearAccountId, { onDelete: "cascade" }),
+    admins: jsonb("admins")
+      .$type<string[]>()
+      .default(sql`'[]'::jsonb`),
+    ...timestamps,
+  },
+  () => [check("id_lowercase_check", sql`id = lower(id)`)],
+);
 
 // RELATIONS for feeds table
 export const feedsRelations = relations(feeds, ({ one, many }) => ({
@@ -104,6 +109,10 @@ export const feedPlugins = table(
 );
 
 export const insertFeedSchema = createInsertSchema(feeds, {
+  id: z
+    .string()
+    .min(1)
+    .transform((s) => s.toLowerCase()),
   created_by: z.string().min(1),
   admins: z.array(z.string()).optional(),
   createdAt: z.undefined(),
