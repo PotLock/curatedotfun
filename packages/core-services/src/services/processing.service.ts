@@ -43,7 +43,7 @@ export class ProcessingService implements IBaseService {
   }
 
   async process(
-    content: RichSubmission,
+    content: unknown,
     config: ProcessConfig,
     options: ProcessOptions,
   ): Promise<SelectProcessingJob> {
@@ -93,7 +93,7 @@ export class ProcessingService implements IBaseService {
         );
       }
 
-      let stepOrder = 2;
+      let stepOrder = (config.transform?.length || 0) + 1;
       for (const distributor of config.distribute) {
         try {
           await this.processDistributor(
@@ -155,11 +155,13 @@ export class ProcessingService implements IBaseService {
       );
     }
 
+    const distributionStepOrder =
+      startingStepOrder + (distributor.transform?.length || 0);
     await this.executeDistribution(
       jobId,
       distributorContent,
       distributor,
-      startingStepOrder + (distributor.transform?.length || 0),
+      distributionStepOrder,
     );
   }
 
@@ -168,44 +170,57 @@ export class ProcessingService implements IBaseService {
     input: unknown,
     transforms: TransformConfig[],
     stage: ProcessingStepStage,
-    stepOrder: number,
+    startingStepOrder: number,
   ): Promise<unknown> {
-    const step = await this.processingRepository.createStep({
-      jobId,
-      stepOrder,
-      type: "transformation",
-      stage,
-      stepName: `stage:${stage}`,
-      status: "processing",
-      input,
-      startedAt: new Date(),
-    });
+    let currentContent = input;
+    let stepOrder = startingStepOrder;
 
-    try {
-      const output = await this.transformationService.applyTransforms(
-        input,
-        transforms,
-      );
-      await this.processingRepository.updateStep(step.id, {
-        status: "success",
-        output,
-        completedAt: new Date(),
+    for (const transform of transforms) {
+      const step = await this.processingRepository.createStep({
+        jobId,
+        stepOrder,
+        type: "transformation",
+        stage,
+        stepName: transform.plugin,
+        status: "processing",
+        input: currentContent,
+        startedAt: new Date(),
       });
-      return output;
-    } catch (error) {
-      const stepError: StepError = {
-        message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        stepName:
-          error instanceof PluginError ? error.context.pluginName : undefined,
-      };
-      await this.processingRepository.updateStep(step.id, {
-        status: "failed",
-        error: stepError,
-        completedAt: new Date(),
-      });
-      throw error;
+
+      try {
+        const output = await this.transformationService.applyTransforms(
+          currentContent,
+          [transform],
+        );
+        await this.processingRepository.updateStep(step.id, {
+          status: "success",
+          output,
+          completedAt: new Date(),
+        });
+        currentContent = output;
+      } catch (error) {
+        const stepError: StepError = {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          stepName:
+            error instanceof PluginError
+              ? error.context.pluginName
+              : transform.plugin,
+        };
+        await this.processingRepository.updateStep(step.id, {
+          status: "failed",
+          error: stepError,
+          completedAt: new Date(),
+        });
+        this.logger.error(
+          { jobId, stepId: step.id, plugin: transform.plugin, error },
+          "Transformation step failed. Halting processing for this job.",
+        );
+        throw error;
+      }
+      stepOrder++;
     }
+    return currentContent;
   }
 
   private async executeDistribution(
@@ -306,10 +321,8 @@ export class ProcessingService implements IBaseService {
       step,
     );
 
-    // Use the input of the failed step as the starting content
-    const content = step.input as RichSubmission;
+    const content = step.input;
 
-    // Create a new job and process it internally
     const newJob = await this.process(content, partialConfig, {
       submissionId: originalJob.submissionId,
       feedId: originalJob.feedId,
