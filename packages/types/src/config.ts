@@ -73,7 +73,7 @@ export const IngestionConfigSchema = z.object({
 });
 
 export const FeedConfigSchema = z.object({
-  id: z.string(),
+  id: z.string().transform((s) => s.toLowerCase()),
   name: z.string(),
   description: z.string(),
   image: z.string().url().or(z.literal("")).optional(),
