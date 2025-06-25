@@ -6,7 +6,7 @@ const dotenv = require("dotenv");
 
 // Path to the dist directory
 const distDir = path.join(__dirname, "../dist");
-const mainJsPath = path.join(distDir, "main.js");
+const mainJsPath = path.join(distDir, "main.cjs");
 const envPath = path.join(__dirname, "../.env");
 
 // Load environment variables from .env file
