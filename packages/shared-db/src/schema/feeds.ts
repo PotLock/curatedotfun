@@ -15,6 +15,7 @@ import { z } from "zod";
 import { submissionFeeds } from "./submissions";
 import { moderationHistory } from "./moderation";
 import { users } from "./users";
+import { processingJobs } from "./processing";
 import {
   createInsertSchema,
   createSelectSchema,
@@ -51,6 +52,9 @@ export const feedsRelations = relations(feeds, ({ one, many }) => ({
   }),
   moderationHistoryEntries: many(moderationHistory, {
     relationName: "ModerationHistoryFeedReference",
+  }),
+  processingJobs: many(processingJobs, {
+    relationName: "FeedProcessingJobs",
   }),
 }));
 
@@ -114,3 +118,26 @@ export const selectFeedSchema = createSelectSchema(feeds);
 export type InsertFeed = z.infer<typeof insertFeedSchema>;
 export type UpdateFeed = z.infer<typeof updateFeedSchema>;
 export type SelectFeed = z.infer<typeof selectFeedSchema>;
+
+// FeedRecapsState Schemas and Types
+export const insertFeedRecapStateSchema = createInsertSchema(feedRecapsState, {
+  id: z.undefined(),
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
+export const updateFeedRecapStateSchema = createUpdateSchema(feedRecapsState);
+export const selectFeedRecapStateSchema = createSelectSchema(feedRecapsState);
+export type InsertFeedRecapState = z.infer<typeof insertFeedRecapStateSchema>;
+export type UpdateFeedRecapState = z.infer<typeof updateFeedRecapStateSchema>;
+export type SelectFeedRecapState = z.infer<typeof selectFeedRecapStateSchema>;
+
+// FeedPlugins Schemas and Types
+export const insertFeedPluginSchema = createInsertSchema(feedPlugins, {
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
+export const updateFeedPluginSchema = createUpdateSchema(feedPlugins);
+export const selectFeedPluginSchema = createSelectSchema(feedPlugins);
+export type InsertFeedPlugin = z.infer<typeof insertFeedPluginSchema>;
+export type UpdateFeedPlugin = z.infer<typeof updateFeedPluginSchema>;
+export type SelectFeedPlugin = z.infer<typeof selectFeedPluginSchema>;

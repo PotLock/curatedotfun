@@ -1,15 +1,15 @@
 import { and, asc, count, desc, eq, ilike, or, sql, SQL } from "drizzle-orm";
 import * as schema from "../schema";
-import { SubmissionStatus } from "../schema";
-import { SelectModerationHistory } from "../schema/moderation";
-import { executeWithRetry, withErrorHandling } from "../utils";
 import {
-  DB,
   InsertSubmission,
   RichSubmission,
   SelectSubmission,
   SelectSubmissionFeed,
-} from "../validators";
+  SubmissionStatus,
+} from "../schema";
+import { SelectModerationHistory } from "../schema/moderation";
+import type { DB } from "../types";
+import { executeWithRetry, withErrorHandling } from "../utils";
 
 export interface PaginationMetadata {
   page?: number;
@@ -34,32 +34,41 @@ export class SubmissionRepository {
     this.db = db;
   }
 
+  /**
+   * Save a new submission to the database
+   * @param submission The submission data to insert
+   * @param txDb Optional transaction DB instance
+   * @returns The created submission
+   */
   async saveSubmission(
     submission: InsertSubmission,
-    txDb: DB,
+    txDb?: DB,
   ): Promise<SelectSubmission> {
     return withErrorHandling(
       async () => {
-        const result = await txDb
-          .insert(schema.submissions)
-          .values({
-            tweetId: submission.tweetId,
-            userId: submission.userId,
-            username: submission.username,
-            content: submission.content,
-            curatorNotes: submission.curatorNotes,
-            curatorId: submission.curatorId,
-            curatorUsername: submission.curatorUsername,
-            curatorTweetId: submission.curatorTweetId,
-            submittedAt: submission.submittedAt,
-          })
-          .returning();
-        if (result.length === 0) {
-          throw new Error(
-            "Failed to save submission: no record returned after insert.",
-          );
-        }
-        return result[0] as SelectSubmission;
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
+          const result = await dbInstance
+            .insert(schema.submissions)
+            .values({
+              tweetId: submission.tweetId,
+              userId: submission.userId,
+              username: submission.username,
+              content: submission.content,
+              curatorNotes: submission.curatorNotes,
+              curatorId: submission.curatorId,
+              curatorUsername: submission.curatorUsername,
+              curatorTweetId: submission.curatorTweetId,
+              submittedAt: submission.submittedAt,
+            })
+            .returning();
+          if (result.length === 0) {
+            throw new Error(
+              "Failed to save submission: no record returned after insert.",
+            );
+          }
+          return result[0] as SelectSubmission;
+        }, dbToUse);
       },
       {
         operationName: "save submission",
@@ -409,15 +418,22 @@ export class SubmissionRepository {
     );
   }
 
-  async cleanupOldSubmissionCounts(txDb: DB): Promise<void> {
+  /**
+   * Clean up old submission counts
+   * @param txDb Optional transaction DB instance
+   */
+  async cleanupOldSubmissionCounts(txDb?: DB): Promise<void> {
     return withErrorHandling(
       async () => {
-        await txDb
-          .delete(schema.submissionCounts)
-          .where(
-            sql`${schema.submissionCounts.lastResetDate}::date < CURRENT_DATE`,
-          )
-          .execute();
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
+          await dbInstance
+            .delete(schema.submissionCounts)
+            .where(
+              sql`${schema.submissionCounts.lastResetDate}::date < CURRENT_DATE`,
+            )
+            .execute();
+        }, dbToUse);
       },
       {
         operationName: "cleanup old submission counts",
@@ -425,27 +441,38 @@ export class SubmissionRepository {
     );
   }
 
-  async incrementDailySubmissionCount(userId: string, txDb: DB): Promise<void> {
+  /**
+   * Increment the daily submission count for a user
+   * @param userId The user ID
+   * @param txDb Optional transaction DB instance
+   */
+  async incrementDailySubmissionCount(
+    userId: string,
+    txDb?: DB,
+  ): Promise<void> {
     return withErrorHandling(
       async () => {
-        await txDb
-          .insert(schema.submissionCounts)
-          .values({
-            userId,
-            count: 1,
-            lastResetDate: sql`CURRENT_DATE`,
-          })
-          .onConflictDoUpdate({
-            target: schema.submissionCounts.userId,
-            set: {
-              count: sql`CASE 
-          WHEN ${schema.submissionCounts.lastResetDate}::date < CURRENT_DATE THEN 1
-          ELSE ${schema.submissionCounts.count} + 1
-        END`,
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
+          await dbInstance
+            .insert(schema.submissionCounts)
+            .values({
+              userId,
+              count: 1,
               lastResetDate: sql`CURRENT_DATE`,
-            },
-          })
-          .execute();
+            })
+            .onConflictDoUpdate({
+              target: schema.submissionCounts.userId,
+              set: {
+                count: sql`CASE 
+            WHEN ${schema.submissionCounts.lastResetDate}::date < CURRENT_DATE THEN 1
+            ELSE ${schema.submissionCounts.count} + 1
+          END`,
+                lastResetDate: sql`CURRENT_DATE`,
+              },
+            })
+            .execute();
+        }, dbToUse);
       },
       {
         operationName: "increment daily submission count",

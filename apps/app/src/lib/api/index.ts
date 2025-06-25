@@ -3,6 +3,7 @@ export * from "./feeds";
 export * from "./leaderboard";
 export * from "./moderation";
 export * from "./plugins";
+export * from "./processing";
 export * from "./submission";
 export * from "./test";
 export * from "./twitter";

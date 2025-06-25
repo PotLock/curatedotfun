@@ -6,3 +6,4 @@ export * from "./api/activity";
 export * from "./api/moderation";
 export * from "./api/feeds";
 export * from "./api/submissions";
+export * from "./api/processing";

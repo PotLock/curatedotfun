@@ -6,7 +6,7 @@ export * from "./services/distribution.service";
 export * from "./services/feed.service";
 export * from "./services/moderation.service";
 export * from "./services/plugin.service";
-export * from "./services/processor.service";
+export * from "./services/processing.service";
 export * from "./services/submission.service";
 export * from "./services/transformation.service";
 export * from "./services/users.service";

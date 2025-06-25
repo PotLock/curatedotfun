@@ -47,7 +47,7 @@ WORKDIR /app
 RUN addgroup -S app && adduser -S app -G app
 
 # Copy the production-ready code from the builder stage.
-COPY --from=builder --chown=app:app /app/apps/worker ./apps/worker
+COPY --from=builder --chown=app:app /app/apps/worker/dist ./apps/worker/dist
 COPY --from=builder --chown=app:app /app/packages/core-services ./packages/core-services
 COPY --from=builder --chown=app:app /app/packages/shared-db ./packages/shared-db
 COPY --from=builder --chown=app:app /app/packages/shared-queue ./packages/shared-queue
@@ -66,4 +66,4 @@ USER app
 WORKDIR /app/apps/worker
 
 # Start the application.
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/index.cjs"]

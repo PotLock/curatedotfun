@@ -2,10 +2,10 @@
   "name": "@curatedotfun/worker",
   "version": "0.1.0",
   "private": true,
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
-    "start": "node dist/index.js",
+    "start": "node dist/index.cjs",
     "build": "rspack build",
     "lint": "eslint . --ext .ts",
     "test": "vitest run"

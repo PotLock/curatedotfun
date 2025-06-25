@@ -32,6 +32,7 @@ import { Route as LayoutCreateFeedReviewRouteImport } from "./routes/_layout/cre
 import { Route as LayoutFeedFeedIdTabsIndexRouteImport } from "./routes/_layout/feed/$feedId/_tabs/index";
 import { Route as LayoutFeedFeedIdTabsTokenRouteImport } from "./routes/_layout/feed/$feedId/_tabs/token";
 import { Route as LayoutFeedFeedIdTabsProposalsRouteImport } from "./routes/_layout/feed/$feedId/_tabs/proposals";
+import { Route as LayoutFeedFeedIdTabsProcessingRouteImport } from "./routes/_layout/feed/$feedId/_tabs/processing";
 import { Route as LayoutFeedFeedIdTabsPointsRouteImport } from "./routes/_layout/feed/$feedId/_tabs/points";
 import { Route as LayoutFeedFeedIdTabsMembersRouteImport } from "./routes/_layout/feed/$feedId/_tabs/members";
 import { Route as LayoutFeedFeedIdTabsCurationRouteImport } from "./routes/_layout/feed/$feedId/_tabs/curation";
@@ -160,6 +161,12 @@ const LayoutFeedFeedIdTabsProposalsRoute =
     path: "/proposals",
     getParentRoute: () => LayoutFeedFeedIdTabsRoute,
   } as any);
+const LayoutFeedFeedIdTabsProcessingRoute =
+  LayoutFeedFeedIdTabsProcessingRouteImport.update({
+    id: "/processing",
+    path: "/processing",
+    getParentRoute: () => LayoutFeedFeedIdTabsRoute,
+  } as any);
 const LayoutFeedFeedIdTabsPointsRoute =
   LayoutFeedFeedIdTabsPointsRouteImport.update({
     id: "/points",
@@ -213,6 +220,7 @@ export interface FileRoutesByFullPath {
   "/feed/$feedId/curation": typeof LayoutFeedFeedIdTabsCurationRoute;
   "/feed/$feedId/members": typeof LayoutFeedFeedIdTabsMembersRoute;
   "/feed/$feedId/points": typeof LayoutFeedFeedIdTabsPointsRoute;
+  "/feed/$feedId/processing": typeof LayoutFeedFeedIdTabsProcessingRoute;
   "/feed/$feedId/proposals": typeof LayoutFeedFeedIdTabsProposalsRoute;
   "/feed/$feedId/token": typeof LayoutFeedFeedIdTabsTokenRoute;
   "/feed/$feedId/": typeof LayoutFeedFeedIdTabsIndexRoute;
@@ -239,6 +247,7 @@ export interface FileRoutesByTo {
   "/feed/$feedId/curation": typeof LayoutFeedFeedIdTabsCurationRoute;
   "/feed/$feedId/members": typeof LayoutFeedFeedIdTabsMembersRoute;
   "/feed/$feedId/points": typeof LayoutFeedFeedIdTabsPointsRoute;
+  "/feed/$feedId/processing": typeof LayoutFeedFeedIdTabsProcessingRoute;
   "/feed/$feedId/proposals": typeof LayoutFeedFeedIdTabsProposalsRoute;
   "/feed/$feedId/token": typeof LayoutFeedFeedIdTabsTokenRoute;
   "/feed/$feedId/settings/connected": typeof LayoutFeedFeedIdTabsSettingsConnectedRoute;
@@ -269,6 +278,7 @@ export interface FileRoutesById {
   "/_layout/feed/$feedId/_tabs/curation": typeof LayoutFeedFeedIdTabsCurationRoute;
   "/_layout/feed/$feedId/_tabs/members": typeof LayoutFeedFeedIdTabsMembersRoute;
   "/_layout/feed/$feedId/_tabs/points": typeof LayoutFeedFeedIdTabsPointsRoute;
+  "/_layout/feed/$feedId/_tabs/processing": typeof LayoutFeedFeedIdTabsProcessingRoute;
   "/_layout/feed/$feedId/_tabs/proposals": typeof LayoutFeedFeedIdTabsProposalsRoute;
   "/_layout/feed/$feedId/_tabs/token": typeof LayoutFeedFeedIdTabsTokenRoute;
   "/_layout/feed/$feedId/_tabs/": typeof LayoutFeedFeedIdTabsIndexRoute;
@@ -299,6 +309,7 @@ export interface FileRouteTypes {
     | "/feed/$feedId/curation"
     | "/feed/$feedId/members"
     | "/feed/$feedId/points"
+    | "/feed/$feedId/processing"
     | "/feed/$feedId/proposals"
     | "/feed/$feedId/token"
     | "/feed/$feedId/"
@@ -325,6 +336,7 @@ export interface FileRouteTypes {
     | "/feed/$feedId/curation"
     | "/feed/$feedId/members"
     | "/feed/$feedId/points"
+    | "/feed/$feedId/processing"
     | "/feed/$feedId/proposals"
     | "/feed/$feedId/token"
     | "/feed/$feedId/settings/connected"
@@ -354,6 +366,7 @@ export interface FileRouteTypes {
     | "/_layout/feed/$feedId/_tabs/curation"
     | "/_layout/feed/$feedId/_tabs/members"
     | "/_layout/feed/$feedId/_tabs/points"
+    | "/_layout/feed/$feedId/_tabs/processing"
     | "/_layout/feed/$feedId/_tabs/proposals"
     | "/_layout/feed/$feedId/_tabs/token"
     | "/_layout/feed/$feedId/_tabs/"
@@ -528,6 +541,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof LayoutFeedFeedIdTabsProposalsRouteImport;
       parentRoute: typeof LayoutFeedFeedIdTabsRoute;
     };
+    "/_layout/feed/$feedId/_tabs/processing": {
+      id: "/_layout/feed/$feedId/_tabs/processing";
+      path: "/processing";
+      fullPath: "/feed/$feedId/processing";
+      preLoaderRoute: typeof LayoutFeedFeedIdTabsProcessingRouteImport;
+      parentRoute: typeof LayoutFeedFeedIdTabsRoute;
+    };
     "/_layout/feed/$feedId/_tabs/points": {
       id: "/_layout/feed/$feedId/_tabs/points";
       path: "/points";
@@ -608,6 +628,7 @@ interface LayoutFeedFeedIdTabsRouteChildren {
   LayoutFeedFeedIdTabsCurationRoute: typeof LayoutFeedFeedIdTabsCurationRoute;
   LayoutFeedFeedIdTabsMembersRoute: typeof LayoutFeedFeedIdTabsMembersRoute;
   LayoutFeedFeedIdTabsPointsRoute: typeof LayoutFeedFeedIdTabsPointsRoute;
+  LayoutFeedFeedIdTabsProcessingRoute: typeof LayoutFeedFeedIdTabsProcessingRoute;
   LayoutFeedFeedIdTabsProposalsRoute: typeof LayoutFeedFeedIdTabsProposalsRoute;
   LayoutFeedFeedIdTabsTokenRoute: typeof LayoutFeedFeedIdTabsTokenRoute;
   LayoutFeedFeedIdTabsIndexRoute: typeof LayoutFeedFeedIdTabsIndexRoute;
@@ -619,6 +640,7 @@ const LayoutFeedFeedIdTabsRouteChildren: LayoutFeedFeedIdTabsRouteChildren = {
   LayoutFeedFeedIdTabsCurationRoute: LayoutFeedFeedIdTabsCurationRoute,
   LayoutFeedFeedIdTabsMembersRoute: LayoutFeedFeedIdTabsMembersRoute,
   LayoutFeedFeedIdTabsPointsRoute: LayoutFeedFeedIdTabsPointsRoute,
+  LayoutFeedFeedIdTabsProcessingRoute: LayoutFeedFeedIdTabsProcessingRoute,
   LayoutFeedFeedIdTabsProposalsRoute: LayoutFeedFeedIdTabsProposalsRoute,
   LayoutFeedFeedIdTabsTokenRoute: LayoutFeedFeedIdTabsTokenRoute,
   LayoutFeedFeedIdTabsIndexRoute: LayoutFeedFeedIdTabsIndexRoute,

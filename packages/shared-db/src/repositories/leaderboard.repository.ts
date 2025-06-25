@@ -1,7 +1,7 @@
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import * as schema from "../schema";
 import { executeWithRetry, withErrorHandling } from "../utils";
-import { DB } from "../validators";
+import type { DB } from "../types";
 
 export interface FeedSubmissionCount {
   feedId: string;
@@ -33,6 +33,7 @@ export class LeaderboardRepository {
    * and rejection counts, along with feed-specific submission details.
    *
    * @param timeRange The time range for the leaderboard (default: "all")
+   *                  Valid values: "all", "month", "week", "today"
    * @returns Array of curator leaderboard entries
    */
   async getCuratorStatsLeaderboard(

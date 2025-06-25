@@ -74,14 +74,17 @@ export const activitiesRelations = relations(activities, ({ one }) => ({
   user: one(users, {
     fields: [activities.user_id],
     references: [users.id],
+    relationName: "UserActivities",
   }),
   feed: one(feeds, {
     fields: [activities.feed_id],
     references: [feeds.id],
+    relationName: "ActivityFeed",
   }),
   submission: one(submissions, {
     fields: [activities.submission_id],
     references: [submissions.tweetId],
+    relationName: "ActivitySubmission",
   }),
 }));
 
@@ -105,6 +108,7 @@ export const userStatsRelations = relations(userStats, ({ one }) => ({
   user: one(users, {
     fields: [userStats.user_id],
     references: [users.id],
+    relationName: "UserStats",
   }),
 }));
 
@@ -152,10 +156,12 @@ export const feedUserStatsRelations = relations(feedUserStats, ({ one }) => ({
   user: one(users, {
     fields: [feedUserStats.user_id],
     references: [users.id],
+    relationName: "UserFeedStats",
   }),
   feed: one(feeds, {
     fields: [feedUserStats.feed_id],
     references: [feeds.id],
+    relationName: "FeedUserStats",
   }),
 }));
 

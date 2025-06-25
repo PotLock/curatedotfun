@@ -1,6 +1,6 @@
 import {
   FeedService,
-  ProcessorService,
+  ProcessingService,
   ServiceProvider,
   SubmissionService,
 } from "@curatedotfun/core-services";
@@ -22,7 +22,7 @@ export const processingProcessor = async (
   try {
     const feedService: FeedService = sp.getFeedService();
     const submissionService: SubmissionService = sp.getSubmissionService();
-    const processorService: ProcessorService = sp.getProcessorService();
+    const processingService: ProcessingService = sp.getProcessingService();
 
     const submission = await submissionService.getSubmission(submissionId);
     if (!submission) {
@@ -35,7 +35,12 @@ export const processingProcessor = async (
     }
 
     if (feed.config.outputs?.stream?.enabled) {
-      await processorService.process(submission, feed.config.outputs.stream);
+      await processingService.process(submission, feed.config.outputs.stream, {
+        submissionId,
+        feedId,
+        idempotencyKey: job.id,
+        retryOfJobId: job.data.retryOfJobId,
+      });
       logger.info(`Successfully processed job ${job.id}.`);
     } else {
       logger.info(

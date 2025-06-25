@@ -127,6 +127,20 @@
       "when": 1750522673585,
       "tag": "0017_warm_cerebro",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1750802762051,
+      "tag": "0018_quick_eddie_brock",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1750818021026,
+      "tag": "0019_neat_paladin",
+      "breakpoints": true
     }
   ]
 }

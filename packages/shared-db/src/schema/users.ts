@@ -38,9 +38,15 @@ export const usersRelations = relations(users, ({ many }) => ({
   createdFeeds: many(feeds, {
     relationName: "FeedCreator",
   }),
-  activities: many(activities),
-  userStats: many(userStats),
-  feedUserStats: many(feedUserStats),
+  activities: many(activities, {
+    relationName: "UserActivities",
+  }),
+  userStats: many(userStats, {
+    relationName: "UserStats",
+  }),
+  feedUserStats: many(feedUserStats, {
+    relationName: "UserFeedStats",
+  }),
 }));
 
 export const insertUserSchema = createInsertSchema(users, {
