@@ -5,7 +5,7 @@ import {
   SelectFeed,
   SelectProcessingJob,
   SelectProcessingStep,
-  StepError
+  StepError,
 } from "@curatedotfun/shared-db";
 import { DistributorConfig, TransformConfig } from "@curatedotfun/types";
 import {
