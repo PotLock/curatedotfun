@@ -175,7 +175,7 @@ export class ProcessingService implements IBaseService {
       stepOrder,
       type: "transformation",
       stage,
-      pluginName: `stage:${stage}`,
+      stepName: `stage:${stage}`,
       status: "processing",
       input,
       startedAt: new Date(),
@@ -196,7 +196,7 @@ export class ProcessingService implements IBaseService {
       const stepError: StepError = {
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
-        pluginName:
+        stepName:
           error instanceof PluginError ? error.context.pluginName : undefined,
       };
       await this.processingRepository.updateStep(step.id, {
@@ -219,7 +219,7 @@ export class ProcessingService implements IBaseService {
       stepOrder,
       type: "distribution",
       stage: "distributor",
-      pluginName: distributor.plugin,
+      stepName: distributor.plugin,
       status: "processing",
       input,
       startedAt: new Date(),
@@ -239,7 +239,7 @@ export class ProcessingService implements IBaseService {
       const stepError: StepError = {
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
-        pluginName: distributor.plugin,
+        stepName: distributor.plugin,
       };
       await this.processingRepository.updateStep(step.id, {
         status: "failed",
@@ -335,7 +335,7 @@ export class ProcessingService implements IBaseService {
 
     if (failedStep.stage === "distributor") {
       const distributorIndex = fullConfig.distribute?.findIndex(
-        (d) => d.plugin === failedStep.pluginName,
+        (d) => d.plugin === failedStep.stepName,
       );
 
       if (distributorIndex !== undefined && distributorIndex > -1) {

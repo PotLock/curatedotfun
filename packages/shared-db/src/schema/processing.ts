@@ -54,7 +54,7 @@ export type StepOutput = z.infer<typeof StepOutputSchema>;
 export const StepErrorSchema = z.object({
   message: z.string(),
   stack: z.string().optional(),
-  pluginName: z.string().optional(),
+  stepName: z.string().optional(),
   details: z.record(z.unknown()).optional(),
   pluginErrorCode: z.string().optional(),
   retryable: z.boolean().optional(),
@@ -173,12 +173,7 @@ export const processingSteps = table(
     stepOrder: integer("step_order").notNull(),
     type: processingStepTypeEnum("type").notNull(),
     stage: processingStepStageEnum("stage").notNull(),
-    pluginName: text("plugin_name")
-      .notNull()
-      .references(() => plugins.name, {
-        onDelete: "cascade",
-        onUpdate: "cascade",
-      }),
+    stepName: text("step_name"),
     status: processingStepStatusEnum("status").notNull().default("pending"),
     input: jsonb("input").$type<StepInput>(),
     output: jsonb("output").$type<StepOutput>(),
@@ -196,7 +191,7 @@ export const processingSteps = table(
   },
   (table) => [
     index("processing_steps_job_idx").on(table.jobId),
-    index("processing_steps_plugin_name_idx").on(table.pluginName),
+    index("processing_steps_plugin_name_idx").on(table.stepName),
     index("processing_steps_status_idx").on(table.status),
     uniqueIndex("processing_steps_job_order_idx").on(
       table.jobId,
@@ -241,11 +236,6 @@ export const processingStepsRelations = relations(
         references: [processingJobs.id],
         relationName: "ProcessingStepJob",
       }),
-      plugin: one(plugins, {
-        fields: [processingSteps.pluginName],
-        references: [plugins.name],
-        relationName: "ProcessingStepPlugin",
-      }),
     };
   },
 );
@@ -277,7 +267,7 @@ export const insertProcessingStepSchema = createInsertSchema(processingSteps, {
   stepOrder: z.number().int().positive(),
   type: processingStepTypeZodEnum,
   stage: processingStepStageZodEnum,
-  pluginName: z.string(),
+  stepName: z.string().optional().nullable(),
   status: processingStepStatusZodEnum.optional(),
   input: StepInputSchema.optional(),
   output: StepOutputSchema.optional(),

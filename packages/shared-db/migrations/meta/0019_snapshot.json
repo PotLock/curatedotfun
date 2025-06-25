@@ -1,5 +1,5 @@
 {
-  "id": "edbe2632-16d5-4bd0-bf72-1eec268223b5",
+  "id": "f980abaa-30b8-4f9d-8d10-59e7baacebc5",
   "prevId": "ab74eb36-7a7f-4e87-928a-cdfe9ce3fc89",
   "version": "7",
   "dialect": "postgresql",
@@ -1690,11 +1690,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "plugin_name": {
-          "name": "plugin_name",
+        "step_name": {
+          "name": "step_name",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "status": {
           "name": "status",
@@ -1776,7 +1776,7 @@
           "name": "processing_steps_plugin_name_idx",
           "columns": [
             {
-              "expression": "plugin_name",
+              "expression": "step_name",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1833,15 +1833,6 @@
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
-        },
-        "processing_steps_plugin_name_plugins_name_fk": {
-          "name": "processing_steps_plugin_name_plugins_name_fk",
-          "tableFrom": "processing_steps",
-          "tableTo": "plugins",
-          "columnsFrom": ["plugin_name"],
-          "columnsTo": ["name"],
-          "onDelete": "cascade",
-          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {},
