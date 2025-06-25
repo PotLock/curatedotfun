@@ -4,3 +4,4 @@ node_modules
 .turbo
 .next
 .docusaurus
+packages/shared-db/migrations
