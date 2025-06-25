@@ -193,16 +193,21 @@ export const processingJobsRelations = relations(
       submission: one(submissions, {
         fields: [processingJobs.submissionId],
         references: [submissions.tweetId],
+        relationName: "ProcessingJobSubmission",
       }),
       feed: one(feeds, {
         fields: [processingJobs.feedId],
         references: [feeds.id],
+        relationName: "ProcessingJobFeed",
       }),
       retryOf: one(processingJobs, {
         fields: [processingJobs.retryOfJobId],
         references: [processingJobs.id],
+        relationName: "ProcessingJobRetry",
       }),
-      steps: many(processingSteps),
+      steps: many(processingSteps, {
+        relationName: "ProcessingJobSteps",
+      }),
     };
   },
 );
@@ -214,6 +219,7 @@ export const processingStepsRelations = relations(
       job: one(processingJobs, {
         fields: [processingSteps.jobId],
         references: [processingJobs.id],
+        relationName: "ProcessingStepJob",
       }),
     };
   },

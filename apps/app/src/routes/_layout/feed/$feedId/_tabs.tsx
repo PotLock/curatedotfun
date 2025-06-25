@@ -14,12 +14,12 @@ interface TabDefinition {
 
 const TABS: TabDefinition[] = [
   {
-    to: "/feed/$feedId/_tabs/curation",
+    to: "/feed/$feedId/curation",
     label: "Curation",
     icon: ListFilter,
   },
   {
-    to: "/feed/$feedId/_tabs/processing",
+    to: "/feed/$feedId/processing",
     label: "Processing",
     icon: Cpu,
   },

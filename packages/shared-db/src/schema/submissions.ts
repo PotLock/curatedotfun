@@ -14,6 +14,7 @@ import { z } from "zod";
 import { timestamps } from "./common";
 import { feeds } from "./feeds";
 import { moderationHistory } from "./moderation";
+import { processingJobs } from "./processing";
 
 export const submissionStatusValues = [
   "pending",
@@ -85,6 +86,9 @@ export const submissionsRelations = relations(submissions, ({ many }) => ({
   }),
   feedLinks: many(submissionFeeds, {
     relationName: "SubmissionFeedLinks",
+  }),
+  processingJobs: many(processingJobs, {
+    relationName: "SubmissionProcessingJobs",
   }),
 }));
 

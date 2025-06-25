@@ -46,10 +46,20 @@ export function AuthProvider({
   const [isSignedIn, setIsSignedIn] = useState<boolean>(
     near.authStatus() === "SignedIn",
   );
-  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(
+    () => sessionStorage.getItem("isAuthorized") === "true",
+  );
   const [nonce, setNonce] = useState<string | null>(null);
   const [recipient, setRecipient] = useState<string | null>(null);
   const initialCheckRef = useRef(true);
+
+  useEffect(() => {
+    if (isAuthorized) {
+      sessionStorage.setItem("isAuthorized", "true");
+    } else {
+      sessionStorage.removeItem("isAuthorized");
+    }
+  }, [isAuthorized]);
 
   const checkAuthorization = useCallback(async () => {
     if (!currentAccountId) {
@@ -98,13 +108,15 @@ export function AuthProvider({
           title: "Wallet Connected",
           description: `Connected as: ${newAccountId}`,
           variant: "success",
+          duration: 1000,
         });
         await Promise.all([checkAuthorization(), initiateLogin(newAccountId)]);
       } else {
         toast({
           title: "Wallet Disconnected",
           description: "You have been signed out successfully.",
-          variant: "destructive",
+          variant: "success",
+          duration: 1000,
         });
         setIsAuthorized(false);
         setNonce(null);
