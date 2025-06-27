@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { ImageUpload } from "@/components/ImageUpload";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +19,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
-import type { FeedWrappedResponse } from "@curatedotfun/types";
+import type { FeedWrappedResponse, FeedsWrappedResponse } from "@curatedotfun/types";
 
 const BasicInformationFormSchema = z.object({
   name: z.string().min(3, "Feed name must be at least 3 characters").optional(),
@@ -43,6 +44,8 @@ function BasicInformationComponent() {
   const search = Route.useSearch();
   const { feedConfig, setValues } = useFeedCreationStore();
   const queryClient = useQueryClient();
+  const [isValidatingName, setIsValidatingName] = useState(false);
+  const [isValidatingId, setIsValidatingId] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(BasicInformationFormSchema),
@@ -66,6 +69,7 @@ function BasicInformationComponent() {
       form.clearErrors("id");
       return;
     }
+    setIsValidatingId(true);
     try {
       const data = await queryClient.fetchQuery({
         queryKey: ["feed-details", id],
@@ -83,6 +87,39 @@ function BasicInformationComponent() {
       }
     } catch {
       form.clearErrors("id");
+    } finally {
+      setIsValidatingId(false);
+    }
+  };
+
+  const checkFeedName = async (name: string) => {
+    if (!name || name.length < 3) {
+      form.clearErrors("name");
+      return;
+    }
+    setIsValidatingName(true);
+    try {
+      const data = await queryClient.fetchQuery({
+        queryKey: ["feeds"],
+        queryFn: () =>
+          apiClient.makeRequest<FeedsWrappedResponse>("GET", "/feeds"),
+        retry: false,
+      });
+      const existingFeed = data?.data?.find(
+        (feed) => feed.name.toLowerCase() === name.toLowerCase()
+      );
+      if (existingFeed) {
+        form.setError("name", {
+          type: "manual",
+          message: "This feed name is already taken.",
+        });
+      } else {
+        form.clearErrors("name");
+      }
+    } catch {
+      form.clearErrors("name");
+    } finally {
+      setIsValidatingName(false);
     }
   };
 
@@ -121,6 +158,10 @@ function BasicInformationComponent() {
                       placeholder="Name of your feed"
                       required
                       {...field}
+                      onBlur={(e) => {
+                        field.onBlur();
+                        checkFeedName(e.target.value);
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -173,8 +214,8 @@ function BasicInformationComponent() {
               )}
             />
             <div className="flex justify-end">
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "..." : "Next"}
+              <Button type="submit" disabled={form.formState.isSubmitting || isValidatingName || isValidatingId}>
+                {form.formState.isSubmitting ? "..." : isValidatingName || isValidatingId ? "Validating..." : "Next"}
               </Button>
             </div>
           </form>
