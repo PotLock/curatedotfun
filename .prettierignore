@@ -5,3 +5,4 @@ node_modules
 .next
 .docusaurus
 packages/shared-db/migrations
+apps/app/src/routeTree.gen.ts
