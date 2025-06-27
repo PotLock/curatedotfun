@@ -8,6 +8,7 @@ import {
   forwardRef,
   useImperativeHandle,
 } from "react";
+import { debounce } from "lodash-es";
 import { useFieldArray, useForm } from "react-hook-form";
 import { Form } from "../ui/form";
 import {
@@ -131,7 +132,6 @@ export const EditFeedForm = forwardRef<EditFeedFormRef, EditFeedFormProps>(
 
     // Watch for form changes and auto-update with debouncing
     const watchedValues = form.watch();
-    const updateTimeoutRef = useRef<NodeJS.Timeout>();
 
     // Track if form has been initialized to avoid triggering updates during initial load
     const [isFormInitialized, setIsFormInitialized] = useState(false);
@@ -144,171 +144,150 @@ export const EditFeedForm = forwardRef<EditFeedFormRef, EditFeedFormProps>(
     }, [currentConfig, isFormInitialized]);
 
     // Debounced config update function
-    const debouncedUpdateConfig = useCallback(
-      (values: FormValues, config: FeedConfig) => {
-        // Clear any existing timeout
-        if (updateTimeoutRef.current) {
-          clearTimeout(updateTimeoutRef.current);
+    const debouncedUpdateConfig = useRef(
+      debounce((values: FormValues, config: FeedConfig) => {
+        // Start with the original config and only update fields that have been explicitly set in the form
+        const updatedConfig: FeedConfig = {
+          ...config, // Preserve all existing data first
+        };
+
+        // Only update fields that have been explicitly changed in the form
+        if (values.name !== undefined && values.name !== config.name) {
+          updatedConfig.name = values.name;
         }
 
-        // Set a new timeout
-        updateTimeoutRef.current = setTimeout(() => {
-          // Start with the original config and only update fields that have been explicitly set in the form
-          const updatedConfig: FeedConfig = {
-            ...config, // Preserve all existing data first
-          };
+        if (
+          values.description !== undefined &&
+          values.description !== config.description
+        ) {
+          updatedConfig.description = values.description;
+        }
 
-          // Only update fields that have been explicitly changed in the form
-          if (values.name !== undefined && values.name !== config.name) {
-            updatedConfig.name = values.name;
-          }
+        if (values.enabled !== undefined && values.enabled !== config.enabled) {
+          updatedConfig.enabled = values.enabled;
+        }
+
+        if (
+          values.pollingIntervalMs !== undefined &&
+          values.pollingIntervalMs !== config.pollingIntervalMs
+        ) {
+          updatedConfig.pollingIntervalMs = values.pollingIntervalMs;
+        }
+
+        // Only update sources if they exist in the form
+        if (
+          values.sources !== undefined &&
+          JSON.stringify(values.sources) !== JSON.stringify(config.sources)
+        ) {
+          updatedConfig.sources = values.sources;
+        }
+
+        // Only update ingestion if form values are different from current
+        if (
+          values.ingestionEnabled !== undefined ||
+          values.ingestionSchedule !== undefined
+        ) {
+          const currentIngestionEnabled = config.ingestion?.enabled ?? false;
+          const currentIngestionSchedule = config.ingestion?.schedule ?? "";
 
           if (
-            values.description !== undefined &&
-            values.description !== config.description
+            values.ingestionEnabled !== currentIngestionEnabled ||
+            values.ingestionSchedule !== currentIngestionSchedule
           ) {
-            updatedConfig.description = values.description;
+            updatedConfig.ingestion = {
+              enabled: values.ingestionEnabled ?? currentIngestionEnabled,
+              schedule: values.ingestionSchedule ?? currentIngestionSchedule,
+            };
           }
+        }
 
-          if (
-            values.enabled !== undefined &&
-            values.enabled !== config.enabled
-          ) {
-            updatedConfig.enabled = values.enabled;
-          }
+        // Handle outputs - only update if stream settings or transforms/distributors have changed
+        if (
+          values.streamEnabled !== undefined ||
+          values.streamTransforms !== undefined ||
+          values.streamDistributors !== undefined ||
+          values.recaps !== undefined
+        ) {
+          const currentStreamEnabled = config.outputs?.stream?.enabled ?? false;
+          const currentTransforms = config.outputs?.stream?.transform ?? [];
+          const currentDistributors = config.outputs?.stream?.distribute ?? [];
+          const currentRecaps = config.outputs?.recap ?? [];
 
-          if (
-            values.pollingIntervalMs !== undefined &&
-            values.pollingIntervalMs !== config.pollingIntervalMs
-          ) {
-            updatedConfig.pollingIntervalMs = values.pollingIntervalMs;
-          }
+          // Check if stream output settings have changed
+          const streamChanged =
+            values.streamEnabled !== currentStreamEnabled ||
+            JSON.stringify(values.streamTransforms) !==
+              JSON.stringify(currentTransforms) ||
+            JSON.stringify(values.streamDistributors) !==
+              JSON.stringify(currentDistributors);
 
-          // Only update sources if they exist in the form
-          if (
-            values.sources !== undefined &&
-            JSON.stringify(values.sources) !== JSON.stringify(config.sources)
-          ) {
-            updatedConfig.sources = values.sources;
-          }
+          const recapsChanged =
+            JSON.stringify(values.recaps) !== JSON.stringify(currentRecaps);
 
-          // Only update ingestion if form values are different from current
-          if (
-            values.ingestionEnabled !== undefined ||
-            values.ingestionSchedule !== undefined
-          ) {
-            const currentIngestionEnabled = config.ingestion?.enabled ?? false;
-            const currentIngestionSchedule = config.ingestion?.schedule ?? "";
+          if (streamChanged || recapsChanged) {
+            updatedConfig.outputs = {
+              ...config.outputs,
+            };
 
-            if (
-              values.ingestionEnabled !== currentIngestionEnabled ||
-              values.ingestionSchedule !== currentIngestionSchedule
-            ) {
-              updatedConfig.ingestion = {
-                enabled: values.ingestionEnabled ?? currentIngestionEnabled,
-                schedule: values.ingestionSchedule ?? currentIngestionSchedule,
+            if (streamChanged) {
+              updatedConfig.outputs.stream = {
+                ...config.outputs?.stream,
+                enabled: values.streamEnabled ?? currentStreamEnabled,
+                transform: values.streamTransforms ?? currentTransforms,
+                distribute: values.streamDistributors ?? currentDistributors,
               };
             }
-          }
 
-          // Handle outputs - only update if stream settings or transforms/distributors have changed
-          if (
-            values.streamEnabled !== undefined ||
-            values.streamTransforms !== undefined ||
-            values.streamDistributors !== undefined ||
-            values.recaps !== undefined
-          ) {
-            const currentStreamEnabled =
-              config.outputs?.stream?.enabled ?? false;
-            const currentTransforms = config.outputs?.stream?.transform ?? [];
-            const currentDistributors =
-              config.outputs?.stream?.distribute ?? [];
-            const currentRecaps = config.outputs?.recap ?? [];
-
-            // Check if stream output settings have changed
-            const streamChanged =
-              values.streamEnabled !== currentStreamEnabled ||
-              JSON.stringify(values.streamTransforms) !==
-                JSON.stringify(currentTransforms) ||
-              JSON.stringify(values.streamDistributors) !==
-                JSON.stringify(currentDistributors);
-
-            const recapsChanged =
-              JSON.stringify(values.recaps) !== JSON.stringify(currentRecaps);
-
-            if (streamChanged || recapsChanged) {
-              updatedConfig.outputs = {
-                ...config.outputs,
-              };
-
-              if (streamChanged) {
-                updatedConfig.outputs.stream = {
-                  ...config.outputs?.stream,
-                  enabled: values.streamEnabled ?? currentStreamEnabled,
-                  transform: values.streamTransforms ?? currentTransforms,
-                  distribute: values.streamDistributors ?? currentDistributors,
-                };
-              }
-
-              if (recapsChanged) {
-                updatedConfig.outputs.recap = values.recaps ?? currentRecaps;
-              }
+            if (recapsChanged) {
+              updatedConfig.outputs.recap = values.recaps ?? currentRecaps;
             }
           }
+        }
 
-          // Handle moderation - only update if values have changed
+        // Handle moderation - only update if values have changed
+        if (
+          values.moderationApprovers !== undefined ||
+          values.moderationBlacklist !== undefined
+        ) {
+          const currentApprovers = config.moderation?.approvers ?? {};
+          const currentBlacklist = config.moderation?.blacklist ?? {};
+
           if (
-            values.moderationApprovers !== undefined ||
-            values.moderationBlacklist !== undefined
+            JSON.stringify(values.moderationApprovers) !==
+              JSON.stringify(currentApprovers) ||
+            JSON.stringify(values.moderationBlacklist) !==
+              JSON.stringify(currentBlacklist)
           ) {
-            const currentApprovers = config.moderation?.approvers ?? {};
-            const currentBlacklist = config.moderation?.blacklist ?? {};
-
-            if (
-              JSON.stringify(values.moderationApprovers) !==
-                JSON.stringify(currentApprovers) ||
-              JSON.stringify(values.moderationBlacklist) !==
-                JSON.stringify(currentBlacklist)
-            ) {
-              updatedConfig.moderation = {
-                ...config.moderation,
-                approvers: values.moderationApprovers ?? currentApprovers,
-                blacklist: values.moderationBlacklist ?? currentBlacklist,
-              };
-            }
+            updatedConfig.moderation = {
+              ...config.moderation,
+              approvers: values.moderationApprovers ?? currentApprovers,
+              blacklist: values.moderationBlacklist ?? currentBlacklist,
+            };
           }
+        }
 
-          // Only update if the config has actually changed
-          if (JSON.stringify(updatedConfig) !== JSON.stringify(config)) {
-            isUpdatingFromForm.current = true;
-            onConfigChange(updatedConfig);
-            // Reset the flag in the next tick to ensure state updates have propagated
-            Promise.resolve().then(() => {
-              isUpdatingFromForm.current = false;
-            });
-          }
-        }, 300); // 300ms debounce
-      },
-      [onConfigChange],
-    );
+        // Only update if the config has actually changed
+        if (JSON.stringify(updatedConfig) !== JSON.stringify(config)) {
+          isUpdatingFromForm.current = true;
+          onConfigChange(updatedConfig);
+          // Reset the flag in the next tick to ensure state updates have propagated
+          Promise.resolve().then(() => {
+            isUpdatingFromForm.current = false;
+          });
+        }
+      }, 300),
+    ).current;
 
     // Update config whenever form values change (but only after form is initialized)
     useEffect(() => {
       if (!currentConfig || !isFormInitialized) return;
       debouncedUpdateConfig(watchedValues, currentConfig);
-    }, [
-      watchedValues,
-      currentConfig,
-      isFormInitialized,
-      debouncedUpdateConfig,
-    ]);
+    }, [watchedValues, currentConfig, isFormInitialized]);
 
     // Cleanup timeout on unmount
     useEffect(() => {
       return () => {
-        if (updateTimeoutRef.current) {
-          clearTimeout(updateTimeoutRef.current);
-        }
+        debouncedUpdateConfig.cancel();
       };
     }, []);
 

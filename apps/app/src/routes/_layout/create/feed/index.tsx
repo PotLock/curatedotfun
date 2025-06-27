@@ -1,6 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { useState } from "react";
 import { ImageUpload } from "@/components/ImageUpload";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,12 +11,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/auth-context";
-import { useFeedCreationStore } from "@/store/feed-creation-store";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { z } from "zod";
-import { useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
+import { useFeedCreationStore } from "@/store/feed-creation-store";
 import type { FeedWrappedResponse } from "@curatedotfun/types";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { debounce } from "lodash-es";
+import { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const BasicInformationFormSchema = z.object({
   name: z.string().min(3, "Feed name must be at least 3 characters").optional(),
@@ -63,33 +64,43 @@ function BasicInformationComponent() {
     });
   };
 
-  const checkFeedId = async (id: string) => {
-    if (!id) {
-      form.clearErrors("id");
-      return;
-    }
-    setIsValidatingId(true);
-    try {
-      const data = await queryClient.fetchQuery({
-        queryKey: ["feed-details", id],
-        queryFn: () =>
-          apiClient.makeRequest<FeedWrappedResponse>("GET", `/feeds/${id}`),
-        retry: false,
-      });
-      if (data?.data) {
+  const debouncedCheckFeedId = useRef(
+    debounce(async (id: string) => {
+      if (!id) {
+        form.clearErrors("id");
+        return;
+      }
+      setIsValidatingId(true);
+      try {
+        await queryClient.fetchQuery({
+          queryKey: ["feed-details", id],
+          queryFn: () =>
+            apiClient.makeRequest<FeedWrappedResponse>("GET", `/feeds/${id}`),
+          retry: false,
+        });
         form.setError("id", {
           type: "manual",
           message: "This hashtag is already taken.",
         });
-      } else {
-        form.clearErrors("id");
+      } catch (error) {
+        if (
+          error &&
+          typeof error === "object" &&
+          "response" in error &&
+          (error.response as { status: number })?.status === 404
+        ) {
+          form.clearErrors("id");
+        } else {
+          form.setError("id", {
+            type: "manual",
+            message: "Network error. Please check your connection.",
+          });
+        }
+      } finally {
+        setIsValidatingId(false);
       }
-    } catch {
-      form.clearErrors("id");
-    } finally {
-      setIsValidatingId(false);
-    }
-  };
+    }, 500),
+  ).current;
 
   return (
     <div>
@@ -162,11 +173,9 @@ function BasicInformationComponent() {
                       required
                       {...field}
                       onChange={(e) => {
-                        field.onChange(e.target.value.toLowerCase());
-                      }}
-                      onBlur={(e) => {
-                        field.onBlur();
-                        checkFeedId(e.target.value);
+                        const value = e.target.value.toLowerCase();
+                        field.onChange(value);
+                        debouncedCheckFeedId(value);
                       }}
                     />
                   </FormControl>

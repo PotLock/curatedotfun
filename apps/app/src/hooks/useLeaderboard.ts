@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { debounce } from "lodash-es";
 import {
   SortingState,
   useReactTable,
@@ -28,6 +29,10 @@ export function useLeaderboard(
   const { data: allFeeds = [] } = useAllFeeds();
   const feedDropdownRef = useRef<HTMLDivElement>(null);
   const timeDropdownRef = useRef<HTMLDivElement>(null);
+
+  const debouncedSetDebouncedSearchQuery = useRef(
+    debounce((query) => setDebouncedSearchQuery(query), 300),
+  ).current;
 
   const timeOptions = [
     { label: "All Time", value: "all" },
@@ -73,11 +78,10 @@ export function useLeaderboard(
 
   // Debounce search query
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 300);
-
-    return () => clearTimeout(timer);
+    debouncedSetDebouncedSearchQuery(searchQuery);
+    return () => {
+      debouncedSetDebouncedSearchQuery.cancel();
+    };
   }, [searchQuery]);
 
   const toggleRow = useCallback((index: number) => {
