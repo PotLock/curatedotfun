@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Card } from "../../../../../../components/ui/card";
+import { ComingSoon } from "@/components/coming-soon";
 
 export const Route = createFileRoute(
   "/_layout/profile/_tabs/settings/_tabs/preferences",
@@ -9,10 +9,16 @@ export const Route = createFileRoute(
 
 function PreferencesComponent() {
   return (
-    <Card className="p-6 space-y-6">
-      <h2 className="text-2xl font-semibold">User Preferences</h2>
-      <p>Set your preferences for the application.</p>
-      {/* Add user preferences form or options here */}
-    </Card>
+    <ComingSoon
+      title="Preferences Settings"
+      description="Customize your experience with personalized preferences for content, privacy, and accessibility settings."
+      features={[
+        "Content preferences for personalized feeds",
+        "Notification preferences for updates",
+        "Privacy settings for your account",
+        "Language and region settings",
+        "Accessibility options",
+      ]}
+    />
   );
 }

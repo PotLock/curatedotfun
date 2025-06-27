@@ -86,6 +86,10 @@ export function useLeaderboard(
     );
   }, []);
 
+  const collapseAllRows = useCallback(() => {
+    setExpandedRows([]);
+  }, []);
+
   const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   }, []);
@@ -137,6 +141,15 @@ export function useLeaderboard(
     });
   }, [filteredLeaderboard, leaderboard]);
 
+  const expandAllRows = useCallback(() => {
+    if (!filteredLeaderboardWithRanks) return;
+    const allRowIndices = Array.from(
+      { length: filteredLeaderboardWithRanks.length },
+      (_, i) => i,
+    );
+    setExpandedRows(allRowIndices);
+  }, [filteredLeaderboardWithRanks]);
+
   const columns = useMemo(() => {
     return createLeaderboardColumns(expandedRows, toggleRow);
   }, [expandedRows, toggleRow]);
@@ -159,6 +172,7 @@ export function useLeaderboard(
     showTimeDropdown,
     feeds,
     timeOptions,
+    expandedRows,
 
     // Handlers
     handleSearch,
@@ -166,6 +180,8 @@ export function useLeaderboard(
     handleTimeDropdownToggle,
     handleFeedDropdownClose,
     handleTimeDropdownClose,
+    expandAllRows,
+    collapseAllRows,
 
     // Refs
     feedDropdownRef,
