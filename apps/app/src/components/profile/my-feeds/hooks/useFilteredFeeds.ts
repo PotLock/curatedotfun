@@ -4,7 +4,7 @@ import type { FilterValue } from "../constants";
 export function useFilteredFeeds(
   feeds: FeedResponse[],
   searchTerm: string,
-  filterValue: FilterValue
+  filterValue: FilterValue,
 ) {
   return feeds.filter((feed) => {
     const matchesSearch =
