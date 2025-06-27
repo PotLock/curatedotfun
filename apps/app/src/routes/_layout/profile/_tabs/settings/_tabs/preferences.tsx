@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ComingSoon } from "@/components/coming-soon";
 
-export const Route = createFileRoute("/_layout/profile/settings/preferences")({
+export const Route = createFileRoute(
+  "/_layout/profile/_tabs/settings/_tabs/preferences",
+)({
   component: PreferencesComponent,
 });
 
