@@ -125,14 +125,16 @@ export function createLeaderboardColumns(
               <div className="flex flex-col gap-2 mt-2 pl-0">
                 {feedSubmissions.slice(1).map((feed, feedIndex) => (
                   <div key={feedIndex} className="flex items-center">
-                    <div className="flex items-center gap-1 border border-neutral-400 px-2 py-1 rounded-md justify-between w-[150px] min-w-0">
-                      <span className="text-sm truncate flex-shrink">
-                        #{feed.feedId}
-                      </span>
-                      <span className="text-sm whitespace-nowrap flex-shrink-0">
-                        {feed.count}/{feed.totalInFeed}
-                      </span>
-                    </div>
+                    <Link to={"/feed/$feedId"} params={{ feedId: feed.feedId }}>
+                      <div className="flex items-center gap-1 border border-neutral-400 px-2 py-1 rounded-md justify-between w-[150px] min-w-0">
+                        <span className="text-sm truncate flex-shrink">
+                          #{feed.feedId}
+                        </span>
+                        <span className="text-sm whitespace-nowrap flex-shrink-0">
+                          {feed.count}/{feed.totalInFeed}
+                        </span>
+                      </div>
+                    </Link>
                   </div>
                 ))}
               </div>
