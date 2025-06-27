@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ComingSoon } from "../../../../components/ui/coming-soon";
+import { ComingSoon } from "../../../../components/coming-soon";
 
 export const Route = createFileRoute("/_layout/profile/settings/notifications")(
   {

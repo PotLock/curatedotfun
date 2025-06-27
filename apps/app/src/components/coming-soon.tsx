@@ -1,6 +1,6 @@
 import { Clock, Sparkles } from "lucide-react";
-import { Card } from "./card";
-import { Badge } from "./badge";
+import { Card } from "./ui/card";
+import { Badge } from "./ui/badge";
 
 interface ComingSoonProps {
   title: string;
