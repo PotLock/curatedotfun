@@ -7,18 +7,11 @@ export const Route = createFileRoute("/_layout")({
 
 function RouteComponent() {
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col min-h-screen h-full bg-white">
       <Header />
-      <div className="flex flex-1 overflow-hidden">
-        {/* Main Content Area */}
-        <div className="flex-1 flex relative">
-          <div className="flex-1 custom-scrollbar overflow-y-auto h-full">
-            <div className=" pb-12 md:p-0 lg:p-0 md:pb-16 lg:pb-20">
-              <Outlet />
-            </div>
-          </div>
-        </div>
-      </div>
+      <main className="relative flex-1 pb-12 md:p-0 lg:p-0 md:pb-16 lg:pb-20">
+        <Outlet />
+      </main>
     </div>
   );
 }
