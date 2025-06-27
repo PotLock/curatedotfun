@@ -51,12 +51,10 @@ function SettingsTabsAreaLayout() {
     }
   };
 
+  const currentTab = getCurrentTab();
+
   return (
-    <Tabs
-      value={getCurrentTab()}
-      onValueChange={handleTabChange}
-      className="w-full"
-    >
+    <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
       <TabsList className="w-full justify-start">
         {navigationItems.map((item) => (
           <TabsTrigger key={item.value} value={item.value}>
@@ -65,7 +63,7 @@ function SettingsTabsAreaLayout() {
         ))}
       </TabsList>
 
-      <TabsContent value={getCurrentTab()} className="mt-6">
+      <TabsContent value={currentTab} className="mt-6">
         <Outlet />
       </TabsContent>
     </Tabs>

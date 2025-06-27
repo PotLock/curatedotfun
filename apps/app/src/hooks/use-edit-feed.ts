@@ -122,7 +122,7 @@ export function useEditFeed(feedId: string): {
       try {
         await deleteFeedMutation.mutateAsync();
         toast({ title: "Success", description: "Feed deleted successfully." });
-        navigate({ to: "/" });
+        navigate({ to: "/profile/my-feeds" });
       } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
         console.error("Failed to delete feed:", err);

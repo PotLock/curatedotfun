@@ -1,23 +1,23 @@
 import { type FeedConfig } from "@curatedotfun/types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { debounce, isEqual } from "lodash-es";
 import {
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
   forwardRef,
+  useCallback,
+  useEffect,
   useImperativeHandle,
+  useRef,
+  useState,
 } from "react";
-import { debounce } from "lodash-es";
 import { useFieldArray, useForm } from "react-hook-form";
 import { Form } from "../ui/form";
 import {
   BasicFieldsSection,
-  SourcesSection,
-  StreamSettingsSection,
-  ModerationSection,
   // IngestionSection,
   FeedConfigFormSchema,
+  ModerationSection,
+  SourcesSection,
+  StreamSettingsSection,
   type FormValues,
 } from "./form";
 
@@ -177,7 +177,7 @@ export const EditFeedForm = forwardRef<EditFeedFormRef, EditFeedFormProps>(
         // Only update sources if they exist in the form
         if (
           values.sources !== undefined &&
-          JSON.stringify(values.sources) !== JSON.stringify(config.sources)
+          !isEqual(values.sources, config.sources)
         ) {
           updatedConfig.sources = values.sources;
         }
