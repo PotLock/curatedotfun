@@ -1,7 +1,5 @@
-import { Search } from "lucide-react";
-import { Input } from "../../ui/input";
 import { useState } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 import { Button } from "../../ui/button";
 import {
@@ -13,63 +11,39 @@ import {
   CommandList,
 } from "../../ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
-import { Card } from "./card";
-
-const feeds = [
-  {
-    value: "all",
-    label: "All",
-  },
-  {
-    value: "latest",
-    label: "Latest",
-  },
-  {
-    value: "popular",
-    label: "Popular",
-  },
-  {
-    value: "technology",
-    label: "Technology",
-  },
-  {
-    value: "design",
-    label: "Design",
-  },
-  {
-    value: "lifestyle",
-    label: "Lifestyle",
-  },
-];
-
-const CardContent = {
-  title: "Near Week",
-  description:
-    "Near Week is a weekly newsletter that covers the latest developments in the blockchain space. It's a great way to stay up to date with the latest news and events in the crypto world.",
-  tags: ["near", "blockchain", "crypto"],
-  createdAt: new Date(),
-  curators: 5,
-  contents: 100,
-  image: "/images/near-week.png",
-  isCompleted: false,
-};
+import { useMyCreatedFeeds } from "../../../lib/api/feeds";
+import { useNavigate } from "@tanstack/react-router";
+import { FeedCard } from "./FeedCard";
+import { SearchForm } from "./SearchForm";
+import { filterOptions, type FilterValue } from "./constants";
+import { useFilteredFeeds } from "./hooks/useFilteredFeeds";
 
 export function MyFeeds() {
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("all");
+  const [filterValue, setFilterValue] = useState<FilterValue>("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
+
+  const { data: feeds = [], isLoading, error } = useMyCreatedFeeds();
+
+  const filteredFeeds = useFilteredFeeds(feeds, searchTerm, filterValue);
+
+  const handleCreateNewFeed = () => {
+    navigate({ to: "/create/feed" });
+  };
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <p className="text-red-500">Failed to load feeds. Please try again.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4 sm:gap-6 w-full">
       <div className="flex flex-col md:flex-row md:gap-0 gap-4 items-stretch justify-between w-full">
-        <form className="relative w-full md:w-fit">
-          <Input
-            placeholder="Search"
-            className="ps-9 sm:min-w-[300px] w-full"
-          />
-          <Search
-            className="absolute left-2 top-1/2 -translate-y-1/2 text-black/50 size-5"
-            strokeWidth={1.5}
-          />
-        </form>
+        <SearchForm searchTerm={searchTerm} onSearchChange={setSearchTerm} />
         <div className="ms-auto md:ms-0 flex items-stretch gap-3">
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -77,36 +51,42 @@ export function MyFeeds() {
                 variant="outline"
                 role="combobox"
                 aria-expanded={open}
-                className="w-[150px] justify-between h-auto"
+                className="truncate justify-between h-auto"
               >
-                {value
-                  ? `${feeds.find((feed) => feed.value === value)?.label} Feeds`
-                  : "Select feed..."}
+                {filterValue
+                  ? `${filterOptions.find((option) => option.value === filterValue)?.label} Feeds`
+                  : "Select filter..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[150px] p-0">
+            <PopoverContent className="p-0">
               <Command>
                 <CommandInput placeholder="Search feeds" />
                 <CommandList>
-                  <CommandEmpty>No feed found.</CommandEmpty>
+                  <CommandEmpty>No filter found.</CommandEmpty>
                   <CommandGroup>
-                    {feeds.map((feed) => (
+                    {filterOptions.map((option) => (
                       <CommandItem
-                        key={feed.value}
-                        value={feed.value}
+                        key={option.value}
+                        value={option.value}
                         onSelect={(currentValue) => {
-                          setValue(currentValue === value ? "" : currentValue);
+                          setFilterValue(
+                            currentValue === filterValue
+                              ? "all"
+                              : (currentValue as FilterValue),
+                          );
                           setOpen(false);
                         }}
                       >
                         <Check
                           className={cn(
                             "mr-2 h-4 w-4",
-                            value === feed.value ? "opacity-100" : "opacity-0",
+                            filterValue === option.value
+                              ? "opacity-100"
+                              : "opacity-0",
                           )}
                         />
-                        {feed.label}
+                        {option.label}
                       </CommandItem>
                     ))}
                   </CommandGroup>
@@ -114,16 +94,40 @@ export function MyFeeds() {
               </Command>
             </PopoverContent>
           </Popover>
-          <Button variant="filled" className="h-auto">
+          <Button
+            variant="filled"
+            className="h-auto"
+            onClick={handleCreateNewFeed}
+          >
             Create New Feed
           </Button>
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
-        <Card {...{ ...CardContent, isCompleted: true }} />
-        <Card {...CardContent} />
-        <Card {...CardContent} />
-      </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading your feeds...</span>
+        </div>
+      ) : filteredFeeds.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-8 text-center">
+          <p className="text-gray-500 mb-4">
+            {searchTerm || filterValue !== "all"
+              ? "No feeds match your search criteria."
+              : "You haven't created any feeds yet."}
+          </p>
+          {!searchTerm && filterValue === "all" && (
+            <Button variant="filled" onClick={handleCreateNewFeed}>
+              Create Your First Feed
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
+          {filteredFeeds.map((feed) => (
+            <FeedCard key={feed.id} feed={feed} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

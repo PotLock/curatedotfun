@@ -4,4 +4,5 @@ packages:
 onlyBuiltDependencies:
   - core-js
   - esbuild
+  - msgpackr-extract
   - secp256k1

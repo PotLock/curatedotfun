@@ -42,6 +42,22 @@ export function useAllFeeds() {
   );
 }
 
+// Hook to get feeds created by the current user
+export function useMyCreatedFeeds() {
+  const { isSignedIn, currentAccountId } = useAuth();
+  return useApiQuery<FeedsWrappedResponse, Error, FeedResponse[]>(
+    ["my-created-feeds", currentAccountId],
+    `/feeds`,
+    {
+      enabled: isSignedIn && !!currentAccountId,
+      select: (data) => {
+        const feeds = data.data ?? [];
+        return feeds.filter((feed) => feed.created_by === currentAccountId);
+      },
+    },
+  );
+}
+
 export function useCreateFeed() {
   return useApiMutation<FeedResponse, Error, CreateFeedRequest>(
     {
@@ -154,3 +170,28 @@ export const useCanModerateFeed = (feedId: string | undefined) => {
     },
   );
 };
+
+// Hook to get feed content count (approved submissions)
+export function useFeedContentCount(feedId: string) {
+  return useApiQuery<PaginatedResponse<FeedContextSubmission>, Error, number>(
+    ["feed-content-count", feedId],
+    `/submissions/feed/${feedId}?page=0&limit=1&status=approved`,
+    {
+      enabled: !!feedId,
+      select: (data) => data.pagination?.totalCount || 0,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  );
+}
+
+// Hook to get basic feed stats
+export function useFeedStats(feedId: string) {
+  const contentCountQuery = useFeedContentCount(feedId);
+  
+  return {
+    contentCount: contentCountQuery.data ?? 0,
+    curatorCount: 0, // TODO: Need new API endpoint: GET /api/feeds/:feedId/stats with curator count
+    isLoading: contentCountQuery.isLoading,
+    error: contentCountQuery.error,
+  };
+}
