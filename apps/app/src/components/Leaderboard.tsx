@@ -1,4 +1,5 @@
 import React from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { LeaderboardEntry } from "../lib/api";
 import { Container } from "./Container";
 import { Hero } from "./Hero";
@@ -33,6 +34,8 @@ export default React.memo(function Leaderboard({
     handleTimeDropdownToggle,
     handleFeedDropdownClose,
     handleTimeDropdownClose,
+    expandAllRows,
+    collapseAllRows,
     feedDropdownRef,
     timeDropdownRef,
     table,
@@ -62,6 +65,25 @@ export default React.memo(function Leaderboard({
           feedDropdownRef={feedDropdownRef}
           timeDropdownRef={timeDropdownRef}
         />
+
+        {hasData && (
+          <div className="flex justify-end gap-2 mb-4">
+            <button
+              onClick={expandAllRows}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm border border-neutral-300 rounded-md bg-white hover:bg-neutral-50 transition-colors text-[#111111]"
+            >
+              <ChevronDown className="h-4 w-4" />
+              Expand All
+            </button>
+            <button
+              onClick={collapseAllRows}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm border border-neutral-300 rounded-md bg-white hover:bg-neutral-50 transition-colors text-[#111111]"
+            >
+              <ChevronUp className="h-4 w-4" />
+              Collapse All
+            </button>
+          </div>
+        )}
 
         <LeaderboardTable
           table={table}

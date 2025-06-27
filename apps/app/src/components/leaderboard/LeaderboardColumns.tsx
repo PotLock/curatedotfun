@@ -2,6 +2,7 @@ import { ChevronUp } from "lucide-react";
 import { createColumnHelper } from "@tanstack/react-table";
 import { LeaderboardEntry } from "../../lib/api";
 import { UserLink } from "../FeedItem";
+import { Link } from "@tanstack/react-router";
 
 export interface ExtendedLeaderboardEntry extends LeaderboardEntry {
   originalRank: number;
@@ -88,14 +89,20 @@ export function createLeaderboardColumns(
           <div className="flex flex-col min-h-[32px] justify-center">
             <div className="flex items-center gap-2">
               {feedSubmissions && feedSubmissions.length > 0 && (
-                <div className="flex items-center justify-between gap-1 border border-neutral-400 px-2 py-1 rounded-md w-[150px] min-w-0">
-                  <span className="text-sm truncate flex-shrink">
-                    #{feedSubmissions[0].feedId}
-                  </span>
-                  <span className="text-sm whitespace-nowrap flex-shrink-0">
-                    {feedSubmissions[0].count}/{feedSubmissions[0].totalInFeed}
-                  </span>
-                </div>
+                <Link
+                  to={"/feed/$feedId"}
+                  params={{ feedId: feedSubmissions[0].feedId }}
+                >
+                  <div className="flex items-center justify-between gap-1 border border-neutral-400 px-2 py-1 rounded-md w-[150px] min-w-0">
+                    <span className="text-sm truncate flex-shrink">
+                      #{feedSubmissions[0].feedId}
+                    </span>
+                    <span className="text-sm whitespace-nowrap flex-shrink-0">
+                      {feedSubmissions[0].count}/
+                      {feedSubmissions[0].totalInFeed}
+                    </span>
+                  </div>
+                </Link>
               )}
 
               {feedSubmissions && feedSubmissions.length > 1 && (
@@ -118,14 +125,16 @@ export function createLeaderboardColumns(
               <div className="flex flex-col gap-2 mt-2 pl-0">
                 {feedSubmissions.slice(1).map((feed, feedIndex) => (
                   <div key={feedIndex} className="flex items-center">
-                    <div className="flex items-center gap-1 border border-neutral-400 px-2 py-1 rounded-md justify-between w-[150px] min-w-0">
-                      <span className="text-sm truncate flex-shrink">
-                        #{feed.feedId}
-                      </span>
-                      <span className="text-sm whitespace-nowrap flex-shrink-0">
-                        {feed.count}/{feed.totalInFeed}
-                      </span>
-                    </div>
+                    <Link to={"/feed/$feedId"} params={{ feedId: feed.feedId }}>
+                      <div className="flex items-center gap-1 border border-neutral-400 px-2 py-1 rounded-md justify-between w-[150px] min-w-0">
+                        <span className="text-sm truncate flex-shrink">
+                          #{feed.feedId}
+                        </span>
+                        <span className="text-sm whitespace-nowrap flex-shrink-0">
+                          {feed.count}/{feed.totalInFeed}
+                        </span>
+                      </div>
+                    </Link>
                   </div>
                 ))}
               </div>

@@ -230,6 +230,117 @@ const StepIdParamSchema = z.object({
   stepId: z.string(),
 });
 
+// Reprocess a job with the latest feed config
+processingRoutes.post(
+  "/jobs/:jobId/reprocess",
+  zValidator("param", JobIdParamSchema),
+  async (c) => {
+    const { jobId } = c.req.valid("param");
+    const sp = c.var.sp;
+
+    try {
+      const processingService = sp.getProcessingService();
+      const newJob = await processingService.reprocessWithLatestConfig(jobId);
+
+      return c.json(
+        ProcessingJobRetryResponseSchema.parse({
+          statusCode: 200,
+          success: true,
+          data: {
+            job: newJob,
+            message: "Job reprocessing initiated successfully.",
+          },
+        }),
+      );
+    } catch (error: unknown) {
+      sp.getLogger().error(
+        { error, jobId },
+        "Error in processingRoutes.post('/jobs/:jobId/reprocess')",
+      );
+
+      if (error instanceof NotFoundError || error instanceof ServiceError) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: error.statusCode as ContentfulStatusCode,
+            success: false,
+            error: { message: error.message },
+          }),
+          error.statusCode as ContentfulStatusCode,
+        );
+      }
+
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 500,
+          success: false,
+          error: { message: "Failed to reprocess job" },
+        }),
+        500,
+      );
+    }
+  },
+);
+
+// Tweak a step's input and reprocess from that point
+const TweakStepBodySchema = z.object({
+  newInput: z.string(),
+});
+
+processingRoutes.post(
+  "/steps/:stepId/tweak",
+  zValidator("param", StepIdParamSchema),
+  zValidator("json", TweakStepBodySchema),
+  async (c) => {
+    const { stepId } = c.req.valid("param");
+    const { newInput } = c.req.valid("json");
+    const sp = c.var.sp;
+
+    try {
+      const processingService = sp.getProcessingService();
+      const newJob = await processingService.tweakAndReprocessStep(
+        stepId,
+        newInput,
+      );
+
+      return c.json(
+        ProcessingJobRetryResponseSchema.parse({
+          statusCode: 200,
+          success: true,
+          data: {
+            job: newJob,
+            message: "Step tweak and reprocess initiated successfully.",
+          },
+        }),
+      );
+    } catch (error: unknown) {
+      sp.getLogger().error(
+        { error, stepId },
+        "Error in processingRoutes.post('/steps/:stepId/tweak')",
+      );
+
+      if (error instanceof NotFoundError || error instanceof ServiceError) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: error.statusCode as ContentfulStatusCode,
+            success: false,
+            error: { message: error.message },
+          }),
+          error.statusCode as ContentfulStatusCode,
+        );
+      }
+
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 500,
+          success: false,
+          error: { message: "Failed to tweak and reprocess step" },
+        }),
+        500,
+      );
+    }
+  },
+);
+
 // Retry processing from a specific failed step
 processingRoutes.post(
   "/steps/:stepId/retry",

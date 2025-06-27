@@ -65,7 +65,7 @@ export class FeedService implements IBaseService {
       return false;
     }
 
-    const isCreator = accountId === feed.created_by;
+    const isCreator = accountId === feed.createdBy;
     const feedAdmins = (feed.admins as string[] | null) || [];
     const isAdminOnFeed = feedAdmins.includes(accountId);
 
@@ -89,6 +89,10 @@ export class FeedService implements IBaseService {
     return this.feedRepository.getAllFeeds();
   }
 
+  async getFeedsByCreator(creatorId: string) {
+    return this.feedRepository.getFeedsByCreator(creatorId);
+  }
+
   async createFeed(feedConfig: FeedConfig, accountId: string) {
     const existingFeed = await this.feedRepository.findFeedById(feedConfig.id);
     if (existingFeed) {
@@ -99,7 +103,7 @@ export class FeedService implements IBaseService {
       id: feedConfig.id,
       name: feedConfig.name,
       description: feedConfig.description,
-      created_by: accountId,
+      createdBy: accountId,
       config: feedConfig,
     };
 

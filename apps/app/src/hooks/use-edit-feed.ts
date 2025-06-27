@@ -1,26 +1,23 @@
 import type { FeedConfig } from "@curatedotfun/types";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Terminal } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { JsonEditor } from "../../../components/content-progress/JsonEditor";
-import { ImageUpload } from "../../../components/ImageUpload";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "../../../components/ui/alert";
-import { Button } from "../../../components/ui/button";
-import { Label } from "../../../components/ui/label";
-import { Loading } from "../../../components/ui/loading";
-import { toast } from "../../../hooks/use-toast";
-import { useDeleteFeed, useFeed, useUpdateFeed } from "../../../lib/api";
+import { toast } from "../hooks/use-toast";
+import { useDeleteFeed, useFeed, useUpdateFeed } from "../lib/api";
 
-export const Route = createFileRoute("/_layout/edit/feed/$feedId")({
-  component: EditFeedComponent,
-});
-
-function EditFeedComponent() {
-  const { feedId } = Route.useParams();
+export function useEditFeed(feedId: string): {
+  feedData: unknown;
+  isLoadingFeed: boolean;
+  feedError: Error | null;
+  currentConfig: FeedConfig | null;
+  jsonString: string;
+  updateFeedMutation: ReturnType<typeof useUpdateFeed>;
+  deleteFeedMutation: ReturnType<typeof useDeleteFeed>;
+  handleImageUploaded: (ipfsHash: string, ipfsUrl: string) => void;
+  handleJsonChange: (newJsonString: string) => void;
+  handleConfigChange: (config: FeedConfig) => void;
+  handleSaveChanges: () => Promise<void>;
+  handleDeleteFeed: () => Promise<void>;
+} {
   const navigate = useNavigate();
   const {
     data: feedData,
@@ -33,21 +30,7 @@ function EditFeedComponent() {
   const [currentConfig, setCurrentConfig] = useState<FeedConfig | null>(null);
   const [jsonString, setJsonString] = useState<string>("");
 
-  const handleImageUploaded = (_ipfsHash: string, ipfsUrl: string) => {
-    setCurrentConfig((prevConfig) => {
-      const newConfig = {
-        ...(prevConfig || { id: feedId, name: "", description: "" }),
-        image: ipfsUrl,
-      } as FeedConfig;
-      setJsonString(JSON.stringify(newConfig, null, 2));
-      return newConfig;
-    });
-    toast({
-      title: "Image Updated",
-      description: "Image URL has been updated in the JSON config.",
-    });
-  };
-
+  // Initialize config when feed data loads
   useEffect(() => {
     if (feedData?.config) {
       const configWithPotentiallyMissingFields: FeedConfig = {
@@ -73,6 +56,17 @@ function EditFeedComponent() {
     }
   }, [feedData]);
 
+  const handleImageUploaded = (_ipfsHash: string, ipfsUrl: string) => {
+    setCurrentConfig((prevConfig) => {
+      const newConfig = {
+        ...(prevConfig || { id: feedId, name: "", description: "" }),
+        image: ipfsUrl,
+      } as FeedConfig;
+      setJsonString(JSON.stringify(newConfig, null, 2));
+      return newConfig;
+    });
+  };
+
   const handleJsonChange = (newJsonString: string) => {
     setJsonString(newJsonString);
     try {
@@ -80,7 +74,17 @@ function EditFeedComponent() {
       setCurrentConfig(parsedConfig);
     } catch (e) {
       console.error("Invalid JSON:", e);
+      toast({
+        title: "Invalid JSON",
+        description: "Please check your JSON syntax and try again.",
+        variant: "destructive",
+      });
     }
+  };
+
+  const handleConfigChange = (config: FeedConfig) => {
+    setCurrentConfig(config);
+    setJsonString(JSON.stringify(config, null, 2));
   };
 
   const handleSaveChanges = async () => {
@@ -93,7 +97,7 @@ function EditFeedComponent() {
       return;
     }
     try {
-      await updateFeedMutation.mutateAsync({ config: currentConfig });
+      await updateFeedMutation.mutateAsync(currentConfig);
       toast({
         title: "Success",
         description: "Feed configuration updated successfully.",
@@ -118,7 +122,7 @@ function EditFeedComponent() {
       try {
         await deleteFeedMutation.mutateAsync();
         toast({ title: "Success", description: "Feed deleted successfully." });
-        navigate({ to: "/" });
+        navigate({ to: "/profile/my-feeds" });
       } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
         console.error("Failed to delete feed:", err);
@@ -131,60 +135,18 @@ function EditFeedComponent() {
     }
   };
 
-  if (isLoadingFeed)
-    return (
-      <div className="p-4">
-        <Loading /> <p>Loading feed details...</p>
-      </div>
-    );
-  if (feedError)
-    return (
-      <Alert variant="destructive" className="m-4">
-        <Terminal className="h-4 w-4" />
-        <AlertTitle>Error Loading Feed</AlertTitle>
-        <AlertDescription>{feedError.message}</AlertDescription>
-      </Alert>
-    );
-  if (!feedData) return <div className="p-4">Feed not found.</div>;
-
-  return (
-    <div className="container mx-auto p-4 space-y-6">
-      <h1 className="text-2xl font-bold">
-        Edit Feed: {currentConfig?.name || feedId}
-      </h1>
-
-      <ImageUpload
-        label="Feed Image"
-        initialImageUrl={currentConfig?.image || null}
-        onUploadSuccess={handleImageUploaded}
-        recommendedText="Update the image for this feed."
-      />
-
-      <div className="space-y-2">
-        <Label>Feed Configuration (JSON)</Label>
-        <JsonEditor
-          jsonContent={jsonString}
-          onContentChange={handleJsonChange}
-        />
-      </div>
-
-      <div className="flex space-x-4">
-        <Button
-          onClick={handleSaveChanges}
-          disabled={updateFeedMutation.isPending}
-        >
-          {updateFeedMutation.isPending ? <Loading /> : null}
-          Save Changes
-        </Button>
-        <Button
-          variant="destructive"
-          onClick={handleDeleteFeed}
-          disabled={deleteFeedMutation.isPending}
-        >
-          {deleteFeedMutation.isPending ? <Loading /> : null}
-          Delete Feed
-        </Button>
-      </div>
-    </div>
-  );
+  return {
+    feedData,
+    isLoadingFeed,
+    feedError,
+    currentConfig,
+    jsonString,
+    updateFeedMutation,
+    deleteFeedMutation,
+    handleImageUploaded,
+    handleJsonChange,
+    handleConfigChange,
+    handleSaveChanges,
+    handleDeleteFeed,
+  };
 }

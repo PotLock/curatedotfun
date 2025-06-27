@@ -26,7 +26,7 @@ export const FeedResponseSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().nullable(),
-  created_by: z.string().nullable(),
+  createdBy: z.string().nullable(),
   admins: z.array(z.string()).nullable(),
   config: FeedConfigSchema,
   createdAt: z.preprocess(

@@ -1,8 +1,4 @@
-import {
-  useProcessingJobs,
-  useProcessingSteps,
-  useRetryProcessingJob,
-} from "@/lib/api";
+import { useProcessingJobs, useProcessingSteps } from "@/lib/api";
 import { ProcessingJob, ProcessingStep } from "@curatedotfun/types";
 import {
   createColumnHelper,
@@ -11,6 +7,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useState } from "react";
+import { ProcessingActions } from "./ProcessingActions";
 import { ProcessingStepDetails } from "./ProcessingStepDetails";
 import { Button } from "../ui/button";
 import {
@@ -23,7 +20,7 @@ import {
 } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { format } from "date-fns";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface ProcessingHistoryProps {
   submissionId: string;
@@ -54,8 +51,6 @@ export function ProcessingHistory({
     isError: isStepsError,
     error: stepsError,
   } = useProcessingSteps(selectedJobId);
-
-  const { mutate: retryJob, isPending: isRetrying } = useRetryProcessingJob();
 
   // Job columns
   const jobColumns = [
@@ -98,32 +93,21 @@ export function ProcessingHistory({
     jobColumnHelper.display({
       id: "actions",
       header: "Actions",
-      cell: (info) => (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSelectedJobId(info.row.original.id)}
-          >
-            View Steps
-          </Button>
-          {info.row.original.status === "failed" && (
+      cell: (info) => {
+        const job = info.row.original;
+        return (
+          <div className="flex items-center gap-2">
             <Button
-              variant="destructive"
+              variant="outline"
               size="sm"
-              onClick={() => {
-                retryJob({ jobId: info.row.original.id });
-              }}
-              disabled={isRetrying}
+              onClick={() => setSelectedJobId(job.id)}
             >
-              <RefreshCw
-                className={`mr-2 h-4 w-4 ${isRetrying ? "animate-spin" : ""}`}
-              />
-              Retry
+              View Steps
             </Button>
-          )}
-        </div>
-      ),
+            <ProcessingActions job={job} />
+          </div>
+        );
+      },
     }),
   ];
 
@@ -178,20 +162,32 @@ export function ProcessingHistory({
           : "N/A",
     }),
     stepColumnHelper.display({
-      id: "details",
-      header: "Details",
-      cell: (info) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            setSelectedStep(info.row.original);
-            setIsStepDetailsOpen(true);
-          }}
-        >
-          View Details
-        </Button>
-      ),
+      id: "actions",
+      header: "Actions",
+      cell: (info) => {
+        const step = info.row.original;
+        const job = jobs?.find((j) => j.id === step.jobId);
+
+        if (!job) {
+          return null;
+        }
+
+        return (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSelectedStep(step);
+                setIsStepDetailsOpen(true);
+              }}
+            >
+              View Details
+            </Button>
+            <ProcessingActions job={job} step={step} />
+          </div>
+        );
+      },
     }),
   ];
 

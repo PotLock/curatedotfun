@@ -90,3 +90,47 @@ export function useRetryProcessingStep() {
     },
   );
 }
+
+/**
+ * Reprocess a job with the latest config
+ */
+export function useReprocessJob() {
+  return useApiMutation<
+    { success: boolean; job: ProcessingJob },
+    unknown,
+    { jobId: string }
+  >(
+    {
+      method: "POST",
+      path: ({ jobId }) => `/processing/jobs/${jobId}/reprocess`,
+      message: "reprocessJob",
+    },
+    {
+      onSuccess: () => {
+        // Invalidate queries to refresh job list
+      },
+    },
+  );
+}
+
+/**
+ * Tweak a step's input and reprocess from that point
+ */
+export function useTweakAndReprocessStep() {
+  return useApiMutation<
+    { success: boolean; job: ProcessingJob },
+    unknown,
+    { stepId: string; newInput: string }
+  >(
+    {
+      method: "POST",
+      path: ({ stepId }) => `/processing/steps/${stepId}/tweak`,
+      message: "tweakAndReprocessStep",
+    },
+    {
+      onSuccess: () => {
+        // Invalidate queries to refresh job list
+      },
+    },
+  );
+}

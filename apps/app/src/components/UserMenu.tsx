@@ -76,7 +76,7 @@ export default function UserMenu({ className }: UserMenuProps) {
             ) : (
               <ProfileImage size="small" />
             )}
-            <p className="text-sm font-medium leading-6 hidden sm:block">
+            <p className="text-sm font-medium leading-6">
               {getUserDisplayName()}
             </p>
             <ChevronDown

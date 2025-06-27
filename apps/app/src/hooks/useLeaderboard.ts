@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { debounce } from "lodash-es";
 import {
   SortingState,
   useReactTable,
@@ -28,6 +29,10 @@ export function useLeaderboard(
   const { data: allFeeds = [] } = useAllFeeds();
   const feedDropdownRef = useRef<HTMLDivElement>(null);
   const timeDropdownRef = useRef<HTMLDivElement>(null);
+
+  const debouncedSetDebouncedSearchQuery = useRef(
+    debounce((query) => setDebouncedSearchQuery(query), 300),
+  ).current;
 
   const timeOptions = [
     { label: "All Time", value: "all" },
@@ -73,17 +78,20 @@ export function useLeaderboard(
 
   // Debounce search query
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 300);
-
-    return () => clearTimeout(timer);
+    debouncedSetDebouncedSearchQuery(searchQuery);
+    return () => {
+      debouncedSetDebouncedSearchQuery.cancel();
+    };
   }, [searchQuery]);
 
   const toggleRow = useCallback((index: number) => {
     setExpandedRows((prev) =>
       prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index],
     );
+  }, []);
+
+  const collapseAllRows = useCallback(() => {
+    setExpandedRows([]);
   }, []);
 
   const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,6 +145,15 @@ export function useLeaderboard(
     });
   }, [filteredLeaderboard, leaderboard]);
 
+  const expandAllRows = useCallback(() => {
+    if (!filteredLeaderboardWithRanks) return;
+    const allRowIndices = Array.from(
+      { length: filteredLeaderboardWithRanks.length },
+      (_, i) => i,
+    );
+    setExpandedRows(allRowIndices);
+  }, [filteredLeaderboardWithRanks]);
+
   const columns = useMemo(() => {
     return createLeaderboardColumns(expandedRows, toggleRow);
   }, [expandedRows, toggleRow]);
@@ -159,6 +176,7 @@ export function useLeaderboard(
     showTimeDropdown,
     feeds,
     timeOptions,
+    expandedRows,
 
     // Handlers
     handleSearch,
@@ -166,6 +184,8 @@ export function useLeaderboard(
     handleTimeDropdownToggle,
     handleFeedDropdownClose,
     handleTimeDropdownClose,
+    expandAllRows,
+    collapseAllRows,
 
     // Refs
     feedDropdownRef,

@@ -58,6 +58,7 @@ export class ServiceProvider {
 
     const feedRepository = new FeedRepository(db);
     const twitterRespository = new TwitterRepository(db);
+    const submissionRepository = new SubmissionRepository(db);
     const pluginRepository = new PluginRepository(db);
 
     const configService = new ConfigService();
@@ -98,6 +99,8 @@ export class ServiceProvider {
       transformationService,
       distributionService,
       processingRepository,
+      feedRepository,
+      submissionRepository,
       logger.child({ component: "ProcessingService" }),
     );
 

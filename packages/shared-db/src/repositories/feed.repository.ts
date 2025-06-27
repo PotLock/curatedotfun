@@ -69,6 +69,23 @@ export class FeedRepository {
   }
 
   /**
+   * Get all feeds by a specific creator
+   */
+  async getFeedsByCreator(creatorId: string): Promise<SelectFeed[]> {
+    return withErrorHandling(
+      async () =>
+        executeWithRetry(async (dbInstance) => {
+          const result = await dbInstance.query.feeds.findMany({
+            where: eq(schema.feeds.createdBy, creatorId),
+          });
+          return result as SelectFeed[];
+        }, this.db),
+      { operationName: "getFeedsByCreator", additionalContext: { creatorId } },
+      [],
+    );
+  }
+
+  /**
    * Create a new feed.
    * @param data The feed data to insert
    * @param txDb Optional transaction DB instance

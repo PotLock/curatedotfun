@@ -1,7 +1,12 @@
+import { PaginationControls } from "@/components/profile/activity/PaginationControls";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { createFileRoute } from "@tanstack/react-router";
 import { ChevronsUpDown } from "lucide-react";
-import { Button } from "../../ui/button";
-import { Card, CardContent } from "../../ui/card";
-import { PaginationControls } from "./PaginationControls";
+
+export const Route = createFileRoute("/_layout/profile/_tabs/activity")({
+  component: ProfileActivity,
+});
 
 // const transformActivityData = (activity: UserActivityStats): ActivityItem => {
 //   const baseItem: ActivityItem = {
@@ -80,6 +85,7 @@ export function ProfileActivity() {
   // );
 
   // const transformedActivity = userActivity?.map(transformActivityData);
+  const hasData = false; // Currently no data is loaded
 
   return (
     <div>
@@ -94,10 +100,15 @@ export function ProfileActivity() {
           </div>
           <div className="w-full border-t border-dashed border-neutral-300 my-1"></div>
           {/* <ActivityTable data={transformedActivity} /> */}
+          {!hasData && (
+            <div className="p-8 text-center text-gray-500">
+              No activity data available
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      <PaginationControls />
+      {hasData && <PaginationControls />}
     </div>
   );
 }

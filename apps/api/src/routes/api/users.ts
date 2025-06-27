@@ -1,6 +1,8 @@
+import { FeedService } from "@curatedotfun/core-services";
 import {
   ApiErrorResponseSchema,
   CreateUserRequestSchema,
+  FeedsWrappedResponseSchema,
   UpdateUserRequestSchema,
   UserDeletedWrappedResponseSchema,
   UserNearAccountIdParamSchema,
@@ -326,6 +328,43 @@ usersRoutes.get(
           statusCode: 500,
           success: false,
           error: { message: "Failed to fetch user profile" },
+        }),
+        500,
+      );
+    }
+  },
+);
+
+usersRoutes.get(
+  "/:nearAccountId/feeds",
+  zValidator("param", UserNearAccountIdParamSchema),
+  async (c) => {
+    const { nearAccountId } = c.req.valid("param");
+    const sp = c.var.sp;
+
+    try {
+      const feedService: FeedService = sp.getFeedService();
+      const feeds = await feedService.getFeedsByCreator(nearAccountId);
+
+      return c.json(
+        FeedsWrappedResponseSchema.parse({
+          statusCode: 200,
+          success: true,
+          data: feeds.map((feed) => ({
+            ...feed,
+            config: feed.config,
+          })),
+        }),
+      );
+    } catch (error) {
+      c.var.sp
+        .getLogger()
+        .error({ error }, `Error fetching feeds for ${nearAccountId}`);
+      return c.json(
+        ApiErrorResponseSchema.parse({
+          statusCode: 500,
+          success: false,
+          error: { message: "Failed to fetch feeds" },
         }),
         500,
       );

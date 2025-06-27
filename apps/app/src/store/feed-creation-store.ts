@@ -1,7 +1,7 @@
 import { create, StateCreator } from "zustand";
 import type { DistributorConfig, CreateFeedConfig } from "@curatedotfun/types";
 import { immer } from "zustand/middleware/immer";
-import { set, groupBy } from "lodash";
+import { set, groupBy } from "lodash-es";
 
 const TELEGRAM_PLUGIN_NAME = "@curatedotfun/telegram-distributor";
 

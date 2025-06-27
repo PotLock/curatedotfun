@@ -1,10 +1,12 @@
 import { Platform, type ConnectedAccount } from "@crosspost/types";
 import { createFileRoute } from "@tanstack/react-router";
-import { ConnectPlatform } from "../../../../components/buttons/ConnectPlatform";
-import { Card } from "../../../../components/ui/card";
-import { useConnectedAccounts } from "../../../../lib/crosspost";
+import { ConnectPlatform } from "../../../../../../components/buttons/ConnectPlatform";
+import { Card } from "../../../../../../components/ui/card";
+import { useConnectedAccounts } from "../../../../../../lib/crosspost";
 
-export const Route = createFileRoute("/_layout/profile/settings/connections")({
+export const Route = createFileRoute(
+  "/_layout/profile/_tabs/settings/_tabs/connections",
+)({
   component: ConnectionsComponent,
 });
 

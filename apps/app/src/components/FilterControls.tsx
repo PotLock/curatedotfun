@@ -3,6 +3,7 @@ import { Filter, Search } from "lucide-react";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import { SortOrderType, StatusFilterType } from "../lib/api";
 import { Button } from "./ui/button";
+import { debounce } from "lodash-es";
 import { Input } from "./ui/input";
 import {
   Select,
@@ -36,7 +37,6 @@ const FilterControls: React.FC<FilterControlsProps> = ({
     initialSortOrder || "newest",
   );
   const [showFiltersDropdown, setShowFiltersDropdown] = useState(false);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   type TargetSearchSchema =
     FileRouteTypes["fileRoutesById"][typeof parentRouteId]["preLoaderRoute"]["validateSearch"]["_output"];
@@ -48,31 +48,27 @@ const FilterControls: React.FC<FilterControlsProps> = ({
     setSortOrder(initialSortOrder || "newest");
   }, [initialQ, initialStatus, initialSortOrder]);
 
-  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const newValue = event.target.value;
-    setSearchQuery(newValue);
-
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    debounceTimerRef.current = setTimeout(() => {
+  const debouncedNavigate = useRef(
+    debounce((newValue) => {
       navigate({
         // @ts-expect-error tanstack router types are hard for a dynamic route
         search: (prev: TargetSearchSchema) => ({
           ...prev,
           q: newValue || undefined,
-          // page: 1, // Optional: Reset page on filter change
         }),
         replace: true,
       });
-    }, 300);
+    }, 300),
+  ).current;
+
+  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const newValue = event.target.value;
+    setSearchQuery(newValue);
+    debouncedNavigate(newValue);
   };
 
   const handleApplyFiltersClick = () => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
+    debouncedNavigate.cancel();
     console.log("status", status);
     navigate({
       // @ts-expect-error tanstack router types are hard for a dynamic route
@@ -91,9 +87,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({
   useEffect(() => {
     // Cleanup debounce timer
     return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
+      debouncedNavigate.cancel();
     };
   }, []);
 
