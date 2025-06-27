@@ -47,6 +47,25 @@ export const DistributionResultSchema = z.object({
 
 export type DistributionResult = z.infer<typeof DistributionResultSchema>;
 
+/**
+ * Schema for a single step within a ProcessingPlan.
+ */
+export const ProcessingPlanStepSchema = z.object({
+  type: z.enum(["transformation", "distribution"]),
+  stage: z.enum(["global", "distributor"]),
+  plugin: z.string(),
+  config: z.record(z.unknown()).optional(),
+  // For distributor transforms, this links back to the parent distributor plugin
+  distributorPlugin: z.string().optional(),
+});
+export type ProcessingPlanStep = z.infer<typeof ProcessingPlanStepSchema>;
+
+/**
+ * Schema for the entire ProcessingPlan.
+ */
+export const ProcessingPlanSchema = z.array(ProcessingPlanStepSchema);
+export type ProcessingPlan = z.infer<typeof ProcessingPlanSchema>;
+
 // Processing job status enum
 export const processingJobStatusValues = [
   "pending",
@@ -109,6 +128,7 @@ export const processingJobs = table(
       .notNull()
       .references(() => feeds.id, { onDelete: "cascade" }),
     idempotencyKey: text("idempotency_key").unique(),
+    plan: jsonb("plan").$type<ProcessingPlan>(),
     status: processingJobStatusEnum("status").notNull().default("pending"),
     startedAt: timestamp("started_at", {
       mode: "date",
@@ -223,6 +243,7 @@ export const insertProcessingJobSchema = createInsertSchema(processingJobs, {
   id: z.string().uuid(),
   submissionId: z.string(),
   feedId: z.string(),
+  plan: ProcessingPlanSchema.optional(),
   idempotencyKey: z.string().optional(),
   status: processingJobStatusZodEnum.optional(),
   startedAt: z.date().optional(),
