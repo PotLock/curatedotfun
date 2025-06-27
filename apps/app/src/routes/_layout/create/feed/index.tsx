@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { ImageUpload } from "@/components/ImageUpload";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +44,7 @@ function BasicInformationComponent() {
   const search = Route.useSearch();
   const { feedConfig, setValues } = useFeedCreationStore();
   const queryClient = useQueryClient();
+  const [isValidatingId, setIsValidatingId] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(BasicInformationFormSchema),
@@ -66,6 +68,7 @@ function BasicInformationComponent() {
       form.clearErrors("id");
       return;
     }
+    setIsValidatingId(true);
     try {
       const data = await queryClient.fetchQuery({
         queryKey: ["feed-details", id],
@@ -83,6 +86,8 @@ function BasicInformationComponent() {
       }
     } catch {
       form.clearErrors("id");
+    } finally {
+      setIsValidatingId(false);
     }
   };
 
@@ -173,8 +178,15 @@ function BasicInformationComponent() {
               )}
             />
             <div className="flex justify-end">
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "..." : "Next"}
+              <Button
+                type="submit"
+                disabled={form.formState.isSubmitting || isValidatingId}
+              >
+                {form.formState.isSubmitting
+                  ? "..."
+                  : isValidatingId
+                    ? "Validating..."
+                    : "Next"}
               </Button>
             </div>
           </form>
