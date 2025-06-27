@@ -80,6 +80,7 @@ export function ProfileActivity() {
   // );
 
   // const transformedActivity = userActivity?.map(transformActivityData);
+  const hasData = false; // Currently no data is loaded
 
   return (
     <div>
@@ -94,10 +95,15 @@ export function ProfileActivity() {
           </div>
           <div className="w-full border-t border-dashed border-neutral-300 my-1"></div>
           {/* <ActivityTable data={transformedActivity} /> */}
+          {!hasData && (
+            <div className="p-8 text-center text-gray-500">
+              No activity data available
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      <PaginationControls />
+      {hasData && <PaginationControls />}
     </div>
   );
 }
