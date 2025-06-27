@@ -3,12 +3,12 @@ import {
   Activity,
   ScanSearch,
   // Award,
-  // Newspaper,
+  Newspaper,
   // NotepadTextDashed
 } from "lucide-react";
 import { ProfileOverview } from "./overview";
 // import { ProfileContent } from "./content";
-// import { MyFeeds } from "./my-feeds";
+import { MyFeeds } from "./my-feeds";
 // import { ProfilePoints } from "./points";
 import { ProfileActivity } from "./activity";
 
@@ -26,12 +26,12 @@ const TABS = [
   //   icon: NotepadTextDashed,
   //   component: ProfileContent,
   // },
-  // {
-  //   value: "my-feeds",
-  //   label: "My Feeds",
-  //   icon: Newspaper,
-  //   component: MyFeeds,
-  // },
+  {
+    value: "my-feeds",
+    label: "My Feeds",
+    icon: Newspaper,
+    component: MyFeeds,
+  },
   // {
   //   value: "points",
   //   label: "Points",

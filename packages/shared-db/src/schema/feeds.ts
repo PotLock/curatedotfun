@@ -34,7 +34,7 @@ export const feeds = table(
     // Keep these fields for backward compatibility and quick lookups
     name: text("name").notNull(),
     description: text("description"),
-    created_by: text("created_by")
+    createdBy: text("created_by")
       // .notNull() // for now
       .references(() => users.nearAccountId, { onDelete: "cascade" }),
     admins: jsonb("admins")
@@ -48,7 +48,7 @@ export const feeds = table(
 // RELATIONS for feeds table
 export const feedsRelations = relations(feeds, ({ one, many }) => ({
   creator: one(users, {
-    fields: [feeds.created_by],
+    fields: [feeds.createdBy],
     references: [users.nearAccountId],
     relationName: "FeedCreator",
   }),
@@ -113,7 +113,7 @@ export const insertFeedSchema = createInsertSchema(feeds, {
     .string()
     .min(1)
     .transform((s) => s.toLowerCase()),
-  created_by: z.string().min(1),
+  createdBy: z.string().min(1),
   admins: z.array(z.string()).optional(),
   createdAt: z.undefined(),
   updatedAt: z.undefined(),
