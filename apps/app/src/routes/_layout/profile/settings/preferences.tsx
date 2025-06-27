@@ -9,7 +9,7 @@ function PreferencesComponent() {
   return (
     <ComingSoon
       title="Preferences Settings"
-      description="Stay in the loop with customizable preferences for your curated content and community activity."
+      description="Customize your experience with personalized preferences for content, privacy, and accessibility settings."
       features={[
         "Content preferences for personalized feeds",
         "Notification preferences for updates",
