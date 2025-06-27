@@ -90,8 +90,8 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "https://staging.curate.press",
-        // target: "http://localhost:3000",
+        // target: "https://staging.curate.press",
+        target: "http://localhost:3000",
         secure: false,
         changeOrigin: true,
         ws: true,
