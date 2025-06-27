@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Card } from "../../../../components/ui/card";
+import { Card } from "../../../../../../components/ui/card";
 
-export const Route = createFileRoute("/_layout/profile/settings/preferences")({
+export const Route = createFileRoute(
+  "/_layout/profile/_tabs/settings/_tabs/preferences",
+)({
   component: PreferencesComponent,
 });
 

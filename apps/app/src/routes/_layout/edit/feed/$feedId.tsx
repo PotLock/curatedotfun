@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { EditFeedActions } from "../../../components/feed/EditFeedActions";
-import { EditFeedConfigSection } from "../../../components/feed/EditFeedConfigSection";
-import { EditFeedHeader } from "../../../components/feed/EditFeedHeader";
-import { EditFeedImageSection } from "../../../components/feed/EditFeedImageSection";
-import { EditFeedLoadingState } from "../../../components/feed/EditFeedLoadingState";
-import { Hero } from "../../../components/Hero";
-import { useEditFeed } from "../../../hooks/use-edit-feed";
+import { EditFeedActions } from "../../../../components/feed/EditFeedActions";
+import { EditFeedConfigSection } from "../../../../components/feed/EditFeedConfigSection";
+import { EditFeedHeader } from "../../../../components/feed/EditFeedHeader";
+import { EditFeedImageSection } from "../../../../components/feed/EditFeedImageSection";
+import { EditFeedLoadingState } from "../../../../components/feed/EditFeedLoadingState";
+import { Hero } from "../../../../components/Hero";
+import { useEditFeed } from "../../../../hooks/use-edit-feed";
 
 export const Route = createFileRoute("/_layout/edit/feed/$feedId")({
   component: EditFeedComponent,

@@ -13,29 +13,27 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
+import { Route as LayoutProfileRouteImport } from './routes/_layout/profile'
 import { Route as LayoutLeaderboardRouteImport } from './routes/_layout/leaderboard'
 import { Route as LayoutTestIndexRouteImport } from './routes/_layout/test/index'
 import { Route as LayoutProfileIndexRouteImport } from './routes/_layout/profile/index'
 import { Route as LayoutPluginIndexRouteImport } from './routes/_layout/plugin/index'
+import { Route as LayoutProfileTabsRouteImport } from './routes/_layout/profile/_tabs'
 import { Route as LayoutPluginPluginIdRouteImport } from './routes/_layout/plugin/$pluginId'
 import { Route as LayoutFeedFeedIdRouteImport } from './routes/_layout/feed/$feedId'
 import { Route as LayoutCreatePluginRouteImport } from './routes/_layout/create/plugin'
 import { Route as LayoutCreateFeedRouteImport } from './routes/_layout/create/feed'
-import { Route as LayoutProfileSettingsRouteRouteImport } from './routes/_layout/profile/settings/route'
-import { Route as LayoutProfileTabsRouteRouteImport } from './routes/_layout/profile/_tabs/route'
-import { Route as LayoutProfileSettingsIndexRouteImport } from './routes/_layout/profile/settings/index'
 import { Route as LayoutCreateFeedIndexRouteImport } from './routes/_layout/create/feed/index'
-import { Route as LayoutProfileSettingsPreferencesRouteImport } from './routes/_layout/profile/settings/preferences'
-import { Route as LayoutProfileSettingsNotificationsRouteImport } from './routes/_layout/profile/settings/notifications'
-import { Route as LayoutProfileSettingsConnectionsRouteImport } from './routes/_layout/profile/settings/connections'
 import { Route as LayoutProfileTabsOverviewRouteImport } from './routes/_layout/profile/_tabs/overview'
 import { Route as LayoutProfileTabsMyFeedsRouteImport } from './routes/_layout/profile/_tabs/my-feeds'
 import { Route as LayoutProfileTabsActivityRouteImport } from './routes/_layout/profile/_tabs/activity'
 import { Route as LayoutFeedFeedIdTabsRouteImport } from './routes/_layout/feed/$feedId/_tabs'
-import { Route as LayoutEditFeedFeedIdRouteImport } from './routes/_layout/edit/feed.$feedId'
+import { Route as LayoutEditFeedFeedIdRouteImport } from './routes/_layout/edit/feed/$feedId'
 import { Route as LayoutCreateFeedSettingsRouteImport } from './routes/_layout/create/feed/settings'
 import { Route as LayoutCreateFeedReviewRouteImport } from './routes/_layout/create/feed/review'
+import { Route as LayoutProfileTabsSettingsIndexRouteImport } from './routes/_layout/profile/_tabs/settings/index'
 import { Route as LayoutFeedFeedIdTabsIndexRouteImport } from './routes/_layout/feed/$feedId/_tabs/index'
+import { Route as LayoutProfileTabsSettingsTabsRouteImport } from './routes/_layout/profile/_tabs/settings/_tabs'
 import { Route as LayoutFeedFeedIdTabsTokenRouteImport } from './routes/_layout/feed/$feedId/_tabs/token'
 import { Route as LayoutFeedFeedIdTabsProposalsRouteImport } from './routes/_layout/feed/$feedId/_tabs/proposals'
 import { Route as LayoutFeedFeedIdTabsProcessingRouteImport } from './routes/_layout/feed/$feedId/_tabs/processing'
@@ -43,22 +41,27 @@ import { Route as LayoutFeedFeedIdTabsPointsRouteImport } from './routes/_layout
 import { Route as LayoutFeedFeedIdTabsMembersRouteImport } from './routes/_layout/feed/$feedId/_tabs/members'
 import { Route as LayoutFeedFeedIdTabsCurationRouteImport } from './routes/_layout/feed/$feedId/_tabs/curation'
 import { Route as LayoutFeedFeedIdTabsSettingsIndexRouteImport } from './routes/_layout/feed/$feedId/_tabs/settings/index'
+import { Route as LayoutProfileTabsSettingsTabsPreferencesRouteImport } from './routes/_layout/profile/_tabs/settings/_tabs/preferences'
+import { Route as LayoutProfileTabsSettingsTabsNotificationsRouteImport } from './routes/_layout/profile/_tabs/settings/_tabs/notifications'
+import { Route as LayoutProfileTabsSettingsTabsConnectionsRouteImport } from './routes/_layout/profile/_tabs/settings/_tabs/connections'
 import { Route as LayoutFeedFeedIdTabsSettingsConnectedRouteImport } from './routes/_layout/feed/$feedId/_tabs/settings/connected'
 
-const LayoutProfileRouteImport = createFileRoute('/_layout/profile')()
+const LayoutProfileTabsSettingsRouteImport = createFileRoute(
+  '/_layout/profile/_tabs/settings',
+)()
 
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LayoutProfileRoute = LayoutProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => LayoutRoute,
-} as any)
 const LayoutIndexRoute = LayoutIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutProfileRoute = LayoutProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutLeaderboardRoute = LayoutLeaderboardRouteImport.update({
@@ -81,6 +84,10 @@ const LayoutPluginIndexRoute = LayoutPluginIndexRouteImport.update({
   path: '/plugin/',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutProfileTabsRoute = LayoutProfileTabsRouteImport.update({
+  id: '/_tabs',
+  getParentRoute: () => LayoutProfileRoute,
+} as any)
 const LayoutPluginPluginIdRoute = LayoutPluginPluginIdRouteImport.update({
   id: '/plugin/$pluginId',
   path: '/plugin/$pluginId',
@@ -101,62 +108,34 @@ const LayoutCreateFeedRoute = LayoutCreateFeedRouteImport.update({
   path: '/create/feed',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutProfileSettingsRouteRoute =
-  LayoutProfileSettingsRouteRouteImport.update({
+const LayoutProfileTabsSettingsRoute =
+  LayoutProfileTabsSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
-    getParentRoute: () => LayoutProfileRoute,
-  } as any)
-const LayoutProfileTabsRouteRoute = LayoutProfileTabsRouteRouteImport.update({
-  id: '/_tabs',
-  getParentRoute: () => LayoutProfileRoute,
-} as any)
-const LayoutProfileSettingsIndexRoute =
-  LayoutProfileSettingsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => LayoutProfileSettingsRouteRoute,
+    getParentRoute: () => LayoutProfileTabsRoute,
   } as any)
 const LayoutCreateFeedIndexRoute = LayoutCreateFeedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => LayoutCreateFeedRoute,
 } as any)
-const LayoutProfileSettingsPreferencesRoute =
-  LayoutProfileSettingsPreferencesRouteImport.update({
-    id: '/preferences',
-    path: '/preferences',
-    getParentRoute: () => LayoutProfileSettingsRouteRoute,
-  } as any)
-const LayoutProfileSettingsNotificationsRoute =
-  LayoutProfileSettingsNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
-    getParentRoute: () => LayoutProfileSettingsRouteRoute,
-  } as any)
-const LayoutProfileSettingsConnectionsRoute =
-  LayoutProfileSettingsConnectionsRouteImport.update({
-    id: '/connections',
-    path: '/connections',
-    getParentRoute: () => LayoutProfileSettingsRouteRoute,
-  } as any)
 const LayoutProfileTabsOverviewRoute =
   LayoutProfileTabsOverviewRouteImport.update({
     id: '/overview',
     path: '/overview',
-    getParentRoute: () => LayoutProfileTabsRouteRoute,
+    getParentRoute: () => LayoutProfileTabsRoute,
   } as any)
 const LayoutProfileTabsMyFeedsRoute =
   LayoutProfileTabsMyFeedsRouteImport.update({
     id: '/my-feeds',
     path: '/my-feeds',
-    getParentRoute: () => LayoutProfileTabsRouteRoute,
+    getParentRoute: () => LayoutProfileTabsRoute,
   } as any)
 const LayoutProfileTabsActivityRoute =
   LayoutProfileTabsActivityRouteImport.update({
     id: '/activity',
     path: '/activity',
-    getParentRoute: () => LayoutProfileTabsRouteRoute,
+    getParentRoute: () => LayoutProfileTabsRoute,
   } as any)
 const LayoutFeedFeedIdTabsRoute = LayoutFeedFeedIdTabsRouteImport.update({
   id: '/_tabs',
@@ -178,11 +157,22 @@ const LayoutCreateFeedReviewRoute = LayoutCreateFeedReviewRouteImport.update({
   path: '/review',
   getParentRoute: () => LayoutCreateFeedRoute,
 } as any)
+const LayoutProfileTabsSettingsIndexRoute =
+  LayoutProfileTabsSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => LayoutProfileTabsSettingsRoute,
+  } as any)
 const LayoutFeedFeedIdTabsIndexRoute =
   LayoutFeedFeedIdTabsIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => LayoutFeedFeedIdTabsRoute,
+  } as any)
+const LayoutProfileTabsSettingsTabsRoute =
+  LayoutProfileTabsSettingsTabsRouteImport.update({
+    id: '/_tabs',
+    getParentRoute: () => LayoutProfileTabsSettingsRoute,
   } as any)
 const LayoutFeedFeedIdTabsTokenRoute =
   LayoutFeedFeedIdTabsTokenRouteImport.update({
@@ -226,6 +216,24 @@ const LayoutFeedFeedIdTabsSettingsIndexRoute =
     path: '/settings/',
     getParentRoute: () => LayoutFeedFeedIdTabsRoute,
   } as any)
+const LayoutProfileTabsSettingsTabsPreferencesRoute =
+  LayoutProfileTabsSettingsTabsPreferencesRouteImport.update({
+    id: '/preferences',
+    path: '/preferences',
+    getParentRoute: () => LayoutProfileTabsSettingsTabsRoute,
+  } as any)
+const LayoutProfileTabsSettingsTabsNotificationsRoute =
+  LayoutProfileTabsSettingsTabsNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => LayoutProfileTabsSettingsTabsRoute,
+  } as any)
+const LayoutProfileTabsSettingsTabsConnectionsRoute =
+  LayoutProfileTabsSettingsTabsConnectionsRouteImport.update({
+    id: '/connections',
+    path: '/connections',
+    getParentRoute: () => LayoutProfileTabsSettingsTabsRoute,
+  } as any)
 const LayoutFeedFeedIdTabsSettingsConnectedRoute =
   LayoutFeedFeedIdTabsSettingsConnectedRouteImport.update({
     id: '/settings/connected',
@@ -235,9 +243,8 @@ const LayoutFeedFeedIdTabsSettingsConnectedRoute =
 
 export interface FileRoutesByFullPath {
   '/leaderboard': typeof LayoutLeaderboardRoute
+  '/profile': typeof LayoutProfileTabsRouteWithChildren
   '/': typeof LayoutIndexRoute
-  '/profile': typeof LayoutProfileTabsRouteRouteWithChildren
-  '/profile/settings': typeof LayoutProfileSettingsRouteRouteWithChildren
   '/create/feed': typeof LayoutCreateFeedRouteWithChildren
   '/create/plugin': typeof LayoutCreatePluginRoute
   '/feed/$feedId': typeof LayoutFeedFeedIdTabsRouteWithChildren
@@ -251,28 +258,29 @@ export interface FileRoutesByFullPath {
   '/profile/activity': typeof LayoutProfileTabsActivityRoute
   '/profile/my-feeds': typeof LayoutProfileTabsMyFeedsRoute
   '/profile/overview': typeof LayoutProfileTabsOverviewRoute
-  '/profile/settings/connections': typeof LayoutProfileSettingsConnectionsRoute
-  '/profile/settings/notifications': typeof LayoutProfileSettingsNotificationsRoute
-  '/profile/settings/preferences': typeof LayoutProfileSettingsPreferencesRoute
   '/create/feed/': typeof LayoutCreateFeedIndexRoute
-  '/profile/settings/': typeof LayoutProfileSettingsIndexRoute
   '/feed/$feedId/curation': typeof LayoutFeedFeedIdTabsCurationRoute
   '/feed/$feedId/members': typeof LayoutFeedFeedIdTabsMembersRoute
   '/feed/$feedId/points': typeof LayoutFeedFeedIdTabsPointsRoute
   '/feed/$feedId/processing': typeof LayoutFeedFeedIdTabsProcessingRoute
   '/feed/$feedId/proposals': typeof LayoutFeedFeedIdTabsProposalsRoute
   '/feed/$feedId/token': typeof LayoutFeedFeedIdTabsTokenRoute
+  '/profile/settings': typeof LayoutProfileTabsSettingsTabsRouteWithChildren
   '/feed/$feedId/': typeof LayoutFeedFeedIdTabsIndexRoute
+  '/profile/settings/': typeof LayoutProfileTabsSettingsIndexRoute
   '/feed/$feedId/settings/connected': typeof LayoutFeedFeedIdTabsSettingsConnectedRoute
+  '/profile/settings/connections': typeof LayoutProfileTabsSettingsTabsConnectionsRoute
+  '/profile/settings/notifications': typeof LayoutProfileTabsSettingsTabsNotificationsRoute
+  '/profile/settings/preferences': typeof LayoutProfileTabsSettingsTabsPreferencesRoute
   '/feed/$feedId/settings': typeof LayoutFeedFeedIdTabsSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/leaderboard': typeof LayoutLeaderboardRoute
   '/': typeof LayoutIndexRoute
-  '/profile': typeof LayoutProfileIndexRoute
   '/create/plugin': typeof LayoutCreatePluginRoute
   '/feed/$feedId': typeof LayoutFeedFeedIdTabsIndexRoute
   '/plugin/$pluginId': typeof LayoutPluginPluginIdRoute
+  '/profile': typeof LayoutProfileIndexRoute
   '/plugin': typeof LayoutPluginIndexRoute
   '/test': typeof LayoutTestIndexRoute
   '/create/feed/review': typeof LayoutCreateFeedReviewRoute
@@ -281,32 +289,31 @@ export interface FileRoutesByTo {
   '/profile/activity': typeof LayoutProfileTabsActivityRoute
   '/profile/my-feeds': typeof LayoutProfileTabsMyFeedsRoute
   '/profile/overview': typeof LayoutProfileTabsOverviewRoute
-  '/profile/settings/connections': typeof LayoutProfileSettingsConnectionsRoute
-  '/profile/settings/notifications': typeof LayoutProfileSettingsNotificationsRoute
-  '/profile/settings/preferences': typeof LayoutProfileSettingsPreferencesRoute
   '/create/feed': typeof LayoutCreateFeedIndexRoute
-  '/profile/settings': typeof LayoutProfileSettingsIndexRoute
   '/feed/$feedId/curation': typeof LayoutFeedFeedIdTabsCurationRoute
   '/feed/$feedId/members': typeof LayoutFeedFeedIdTabsMembersRoute
   '/feed/$feedId/points': typeof LayoutFeedFeedIdTabsPointsRoute
   '/feed/$feedId/processing': typeof LayoutFeedFeedIdTabsProcessingRoute
   '/feed/$feedId/proposals': typeof LayoutFeedFeedIdTabsProposalsRoute
   '/feed/$feedId/token': typeof LayoutFeedFeedIdTabsTokenRoute
+  '/profile/settings': typeof LayoutProfileTabsSettingsIndexRoute
   '/feed/$feedId/settings/connected': typeof LayoutFeedFeedIdTabsSettingsConnectedRoute
+  '/profile/settings/connections': typeof LayoutProfileTabsSettingsTabsConnectionsRoute
+  '/profile/settings/notifications': typeof LayoutProfileTabsSettingsTabsNotificationsRoute
+  '/profile/settings/preferences': typeof LayoutProfileTabsSettingsTabsPreferencesRoute
   '/feed/$feedId/settings': typeof LayoutFeedFeedIdTabsSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
   '/_layout/leaderboard': typeof LayoutLeaderboardRoute
-  '/_layout/': typeof LayoutIndexRoute
   '/_layout/profile': typeof LayoutProfileRouteWithChildren
-  '/_layout/profile/_tabs': typeof LayoutProfileTabsRouteRouteWithChildren
-  '/_layout/profile/settings': typeof LayoutProfileSettingsRouteRouteWithChildren
+  '/_layout/': typeof LayoutIndexRoute
   '/_layout/create/feed': typeof LayoutCreateFeedRouteWithChildren
   '/_layout/create/plugin': typeof LayoutCreatePluginRoute
   '/_layout/feed/$feedId': typeof LayoutFeedFeedIdRouteWithChildren
   '/_layout/plugin/$pluginId': typeof LayoutPluginPluginIdRoute
+  '/_layout/profile/_tabs': typeof LayoutProfileTabsRouteWithChildren
   '/_layout/plugin/': typeof LayoutPluginIndexRoute
   '/_layout/profile/': typeof LayoutProfileIndexRoute
   '/_layout/test/': typeof LayoutTestIndexRoute
@@ -317,28 +324,29 @@ export interface FileRoutesById {
   '/_layout/profile/_tabs/activity': typeof LayoutProfileTabsActivityRoute
   '/_layout/profile/_tabs/my-feeds': typeof LayoutProfileTabsMyFeedsRoute
   '/_layout/profile/_tabs/overview': typeof LayoutProfileTabsOverviewRoute
-  '/_layout/profile/settings/connections': typeof LayoutProfileSettingsConnectionsRoute
-  '/_layout/profile/settings/notifications': typeof LayoutProfileSettingsNotificationsRoute
-  '/_layout/profile/settings/preferences': typeof LayoutProfileSettingsPreferencesRoute
   '/_layout/create/feed/': typeof LayoutCreateFeedIndexRoute
-  '/_layout/profile/settings/': typeof LayoutProfileSettingsIndexRoute
   '/_layout/feed/$feedId/_tabs/curation': typeof LayoutFeedFeedIdTabsCurationRoute
   '/_layout/feed/$feedId/_tabs/members': typeof LayoutFeedFeedIdTabsMembersRoute
   '/_layout/feed/$feedId/_tabs/points': typeof LayoutFeedFeedIdTabsPointsRoute
   '/_layout/feed/$feedId/_tabs/processing': typeof LayoutFeedFeedIdTabsProcessingRoute
   '/_layout/feed/$feedId/_tabs/proposals': typeof LayoutFeedFeedIdTabsProposalsRoute
   '/_layout/feed/$feedId/_tabs/token': typeof LayoutFeedFeedIdTabsTokenRoute
+  '/_layout/profile/_tabs/settings': typeof LayoutProfileTabsSettingsRouteWithChildren
+  '/_layout/profile/_tabs/settings/_tabs': typeof LayoutProfileTabsSettingsTabsRouteWithChildren
   '/_layout/feed/$feedId/_tabs/': typeof LayoutFeedFeedIdTabsIndexRoute
+  '/_layout/profile/_tabs/settings/': typeof LayoutProfileTabsSettingsIndexRoute
   '/_layout/feed/$feedId/_tabs/settings/connected': typeof LayoutFeedFeedIdTabsSettingsConnectedRoute
+  '/_layout/profile/_tabs/settings/_tabs/connections': typeof LayoutProfileTabsSettingsTabsConnectionsRoute
+  '/_layout/profile/_tabs/settings/_tabs/notifications': typeof LayoutProfileTabsSettingsTabsNotificationsRoute
+  '/_layout/profile/_tabs/settings/_tabs/preferences': typeof LayoutProfileTabsSettingsTabsPreferencesRoute
   '/_layout/feed/$feedId/_tabs/settings/': typeof LayoutFeedFeedIdTabsSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/leaderboard'
-    | '/'
     | '/profile'
-    | '/profile/settings'
+    | '/'
     | '/create/feed'
     | '/create/plugin'
     | '/feed/$feedId'
@@ -352,28 +360,29 @@ export interface FileRouteTypes {
     | '/profile/activity'
     | '/profile/my-feeds'
     | '/profile/overview'
-    | '/profile/settings/connections'
-    | '/profile/settings/notifications'
-    | '/profile/settings/preferences'
     | '/create/feed/'
-    | '/profile/settings/'
     | '/feed/$feedId/curation'
     | '/feed/$feedId/members'
     | '/feed/$feedId/points'
     | '/feed/$feedId/processing'
     | '/feed/$feedId/proposals'
     | '/feed/$feedId/token'
+    | '/profile/settings'
     | '/feed/$feedId/'
+    | '/profile/settings/'
     | '/feed/$feedId/settings/connected'
+    | '/profile/settings/connections'
+    | '/profile/settings/notifications'
+    | '/profile/settings/preferences'
     | '/feed/$feedId/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/leaderboard'
     | '/'
-    | '/profile'
     | '/create/plugin'
     | '/feed/$feedId'
     | '/plugin/$pluginId'
+    | '/profile'
     | '/plugin'
     | '/test'
     | '/create/feed/review'
@@ -382,31 +391,30 @@ export interface FileRouteTypes {
     | '/profile/activity'
     | '/profile/my-feeds'
     | '/profile/overview'
-    | '/profile/settings/connections'
-    | '/profile/settings/notifications'
-    | '/profile/settings/preferences'
     | '/create/feed'
-    | '/profile/settings'
     | '/feed/$feedId/curation'
     | '/feed/$feedId/members'
     | '/feed/$feedId/points'
     | '/feed/$feedId/processing'
     | '/feed/$feedId/proposals'
     | '/feed/$feedId/token'
+    | '/profile/settings'
     | '/feed/$feedId/settings/connected'
+    | '/profile/settings/connections'
+    | '/profile/settings/notifications'
+    | '/profile/settings/preferences'
     | '/feed/$feedId/settings'
   id:
     | '__root__'
     | '/_layout'
     | '/_layout/leaderboard'
-    | '/_layout/'
     | '/_layout/profile'
-    | '/_layout/profile/_tabs'
-    | '/_layout/profile/settings'
+    | '/_layout/'
     | '/_layout/create/feed'
     | '/_layout/create/plugin'
     | '/_layout/feed/$feedId'
     | '/_layout/plugin/$pluginId'
+    | '/_layout/profile/_tabs'
     | '/_layout/plugin/'
     | '/_layout/profile/'
     | '/_layout/test/'
@@ -417,19 +425,21 @@ export interface FileRouteTypes {
     | '/_layout/profile/_tabs/activity'
     | '/_layout/profile/_tabs/my-feeds'
     | '/_layout/profile/_tabs/overview'
-    | '/_layout/profile/settings/connections'
-    | '/_layout/profile/settings/notifications'
-    | '/_layout/profile/settings/preferences'
     | '/_layout/create/feed/'
-    | '/_layout/profile/settings/'
     | '/_layout/feed/$feedId/_tabs/curation'
     | '/_layout/feed/$feedId/_tabs/members'
     | '/_layout/feed/$feedId/_tabs/points'
     | '/_layout/feed/$feedId/_tabs/processing'
     | '/_layout/feed/$feedId/_tabs/proposals'
     | '/_layout/feed/$feedId/_tabs/token'
+    | '/_layout/profile/_tabs/settings'
+    | '/_layout/profile/_tabs/settings/_tabs'
     | '/_layout/feed/$feedId/_tabs/'
+    | '/_layout/profile/_tabs/settings/'
     | '/_layout/feed/$feedId/_tabs/settings/connected'
+    | '/_layout/profile/_tabs/settings/_tabs/connections'
+    | '/_layout/profile/_tabs/settings/_tabs/notifications'
+    | '/_layout/profile/_tabs/settings/_tabs/preferences'
     | '/_layout/feed/$feedId/_tabs/settings/'
   fileRoutesById: FileRoutesById
 }
@@ -446,18 +456,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_layout/profile': {
-      id: '/_layout/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof LayoutProfileRouteImport
-      parentRoute: typeof LayoutRoute
-    }
     '/_layout/': {
       id: '/_layout/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof LayoutIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/profile': {
+      id: '/_layout/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof LayoutProfileRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/leaderboard': {
@@ -488,6 +498,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutPluginIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/profile/_tabs': {
+      id: '/_layout/profile/_tabs'
+      path: ''
+      fullPath: '/profile'
+      preLoaderRoute: typeof LayoutProfileTabsRouteImport
+      parentRoute: typeof LayoutProfileRoute
+    }
     '/_layout/plugin/$pluginId': {
       id: '/_layout/plugin/$pluginId'
       path: '/plugin/$pluginId'
@@ -516,26 +533,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutCreateFeedRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/profile/settings': {
-      id: '/_layout/profile/settings'
+    '/_layout/profile/_tabs/settings': {
+      id: '/_layout/profile/_tabs/settings'
       path: '/settings'
       fullPath: '/profile/settings'
-      preLoaderRoute: typeof LayoutProfileSettingsRouteRouteImport
-      parentRoute: typeof LayoutProfileRoute
-    }
-    '/_layout/profile/_tabs': {
-      id: '/_layout/profile/_tabs'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof LayoutProfileTabsRouteRouteImport
-      parentRoute: typeof LayoutProfileRoute
-    }
-    '/_layout/profile/settings/': {
-      id: '/_layout/profile/settings/'
-      path: '/'
-      fullPath: '/profile/settings/'
-      preLoaderRoute: typeof LayoutProfileSettingsIndexRouteImport
-      parentRoute: typeof LayoutProfileSettingsRouteRoute
+      preLoaderRoute: typeof LayoutProfileTabsSettingsRouteImport
+      parentRoute: typeof LayoutProfileTabsRoute
     }
     '/_layout/create/feed/': {
       id: '/_layout/create/feed/'
@@ -544,47 +547,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutCreateFeedIndexRouteImport
       parentRoute: typeof LayoutCreateFeedRoute
     }
-    '/_layout/profile/settings/preferences': {
-      id: '/_layout/profile/settings/preferences'
-      path: '/preferences'
-      fullPath: '/profile/settings/preferences'
-      preLoaderRoute: typeof LayoutProfileSettingsPreferencesRouteImport
-      parentRoute: typeof LayoutProfileSettingsRouteRoute
-    }
-    '/_layout/profile/settings/notifications': {
-      id: '/_layout/profile/settings/notifications'
-      path: '/notifications'
-      fullPath: '/profile/settings/notifications'
-      preLoaderRoute: typeof LayoutProfileSettingsNotificationsRouteImport
-      parentRoute: typeof LayoutProfileSettingsRouteRoute
-    }
-    '/_layout/profile/settings/connections': {
-      id: '/_layout/profile/settings/connections'
-      path: '/connections'
-      fullPath: '/profile/settings/connections'
-      preLoaderRoute: typeof LayoutProfileSettingsConnectionsRouteImport
-      parentRoute: typeof LayoutProfileSettingsRouteRoute
-    }
     '/_layout/profile/_tabs/overview': {
       id: '/_layout/profile/_tabs/overview'
       path: '/overview'
       fullPath: '/profile/overview'
       preLoaderRoute: typeof LayoutProfileTabsOverviewRouteImport
-      parentRoute: typeof LayoutProfileTabsRouteRoute
+      parentRoute: typeof LayoutProfileTabsRoute
     }
     '/_layout/profile/_tabs/my-feeds': {
       id: '/_layout/profile/_tabs/my-feeds'
       path: '/my-feeds'
       fullPath: '/profile/my-feeds'
       preLoaderRoute: typeof LayoutProfileTabsMyFeedsRouteImport
-      parentRoute: typeof LayoutProfileTabsRouteRoute
+      parentRoute: typeof LayoutProfileTabsRoute
     }
     '/_layout/profile/_tabs/activity': {
       id: '/_layout/profile/_tabs/activity'
       path: '/activity'
       fullPath: '/profile/activity'
       preLoaderRoute: typeof LayoutProfileTabsActivityRouteImport
-      parentRoute: typeof LayoutProfileTabsRouteRoute
+      parentRoute: typeof LayoutProfileTabsRoute
     }
     '/_layout/feed/$feedId/_tabs': {
       id: '/_layout/feed/$feedId/_tabs'
@@ -614,12 +596,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutCreateFeedReviewRouteImport
       parentRoute: typeof LayoutCreateFeedRoute
     }
+    '/_layout/profile/_tabs/settings/': {
+      id: '/_layout/profile/_tabs/settings/'
+      path: '/'
+      fullPath: '/profile/settings/'
+      preLoaderRoute: typeof LayoutProfileTabsSettingsIndexRouteImport
+      parentRoute: typeof LayoutProfileTabsSettingsRoute
+    }
     '/_layout/feed/$feedId/_tabs/': {
       id: '/_layout/feed/$feedId/_tabs/'
       path: '/'
       fullPath: '/feed/$feedId/'
       preLoaderRoute: typeof LayoutFeedFeedIdTabsIndexRouteImport
       parentRoute: typeof LayoutFeedFeedIdTabsRoute
+    }
+    '/_layout/profile/_tabs/settings/_tabs': {
+      id: '/_layout/profile/_tabs/settings/_tabs'
+      path: '/settings'
+      fullPath: '/profile/settings'
+      preLoaderRoute: typeof LayoutProfileTabsSettingsTabsRouteImport
+      parentRoute: typeof LayoutProfileTabsSettingsRoute
     }
     '/_layout/feed/$feedId/_tabs/token': {
       id: '/_layout/feed/$feedId/_tabs/token'
@@ -670,6 +666,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutFeedFeedIdTabsSettingsIndexRouteImport
       parentRoute: typeof LayoutFeedFeedIdTabsRoute
     }
+    '/_layout/profile/_tabs/settings/_tabs/preferences': {
+      id: '/_layout/profile/_tabs/settings/_tabs/preferences'
+      path: '/preferences'
+      fullPath: '/profile/settings/preferences'
+      preLoaderRoute: typeof LayoutProfileTabsSettingsTabsPreferencesRouteImport
+      parentRoute: typeof LayoutProfileTabsSettingsTabsRoute
+    }
+    '/_layout/profile/_tabs/settings/_tabs/notifications': {
+      id: '/_layout/profile/_tabs/settings/_tabs/notifications'
+      path: '/notifications'
+      fullPath: '/profile/settings/notifications'
+      preLoaderRoute: typeof LayoutProfileTabsSettingsTabsNotificationsRouteImport
+      parentRoute: typeof LayoutProfileTabsSettingsTabsRoute
+    }
+    '/_layout/profile/_tabs/settings/_tabs/connections': {
+      id: '/_layout/profile/_tabs/settings/_tabs/connections'
+      path: '/connections'
+      fullPath: '/profile/settings/connections'
+      preLoaderRoute: typeof LayoutProfileTabsSettingsTabsConnectionsRouteImport
+      parentRoute: typeof LayoutProfileTabsSettingsTabsRoute
+    }
     '/_layout/feed/$feedId/_tabs/settings/connected': {
       id: '/_layout/feed/$feedId/_tabs/settings/connected'
       path: '/settings/connected'
@@ -680,56 +697,68 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface LayoutProfileTabsRouteRouteChildren {
+interface LayoutProfileTabsSettingsTabsRouteChildren {
+  LayoutProfileTabsSettingsTabsConnectionsRoute: typeof LayoutProfileTabsSettingsTabsConnectionsRoute
+  LayoutProfileTabsSettingsTabsNotificationsRoute: typeof LayoutProfileTabsSettingsTabsNotificationsRoute
+  LayoutProfileTabsSettingsTabsPreferencesRoute: typeof LayoutProfileTabsSettingsTabsPreferencesRoute
+}
+
+const LayoutProfileTabsSettingsTabsRouteChildren: LayoutProfileTabsSettingsTabsRouteChildren =
+  {
+    LayoutProfileTabsSettingsTabsConnectionsRoute:
+      LayoutProfileTabsSettingsTabsConnectionsRoute,
+    LayoutProfileTabsSettingsTabsNotificationsRoute:
+      LayoutProfileTabsSettingsTabsNotificationsRoute,
+    LayoutProfileTabsSettingsTabsPreferencesRoute:
+      LayoutProfileTabsSettingsTabsPreferencesRoute,
+  }
+
+const LayoutProfileTabsSettingsTabsRouteWithChildren =
+  LayoutProfileTabsSettingsTabsRoute._addFileChildren(
+    LayoutProfileTabsSettingsTabsRouteChildren,
+  )
+
+interface LayoutProfileTabsSettingsRouteChildren {
+  LayoutProfileTabsSettingsTabsRoute: typeof LayoutProfileTabsSettingsTabsRouteWithChildren
+  LayoutProfileTabsSettingsIndexRoute: typeof LayoutProfileTabsSettingsIndexRoute
+}
+
+const LayoutProfileTabsSettingsRouteChildren: LayoutProfileTabsSettingsRouteChildren =
+  {
+    LayoutProfileTabsSettingsTabsRoute:
+      LayoutProfileTabsSettingsTabsRouteWithChildren,
+    LayoutProfileTabsSettingsIndexRoute: LayoutProfileTabsSettingsIndexRoute,
+  }
+
+const LayoutProfileTabsSettingsRouteWithChildren =
+  LayoutProfileTabsSettingsRoute._addFileChildren(
+    LayoutProfileTabsSettingsRouteChildren,
+  )
+
+interface LayoutProfileTabsRouteChildren {
   LayoutProfileTabsActivityRoute: typeof LayoutProfileTabsActivityRoute
   LayoutProfileTabsMyFeedsRoute: typeof LayoutProfileTabsMyFeedsRoute
   LayoutProfileTabsOverviewRoute: typeof LayoutProfileTabsOverviewRoute
+  LayoutProfileTabsSettingsRoute: typeof LayoutProfileTabsSettingsRouteWithChildren
 }
 
-const LayoutProfileTabsRouteRouteChildren: LayoutProfileTabsRouteRouteChildren =
-  {
-    LayoutProfileTabsActivityRoute: LayoutProfileTabsActivityRoute,
-    LayoutProfileTabsMyFeedsRoute: LayoutProfileTabsMyFeedsRoute,
-    LayoutProfileTabsOverviewRoute: LayoutProfileTabsOverviewRoute,
-  }
-
-const LayoutProfileTabsRouteRouteWithChildren =
-  LayoutProfileTabsRouteRoute._addFileChildren(
-    LayoutProfileTabsRouteRouteChildren,
-  )
-
-interface LayoutProfileSettingsRouteRouteChildren {
-  LayoutProfileSettingsConnectionsRoute: typeof LayoutProfileSettingsConnectionsRoute
-  LayoutProfileSettingsNotificationsRoute: typeof LayoutProfileSettingsNotificationsRoute
-  LayoutProfileSettingsPreferencesRoute: typeof LayoutProfileSettingsPreferencesRoute
-  LayoutProfileSettingsIndexRoute: typeof LayoutProfileSettingsIndexRoute
+const LayoutProfileTabsRouteChildren: LayoutProfileTabsRouteChildren = {
+  LayoutProfileTabsActivityRoute: LayoutProfileTabsActivityRoute,
+  LayoutProfileTabsMyFeedsRoute: LayoutProfileTabsMyFeedsRoute,
+  LayoutProfileTabsOverviewRoute: LayoutProfileTabsOverviewRoute,
+  LayoutProfileTabsSettingsRoute: LayoutProfileTabsSettingsRouteWithChildren,
 }
 
-const LayoutProfileSettingsRouteRouteChildren: LayoutProfileSettingsRouteRouteChildren =
-  {
-    LayoutProfileSettingsConnectionsRoute:
-      LayoutProfileSettingsConnectionsRoute,
-    LayoutProfileSettingsNotificationsRoute:
-      LayoutProfileSettingsNotificationsRoute,
-    LayoutProfileSettingsPreferencesRoute:
-      LayoutProfileSettingsPreferencesRoute,
-    LayoutProfileSettingsIndexRoute: LayoutProfileSettingsIndexRoute,
-  }
-
-const LayoutProfileSettingsRouteRouteWithChildren =
-  LayoutProfileSettingsRouteRoute._addFileChildren(
-    LayoutProfileSettingsRouteRouteChildren,
-  )
+const LayoutProfileTabsRouteWithChildren =
+  LayoutProfileTabsRoute._addFileChildren(LayoutProfileTabsRouteChildren)
 
 interface LayoutProfileRouteChildren {
-  LayoutProfileTabsRouteRoute: typeof LayoutProfileTabsRouteRouteWithChildren
-  LayoutProfileSettingsRouteRoute: typeof LayoutProfileSettingsRouteRouteWithChildren
+  LayoutProfileTabsRoute: typeof LayoutProfileTabsRouteWithChildren
   LayoutProfileIndexRoute: typeof LayoutProfileIndexRoute
 }
 
 const LayoutProfileRouteChildren: LayoutProfileRouteChildren = {
-  LayoutProfileTabsRouteRoute: LayoutProfileTabsRouteRouteWithChildren,
-  LayoutProfileSettingsRouteRoute: LayoutProfileSettingsRouteRouteWithChildren,
+  LayoutProfileTabsRoute: LayoutProfileTabsRouteWithChildren,
   LayoutProfileIndexRoute: LayoutProfileIndexRoute,
 }
 
@@ -794,8 +823,8 @@ const LayoutFeedFeedIdRouteWithChildren =
 
 interface LayoutRouteChildren {
   LayoutLeaderboardRoute: typeof LayoutLeaderboardRoute
-  LayoutIndexRoute: typeof LayoutIndexRoute
   LayoutProfileRoute: typeof LayoutProfileRouteWithChildren
+  LayoutIndexRoute: typeof LayoutIndexRoute
   LayoutCreateFeedRoute: typeof LayoutCreateFeedRouteWithChildren
   LayoutCreatePluginRoute: typeof LayoutCreatePluginRoute
   LayoutFeedFeedIdRoute: typeof LayoutFeedFeedIdRouteWithChildren
@@ -807,8 +836,8 @@ interface LayoutRouteChildren {
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutLeaderboardRoute: LayoutLeaderboardRoute,
-  LayoutIndexRoute: LayoutIndexRoute,
   LayoutProfileRoute: LayoutProfileRouteWithChildren,
+  LayoutIndexRoute: LayoutIndexRoute,
   LayoutCreateFeedRoute: LayoutCreateFeedRouteWithChildren,
   LayoutCreatePluginRoute: LayoutCreatePluginRoute,
   LayoutFeedFeedIdRoute: LayoutFeedFeedIdRouteWithChildren,

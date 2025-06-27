@@ -14,9 +14,8 @@ import {
   BasicFieldsSection,
   SourcesSection,
   StreamSettingsSection,
-  RecapsSection,
   ModerationSection,
-  IngestionSection,
+  // IngestionSection,
   FeedConfigFormSchema,
   type FormValues,
 } from "./form";
@@ -121,14 +120,14 @@ export const EditFeedForm = forwardRef<EditFeedFormRef, EditFeedFormProps>(
       name: "streamDistributors",
     });
 
-    const {
-      fields: recapFields,
-      append: appendRecap,
-      remove: removeRecap,
-    } = useFieldArray({
-      control: form.control,
-      name: "recaps",
-    });
+    // const {
+    //   fields: recapFields,
+    //   append: appendRecap,
+    //   remove: removeRecap,
+    // } = useFieldArray({
+    //   control: form.control,
+    //   name: "recaps",
+    // });
 
     // Watch for form changes and auto-update with debouncing
     const watchedValues = form.watch();
@@ -346,17 +345,17 @@ export const EditFeedForm = forwardRef<EditFeedFormRef, EditFeedFormProps>(
               removeDistributor={removeDistributor}
               watch={form.watch}
             />
-
+            {/* 
             <RecapsSection
               control={form.control}
               recapFields={recapFields}
               appendRecap={appendRecap}
               removeRecap={removeRecap}
-            />
+            /> */}
 
             <ModerationSection control={form.control} />
 
-            <IngestionSection control={form.control} watch={form.watch} />
+            {/* <IngestionSection control={form.control} watch={form.watch} /> */}
           </div>
         </Form>
       </div>
