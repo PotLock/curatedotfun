@@ -19,7 +19,10 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
-import type { FeedWrappedResponse, FeedsWrappedResponse } from "@curatedotfun/types";
+import type {
+  FeedWrappedResponse,
+  FeedsWrappedResponse,
+} from "@curatedotfun/types";
 
 const BasicInformationFormSchema = z.object({
   name: z.string().min(3, "Feed name must be at least 3 characters").optional(),
@@ -106,7 +109,7 @@ function BasicInformationComponent() {
         retry: false,
       });
       const existingFeed = data?.data?.find(
-        (feed) => feed.name.toLowerCase() === name.toLowerCase()
+        (feed) => feed.name.toLowerCase() === name.toLowerCase(),
       );
       if (existingFeed) {
         form.setError("name", {
@@ -214,8 +217,19 @@ function BasicInformationComponent() {
               )}
             />
             <div className="flex justify-end">
-              <Button type="submit" disabled={form.formState.isSubmitting || isValidatingName || isValidatingId}>
-                {form.formState.isSubmitting ? "..." : isValidatingName || isValidatingId ? "Validating..." : "Next"}
+              <Button
+                type="submit"
+                disabled={
+                  form.formState.isSubmitting ||
+                  isValidatingName ||
+                  isValidatingId
+                }
+              >
+                {form.formState.isSubmitting
+                  ? "..."
+                  : isValidatingName || isValidatingId
+                    ? "Validating..."
+                    : "Next"}
               </Button>
             </div>
           </form>

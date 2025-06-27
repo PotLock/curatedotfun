@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_layout/profile/settings/notifications")(
 
 function NotificationsComponent() {
   return (
-    <ComingSoon 
+    <ComingSoon
       title="Notification Settings"
       description="Stay in the loop with customizable notifications for your curated content and community activity."
       features={[
@@ -17,7 +17,7 @@ function NotificationsComponent() {
         "Push notifications for real-time updates",
         "Digest settings for weekly summaries",
         "Custom notification schedules",
-        "Fine-grained notification categories"
+        "Fine-grained notification categories",
       ]}
     />
   );
