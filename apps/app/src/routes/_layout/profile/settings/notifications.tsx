@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Card } from "../../../../components/ui/card";
+import { ComingSoon } from "../../../../components/ui/coming-soon";
 
 export const Route = createFileRoute("/_layout/profile/settings/notifications")(
   {
@@ -9,10 +9,16 @@ export const Route = createFileRoute("/_layout/profile/settings/notifications")(
 
 function NotificationsComponent() {
   return (
-    <Card className="p-6 space-y-6">
-      <h2 className="text-2xl font-semibold">Notification Settings</h2>
-      <p>Manage your notification preferences here.</p>
-      {/* Add notification settings form or options here */}
-    </Card>
+    <ComingSoon 
+      title="Notification Settings"
+      description="Stay in the loop with customizable notifications for your curated content and community activity."
+      features={[
+        "Email notifications for new submissions and approvals",
+        "Push notifications for real-time updates",
+        "Digest settings for weekly summaries",
+        "Custom notification schedules",
+        "Fine-grained notification categories"
+      ]}
+    />
   );
 }
