@@ -187,7 +187,7 @@ export function useFeedContentCount(feedId: string) {
 // Hook to get basic feed stats
 export function useFeedStats(feedId: string) {
   const contentCountQuery = useFeedContentCount(feedId);
-  
+
   return {
     contentCount: contentCountQuery.data ?? 0,
     curatorCount: 0, // TODO: Need new API endpoint: GET /api/feeds/:feedId/stats with curator count

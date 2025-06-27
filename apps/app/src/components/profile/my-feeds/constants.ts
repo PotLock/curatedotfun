@@ -13,4 +13,4 @@ export const filterOptions = [
   },
 ] as const;
 
-export type FilterValue = typeof filterOptions[number]["value"];
+export type FilterValue = (typeof filterOptions)[number]["value"];
