@@ -1,8 +1,8 @@
 import { ApproverFor } from "./ApproverFor";
-import { CurateCTA } from "./CurateCTA";
+// import { CurateCTA } from "./CurateCTA";
 import { CuratorFor } from "./CuratorFor";
-import { TopBadges } from "./TopBadges";
-import { UserStats } from "./UserStats";
+// import { TopBadges } from "./TopBadges";
+// import { UserStats } from "./UserStats";
 
 export function ProfileOverview() {
   return (
