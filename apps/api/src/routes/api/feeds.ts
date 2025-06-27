@@ -7,7 +7,11 @@ import {
   FeedWrappedResponseSchema,
   UpdateFeedRequestSchema,
 } from "@curatedotfun/types";
-import { ForbiddenError, NotFoundError } from "@curatedotfun/utils";
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from "@curatedotfun/utils";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
@@ -84,6 +88,16 @@ feedsRoutes.post(
       );
     } catch (error) {
       c.var.sp.getLogger().error({ error, accountId }, "Error creating feed");
+      if (error instanceof ConflictError) {
+        return c.json(
+          ApiErrorResponseSchema.parse({
+            statusCode: 409,
+            success: false,
+            error: { message: error.message },
+          }),
+          409,
+        );
+      }
       return c.json(
         ApiErrorResponseSchema.parse({
           statusCode: 500,

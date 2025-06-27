@@ -1,5 +1,5 @@
 import retry from "async-retry";
-import { DB } from "./validators";
+import type { DB } from "./types";
 
 /**
  * List of PostgreSQL error codes that are considered transient/retryable

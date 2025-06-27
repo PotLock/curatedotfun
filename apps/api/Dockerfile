@@ -50,7 +50,8 @@ WORKDIR /app
 RUN addgroup -S app && adduser -S app -G app
 
 # Copy the production-ready code from the builder stage.
-COPY --from=builder --chown=app:app /app/apps/api ./apps/api
+COPY --from=builder --chown=app:app /app/apps/api/dist ./apps/api/dist
+COPY --from=builder --chown=app:app /app/apps/api/public ./apps/api/public
 COPY --from=builder --chown=app:app /app/packages/shared-db ./packages/shared-db
 COPY --from=builder --chown=app:app /app/packages/utils ./packages/utils
 
@@ -70,4 +71,4 @@ EXPOSE 3000
 WORKDIR /app/apps/api
 
 # Start the application.
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/main.cjs"]

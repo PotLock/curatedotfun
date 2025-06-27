@@ -1,3 +1,4 @@
+import type { FeedConfig } from "@curatedotfun/types";
 import {
   and,
   asc,
@@ -11,18 +12,18 @@ import {
   SQL,
 } from "drizzle-orm";
 import * as schema from "../schema";
-import { SubmissionStatus, submissionStatusZodEnum } from "../schema";
-import { executeWithRetry, withErrorHandling } from "../utils";
 import {
-  DB,
   InsertSubmissionFeed,
   RichSubmission,
   SelectSubmissionFeed,
-} from "../validators";
+  SubmissionStatus,
+  submissionStatusZodEnum,
+} from "../schema";
 import type { InsertFeed, SelectFeed, UpdateFeed } from "../schema/feeds";
 import { SelectModerationHistory } from "../schema/moderation";
+import type { DB } from "../types";
+import { executeWithRetry, withErrorHandling } from "../utils";
 import { PaginatedResponse } from "./submission.repository";
-import type { FeedConfig } from "@curatedotfun/types";
 
 /**
  * Repository for feed-related database operations
@@ -69,15 +70,24 @@ export class FeedRepository {
 
   /**
    * Create a new feed.
+   * @param data The feed data to insert
+   * @param txDb Optional transaction DB instance
+   * @returns The created feed
    */
-  async createFeed(data: InsertFeed, txDb: DB): Promise<SelectFeed> {
+  async createFeed(data: InsertFeed, txDb?: DB): Promise<SelectFeed> {
     return withErrorHandling(
       async () => {
-        const result = await txDb.insert(schema.feeds).values(data).returning();
-        if (result.length === 0) {
-          throw new Error("Failed to create feed, no record returned.");
-        }
-        return result[0] as SelectFeed;
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
+          const result = await dbInstance
+            .insert(schema.feeds)
+            .values(data)
+            .returning();
+          if (result.length === 0) {
+            throw new Error("Failed to create feed, no record returned.");
+          }
+          return result[0] as SelectFeed;
+        }, dbToUse);
       },
       { operationName: "createFeed", additionalContext: { data } },
     );
@@ -85,20 +95,27 @@ export class FeedRepository {
 
   /**
    * Update an existing feed.
+   * @param feedId The feed ID
+   * @param data The data to update
+   * @param txDb Optional transaction DB instance
+   * @returns The updated feed or null if not found
    */
   async updateFeed(
     feedId: string,
     data: UpdateFeed,
-    txDb: DB,
+    txDb?: DB,
   ): Promise<SelectFeed | null> {
     return withErrorHandling(
       async () => {
-        const result = await txDb
-          .update(schema.feeds)
-          .set({ ...data, updatedAt: new Date() })
-          .where(eq(schema.feeds.id, feedId))
-          .returning();
-        return result.length > 0 ? (result[0] as SelectFeed) : null;
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
+          const result = await dbInstance
+            .update(schema.feeds)
+            .set({ ...data, updatedAt: new Date() })
+            .where(eq(schema.feeds.id, feedId))
+            .returning();
+          return result.length > 0 ? (result[0] as SelectFeed) : null;
+        }, dbToUse);
       },
       { operationName: "updateFeed", additionalContext: { feedId, data } },
     );
@@ -106,25 +123,33 @@ export class FeedRepository {
 
   /**
    * Delete a feed by ID.
+   * @param feedId The feed ID
+   * @param txDb Optional transaction DB instance
+   * @returns The deleted feed or null if not found
    */
-  async deleteFeed(feedId: string, txDb: DB): Promise<SelectFeed | null> {
+  async deleteFeed(feedId: string, txDb?: DB): Promise<SelectFeed | null> {
     return withErrorHandling(
       async () => {
-        // First, delete related entries in other tables
-        await txDb
-          .delete(schema.submissionFeeds)
-          .where(eq(schema.submissionFeeds.feedId, feedId));
-        await txDb
-          .delete(schema.feedRecapsState)
-          .where(eq(schema.feedRecapsState.feedId, feedId));
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
+          return dbInstance.transaction(async (tx) => {
+            // First, delete related entries in other tables
+            await tx
+              .delete(schema.submissionFeeds)
+              .where(eq(schema.submissionFeeds.feedId, feedId));
+            await tx
+              .delete(schema.feedRecapsState)
+              .where(eq(schema.feedRecapsState.feedId, feedId));
 
-        // Now, delete the feed and return the deleted record
-        const result = await txDb
-          .delete(schema.feeds)
-          .where(eq(schema.feeds.id, feedId))
-          .returning();
+            // Now, delete the feed and return the deleted record
+            const result = await tx
+              .delete(schema.feeds)
+              .where(eq(schema.feeds.id, feedId))
+              .returning();
 
-        return result.length > 0 ? (result[0] as SelectFeed) : null;
+            return result.length > 0 ? (result[0] as SelectFeed) : null;
+          });
+        }, dbToUse);
       },
       { operationName: "deleteFeed", additionalContext: { feedId } },
       null,
@@ -169,26 +194,35 @@ export class FeedRepository {
 
   // Recap related methods have been moved to FeedRecapRepository.ts
 
+  /**
+   * Save a submission to a feed
+   * @param data The submission feed data
+   * @param txDb Optional transaction DB instance
+   * @returns The created submission feed
+   */
   async saveSubmissionToFeed(
     data: InsertSubmissionFeed,
-    txDb: DB,
+    txDb?: DB,
   ): Promise<SelectSubmissionFeed> {
     return withErrorHandling(
       async () => {
-        const result = await txDb
-          .insert(schema.submissionFeeds)
-          .values({
-            submissionId: data.submissionId,
-            feedId: data.feedId,
-            status: data.status ?? submissionStatusZodEnum.Enum.pending,
-          })
-          .returning();
-        if (result.length === 0) {
-          throw new Error(
-            "Failed to save submission to feed, no record returned.",
-          );
-        }
-        return result[0] as SelectSubmissionFeed;
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
+          const result = await dbInstance
+            .insert(schema.submissionFeeds)
+            .values({
+              submissionId: data.submissionId,
+              feedId: data.feedId,
+              status: data.status ?? submissionStatusZodEnum.Enum.pending,
+            })
+            .returning();
+          if (result.length === 0) {
+            throw new Error(
+              "Failed to save submission to feed, no record returned.",
+            );
+          }
+          return result[0] as SelectSubmissionFeed;
+        }, dbToUse);
       },
       {
         operationName: "saveSubmissionToFeed",
@@ -224,14 +258,21 @@ export class FeedRepository {
     );
   }
 
+  /**
+   * Remove a submission from a feed
+   * @param submissionId The submission ID
+   * @param feedId The feed ID
+   * @param txDb Optional transaction DB instance
+   */
   async removeFromSubmissionFeed(
     submissionId: string,
     feedId: string,
-    txDb: DB,
+    txDb?: DB,
   ): Promise<void> {
     return withErrorHandling(
       async () => {
-        executeWithRetry(async (dbInstance) => {
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
           await dbInstance
             .delete(schema.submissionFeeds)
             .where(
@@ -241,7 +282,7 @@ export class FeedRepository {
               ),
             )
             .execute();
-        }, this.db);
+        }, dbToUse);
       },
       {
         operationName: "removeFromSubmissionFeed",
@@ -449,24 +490,31 @@ export class FeedRepository {
 
   /**
    * Updates the status of a submission in a feed.
+   * @param submissionId The submission ID
+   * @param feedId The feed ID
+   * @param status The new status
+   * @param txDb Optional transaction DB instance
    */
   async updateSubmissionFeedStatus(
     submissionId: string,
     feedId: string,
     status: SubmissionStatus,
-    txDb: DB,
+    txDb?: DB,
   ): Promise<void> {
     return withErrorHandling(
       async () => {
-        await txDb
-          .update(schema.submissionFeeds)
-          .set({ status, updatedAt: new Date() })
-          .where(
-            and(
-              eq(schema.submissionFeeds.submissionId, submissionId),
-              eq(schema.submissionFeeds.feedId, feedId),
-            ),
-          );
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
+          await dbInstance
+            .update(schema.submissionFeeds)
+            .set({ status, updatedAt: new Date() })
+            .where(
+              and(
+                eq(schema.submissionFeeds.submissionId, submissionId),
+                eq(schema.submissionFeeds.feedId, feedId),
+              ),
+            );
+        }, dbToUse);
       },
       {
         operationName: "updateSubmissionFeedStatus",

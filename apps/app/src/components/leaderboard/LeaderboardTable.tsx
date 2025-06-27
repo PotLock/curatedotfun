@@ -25,7 +25,7 @@ export function LeaderboardTable({
   hasData,
 }: LeaderboardTableProps) {
   return (
-    <div className="overflow-y-auto max-w-[368px] md:max-w-screen-xl md:w-full mx-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+    <div className="overflow-y-auto max-w-[calc(100vw-32px)] md:max-w-screen-xl md:w-full mx-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
       <div className="relative">
         <Table className="w-full border-collapse">
           <TableHeader className="sticky top-0 bg-white z-10">

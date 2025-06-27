@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -45,13 +46,26 @@ export function AuthProvider({
   const [isSignedIn, setIsSignedIn] = useState<boolean>(
     near.authStatus() === "SignedIn",
   );
-  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(
+    () => sessionStorage.getItem("isAuthorized") === "true",
+  );
   const [nonce, setNonce] = useState<string | null>(null);
   const [recipient, setRecipient] = useState<string | null>(null);
-  const isSigningInRef = React.useRef(false);
-  const previousAccountIdRef = React.useRef<string | null>(currentAccountId);
+  const initialCheckRef = useRef(true);
+
+  useEffect(() => {
+    if (isAuthorized) {
+      sessionStorage.setItem("isAuthorized", "true");
+    } else {
+      sessionStorage.removeItem("isAuthorized");
+    }
+  }, [isAuthorized]);
 
   const checkAuthorization = useCallback(async () => {
+    if (!currentAccountId) {
+      setIsAuthorized(false);
+      return;
+    }
     try {
       await apiClient.makeRequest("GET", "/users/me");
       setIsAuthorized(true);
@@ -59,7 +73,7 @@ export function AuthProvider({
       console.error("Authorization check failed:", error);
       setIsAuthorized(false);
     }
-  }, []);
+  }, [currentAccountId]);
 
   const initiateLogin = useCallback(async (accountId: string) => {
     try {
@@ -81,52 +95,49 @@ export function AuthProvider({
   }, []);
 
   useEffect(() => {
-    const accountListener = near.event.onAccount((newAccountId) => {
+    const handleAccountChange = async (newAccountId: string | null) => {
+      if (newAccountId === currentAccountId) {
+        return;
+      }
+
       setCurrentAccountId(newAccountId);
       setIsSignedIn(!!newAccountId);
 
-      if (!newAccountId) {
+      if (newAccountId) {
         toast({
-          title: "Signed out",
+          title: "Wallet Connected",
+          description: `Connected as: ${newAccountId}`,
+          variant: "success",
+          duration: 1000,
+        });
+        await Promise.all([checkAuthorization(), initiateLogin(newAccountId)]);
+      } else {
+        toast({
+          title: "Wallet Disconnected",
           description: "You have been signed out successfully.",
           variant: "success",
+          duration: 1000,
         });
-        setIsAuthorized(false);
-        setNonce(null);
-        setRecipient(null);
       }
-    });
+    };
+
+    const accountListener = near.event.onAccount(handleAccountChange);
+
+    // Initial check
+    if (near.accountId() && initialCheckRef.current) {
+      initialCheckRef.current = false;
+      handleAccountChange(near.accountId()!);
+    }
 
     return () => {
       near.event.offAccount(accountListener);
     };
-  }, []);
-
-  useEffect(() => {
-    if (currentAccountId && currentAccountId !== previousAccountIdRef.current) {
-      if (isSigningInRef.current) {
-        toast({
-          title: "Success!",
-          description: `Connected as: ${currentAccountId}`,
-          variant: "success",
-        });
-        isSigningInRef.current = false;
-      }
-      checkAuthorization().then(() => {
-        if (currentAccountId) {
-          initiateLogin(currentAccountId);
-        }
-      });
-    }
-    previousAccountIdRef.current = currentAccountId;
-  }, [currentAccountId, checkAuthorization, initiateLogin]);
+  }, [checkAuthorization, initiateLogin]);
 
   const handleSignIn = async (): Promise<void> => {
-    isSigningInRef.current = true;
     try {
       await near.requestSignIn();
     } catch (e: unknown) {
-      isSigningInRef.current = false;
       toast({
         title: "Sign-in failed",
         description: e instanceof Error ? e.message : String(e),
@@ -147,10 +158,10 @@ export function AuthProvider({
     if (!nonce || !recipient) {
       toast({
         title: "Authorization not ready",
-        description:
-          "Please wait a moment and try again. If the problem persists, please sign out and sign back in.",
+        description: "Please try signing back in.",
         variant: "destructive",
       });
+      handleSignOut();
       return;
     }
     try {

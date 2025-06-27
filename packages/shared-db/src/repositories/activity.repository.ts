@@ -8,7 +8,7 @@ import type {
 } from "../schema/activity";
 import { activityTypeZodEnum } from "../schema/activity";
 import { executeWithRetry, withErrorHandling } from "../utils";
-import { DB } from "../validators";
+import type { DB } from "../types";
 
 export class ActivityRepository {
   private readonly db: DB;
@@ -19,6 +19,9 @@ export class ActivityRepository {
 
   /**
    * Create a new activity entry
+   * @param data The activity data to insert
+   * @param txDb Transaction DB instance
+   * @returns The created activity
    */
   async createActivity(data: InsertActivity, txDb: DB) {
     return withErrorHandling(
@@ -467,6 +470,10 @@ export class ActivityRepository {
 
   /**
    * Update user statistics
+   * @param userId The user ID
+   * @param data The user stats data to update
+   * @param txDb Transaction DB instance
+   * @returns The updated user stats
    */
   async updateUserStats(userId: number, data: UpdateUserStats, txDb: DB) {
     return withErrorHandling(
@@ -564,6 +571,11 @@ export class ActivityRepository {
 
   /**
    * Update feed-specific user statistics
+   * @param userId The user ID
+   * @param feedId The feed ID
+   * @param data The feed user stats data to update
+   * @param txDb Transaction DB instance
+   * @returns The updated feed user stats
    */
   async updateFeedUserStats(
     userId: number,

@@ -1,5 +1,6 @@
 import type { Submission } from "@curatedotfun/types";
-import { useApiInfiniteQuery } from "../../hooks/api-client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useApiInfiniteQuery, useApiQuery } from "../../hooks/api-client";
 import type {
   SortOrderType,
   StatusFilterType,
@@ -8,8 +9,11 @@ import type {
   TransformedInfiniteData,
 } from "./types";
 
+import { useEffect } from "react";
+
 export function useAllSubmissions(filters: SubmissionFilters = {}) {
   const { limit = 20, status, sortOrder, q } = filters;
+  const queryClient = useQueryClient();
 
   const pathFn = (pageParam: number) => {
     const params = new URLSearchParams();
@@ -21,7 +25,7 @@ export function useAllSubmissions(filters: SubmissionFilters = {}) {
     return `/submissions?${params.toString()}`;
   };
 
-  return useApiInfiniteQuery<
+  const queryResult = useApiInfiniteQuery<
     PaginatedResponse<Submission>, // TQueryFnData
     Error, // TError
     TransformedInfiniteData<Submission>, // TData
@@ -51,4 +55,34 @@ export function useAllSubmissions(filters: SubmissionFilters = {}) {
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   });
+
+  const { data } = queryResult;
+
+  useEffect(() => {
+    if (data) {
+      queryClient.setQueryData(
+        ["submissions"],
+        data.pages.flatMap((page) => page.items),
+      );
+    }
+  }, [data, queryClient]);
+
+  return queryResult;
+}
+
+export function useSubmission(submissionId: string) {
+  const queryClient = useQueryClient();
+  return useApiQuery<Submission>(
+    ["submission", submissionId],
+    `/submissions/single/${submissionId}`,
+    {
+      enabled: !!submissionId,
+      initialData: () => {
+        const allSubmissions = queryClient.getQueryData<Submission[]>([
+          "submissions",
+        ]);
+        return allSubmissions?.find((s) => s.tweetId === submissionId);
+      },
+    },
+  );
 }

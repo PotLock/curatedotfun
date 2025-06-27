@@ -6,7 +6,7 @@ import {
   plugins,
 } from "../schema/plugins";
 import { executeWithRetry, withErrorHandling } from "../utils";
-import { DB } from "../validators";
+import type { DB } from "../types";
 
 export interface IPluginRepository {
   getPlugin: (pluginId: string) => Promise<RegisteredPlugin | undefined>;
@@ -107,10 +107,17 @@ export class PluginRepository implements IPluginRepository {
     );
   }
 
-  async createPlugin(data: InsertPlugin): Promise<RegisteredPlugin> {
+  /**
+   * Create a new plugin
+   * @param data The plugin data to insert
+   * @param txDb Optional transaction DB instance
+   * @returns The created plugin
+   */
+  async createPlugin(data: InsertPlugin, txDb?: DB): Promise<RegisteredPlugin> {
     return withErrorHandling(
-      async () =>
-        executeWithRetry(async (dbInstance) => {
+      async () => {
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
           const existingPlugin = await dbInstance
             .select({ id: plugins.id })
             .from(plugins)
@@ -138,7 +145,8 @@ export class PluginRepository implements IPluginRepository {
             throw new Error("Failed to register plugin");
           }
           return newPlugin[0];
-        }, this.db),
+        }, dbToUse);
+      },
       {
         operationName: "PluginRepository.createPlugin",
         additionalContext: { data },
@@ -146,13 +154,22 @@ export class PluginRepository implements IPluginRepository {
     );
   }
 
+  /**
+   * Update an existing plugin
+   * @param pluginId The plugin ID
+   * @param data The data to update
+   * @param txDb Optional transaction DB instance
+   * @returns The updated plugin or undefined if not found
+   */
   async updatePlugin(
     pluginId: string,
     data: PluginUpdateData,
+    txDb?: DB,
   ): Promise<RegisteredPlugin | undefined> {
     return withErrorHandling(
-      async () =>
-        executeWithRetry(async (dbInstance) => {
+      async () => {
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
           if (Object.keys(data).length === 0) {
             return undefined;
           }
@@ -162,7 +179,8 @@ export class PluginRepository implements IPluginRepository {
             .where(eq(plugins.id, pluginId))
             .returning();
           return updatedPlugin[0];
-        }, this.db),
+        }, dbToUse);
+      },
       {
         operationName: "PluginRepository.updatePlugin",
         additionalContext: { pluginId, data },
@@ -170,16 +188,27 @@ export class PluginRepository implements IPluginRepository {
     );
   }
 
-  async deletePlugin(pluginId: string): Promise<RegisteredPlugin | undefined> {
+  /**
+   * Delete a plugin
+   * @param pluginId The plugin ID
+   * @param txDb Optional transaction DB instance
+   * @returns The deleted plugin or undefined if not found
+   */
+  async deletePlugin(
+    pluginId: string,
+    txDb?: DB,
+  ): Promise<RegisteredPlugin | undefined> {
     return withErrorHandling(
-      async () =>
-        executeWithRetry(async (dbInstance) => {
+      async () => {
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
           const deletedPlugin = await dbInstance
             .delete(plugins)
             .where(eq(plugins.id, pluginId))
             .returning();
           return deletedPlugin[0];
-        }, this.db),
+        }, dbToUse);
+      },
       {
         operationName: "PluginRepository.deletePlugin",
         additionalContext: { pluginId },

@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import * as schema from "../schema";
-import { DB } from "../validators";
+import type { DB } from "../types";
 import { executeWithRetry, withErrorHandling } from "../utils";
 
 export interface TwitterConfig {
@@ -35,15 +35,18 @@ export class TwitterRepository {
    *
    * @param username Twitter username
    * @param cookies Twitter cookies
+   * @param txDb Optional transaction DB instance
    */
   async setTwitterCookies(
     username: string,
     cookies: TwitterCookie[] | null,
+    txDb?: DB,
   ): Promise<void> {
     return withErrorHandling(
       async () => {
+        const dbToUse = txDb || this.db;
         const cookiesJson = JSON.stringify(cookies);
-        await executeWithRetry(async (dbInstance) => {
+        return executeWithRetry(async (dbInstance) => {
           await dbInstance
             .insert(schema.twitterCookies)
             .values({
@@ -57,7 +60,7 @@ export class TwitterRepository {
                 updatedAt: new Date(),
               },
             });
-        }, this.db);
+        }, dbToUse);
       },
       {
         operationName: "set Twitter cookies",
@@ -108,15 +111,17 @@ export class TwitterRepository {
    * Deletes Twitter cookies for a user.
    *
    * @param username Twitter username
+   * @param txDb Optional transaction DB instance
    */
-  async deleteTwitterCookies(username: string): Promise<void> {
+  async deleteTwitterCookies(username: string, txDb?: DB): Promise<void> {
     return withErrorHandling(
       async () => {
-        await executeWithRetry(async (dbInstance) => {
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
           await dbInstance
             .delete(schema.twitterCookies)
             .where(eq(schema.twitterCookies.username, username));
-        }, this.db);
+        }, dbToUse);
       },
       {
         operationName: "delete Twitter cookies",
@@ -130,11 +135,17 @@ export class TwitterRepository {
    *
    * @param key Cache key
    * @param value Cache value
+   * @param txDb Optional transaction DB instance
    */
-  async setTwitterCacheValue(key: string, value: string): Promise<void> {
+  async setTwitterCacheValue(
+    key: string,
+    value: string,
+    txDb?: DB,
+  ): Promise<void> {
     return withErrorHandling(
       async () => {
-        await executeWithRetry(async (dbInstance) => {
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
           await dbInstance
             .insert(schema.twitterCache)
             .values({
@@ -148,7 +159,7 @@ export class TwitterRepository {
                 updatedAt: new Date(),
               },
             });
-        }, this.db);
+        }, dbToUse);
       },
       {
         operationName: "set Twitter cache value",
@@ -188,15 +199,17 @@ export class TwitterRepository {
    * Deletes a Twitter cache value.
    *
    * @param key Cache key
+   * @param txDb Optional transaction DB instance
    */
-  async deleteTwitterCacheValue(key: string): Promise<void> {
+  async deleteTwitterCacheValue(key: string, txDb?: DB): Promise<void> {
     return withErrorHandling(
       async () => {
-        await executeWithRetry(async (dbInstance) => {
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
           await dbInstance
             .delete(schema.twitterCache)
             .where(eq(schema.twitterCache.key, key));
-        }, this.db);
+        }, dbToUse);
       },
       {
         operationName: "delete Twitter cache value",
@@ -207,13 +220,16 @@ export class TwitterRepository {
 
   /**
    * Clears the Twitter cache.
+   *
+   * @param txDb Optional transaction DB instance
    */
-  async clearTwitterCache(): Promise<void> {
+  async clearTwitterCache(txDb?: DB): Promise<void> {
     return withErrorHandling(
       async () => {
-        await executeWithRetry(async (dbInstance) => {
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
           await dbInstance.delete(schema.twitterCache);
-        }, this.db);
+        }, dbToUse);
       },
       { operationName: "clear Twitter cache" },
     );

@@ -1,10 +1,10 @@
 import type {
   CanModerateResponse,
   CreateFeedRequest,
+  FeedContextSubmission,
   FeedResponse,
   FeedsWrappedResponse,
   FeedWrappedResponse,
-  Submission,
   UpdateFeedRequest,
 } from "@curatedotfun/types";
 import { useAuth } from "../../contexts/auth-context";
@@ -99,10 +99,10 @@ export function useFeedItems(feedId: string, filters: SubmissionFilters = {}) {
     return `/submissions/feed/${feedId}?${params.toString()}`;
   };
 
-  return useApiInfiniteQuery<
-    PaginatedResponse<Submission>, // TQueryFnData: data type per page
-    Error, // TError
-    TransformedInfiniteData<Submission>, // TData: type of combined data
+  const queryResult = useApiInfiniteQuery<
+    PaginatedResponse<FeedContextSubmission>,
+    Error,
+    TransformedInfiniteData<FeedContextSubmission>,
     [
       string,
       string,
@@ -131,6 +131,8 @@ export function useFeedItems(feedId: string, filters: SubmissionFilters = {}) {
     refetchOnReconnect: true,
     enabled: !!feedId,
   });
+
+  return queryResult;
 }
 
 /**

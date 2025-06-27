@@ -1,7 +1,7 @@
 import { and, eq, desc, gte, lt } from "drizzle-orm";
 import { InsertAuthRequest, authRequests } from "../schema";
 import { executeWithRetry, withErrorHandling } from "../utils";
-import { DB } from "../validators";
+import type { DB } from "../types";
 
 export class AuthRequestRepository {
   private readonly db: DB;
@@ -10,16 +10,23 @@ export class AuthRequestRepository {
     this.db = db;
   }
 
-  async create(data: InsertAuthRequest) {
+  /**
+   * Create a new auth request
+   * @param data The auth request data to insert
+   * @param txDb Optional transaction DB instance
+   * @returns The created auth request
+   */
+  async create(data: InsertAuthRequest, txDb?: DB) {
     return withErrorHandling(
       async () => {
+        const dbToUse = txDb || this.db;
         return executeWithRetry(async (dbInstance) => {
           const result = await dbInstance
             .insert(authRequests)
             .values(data)
             .returning();
           return result[0] ?? null;
-        }, this.db);
+        }, dbToUse);
       },
       {
         operationName: "create auth request",
@@ -28,6 +35,11 @@ export class AuthRequestRepository {
     );
   }
 
+  /**
+   * Find the latest auth request for an account
+   * @param accountId The account ID
+   * @returns The latest auth request or null if not found
+   */
   async findLatestByAccountId(accountId: string) {
     return withErrorHandling(
       async () => {
@@ -55,16 +67,23 @@ export class AuthRequestRepository {
     );
   }
 
-  async deleteById(id: number): Promise<boolean> {
+  /**
+   * Delete an auth request by ID
+   * @param id The auth request ID
+   * @param txDb Optional transaction DB instance
+   * @returns True if the auth request was deleted, false otherwise
+   */
+  async deleteById(id: number, txDb?: DB): Promise<boolean> {
     return withErrorHandling(
       async () => {
+        const dbToUse = txDb || this.db;
         return executeWithRetry(async (dbInstance) => {
           const result = await dbInstance
             .delete(authRequests)
             .where(eq(authRequests.id, id))
             .returning();
           return result.length > 0;
-        }, this.db);
+        }, dbToUse);
       },
       {
         operationName: "delete auth request by id",
@@ -74,9 +93,15 @@ export class AuthRequestRepository {
     );
   }
 
-  async deleteExpired(): Promise<number> {
+  /**
+   * Delete all expired auth requests
+   * @param txDb Optional transaction DB instance
+   * @returns The number of auth requests deleted
+   */
+  async deleteExpired(txDb?: DB): Promise<number> {
     return withErrorHandling(
       async () => {
+        const dbToUse = txDb || this.db;
         return executeWithRetry(async (dbInstance) => {
           const now = new Date();
           const result = await dbInstance
@@ -84,7 +109,7 @@ export class AuthRequestRepository {
             .where(lt(authRequests.expiresAt, now))
             .returning();
           return result.length;
-        }, this.db);
+        }, dbToUse);
       },
       {
         operationName: "delete expired auth requests",

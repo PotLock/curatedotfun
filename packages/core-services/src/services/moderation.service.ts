@@ -27,7 +27,7 @@ import { createQueue, QUEUE_NAMES } from "@curatedotfun/shared-queue"; // Added
 import { isSuperAdmin } from "../utils/auth";
 import { FeedService } from "./feed.service";
 import { IBaseService } from "./interfaces/base-service.interface";
-import { ProcessorService } from "./processor.service";
+import { ProcessingService } from "./processing.service";
 
 export class ModerationService implements IBaseService {
   public readonly logger: Logger;
@@ -36,7 +36,7 @@ export class ModerationService implements IBaseService {
     private readonly feedRepository: FeedRepository,
     private readonly moderationRepository: ModerationRepository,
     private readonly submissionRepository: SubmissionRepository,
-    private readonly processorService: ProcessorService,
+    private readonly processingService: ProcessingService,
     private readonly feedService: FeedService,
     private readonly superAdminAccounts: string[],
     private readonly db: DB,
@@ -122,7 +122,7 @@ export class ModerationService implements IBaseService {
     payload: CreateModerationRequest,
   ): Promise<void> {
     try {
-      const submission = await this.submissionRepository.getSubmission(
+      const submission = await this.submissionRepository.getRichSubmission(
         payload.submissionId,
       );
       if (!submission) {

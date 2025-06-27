@@ -1,5 +1,7 @@
 import type { FeedConfig } from "@curatedotfun/types";
+import { relations, sql } from "drizzle-orm";
 import {
+  check,
   index,
   jsonb,
   primaryKey,
@@ -9,35 +11,39 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { relations, sql } from "drizzle-orm";
-import { timestamps } from "./common";
-import { z } from "zod";
-import { submissionFeeds } from "./submissions";
-import { moderationHistory } from "./moderation";
-import { users } from "./users";
 import {
   createInsertSchema,
   createSelectSchema,
   createUpdateSchema,
 } from "drizzle-zod";
+import { z } from "zod";
+import { timestamps } from "./common";
+import { moderationHistory } from "./moderation";
+import { processingJobs } from "./processing";
+import { submissionFeeds } from "./submissions";
+import { users } from "./users";
 
 // Feeds Table
 // Stores the entire feed configuration as JSONB
-export const feeds = table("feeds", {
-  id: text("id").primaryKey(), // (hashtag)
-  // Store the entire configuration as JSONB
-  config: jsonb("config").$type<FeedConfig>().notNull(), // This should be FeedConfig
-  // Keep these fields for backward compatibility and quick lookups
-  name: text("name").notNull(),
-  description: text("description"),
-  created_by: text("created_by")
-    // .notNull() // for now
-    .references(() => users.nearAccountId, { onDelete: "cascade" }),
-  admins: jsonb("admins")
-    .$type<string[]>()
-    .default(sql`'[]'::jsonb`),
-  ...timestamps,
-});
+export const feeds = table(
+  "feeds",
+  {
+    id: text("id").primaryKey(), // (hashtag)
+    // Store the entire configuration as JSONB
+    config: jsonb("config").$type<FeedConfig>().notNull(), // This should be FeedConfig
+    // Keep these fields for backward compatibility and quick lookups
+    name: text("name").notNull(),
+    description: text("description"),
+    created_by: text("created_by")
+      // .notNull() // for now
+      .references(() => users.nearAccountId, { onDelete: "cascade" }),
+    admins: jsonb("admins")
+      .$type<string[]>()
+      .default(sql`'[]'::jsonb`),
+    ...timestamps,
+  },
+  () => [check("id_lowercase_check", sql`id = lower(id)`)],
+);
 
 // RELATIONS for feeds table
 export const feedsRelations = relations(feeds, ({ one, many }) => ({
@@ -51,6 +57,9 @@ export const feedsRelations = relations(feeds, ({ one, many }) => ({
   }),
   moderationHistoryEntries: many(moderationHistory, {
     relationName: "ModerationHistoryFeedReference",
+  }),
+  processingJobs: many(processingJobs, {
+    relationName: "FeedProcessingJobs",
   }),
 }));
 
@@ -100,6 +109,10 @@ export const feedPlugins = table(
 );
 
 export const insertFeedSchema = createInsertSchema(feeds, {
+  id: z
+    .string()
+    .min(1)
+    .transform((s) => s.toLowerCase()),
   created_by: z.string().min(1),
   admins: z.array(z.string()).optional(),
   createdAt: z.undefined(),
@@ -114,3 +127,26 @@ export const selectFeedSchema = createSelectSchema(feeds);
 export type InsertFeed = z.infer<typeof insertFeedSchema>;
 export type UpdateFeed = z.infer<typeof updateFeedSchema>;
 export type SelectFeed = z.infer<typeof selectFeedSchema>;
+
+// FeedRecapsState Schemas and Types
+export const insertFeedRecapStateSchema = createInsertSchema(feedRecapsState, {
+  id: z.undefined(),
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
+export const updateFeedRecapStateSchema = createUpdateSchema(feedRecapsState);
+export const selectFeedRecapStateSchema = createSelectSchema(feedRecapsState);
+export type InsertFeedRecapState = z.infer<typeof insertFeedRecapStateSchema>;
+export type UpdateFeedRecapState = z.infer<typeof updateFeedRecapStateSchema>;
+export type SelectFeedRecapState = z.infer<typeof selectFeedRecapStateSchema>;
+
+// FeedPlugins Schemas and Types
+export const insertFeedPluginSchema = createInsertSchema(feedPlugins, {
+  createdAt: z.undefined(),
+  updatedAt: z.undefined(),
+});
+export const updateFeedPluginSchema = createUpdateSchema(feedPlugins);
+export const selectFeedPluginSchema = createSelectSchema(feedPlugins);
+export type InsertFeedPlugin = z.infer<typeof insertFeedPluginSchema>;
+export type UpdateFeedPlugin = z.infer<typeof updateFeedPluginSchema>;
+export type SelectFeedPlugin = z.infer<typeof selectFeedPluginSchema>;

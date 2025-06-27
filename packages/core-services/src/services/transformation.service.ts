@@ -7,8 +7,6 @@ import { sanitizeJson } from "../utils/sanitize";
 import { IBaseService } from "./interfaces/base-service.interface";
 import { PluginService } from "./plugin.service";
 
-export type TransformStage = "global" | "distributor" | "batch";
-
 export class TransformationService implements IBaseService {
   public readonly logger: Logger;
   constructor(
@@ -41,11 +39,7 @@ export class TransformationService implements IBaseService {
   /**
    * Apply a series of transformations to content
    */
-  async applyTransforms(
-    content: any,
-    transforms: TransformConfig[] = [],
-    stage: TransformStage = "global",
-  ) {
+  async applyTransforms(content: unknown, transforms: TransformConfig[] = []) {
     let result = content;
 
     for (let i = 0; i < transforms.length; i++) {
@@ -56,13 +50,13 @@ export class TransformationService implements IBaseService {
           config: transform.config,
         });
 
-        const args: ActionArgs<any, Record<string, unknown>> = {
+        const args: ActionArgs<unknown, Record<string, unknown>> = {
           input: result,
           config: transform.config,
         };
 
-        this.logger.debug(
-          `Applying ${stage} transform #${i + 1} (${transform.plugin})`,
+        this.logger.info(
+          `Applying transform #${i + 1} (${transform.plugin}), args: ${JSON.stringify(args)}`,
         );
         const transformResult = await plugin.transform(args);
 
@@ -79,7 +73,7 @@ export class TransformationService implements IBaseService {
             false, // Not retryable - plugin should be fixed
           );
           logPluginError(pluginError, this.logger, {
-            context: { stage, transformIndex: i },
+            context: { transformIndex: i },
           });
           throw pluginError;
         }
@@ -91,7 +85,7 @@ export class TransformationService implements IBaseService {
       } catch (error) {
         if (error instanceof PluginError) {
           logPluginError(error, this.logger, {
-            context: { stage, transformIndex: i },
+            context: { transformIndex: i },
           });
           throw error;
         }
@@ -107,7 +101,7 @@ export class TransformationService implements IBaseService {
           false, // Not retryable by default
           {
             cause: error instanceof Error ? error : undefined,
-            details: { stage, transformIndex: i },
+            details: { transformIndex: i },
           },
         );
         logPluginError(pluginError, this.logger);

@@ -2,11 +2,17 @@ import type {
   CreateModerationRequest,
   ModerationActionCreatedWrappedResponse,
   ModerationActionType,
+  Submission,
 } from "@curatedotfun/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../contexts/auth-context";
 import { useApiMutation } from "../../hooks/api-client";
 import { toast } from "../../hooks/use-toast";
+
+interface OptimisticUpdateContext {
+  previousSubmission?: Submission;
+  submissionId: string;
+}
 
 const useModerateSubmission = (
   moderationAction: ModerationActionType,
@@ -18,7 +24,8 @@ const useModerateSubmission = (
   const { mutate: actualMutate, ...rest } = useApiMutation<
     ModerationActionCreatedWrappedResponse,
     Error,
-    CreateModerationRequest
+    CreateModerationRequest,
+    OptimisticUpdateContext
   >(
     {
       method: "POST",
@@ -27,6 +34,32 @@ const useModerateSubmission = (
     },
     {
       mutationKey: ["moderate", moderationAction, submissionId],
+      onMutate: async (variables: CreateModerationRequest) => {
+        await queryClient.cancelQueries({
+          queryKey: ["submission", variables.submissionId],
+        });
+
+        const previousSubmission = queryClient.getQueryData<Submission>([
+          "submission",
+          variables.submissionId,
+        ]);
+
+        if (previousSubmission) {
+          queryClient.setQueryData<Submission>(
+            ["submission", variables.submissionId],
+            (oldData) => {
+              if (!oldData) return undefined;
+              return {
+                ...oldData,
+                status:
+                  variables.action === "approve" ? "approved" : "rejected",
+              };
+            },
+          );
+        }
+
+        return { previousSubmission, submissionId: variables.submissionId };
+      },
       onSuccess: (_data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["submissions"] });
         queryClient.invalidateQueries({
@@ -43,7 +76,13 @@ const useModerateSubmission = (
           `Successfully ${variables.action}d submission, invalidated relevant queries.`,
         );
       },
-      onError: (error, variables) => {
+      onError: (error, variables, context) => {
+        if (context?.previousSubmission) {
+          queryClient.setQueryData<Submission>(
+            ["submission", context.submissionId],
+            context.previousSubmission,
+          );
+        }
         toast({
           title: "Error",
           description: `Error ${variables.action === "approve" ? "approving" : "rejecting"} submission.`,

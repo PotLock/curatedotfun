@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 // import { ConnectPlatformDialog } from "../../../../../components/feed/settings/connected/ConnectPlatformDialog";
-import { Button } from "../../../../../components/ui/button";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute(
-  "/_layout/feed/$feedId/settings/connected",
+  "/_layout/feed/$feedId/_tabs/settings/connected",
 )({
   component: ConnectedAccounts,
 });

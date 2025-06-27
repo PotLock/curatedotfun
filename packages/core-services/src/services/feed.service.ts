@@ -12,10 +12,14 @@ import {
   StreamConfig,
 } from "@curatedotfun/types";
 import { Logger } from "pino";
-import { ForbiddenError, NotFoundError } from "@curatedotfun/utils";
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from "@curatedotfun/utils";
 import { isSuperAdmin } from "../utils/auth";
 import { IBaseService } from "./interfaces/base-service.interface";
-import { ProcessorService } from "./processor.service";
+import { ProcessingService } from "./processing.service";
 import { merge } from "lodash";
 
 export type FeedAction = "update" | "delete" | "manage_admins";
@@ -26,7 +30,7 @@ export class FeedService implements IBaseService {
 
   constructor(
     private feedRepository: FeedRepository,
-    private processorService: ProcessorService,
+    private processingService: ProcessingService,
     private db: DB,
     logger: Logger,
     superAdminAccounts: string[],
@@ -52,10 +56,10 @@ export class FeedService implements IBaseService {
       return true;
     }
 
-    const feed = await this.feedRepository.findFeedById(feedId);
+    const feed = await this.feedRepository.findFeedById(feedId.toLowerCase());
     if (!feed) {
       this.logger.warn(
-        { accountId, feedId, action },
+        { accountId, feedId: feedId.toLowerCase(), action },
         "hasPermission check: Feed not found.",
       );
       return false;
@@ -86,6 +90,11 @@ export class FeedService implements IBaseService {
   }
 
   async createFeed(feedConfig: FeedConfig, accountId: string) {
+    const existingFeed = await this.feedRepository.findFeedById(feedConfig.id);
+    if (existingFeed) {
+      throw new ConflictError(`Feed with ID #${feedConfig.id} already exists.`);
+    }
+
     const dbData: InsertFeed = {
       id: feedConfig.id,
       name: feedConfig.name,
@@ -100,9 +109,10 @@ export class FeedService implements IBaseService {
   }
 
   async getFeedById(feedId: string) {
-    const feed = await this.feedRepository.findFeedById(feedId);
+    const lowerCaseFeedId = feedId.toLowerCase();
+    const feed = await this.feedRepository.findFeedById(lowerCaseFeedId);
     if (!feed) {
-      throw new NotFoundError("Feed", feedId);
+      throw new NotFoundError("Feed", lowerCaseFeedId);
     }
     return feed;
   }
@@ -112,7 +122,12 @@ export class FeedService implements IBaseService {
     data: Partial<FeedConfig>,
     accountId: string,
   ) {
-    const hasPermission = await this.hasPermission(accountId, feedId, "update");
+    const lowerCaseFeedId = feedId.toLowerCase();
+    const hasPermission = await this.hasPermission(
+      accountId,
+      lowerCaseFeedId,
+      "update",
+    );
     if (!hasPermission) {
       throw new ForbiddenError(
         "You do not have permission to update this feed.",
@@ -120,7 +135,7 @@ export class FeedService implements IBaseService {
     }
 
     // Fetch the existing feed to merge the config
-    const existingFeed = await this.getFeedById(feedId);
+    const existingFeed = await this.getFeedById(lowerCaseFeedId);
     const existingConfig = existingFeed.config as FeedConfig;
 
     const newConfig: FeedConfig = merge({}, existingConfig, data);
@@ -134,19 +149,24 @@ export class FeedService implements IBaseService {
 
     return this.db.transaction(async (tx) => {
       const updatedFeed = await this.feedRepository.updateFeed(
-        feedId,
+        lowerCaseFeedId,
         dbData,
         tx,
       );
       if (!updatedFeed) {
-        throw new NotFoundError("Feed", feedId);
+        throw new NotFoundError("Feed", lowerCaseFeedId);
       }
       return updatedFeed;
     });
   }
 
   async deleteFeed(feedId: string, accountId: string) {
-    const hasPermission = await this.hasPermission(accountId, feedId, "delete");
+    const lowerCaseFeedId = feedId.toLowerCase();
+    const hasPermission = await this.hasPermission(
+      accountId,
+      lowerCaseFeedId,
+      "delete",
+    );
     if (!hasPermission) {
       throw new ForbiddenError(
         "You do not have permission to delete this feed.",
@@ -154,9 +174,12 @@ export class FeedService implements IBaseService {
     }
 
     return this.db.transaction(async (tx) => {
-      const deletedFeed = await this.feedRepository.deleteFeed(feedId, tx);
+      const deletedFeed = await this.feedRepository.deleteFeed(
+        lowerCaseFeedId,
+        tx,
+      );
       if (!deletedFeed) {
-        throw new NotFoundError("Feed", feedId);
+        throw new NotFoundError("Feed", lowerCaseFeedId);
       }
       return deletedFeed;
     });
@@ -266,8 +289,6 @@ export class FeedService implements IBaseService {
             );
           }
         }
-
-        await this.processorService.process(submission, streamConfig);
         processedCount++;
       } catch (error) {
         this.logger.error(
