@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import type {
   CanModerateResponse,
   CreateFeedRequest,
@@ -13,6 +14,7 @@ import {
   useApiMutation,
   useApiQuery,
 } from "../../hooks/api-client";
+import { useUserFeeds } from "./users";
 import type {
   PaginatedResponse,
   SortOrderType,
@@ -42,23 +44,14 @@ export function useAllFeeds() {
   );
 }
 
-// Hook to get feeds created by the current user
 export function useMyCreatedFeeds() {
   const { isSignedIn, currentAccountId } = useAuth();
-  return useApiQuery<FeedsWrappedResponse, Error, FeedResponse[]>(
-    ["my-created-feeds", currentAccountId],
-    `/feeds`,
-    {
-      enabled: isSignedIn && !!currentAccountId,
-      select: (data) => {
-        const feeds = data.data ?? [];
-        return feeds.filter((feed) => feed.created_by === currentAccountId);
-      },
-    },
-  );
+  return useUserFeeds(isSignedIn ? currentAccountId : null);
 }
 
 export function useCreateFeed() {
+  const queryClient = useQueryClient();
+  const { currentAccountId } = useAuth();
   return useApiMutation<FeedResponse, Error, CreateFeedRequest>(
     {
       method: "POST",
@@ -66,12 +59,19 @@ export function useCreateFeed() {
       message: "createFeed",
     },
     {
-      // onSuccess logic can be added here if needed, using queryClient from useQueryClient()
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["user-feeds", currentAccountId],
+        });
+        queryClient.invalidateQueries({ queryKey: ["feeds"] });
+      },
     },
   );
 }
 
 export function useUpdateFeed(feedId: string) {
+  const queryClient = useQueryClient();
+  const { currentAccountId } = useAuth();
   return useApiMutation<FeedResponse, Error, UpdateFeedRequest>(
     {
       method: "PUT",
@@ -79,7 +79,13 @@ export function useUpdateFeed(feedId: string) {
       message: "updateFeed",
     },
     {
-      // onSuccess logic
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["feed-details", feedId] });
+        queryClient.invalidateQueries({
+          queryKey: ["user-feeds", currentAccountId],
+        });
+        queryClient.invalidateQueries({ queryKey: ["feeds"] });
+      },
     },
   );
 }
@@ -89,6 +95,8 @@ interface DeleteFeedResponse {
   message?: string;
 }
 export function useDeleteFeed(feedId: string) {
+  const queryClient = useQueryClient();
+  const { currentAccountId } = useAuth();
   return useApiMutation<DeleteFeedResponse, Error, void>(
     {
       method: "DELETE",
@@ -96,7 +104,13 @@ export function useDeleteFeed(feedId: string) {
       message: "deleteFeed",
     },
     {
-      // onSuccess logic
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["user-feeds", currentAccountId],
+        });
+        queryClient.invalidateQueries({ queryKey: ["feeds"] });
+        queryClient.invalidateQueries({ queryKey: ["feed-details", feedId] });
+      },
     },
   );
 }
