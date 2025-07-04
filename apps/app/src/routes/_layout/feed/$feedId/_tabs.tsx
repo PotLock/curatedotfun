@@ -64,16 +64,16 @@ export const Route = createFileRoute("/_layout/feed/$feedId/_tabs")({
 function FeedTabsAreaLayout() {
   const { feedId } = useParams({ from: "/_layout/feed/$feedId/_tabs" });
   const location = useLocation();
-  
+
   // Find the current active tab based on the current pathname
-  const currentTab = TABS.find(tab => 
-    location.pathname.includes(tab.to.replace("$feedId", feedId))
+  const currentTab = TABS.find((tab) =>
+    location.pathname.includes(tab.to.replace("$feedId", feedId)),
   );
   const activeValue = currentTab?.label || TABS[0]?.label;
 
   return (
     <div>
-      <div className="overflow-x-auto overflow-y-hidden max-w-[380px] md:max-w-full">
+      <div className="overflow-x-auto overflow-y-hidden max-w-fit md:max-w-full">
         <Tabs value={activeValue}>
           <TabsList className="w-full">
             {TABS.map(({ to, label, icon: Icon }) => (
