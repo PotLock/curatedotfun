@@ -21,35 +21,40 @@ interface RssFeedData {
 
 async function fetchRssFeed(serviceUrl: string): Promise<RssFeedData> {
   const response = await fetch(serviceUrl);
-  
+
   if (!response.ok) {
     throw new Error(`Failed to fetch RSS feed: ${response.status}`);
   }
-  
+
   const xmlText = await response.text();
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-  
+
   const channel = xmlDoc.querySelector("channel");
   if (!channel) {
     throw new Error("Invalid RSS feed format");
   }
-  
+
   const title = channel.querySelector("title")?.textContent || "";
   const description = channel.querySelector("description")?.textContent || "";
   const link = channel.querySelector("link")?.textContent || "";
-  
+
   const items = Array.from(channel.querySelectorAll("item")).map((item) => {
     const link = item.querySelector("link")?.textContent || "";
     const description = item.querySelector("description")?.textContent || "";
-    
+
     // Extract image from various sources
-    let image = item.querySelector("enclosure[type^='image']")?.getAttribute("url") || "";
+    let image =
+      item.querySelector("enclosure[type^='image']")?.getAttribute("url") || "";
     if (!image) {
-      image = item.querySelector("media\\:content[type^='image']")?.getAttribute("url") || "";
+      image =
+        item
+          .querySelector("media\\:content[type^='image']")
+          ?.getAttribute("url") || "";
     }
     if (!image) {
-      image = item.querySelector("media\\:thumbnail")?.getAttribute("url") || "";
+      image =
+        item.querySelector("media\\:thumbnail")?.getAttribute("url") || "";
     }
     if (!image && description) {
       const imgMatch = description.match(/<img[^>]+src="([^"]+)"/);
@@ -57,7 +62,7 @@ async function fetchRssFeed(serviceUrl: string): Promise<RssFeedData> {
         image = imgMatch[1];
       }
     }
-    
+
     // Determine platform from link
     let platform = "other";
     if (link.includes("twitter.com") || link.includes("x.com")) {
@@ -69,12 +74,12 @@ async function fetchRssFeed(serviceUrl: string): Promise<RssFeedData> {
     } else if (link.includes("reddit.com")) {
       platform = "reddit";
     }
-    
+
     // Extract categories
-    const categories = Array.from(item.querySelectorAll("category")).map(cat => 
-      cat.textContent?.trim() || ""
-    ).filter(Boolean);
-    
+    const categories = Array.from(item.querySelectorAll("category"))
+      .map((cat) => cat.textContent?.trim() || "")
+      .filter(Boolean);
+
     return {
       title: item.querySelector("title")?.textContent || "",
       link,
@@ -86,7 +91,7 @@ async function fetchRssFeed(serviceUrl: string): Promise<RssFeedData> {
       categories,
     };
   });
-  
+
   return { title, description, link, items };
 }
 
@@ -118,11 +123,13 @@ export function useRssFeed(feedId: string) {
   return {
     hasRssFeed,
     rssData: rssData?.items || [],
-    feedInfo: rssData ? {
-      title: rssData.title,
-      description: rssData.description,
-      link: rssData.link,
-    } : null,
+    feedInfo: rssData
+      ? {
+          title: rssData.title,
+          description: rssData.description,
+          link: rssData.link,
+        }
+      : null,
     isLoading,
     isError,
     error: error?.message,

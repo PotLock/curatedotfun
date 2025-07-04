@@ -27,7 +27,7 @@ export function FeedCard({ item, feedName, feedId, feedImage }: FeedCardProps) {
   };
 
   return (
-    <Card 
+    <Card
       className="cursor-pointer hover:shadow-md transition-shadow h-full flex flex-col"
       onClick={handleClick}
     >
