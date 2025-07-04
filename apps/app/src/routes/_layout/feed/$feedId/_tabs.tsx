@@ -3,8 +3,10 @@ import {
   Outlet,
   createFileRoute,
   useParams,
+  useLocation,
 } from "@tanstack/react-router";
-import { ListFilter, type LucideIcon, Cpu } from "lucide-react";
+import { ListFilter, type LucideIcon, Cpu, Newspaper } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/profile-tabs";
 
 interface TabDefinition {
   to: string;
@@ -13,6 +15,11 @@ interface TabDefinition {
 }
 
 const TABS: TabDefinition[] = [
+  {
+    to: "/feed/$feedId/content",
+    label: "Content",
+    icon: Newspaper,
+  },
   {
     to: "/feed/$feedId/curation",
     label: "Curation",
@@ -56,27 +63,33 @@ export const Route = createFileRoute("/_layout/feed/$feedId/_tabs")({
 
 function FeedTabsAreaLayout() {
   const { feedId } = useParams({ from: "/_layout/feed/$feedId/_tabs" });
+  const location = useLocation();
+  
+  // Find the current active tab based on the current pathname
+  const currentTab = TABS.find(tab => 
+    location.pathname.includes(tab.to.replace("$feedId", feedId))
+  );
+  const activeValue = currentTab?.label || TABS[0]?.label;
 
   return (
     <div>
-      <div className="overflow-x-auto overflow-y-hidden max-w-[380px] md:max-w-full border-b border-gray-200">
-        <div className="flex space-x-1">
-          {TABS.map(({ to, label, icon: Icon }) => (
-            <Link
-              key={label}
-              to={to}
-              params={{ feedId }}
-              className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap"
-              activeProps={{
-                className:
-                  "flex items-center space-x-2 px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-500 -mb-px",
-              }}
-            >
-              <Icon strokeWidth={1} size={20} />
-              <span>{label}</span>
-            </Link>
-          ))}
-        </div>
+      <div className="overflow-x-auto overflow-y-hidden max-w-[380px] md:max-w-full">
+        <Tabs value={activeValue}>
+          <TabsList className="w-full">
+            {TABS.map(({ to, label, icon: Icon }) => (
+              <TabsTrigger key={label} value={label} asChild>
+                <Link
+                  to={to}
+                  params={{ feedId }}
+                  className="flex items-center gap-2"
+                >
+                  <Icon strokeWidth={1} size={20} />
+                  <span>{label}</span>
+                </Link>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
       <div className="mt-4">
         <Outlet />
