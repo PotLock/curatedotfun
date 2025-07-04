@@ -40,6 +40,7 @@ import { Route as LayoutFeedFeedIdTabsProcessingRouteImport } from './routes/_la
 import { Route as LayoutFeedFeedIdTabsPointsRouteImport } from './routes/_layout/feed/$feedId/_tabs/points'
 import { Route as LayoutFeedFeedIdTabsMembersRouteImport } from './routes/_layout/feed/$feedId/_tabs/members'
 import { Route as LayoutFeedFeedIdTabsCurationRouteImport } from './routes/_layout/feed/$feedId/_tabs/curation'
+import { Route as LayoutFeedFeedIdTabsContentRouteImport } from './routes/_layout/feed/$feedId/_tabs/content'
 import { Route as LayoutFeedFeedIdTabsSettingsIndexRouteImport } from './routes/_layout/feed/$feedId/_tabs/settings/index'
 import { Route as LayoutProfileTabsSettingsTabsPreferencesRouteImport } from './routes/_layout/profile/_tabs/settings/_tabs/preferences'
 import { Route as LayoutProfileTabsSettingsTabsNotificationsRouteImport } from './routes/_layout/profile/_tabs/settings/_tabs/notifications'
@@ -210,6 +211,12 @@ const LayoutFeedFeedIdTabsCurationRoute =
     path: '/curation',
     getParentRoute: () => LayoutFeedFeedIdTabsRoute,
   } as any)
+const LayoutFeedFeedIdTabsContentRoute =
+  LayoutFeedFeedIdTabsContentRouteImport.update({
+    id: '/content',
+    path: '/content',
+    getParentRoute: () => LayoutFeedFeedIdTabsRoute,
+  } as any)
 const LayoutFeedFeedIdTabsSettingsIndexRoute =
   LayoutFeedFeedIdTabsSettingsIndexRouteImport.update({
     id: '/settings/',
@@ -259,6 +266,7 @@ export interface FileRoutesByFullPath {
   '/profile/my-feeds': typeof LayoutProfileTabsMyFeedsRoute
   '/profile/overview': typeof LayoutProfileTabsOverviewRoute
   '/create/feed/': typeof LayoutCreateFeedIndexRoute
+  '/feed/$feedId/content': typeof LayoutFeedFeedIdTabsContentRoute
   '/feed/$feedId/curation': typeof LayoutFeedFeedIdTabsCurationRoute
   '/feed/$feedId/members': typeof LayoutFeedFeedIdTabsMembersRoute
   '/feed/$feedId/points': typeof LayoutFeedFeedIdTabsPointsRoute
@@ -290,6 +298,7 @@ export interface FileRoutesByTo {
   '/profile/my-feeds': typeof LayoutProfileTabsMyFeedsRoute
   '/profile/overview': typeof LayoutProfileTabsOverviewRoute
   '/create/feed': typeof LayoutCreateFeedIndexRoute
+  '/feed/$feedId/content': typeof LayoutFeedFeedIdTabsContentRoute
   '/feed/$feedId/curation': typeof LayoutFeedFeedIdTabsCurationRoute
   '/feed/$feedId/members': typeof LayoutFeedFeedIdTabsMembersRoute
   '/feed/$feedId/points': typeof LayoutFeedFeedIdTabsPointsRoute
@@ -325,6 +334,7 @@ export interface FileRoutesById {
   '/_layout/profile/_tabs/my-feeds': typeof LayoutProfileTabsMyFeedsRoute
   '/_layout/profile/_tabs/overview': typeof LayoutProfileTabsOverviewRoute
   '/_layout/create/feed/': typeof LayoutCreateFeedIndexRoute
+  '/_layout/feed/$feedId/_tabs/content': typeof LayoutFeedFeedIdTabsContentRoute
   '/_layout/feed/$feedId/_tabs/curation': typeof LayoutFeedFeedIdTabsCurationRoute
   '/_layout/feed/$feedId/_tabs/members': typeof LayoutFeedFeedIdTabsMembersRoute
   '/_layout/feed/$feedId/_tabs/points': typeof LayoutFeedFeedIdTabsPointsRoute
@@ -361,6 +371,7 @@ export interface FileRouteTypes {
     | '/profile/my-feeds'
     | '/profile/overview'
     | '/create/feed/'
+    | '/feed/$feedId/content'
     | '/feed/$feedId/curation'
     | '/feed/$feedId/members'
     | '/feed/$feedId/points'
@@ -392,6 +403,7 @@ export interface FileRouteTypes {
     | '/profile/my-feeds'
     | '/profile/overview'
     | '/create/feed'
+    | '/feed/$feedId/content'
     | '/feed/$feedId/curation'
     | '/feed/$feedId/members'
     | '/feed/$feedId/points'
@@ -426,6 +438,7 @@ export interface FileRouteTypes {
     | '/_layout/profile/_tabs/my-feeds'
     | '/_layout/profile/_tabs/overview'
     | '/_layout/create/feed/'
+    | '/_layout/feed/$feedId/_tabs/content'
     | '/_layout/feed/$feedId/_tabs/curation'
     | '/_layout/feed/$feedId/_tabs/members'
     | '/_layout/feed/$feedId/_tabs/points'
@@ -659,6 +672,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutFeedFeedIdTabsCurationRouteImport
       parentRoute: typeof LayoutFeedFeedIdTabsRoute
     }
+    '/_layout/feed/$feedId/_tabs/content': {
+      id: '/_layout/feed/$feedId/_tabs/content'
+      path: '/content'
+      fullPath: '/feed/$feedId/content'
+      preLoaderRoute: typeof LayoutFeedFeedIdTabsContentRouteImport
+      parentRoute: typeof LayoutFeedFeedIdTabsRoute
+    }
     '/_layout/feed/$feedId/_tabs/settings/': {
       id: '/_layout/feed/$feedId/_tabs/settings/'
       path: '/settings'
@@ -782,6 +802,7 @@ const LayoutCreateFeedRouteWithChildren =
   LayoutCreateFeedRoute._addFileChildren(LayoutCreateFeedRouteChildren)
 
 interface LayoutFeedFeedIdTabsRouteChildren {
+  LayoutFeedFeedIdTabsContentRoute: typeof LayoutFeedFeedIdTabsContentRoute
   LayoutFeedFeedIdTabsCurationRoute: typeof LayoutFeedFeedIdTabsCurationRoute
   LayoutFeedFeedIdTabsMembersRoute: typeof LayoutFeedFeedIdTabsMembersRoute
   LayoutFeedFeedIdTabsPointsRoute: typeof LayoutFeedFeedIdTabsPointsRoute
@@ -794,6 +815,7 @@ interface LayoutFeedFeedIdTabsRouteChildren {
 }
 
 const LayoutFeedFeedIdTabsRouteChildren: LayoutFeedFeedIdTabsRouteChildren = {
+  LayoutFeedFeedIdTabsContentRoute: LayoutFeedFeedIdTabsContentRoute,
   LayoutFeedFeedIdTabsCurationRoute: LayoutFeedFeedIdTabsCurationRoute,
   LayoutFeedFeedIdTabsMembersRoute: LayoutFeedFeedIdTabsMembersRoute,
   LayoutFeedFeedIdTabsPointsRoute: LayoutFeedFeedIdTabsPointsRoute,
