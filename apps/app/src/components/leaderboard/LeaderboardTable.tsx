@@ -84,7 +84,7 @@ export function LeaderboardTable({
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className="py-2 px-2 align-middle"
+                        className="py-2 px-2 align-baseline"
                       >
                         {flexRender(
                           cell.column.columnDef.cell,

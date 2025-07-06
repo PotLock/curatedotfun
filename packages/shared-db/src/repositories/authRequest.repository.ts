@@ -73,6 +73,32 @@ export class AuthRequestRepository {
    * @param txDb Optional transaction DB instance
    * @returns True if the auth request was deleted, false otherwise
    */
+  async deleteByAccountId(accountId: string, txDb?: DB): Promise<boolean> {
+    return withErrorHandling(
+      async () => {
+        const dbToUse = txDb || this.db;
+        return executeWithRetry(async (dbInstance) => {
+          const result = await dbInstance
+            .delete(authRequests)
+            .where(eq(authRequests.accountId, accountId))
+            .returning();
+          return result.length > 0;
+        }, dbToUse);
+      },
+      {
+        operationName: "delete auth request by account id",
+        additionalContext: { accountId },
+      },
+      false,
+    );
+  }
+
+  /**
+   * Delete an auth request by ID
+   * @param id The auth request ID
+   * @param txDb Optional transaction DB instance
+   * @returns True if the auth request was deleted, false otherwise
+   */
   async deleteById(id: number, txDb?: DB): Promise<boolean> {
     return withErrorHandling(
       async () => {

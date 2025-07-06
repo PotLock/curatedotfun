@@ -37,6 +37,9 @@ export class AuthService {
     const { accountId } = payload;
     await this.userService.ensureUserProfile(accountId);
 
+    // Invalidate any existing auth requests for this account
+    await this.authRequestRepository.deleteByAccountId(accountId);
+
     const nonce = randomBytes(32).toString("hex");
 
     const expiresAt = new Date(Date.now() + AUTH_REQUEST_EXPIRY_MS);

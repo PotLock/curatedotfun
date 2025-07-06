@@ -1,11 +1,14 @@
 import {
+  FeedRepository,
   Json,
+  ProcessingPlan,
+  ProcessingPlanStep,
   ProcessingRepository,
-  ProcessingStepStage,
   SelectFeed,
   SelectProcessingJob,
   SelectProcessingStep,
   StepError,
+  SubmissionRepository,
 } from "@curatedotfun/shared-db";
 import { DistributorConfig, TransformConfig } from "@curatedotfun/types";
 import {
@@ -29,6 +32,7 @@ interface ProcessOptions {
   feedId?: string;
   idempotencyKey?: string;
   retryOfJobId?: string;
+  plan?: ProcessingPlan;
 }
 
 export class ProcessingService implements IBaseService {
@@ -38,6 +42,8 @@ export class ProcessingService implements IBaseService {
     private transformationService: TransformationService,
     private distributionService: DistributionService,
     private processingRepository: ProcessingRepository,
+    private feedRepository: FeedRepository,
+    private submissionRepository: SubmissionRepository,
     logger: Logger,
   ) {
     this.logger = logger.child({ service: ProcessingService.name });
@@ -58,74 +64,44 @@ export class ProcessingService implements IBaseService {
       );
     }
 
+    const plan = options.plan ?? this._buildPlan(config);
+
     const job = await this.processingRepository.createJob({
       submissionId,
       feedId,
       idempotencyKey,
+      plan,
       status: "processing",
       startedAt: new Date(),
       retryOfJobId,
     });
     this.logger.info(
-      { jobId: job.id, submissionId },
+      { jobId: job.id, submissionId, hasPlan: !!plan },
       "Processing job started.",
     );
 
     let currentContent: unknown = content;
-    const distributorErrors: {
-      distributor: DistributorConfig;
-      error: Error;
-    }[] = [];
 
     try {
-      if (config.transform?.length) {
-        currentContent = await this.executeTransforms(
-          job.id,
-          currentContent,
-          config.transform,
-          "global",
-          1,
-        );
-      }
+      for (let i = 0; i < plan.length; i++) {
+        const planStep = plan[i];
+        const stepOrder = i + 1;
 
-      if (!config.distribute?.length) {
-        throw new ProcessorError(
-          "no_distributors",
-          "No distributors configured.",
-        );
-      }
-
-      let stepOrder = (config.transform?.length || 0) + 1;
-      for (const distributor of config.distribute) {
-        try {
-          await this.processDistributor(
+        if (planStep.type === "transformation") {
+          currentContent = await this.executeTransform(
             job.id,
             currentContent,
-            distributor,
+            planStep,
             stepOrder,
           );
-        } catch (error) {
-          distributorErrors.push({
-            distributor,
-            error: error instanceof Error ? error : new Error(String(error)),
-          });
-          this.logger.error(
-            {
-              jobId: job.id,
-              plugin: distributor.plugin,
-              error,
-            },
-            "Distributor failed.",
+        } else if (planStep.type === "distribution") {
+          await this.executeDistribution(
+            job.id,
+            currentContent,
+            planStep,
+            stepOrder,
           );
         }
-        stepOrder += (distributor.transform?.length || 0) + 1;
-      }
-
-      if (distributorErrors.length === config.distribute.length) {
-        throw new ProcessorError(
-          "all_distributors_failed",
-          "All distributors failed to process.",
-        );
       }
 
       await this.processingRepository.updateJob(job.id, {
@@ -140,97 +116,61 @@ export class ProcessingService implements IBaseService {
     return job;
   }
 
-  private async processDistributor(
+  private async executeTransform(
     jobId: string,
     input: unknown,
-    distributor: DistributorConfig,
-    startingStepOrder: number,
-  ) {
-    let distributorContent = input;
-    if (distributor.transform?.length) {
-      distributorContent = await this.executeTransforms(
-        jobId,
-        input,
-        distributor.transform,
-        "distributor",
-        startingStepOrder,
-      );
-    }
-
-    const distributionStepOrder =
-      startingStepOrder + (distributor.transform?.length || 0);
-    await this.executeDistribution(
-      jobId,
-      distributorContent,
-      distributor,
-      distributionStepOrder,
-    );
-  }
-
-  private async executeTransforms(
-    jobId: string,
-    input: unknown,
-    transforms: TransformConfig[],
-    stage: ProcessingStepStage,
-    startingStepOrder: number,
+    planStep: ProcessingPlanStep,
+    stepOrder: number,
   ): Promise<unknown> {
-    let currentContent = input;
-    let stepOrder = startingStepOrder;
+    const step = await this.processingRepository.createStep({
+      jobId,
+      stepOrder,
+      type: "transformation",
+      stage: planStep.stage,
+      pluginName: planStep.plugin,
+      stepName: planStep.plugin,
+      config: planStep.config as Json,
+      status: "processing",
+      input: input as Json,
+      startedAt: new Date(),
+    });
 
-    for (const transform of transforms) {
-      const step = await this.processingRepository.createStep({
-        jobId,
-        stepOrder,
-        type: "transformation",
-        stage,
-        pluginName: transform.plugin,
-        stepName: transform.plugin,
-        config: transform.config as Json,
-        status: "processing",
-        input: currentContent as Json,
-        startedAt: new Date(),
+    try {
+      const output = await this.transformationService.applyTransforms(input, [
+        planStep as TransformConfig,
+      ]);
+      await this.processingRepository.updateStep(step.id, {
+        status: "success",
+        output: output as Json,
+        completedAt: new Date(),
       });
-
-      try {
-        const output = await this.transformationService.applyTransforms(
-          currentContent,
-          [transform],
-        );
-        await this.processingRepository.updateStep(step.id, {
-          status: "success",
-          output: output as Json,
-          completedAt: new Date(),
-        });
-        currentContent = output;
-      } catch (error) {
-        const stepError: StepError = {
-          message: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined,
-          stepName:
-            error instanceof PluginError
-              ? error.context.pluginName
-              : transform.plugin,
-        };
-        await this.processingRepository.updateStep(step.id, {
-          status: "failed",
-          error: stepError as Json,
-          completedAt: new Date(),
-        });
-        this.logger.error(
-          { jobId, stepId: step.id, plugin: transform.plugin, error },
-          "Transformation step failed. Halting processing for this job.",
-        );
-        throw error;
-      }
-      stepOrder++;
+      return output;
+    } catch (error) {
+      const stepError: StepError = {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        stepName:
+          error instanceof PluginError
+            ? error.context.pluginName
+            : planStep.plugin,
+      };
+      await this.processingRepository.updateStep(step.id, {
+        status: "failed",
+        error: stepError as Json,
+        completedAt: new Date(),
+      });
+      this.logger.error(
+        { jobId, stepId: step.id, plugin: planStep.plugin, error },
+        "Transformation step failed. Halting processing for this job.",
+      );
+      throw error;
     }
-    return currentContent;
   }
 
   private async executeDistribution(
     jobId: string,
     input: unknown,
-    distributor: DistributorConfig,
+    planStep: ProcessingPlanStep,
     stepOrder: number,
   ) {
     const step = await this.processingRepository.createStep({
@@ -238,9 +178,9 @@ export class ProcessingService implements IBaseService {
       stepOrder,
       type: "distribution",
       stage: "distributor",
-      pluginName: distributor.plugin,
-      stepName: distributor.plugin,
-      config: distributor.config as Json,
+      pluginName: planStep.plugin,
+      stepName: planStep.plugin,
+      config: planStep.config as Json,
       status: "processing",
       input: input as Json,
       startedAt: new Date(),
@@ -248,7 +188,7 @@ export class ProcessingService implements IBaseService {
 
     try {
       const output = await this.distributionService.distributeContent(
-        distributor,
+        planStep as DistributorConfig,
         input,
       );
       await this.processingRepository.updateStep(step.id, {
@@ -260,7 +200,7 @@ export class ProcessingService implements IBaseService {
       const stepError: StepError = {
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
-        stepName: distributor.plugin,
+        stepName: planStep.plugin,
       };
       await this.processingRepository.updateStep(step.id, {
         status: "failed",
@@ -305,72 +245,164 @@ export class ProcessingService implements IBaseService {
     stepId: string,
     feed: SelectFeed & { config: { outputs: { stream: ProcessConfig } } },
   ): Promise<SelectProcessingJob> {
-    const step = await this.processingRepository.getStepById(stepId);
-    if (!step) {
+    const stepToRetry = await this.processingRepository.getStepById(stepId);
+    if (!stepToRetry) {
       throw new NotFoundError("ProcessingStep", stepId);
     }
 
-    if (step.status !== "failed") {
+    if (!["failed", "success"].includes(stepToRetry.status)) {
       throw new ProcessorError(
-        "step_not_failed",
-        "Only failed steps can be retried.",
+        "step_not_retryable",
+        "Only failed or successful steps can be retried.",
       );
     }
 
-    const originalJob = await this.processingRepository.getJobById(step.jobId);
+    const originalJob = await this.processingRepository.getJobById(
+      stepToRetry.jobId,
+    );
     if (!originalJob) {
-      throw new NotFoundError("ProcessingJob", step.jobId);
+      throw new NotFoundError("ProcessingJob", stepToRetry.jobId);
+    }
+    if (!originalJob.plan) {
+      throw new ProcessorError(
+        "missing_plan",
+        "Cannot retry a job that has no processing plan.",
+      );
     }
 
-    const partialConfig = this.reconstructConfigFromStep(
-      feed.config.outputs.stream,
-      step,
+    const plan = originalJob.plan as ProcessingPlan;
+    const stepIndex = stepToRetry.stepOrder - 1;
+
+    if (stepIndex < 0 || stepIndex >= plan.length) {
+      throw new ProcessorError(
+        "invalid_step_index",
+        "Step to retry is out of bounds of the processing plan.",
+      );
+    }
+
+    const partialPlan = plan.slice(stepIndex);
+    const content = stepToRetry.input;
+
+    return this.process(
+      content,
+      {},
+      {
+        submissionId: originalJob.submissionId,
+        feedId: originalJob.feedId,
+        retryOfJobId: originalJob.id,
+        plan: partialPlan,
+      },
     );
+  }
 
-    const content = step.input;
+  private _buildPlan(config: ProcessConfig): ProcessingPlan {
+    const plan: ProcessingPlan = [];
 
-    const newJob = await this.process(content, partialConfig, {
+    // Add global transforms
+    config.transform?.forEach((t) => {
+      plan.push({
+        type: "transformation",
+        stage: "global",
+        plugin: t.plugin,
+        config: t.config,
+      });
+    });
+
+    // Add distributor transforms and distribution steps
+    config.distribute?.forEach((d) => {
+      d.transform?.forEach((t) => {
+        plan.push({
+          type: "transformation",
+          stage: "distributor",
+          plugin: t.plugin,
+          config: t.config,
+          distributorPlugin: d.plugin,
+        });
+      });
+      plan.push({
+        type: "distribution",
+        stage: "distributor",
+        plugin: d.plugin,
+        config: d.config,
+      });
+    });
+
+    return plan;
+  }
+
+  async reprocessWithLatestConfig(jobId: string): Promise<SelectProcessingJob> {
+    const originalJob = await this.processingRepository.getJobById(jobId);
+    if (!originalJob) {
+      throw new NotFoundError("ProcessingJob", jobId);
+    }
+
+    const submission = await this.submissionRepository.getSubmission(
+      originalJob.submissionId,
+    );
+    if (!submission) {
+      throw new NotFoundError("Submission", originalJob.submissionId);
+    }
+
+    const feed = await this.feedRepository.findFeedById(originalJob.feedId);
+    if (!feed?.config?.outputs?.stream) {
+      throw new ProcessorError(
+        "missing_config",
+        `Feed ${originalJob.feedId} is missing a stream config.`,
+      );
+    }
+
+    const newConfig = feed.config.outputs.stream;
+    const content = submission.content;
+
+    return this.process(content, newConfig, {
       submissionId: originalJob.submissionId,
       feedId: originalJob.feedId,
       retryOfJobId: originalJob.id,
     });
-
-    return newJob;
   }
 
-  private reconstructConfigFromStep(
-    fullConfig: ProcessConfig,
-    failedStep: SelectProcessingStep,
-  ): ProcessConfig {
-    const newConfig: ProcessConfig = {
-      transform: [],
-      distribute: [],
-    };
-
-    if (failedStep.stage === "global") {
-      // If a global transform fails, we need to restart the whole process
-      return fullConfig;
+  async tweakAndReprocessStep(
+    stepId: string,
+    newInput: string,
+  ): Promise<SelectProcessingJob> {
+    const stepToTweak = await this.processingRepository.getStepById(stepId);
+    if (!stepToTweak) {
+      throw new NotFoundError("ProcessingStep", stepId);
     }
 
-    if (failedStep.stage === "distributor") {
-      const distributorIndex = fullConfig.distribute?.findIndex(
-        (d) => d.plugin === failedStep.stepName,
+    const originalJob = await this.processingRepository.getJobById(
+      stepToTweak.jobId,
+    );
+    if (!originalJob?.plan) {
+      throw new ProcessorError(
+        "missing_plan",
+        "Cannot tweak a step from a job that has no processing plan.",
       );
-
-      if (distributorIndex !== undefined && distributorIndex > -1) {
-        // If a distributor's transform failed, we restart that distributor
-        if (failedStep.type === "transformation") {
-          const distributorConfig = fullConfig.distribute?.[distributorIndex];
-          if (distributorConfig) {
-            newConfig.distribute?.push(distributorConfig);
-          }
-        } else {
-          // If a distribution step failed, we restart from that distributor
-          newConfig.distribute = fullConfig.distribute?.slice(distributorIndex);
-        }
-      }
     }
 
-    return newConfig;
+    let parsedInput: unknown;
+    try {
+      parsedInput = JSON.parse(newInput);
+    } catch (error) {
+      throw new ProcessorError(
+        "invalid_json_input",
+        "The provided input string is not valid JSON.",
+      );
+    }
+
+    const plan = originalJob.plan as ProcessingPlan;
+    const stepIndex = stepToTweak.stepOrder - 1;
+    const partialPlan = plan.slice(stepIndex);
+
+    return this.process(
+      parsedInput,
+      {},
+      {
+        submissionId: originalJob.submissionId,
+        feedId: originalJob.feedId,
+        retryOfJobId: originalJob.id,
+        plan: partialPlan,
+      },
+    );
   }
 }
