@@ -16,6 +16,7 @@ import {
   PluginError,
   ProcessorError,
 } from "@curatedotfun/utils";
+import { randomUUID } from "crypto";
 import { Logger } from "pino";
 import { DistributionService } from "./distribution.service";
 import { IBaseService } from "./interfaces/base-service.interface";
@@ -53,7 +54,8 @@ export class ProcessingService implements IBaseService {
     config: ProcessConfig,
     options: ProcessOptions,
   ): Promise<SelectProcessingJob> {
-    const { submissionId, feedId, idempotencyKey, retryOfJobId } = options;
+    const { submissionId, feedId, retryOfJobId } = options;
+    const idempotencyKey = options.idempotencyKey ?? randomUUID();
 
     if (!submissionId || !feedId) {
       throw new ProcessorError(
