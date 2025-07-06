@@ -98,11 +98,9 @@ async function fetchRssFeed(serviceUrl: string): Promise<RssFeedData> {
 export function useRssFeed(feedId: string) {
   const { data: feedData } = useFeed(feedId);
 
-  const rssFeed =
-    feedData &&
-    feedData.config.outputs.stream?.distribute?.find(
-      (distribute) => distribute.plugin === "@curatedotfun/rss",
-    );
+  const rssFeed = feedData?.config.outputs.stream?.distribute?.find(
+    (distribute) => distribute.plugin === "@curatedotfun/rss",
+  );
 
   const hasRssFeed = Boolean(rssFeed);
   const serviceUrl = rssFeed?.config?.serviceUrl;
