@@ -47,7 +47,7 @@ export function AuthProvider({
     near.authStatus() === "SignedIn",
   );
   const [isAuthorized, setIsAuthorized] = useState<boolean>(
-    () => sessionStorage.getItem("isAuthorized") === "true",
+    () => localStorage.getItem("isAuthorized") === "true",
   );
   const [nonce, setNonce] = useState<string | null>(null);
   const [recipient, setRecipient] = useState<string | null>(null);
@@ -55,9 +55,9 @@ export function AuthProvider({
 
   useEffect(() => {
     if (isAuthorized) {
-      sessionStorage.setItem("isAuthorized", "true");
+      localStorage.setItem("isAuthorized", "true");
     } else {
-      sessionStorage.removeItem("isAuthorized");
+      localStorage.removeItem("isAuthorized");
     }
   }, [isAuthorized]);
 
@@ -95,29 +95,10 @@ export function AuthProvider({
   }, []);
 
   useEffect(() => {
-    const handleAccountChange = async (newAccountId: string | null) => {
-      if (newAccountId === currentAccountId) {
-        return;
-      }
-
-      setCurrentAccountId(newAccountId);
-      setIsSignedIn(!!newAccountId);
-
-      if (newAccountId) {
-        toast({
-          title: "Wallet Connected",
-          description: `Connected as: ${newAccountId}`,
-          variant: "success",
-          duration: 1000,
-        });
-        await Promise.all([checkAuthorization(), initiateLogin(newAccountId)]);
-      } else {
-        toast({
-          title: "Wallet Disconnected",
-          description: "You have been signed out successfully.",
-          variant: "success",
-          duration: 1000,
-        });
+    const handleAccountChange = (newAccountId: string | null) => {
+      if (newAccountId !== currentAccountId) {
+        setCurrentAccountId(newAccountId);
+        setIsSignedIn(!!newAccountId);
       }
     };
 
@@ -132,7 +113,27 @@ export function AuthProvider({
     return () => {
       near.event.offAccount(accountListener);
     };
-  }, [checkAuthorization, initiateLogin]);
+  }, [currentAccountId]);
+
+  useEffect(() => {
+    if (currentAccountId) {
+      toast({
+        title: "Wallet Connected",
+        description: `Connected as: ${currentAccountId}`,
+        variant: "success",
+        duration: 1000,
+      });
+      Promise.all([checkAuthorization(), initiateLogin(currentAccountId)]);
+    } else {
+      setIsAuthorized(false);
+      toast({
+        title: "Wallet Disconnected",
+        description: "You have been signed out successfully.",
+        variant: "success",
+        duration: 1000,
+      });
+    }
+  }, [currentAccountId, checkAuthorization, initiateLogin]);
 
   const handleSignIn = async (): Promise<void> => {
     try {
@@ -203,6 +204,7 @@ export function AuthProvider({
         error,
       );
     }
+    setIsAuthorized(false);
     near.signOut();
   };
 
