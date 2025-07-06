@@ -1,16 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-
-interface RssFeedItem {
-  title: string;
-  link: string;
-  description: string;
-  pubDate: string;
-  guid: string;
-  image?: string;
-  platform?: string;
-  categories?: string[];
-}
+import { RssFeedItem } from "@/types/rss";
 
 interface FeedCardProps {
   item: RssFeedItem;

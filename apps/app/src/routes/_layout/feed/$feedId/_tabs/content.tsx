@@ -35,8 +35,8 @@ function RouteComponent() {
 
     // Apply category filter
     if (categoryFilter !== "all") {
-      filtered = filtered.filter(
-        (item) => item.categories && item.categories.includes(categoryFilter),
+      filtered = filtered.filter((item) =>
+        item.categories?.includes(categoryFilter),
       );
     }
 

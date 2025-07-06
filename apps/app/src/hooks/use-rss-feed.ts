@@ -1,16 +1,6 @@
 import { useFeed } from "@/lib/api";
+import { RssFeedItem } from "@/types/rss";
 import { useQuery } from "@tanstack/react-query";
-
-interface RssFeedItem {
-  title: string;
-  link: string;
-  description: string;
-  pubDate: string;
-  guid: string;
-  image?: string;
-  platform?: string;
-  categories?: string[];
-}
 
 interface RssFeedData {
   title: string;
@@ -28,7 +18,14 @@ async function fetchRssFeed(serviceUrl: string): Promise<RssFeedData> {
 
   const xmlText = await response.text();
   const parser = new DOMParser();
+
   const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+  // Check for parsing errors
+  const parseError = xmlDoc.querySelector("parsererror");
+  if (parseError) {
+    throw new Error("Invalid XML format");
+  }
 
   const channel = xmlDoc.querySelector("channel");
   if (!channel) {
