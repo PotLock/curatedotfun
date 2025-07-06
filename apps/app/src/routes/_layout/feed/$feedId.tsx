@@ -4,6 +4,7 @@ import { useState } from "react";
 import { DistributorBadges } from "../../../components/DistributorBadges";
 import { FeedWelcomeContent } from "../../../components/feed/welcome-content";
 import TopCurators from "../../../components/feed/top-curators";
+import { RecentContent } from "../../../components/feed/RecentContent";
 import { Badge } from "../../../components/ui/badge";
 import { useFeed } from "../../../lib/api";
 
@@ -149,6 +150,13 @@ function FeedPageBaseLayout() {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 w-full min-w-0">
               {/* Left Column: Outlet for Tabs */}
               <div className="col-span-1 md:col-span-9">
+                <div className="mb-6">
+                  <RecentContent
+                    feedId={feedId}
+                    feedName={feed.name || `Feed ${feedId}`}
+                    feedImage={feed.config?.image}
+                  />
+                </div>
                 <Outlet />
               </div>
 
