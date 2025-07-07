@@ -6,7 +6,7 @@ import { useFeedCreationStore } from "@/store/feed-creation-store";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
-export const Route = createFileRoute("/_layout/create/feed/review")({
+export const Route = createFileRoute("/_layout/create/feed/_tabs/review")({
   component: FeedReviewComponent,
 });
 

@@ -2,7 +2,7 @@ import { Hero } from "@/components/Hero";
 import { Progress } from "@/components/ui/progress";
 import { createFileRoute, Outlet, useMatchRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_layout/create/feed")({
+export const Route = createFileRoute("/_layout/create/feed/_tabs")({
   component: FeedLayoutComponent,
 });
 
