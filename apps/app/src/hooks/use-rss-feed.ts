@@ -100,7 +100,7 @@ export function useRssFeed(feedId: string) {
   );
 
   const hasRssFeed = Boolean(rssFeed);
-  const serviceUrl = `${rssFeed?.config?.serviceUrl}/rss.xml`;
+  const serviceUrl = rssFeed?.config?.serviceUrl ? `${rssFeed.config.serviceUrl}/rss.xml` : undefined;
 
   const {
     data: rssData,
