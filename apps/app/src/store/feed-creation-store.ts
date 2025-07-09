@@ -134,8 +134,7 @@ const feedCreationStateCreator: StateCreator<
           state.feedConfig.outputs.stream.distribute.push(rssDistributor);
         }
         rssDistributor.config.feedConfig.title = values.name ?? "";
-        rssDistributor.config.feedConfig.description =
-          values.description ?? "";
+        rssDistributor.config.feedConfig.description = values.description ?? "";
         rssDistributor.config.serviceUrl = `https://rss.curate.fun/${values.id}/rss.xml`;
         const objectTransform = rssDistributor.transform?.find(
           (t) => t.plugin === "@curatedotfun/object-transform",
