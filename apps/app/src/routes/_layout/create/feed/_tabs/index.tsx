@@ -34,7 +34,7 @@ const BasicInformationFormSchema = z.object({
 
 type FormValues = z.infer<typeof BasicInformationFormSchema>;
 
-export const Route = createFileRoute("/_layout/create/feed/")({
+export const Route = createFileRoute("/_layout/create/feed/_tabs/")({
   validateSearch: BasicInformationFormSchema,
   component: BasicInformationComponent,
 });

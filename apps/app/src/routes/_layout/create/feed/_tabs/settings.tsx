@@ -51,7 +51,7 @@ const steps: Step[] = [
   },
 ];
 
-export const Route = createFileRoute("/_layout/create/feed/settings")({
+export const Route = createFileRoute("/_layout/create/feed/_tabs/settings")({
   component: CurationSettingsComponent,
 });
 

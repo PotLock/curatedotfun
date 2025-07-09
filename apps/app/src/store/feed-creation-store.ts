@@ -92,6 +92,63 @@ const feedCreationStateCreator: StateCreator<
   setValues: (values) => {
     setState((state) => {
       state.feedConfig = { ...state.feedConfig, ...values };
+      if (values.id && state.feedConfig.outputs?.stream?.distribute) {
+        let rssDistributor = state.feedConfig.outputs.stream.distribute.find(
+          (d) => d.plugin === "@curatedotfun/rss",
+        );
+        if (!rssDistributor) {
+          rssDistributor = {
+            plugin: "@curatedotfun/rss",
+            config: {
+              apiSecret: "{{RSS_SERVICE_API_SECRET}}",
+              feedConfig: {
+                title: "",
+                description: "",
+              },
+              serviceUrl: "",
+            },
+            transform: [
+              {
+                plugin: "@curatedotfun/object-transform",
+                config: {
+                  mappings: {
+                    link: "{{source}}",
+                    title: "{{title}}",
+                    author: {
+                      link: "https://x.com/{{author}}",
+                      name: "{{username}}",
+                    },
+                    source: {
+                      url: "{{source}}",
+                      title: "twitter",
+                    },
+                    content: "<h2>{{title}}</h2><p>{{summary}}</p>",
+                    categories: ["{{tags}}"],
+                    description: "{{summary}}",
+                    publishedAt: "{{createdAt}}",
+                  },
+                },
+              },
+            ],
+          };
+          state.feedConfig.outputs.stream.distribute.push(rssDistributor);
+        }
+        rssDistributor.config.feedConfig.title = values.name ?? "";
+        rssDistributor.config.feedConfig.description = values.description ?? "";
+        rssDistributor.config.serviceUrl = `https://rss.curate.fun/${values.id}/rss.xml`;
+        const objectTransform = rssDistributor.transform?.find(
+          (t) => t.plugin === "@curatedotfun/object-transform",
+        );
+        if (
+          objectTransform &&
+          Array.isArray(objectTransform.config.mappings.categories)
+        ) {
+          const categories = objectTransform.config.mappings.categories;
+          if (!categories.includes(values.id)) {
+            categories.push(values.id);
+          }
+        }
+      }
     });
   },
   setTelegramConfig: ({ enabled, channelId, threadId }) => {
