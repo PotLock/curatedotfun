@@ -82,20 +82,8 @@ function BasicInformationComponent() {
           type: "manual",
           message: "This hashtag is already taken.",
         });
-      } catch (error) {
-        if (
-          error &&
-          typeof error === "object" &&
-          "response" in error &&
-          (error.response as { status: number })?.status === 404
-        ) {
-          form.clearErrors("id");
-        } else {
-          form.setError("id", {
-            type: "manual",
-            message: "Network error. Please check your connection.",
-          });
-        }
+      } catch {
+        form.clearErrors("id");
       } finally {
         setIsValidatingId(false);
       }

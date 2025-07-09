@@ -132,7 +132,6 @@ feedsRoutes.get(
         }),
       );
     } catch (error) {
-      c.var.sp.getLogger().error({ error }, `Error fetching feed`);
       if (error instanceof NotFoundError) {
         return c.json(
           ApiErrorResponseSchema.parse({
@@ -143,6 +142,7 @@ feedsRoutes.get(
           404,
         );
       }
+      c.var.sp.getLogger().error({ error }, `Error fetching feed`);
       return c.json(
         ApiErrorResponseSchema.parse({
           statusCode: 500,
