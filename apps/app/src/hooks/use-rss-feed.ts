@@ -10,7 +10,7 @@ interface RssFeedData {
 }
 
 async function fetchRssFeed(serviceUrl: string): Promise<RssFeedData> {
-  const response = await fetch(serviceUrl);
+  const response = await fetch(`${serviceUrl}/rss.xml`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch RSS feed: ${response.status}`);
