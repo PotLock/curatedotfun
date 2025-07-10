@@ -83,44 +83,47 @@ export class ProcessingService implements IBaseService {
     const executedSteps: SelectProcessingStep[] = [];
     try {
       let globalOutput: unknown = content;
-      const branches = new Map<string, ProcessingPlanStep[]>();
-      const globalSteps: ProcessingPlanStep[] = [];
 
-      for (const step of plan) {
+      const planWithOrder = plan.map((step, index) => ({
+        ...step,
+        order: index + 1,
+      }));
+
+      const globalStepsWithOrder: typeof planWithOrder = [];
+      const branchesWithOrder = new Map<string, typeof planWithOrder>();
+
+      for (const step of planWithOrder) {
         if (step.branchId) {
-          if (!branches.has(step.branchId)) {
-            branches.set(step.branchId, []);
+          if (!branchesWithOrder.has(step.branchId)) {
+            branchesWithOrder.set(step.branchId, []);
           }
-          branches.get(step.branchId)!.push(step);
+          branchesWithOrder.get(step.branchId)!.push(step);
         } else {
-          globalSteps.push(step);
+          globalStepsWithOrder.push(step);
         }
       }
 
-      let stepOrder = 0;
-      for (const planStep of globalSteps) {
-        stepOrder++;
+      for (const planStep of globalStepsWithOrder) {
         const result = await this.executeTransform(
           job.id,
           globalOutput,
           planStep,
-          stepOrder,
+          planStep.order,
         );
         executedSteps.push(result.step);
         globalOutput = result.output;
       }
 
-      const branchPromises = Array.from(branches.values()).map(
+      const branchPromises = Array.from(branchesWithOrder.values()).map(
         async (branch) => {
           let branchContent = globalOutput;
           for (const planStep of branch) {
-            stepOrder++;
             if (planStep.type === "transformation") {
               const result = await this.executeTransform(
                 job.id,
                 branchContent,
                 planStep,
-                stepOrder,
+                planStep.order,
               );
               executedSteps.push(result.step);
               branchContent = result.output;
@@ -129,7 +132,7 @@ export class ProcessingService implements IBaseService {
                 job.id,
                 branchContent,
                 planStep,
-                stepOrder,
+                planStep.order,
               );
               executedSteps.push(step);
             }
