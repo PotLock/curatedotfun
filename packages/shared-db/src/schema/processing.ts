@@ -72,6 +72,7 @@ export const processingJobStatusValues = [
   "processing",
   "completed",
   "failed",
+  "completed_with_errors",
 ] as const;
 export const processingJobStatusEnum = pgEnum(
   "processing_job_status",

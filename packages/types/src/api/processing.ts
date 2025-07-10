@@ -6,6 +6,7 @@ export const ProcessingJobStatusSchema = z.enum([
   "processing",
   "completed",
   "failed",
+  "completed_with_errors",
 ]);
 
 export type ProcessingJobStatus = z.infer<typeof ProcessingJobStatusSchema>;

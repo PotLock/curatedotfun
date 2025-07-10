@@ -1,7 +1,7 @@
 import { useTweakAndReprocessStep } from "@/lib/api";
 import { ProcessingStep } from "@curatedotfun/types";
 import { format } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { ClipboardCopy, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -126,12 +126,22 @@ export function ProcessingStepDetails({
               {step.error && <TabsTrigger value="error">Error</TabsTrigger>}
             </TabsList>
             <TabsContent value="input" className="flex-1 flex flex-col gap-4">
-              <Textarea
-                value={editableInput}
-                onChange={(e) => setEditableInput(e.target.value)}
-                className="flex-1 font-mono text-sm"
-                rows={15}
-              />
+              <div className="relative flex-1">
+                <Textarea
+                  value={editableInput}
+                  onChange={(e) => setEditableInput(e.target.value)}
+                  className="flex-1 font-mono text-sm h-full"
+                  rows={15}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2"
+                  onClick={() => navigator.clipboard.writeText(editableInput)}
+                >
+                  <ClipboardCopy className="h-4 w-4" />
+                </Button>
+              </div>
               <Button
                 onClick={() => {
                   tweakAndReprocess({
@@ -150,25 +160,57 @@ export function ProcessingStepDetails({
               </Button>
             </TabsContent>
             <TabsContent value="output" className="flex-1 overflow-hidden">
-              <div className="h-[300px] w-full rounded-md border p-4 overflow-auto">
+              <div className="h-[300px] w-full rounded-md border p-4 overflow-auto relative">
                 <pre className="text-sm">
                   {step.output ? formatJson(step.output) : "No output data"}
                 </pre>
+                {step.output && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={() =>
+                      navigator.clipboard.writeText(formatJson(step.output))
+                    }
+                  >
+                    <ClipboardCopy className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </TabsContent>
             {step.config && (
               <TabsContent value="config" className="flex-1 overflow-hidden">
-                <div className="h-[300px] w-full rounded-md border p-4 overflow-auto">
+                <div className="h-[300px] w-full rounded-md border p-4 overflow-auto relative">
                   <pre className="text-sm">{formatJson(step.config)}</pre>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={() =>
+                      navigator.clipboard.writeText(formatJson(step.config))
+                    }
+                  >
+                    <ClipboardCopy className="h-4 w-4" />
+                  </Button>
                 </div>
               </TabsContent>
             )}
             {step.error && (
               <TabsContent value="error" className="flex-1 overflow-hidden">
-                <div className="h-[300px] w-full rounded-md border p-4 bg-red-50 dark:bg-red-950 overflow-auto">
+                <div className="h-[300px] w-full rounded-md border p-4 bg-red-50 dark:bg-red-950 overflow-auto relative">
                   <pre className="text-sm text-red-600 dark:text-red-400">
                     {formatJson(step.error)}
                   </pre>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={() =>
+                      navigator.clipboard.writeText(formatJson(step.error))
+                    }
+                  >
+                    <ClipboardCopy className="h-4 w-4" />
+                  </Button>
                 </div>
               </TabsContent>
             )}

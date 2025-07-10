@@ -60,21 +60,20 @@ export function ProcessingHistory({
     }),
     jobColumnHelper.accessor("status", {
       header: "Status",
-      cell: (info) => (
-        <Badge
-          variant={
-            info.getValue() === "completed"
-              ? "secondary"
-              : info.getValue() === "failed"
-                ? "destructive"
-                : info.getValue() === "processing"
-                  ? "default"
-                  : "outline"
-          }
-        >
-          {info.getValue()}
-        </Badge>
-      ),
+      cell: (info) => {
+        const status = info.getValue();
+        const variant =
+          status === "completed"
+            ? "secondary"
+            : status === "failed"
+              ? "destructive"
+              : status === "processing"
+                ? "default"
+                : status === "completed_with_errors"
+                  ? "warning"
+                  : "outline";
+        return <Badge variant={variant}>{status}</Badge>;
+      },
     }),
     jobColumnHelper.accessor("startedAt", {
       header: "Started",
@@ -175,7 +174,6 @@ export function ProcessingHistory({
         return (
           <div className="flex items-center gap-2">
             <Button
-              variant="ghost"
               size="sm"
               onClick={() => {
                 setSelectedStep(step);
