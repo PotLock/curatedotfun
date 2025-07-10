@@ -80,33 +80,64 @@ export class ProcessingService implements IBaseService {
       "Processing job started.",
     );
 
-    let currentContent: unknown = content;
     const executedSteps: SelectProcessingStep[] = [];
-
     try {
-      for (let i = 0; i < plan.length; i++) {
-        const planStep = plan[i];
-        const stepOrder = i + 1;
+      let globalOutput: unknown = content;
+      const branches = new Map<string, ProcessingPlanStep[]>();
+      const globalSteps: ProcessingPlanStep[] = [];
 
-        if (planStep.type === "transformation") {
-          const result = await this.executeTransform(
-            job.id,
-            currentContent,
-            planStep,
-            stepOrder,
-          );
-          executedSteps.push(result.step);
-          currentContent = result.output;
-        } else if (planStep.type === "distribution") {
-          const step = await this.executeDistribution(
-            job.id,
-            currentContent,
-            planStep,
-            stepOrder,
-          );
-          executedSteps.push(step);
+      for (const step of plan) {
+        if (step.branchId) {
+          if (!branches.has(step.branchId)) {
+            branches.set(step.branchId, []);
+          }
+          branches.get(step.branchId)!.push(step);
+        } else {
+          globalSteps.push(step);
         }
       }
+
+      let stepOrder = 0;
+      for (const planStep of globalSteps) {
+        stepOrder++;
+        const result = await this.executeTransform(
+          job.id,
+          globalOutput,
+          planStep,
+          stepOrder,
+        );
+        executedSteps.push(result.step);
+        globalOutput = result.output;
+      }
+
+      const branchPromises = Array.from(branches.values()).map(
+        async (branch) => {
+          let branchContent = globalOutput;
+          for (const planStep of branch) {
+            stepOrder++;
+            if (planStep.type === "transformation") {
+              const result = await this.executeTransform(
+                job.id,
+                branchContent,
+                planStep,
+                stepOrder,
+              );
+              executedSteps.push(result.step);
+              branchContent = result.output;
+            } else if (planStep.type === "distribution") {
+              const step = await this.executeDistribution(
+                job.id,
+                branchContent,
+                planStep,
+                stepOrder,
+              );
+              executedSteps.push(step);
+            }
+          }
+        },
+      );
+
+      await Promise.all(branchPromises);
 
       const hasFailures = executedSteps.some((s) => s.status === "failed");
       const finalStatus = hasFailures ? "completed_with_errors" : "completed";
@@ -293,7 +324,17 @@ export class ProcessingService implements IBaseService {
       );
     }
 
-    const partialPlan = plan.slice(stepIndex);
+    const stepToRetryDetails = plan[stepIndex];
+    let partialPlan: ProcessingPlan;
+
+    if (stepToRetryDetails.branchId) {
+      partialPlan = plan
+        .slice(stepIndex)
+        .filter((step) => step.branchId === stepToRetryDetails.branchId);
+    } else {
+      // Fallback for old plans without branchId
+      partialPlan = plan.slice(stepIndex);
+    }
     const content = stepToRetry.input;
 
     return this.process(
@@ -323,6 +364,7 @@ export class ProcessingService implements IBaseService {
 
     // Add distributor transforms and distribution steps
     config.distribute?.forEach((d) => {
+      const branchId = randomUUID();
       d.transform?.forEach((t) => {
         plan.push({
           type: "transformation",
@@ -330,6 +372,7 @@ export class ProcessingService implements IBaseService {
           plugin: t.plugin,
           config: t.config,
           distributorPlugin: d.plugin,
+          branchId,
         });
       });
       plan.push({
@@ -337,6 +380,7 @@ export class ProcessingService implements IBaseService {
         stage: "distributor",
         plugin: d.plugin,
         config: d.config,
+        branchId,
       });
     });
 
@@ -405,7 +449,25 @@ export class ProcessingService implements IBaseService {
 
     const plan = originalJob.plan as ProcessingPlan;
     const stepIndex = stepToTweak.stepOrder - 1;
-    const partialPlan = plan.slice(stepIndex);
+
+    if (stepIndex < 0 || stepIndex >= plan.length) {
+      throw new ProcessorError(
+        "invalid_step_index",
+        "Step to tweak is out of bounds of the processing plan.",
+      );
+    }
+
+    const stepToTweakDetails = plan[stepIndex];
+    let partialPlan: ProcessingPlan;
+
+    if (stepToTweakDetails.branchId) {
+      partialPlan = plan
+        .slice(stepIndex)
+        .filter((step) => step.branchId === stepToTweakDetails.branchId);
+    } else {
+      // Fallback for old plans without branchId
+      partialPlan = plan.slice(stepIndex);
+    }
 
     return this.process(
       parsedInput,

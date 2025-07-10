@@ -57,6 +57,8 @@ export const ProcessingPlanStepSchema = z.object({
   config: z.record(z.unknown()).optional(),
   // For distributor transforms, this links back to the parent distributor plugin
   distributorPlugin: z.string().optional(),
+  // A unique identifier for a branch of distributor steps
+  branchId: z.string().optional(),
 });
 export type ProcessingPlanStep = z.infer<typeof ProcessingPlanStepSchema>;
 
