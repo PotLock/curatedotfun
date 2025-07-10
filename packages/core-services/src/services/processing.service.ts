@@ -365,7 +365,7 @@ export class ProcessingService implements IBaseService {
     }
 
     const newConfig = feed.config.outputs.stream;
-    const content = submission.content;
+    const content = submission;
 
     return this.process(content, newConfig, {
       submissionId: originalJob.submissionId,
