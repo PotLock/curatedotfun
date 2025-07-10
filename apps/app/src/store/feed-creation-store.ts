@@ -101,6 +101,7 @@ const feedCreationStateCreator: StateCreator<
             plugin: "@curatedotfun/rss",
             config: {
               apiSecret: "{{RSS_SERVICE_API_SECRET}}",
+              feedId: "",
               feedConfig: {
                 title: "",
                 description: "",
@@ -133,8 +134,10 @@ const feedCreationStateCreator: StateCreator<
           };
           state.feedConfig.outputs.stream.distribute.push(rssDistributor);
         }
+        rssDistributor.config.feedId = values.id;
         rssDistributor.config.feedConfig.title = values.name ?? "";
         rssDistributor.config.feedConfig.description = values.description ?? "";
+        rssDistributor.config.feedConfig.siteUrl = `https://app.curate.fun/feed/${values.id}`;
         rssDistributor.config.serviceUrl = `https://rss.curate.fun/${values.id}`;
         const objectTransform = rssDistributor.transform?.find(
           (t) => t.plugin === "@curatedotfun/object-transform",

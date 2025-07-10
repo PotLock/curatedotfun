@@ -141,7 +141,6 @@ function ProcessingTab() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
-                          variant="ghost"
                           size="sm"
                           onClick={() => toggleExpand(submission.tweetId)}
                         >

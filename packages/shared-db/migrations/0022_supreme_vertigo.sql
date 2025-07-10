@@ -1,0 +1,1 @@
+ALTER TYPE "public"."processing_job_status" ADD VALUE 'completed_with_errors';

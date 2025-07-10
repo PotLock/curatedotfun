@@ -2,6 +2,7 @@ import { DistributionResult, RichSubmission } from "@curatedotfun/shared-db";
 import type { ActionArgs, DistributorConfig } from "@curatedotfun/types";
 import { PluginError, PluginErrorCode } from "@curatedotfun/utils";
 import type { Logger } from "pino";
+import { ZodError } from "zod";
 import type { ConfigService } from "./config.service";
 import { logPluginError } from "../utils/error";
 import { sanitizeJson } from "../utils/sanitize";
@@ -49,8 +50,16 @@ export class DistributionService implements IBaseService {
         await plugin.distribute(args);
         return { success: true };
       } catch (error) {
+        let errorMessage =
+          error instanceof Error ? error.message : "Distribution failed";
+        if (error instanceof ZodError) {
+          errorMessage = error.errors
+            .map((e) => `  - [${e.path.join(".")}]: ${e.message} (${e.code})`)
+            .join("\n");
+          errorMessage = `Configuration validation failed:\n${errorMessage}`;
+        }
         const pluginError = new PluginError(
-          error instanceof Error ? error.message : "Distribution failed",
+          errorMessage,
           {
             pluginName,
             operation: "distribute",

@@ -81,6 +81,7 @@ export class ProcessingService implements IBaseService {
     );
 
     let currentContent: unknown = content;
+    const executedSteps: SelectProcessingStep[] = [];
 
     try {
       for (let i = 0; i < plan.length; i++) {
@@ -88,32 +89,41 @@ export class ProcessingService implements IBaseService {
         const stepOrder = i + 1;
 
         if (planStep.type === "transformation") {
-          currentContent = await this.executeTransform(
+          const result = await this.executeTransform(
             job.id,
             currentContent,
             planStep,
             stepOrder,
           );
+          executedSteps.push(result.step);
+          currentContent = result.output;
         } else if (planStep.type === "distribution") {
-          await this.executeDistribution(
+          const step = await this.executeDistribution(
             job.id,
             currentContent,
             planStep,
             stepOrder,
           );
+          executedSteps.push(step);
         }
       }
 
-      await this.processingRepository.updateJob(job.id, {
-        status: "completed",
+      const hasFailures = executedSteps.some((s) => s.status === "failed");
+      const finalStatus = hasFailures ? "completed_with_errors" : "completed";
+
+      const updatedJob = await this.processingRepository.updateJob(job.id, {
+        status: finalStatus,
         completedAt: new Date(),
       });
-      this.logger.info({ jobId: job.id }, "Processing job completed.");
+      this.logger.info(
+        { jobId: job.id, finalStatus },
+        "Processing job finished.",
+      );
+      return updatedJob;
     } catch (error) {
       await this.handleProcessingError(job.id, error);
       throw error;
     }
-    return job;
   }
 
   private async executeTransform(
@@ -121,8 +131,8 @@ export class ProcessingService implements IBaseService {
     input: unknown,
     planStep: ProcessingPlanStep,
     stepOrder: number,
-  ): Promise<unknown> {
-    const step = await this.processingRepository.createStep({
+  ): Promise<{ output: unknown; step: SelectProcessingStep }> {
+    let step = await this.processingRepository.createStep({
       jobId,
       stepOrder,
       type: "transformation",
@@ -139,12 +149,12 @@ export class ProcessingService implements IBaseService {
       const output = await this.transformationService.applyTransforms(input, [
         planStep as TransformConfig,
       ]);
-      await this.processingRepository.updateStep(step.id, {
+      const updatedStep = await this.processingRepository.updateStep(step.id, {
         status: "success",
         output: output as Json,
         completedAt: new Date(),
       });
-      return output;
+      return { output, step: updatedStep };
     } catch (error) {
       const stepError: StepError = {
         message: error instanceof Error ? error.message : String(error),
@@ -172,7 +182,7 @@ export class ProcessingService implements IBaseService {
     input: unknown,
     planStep: ProcessingPlanStep,
     stepOrder: number,
-  ) {
+  ): Promise<SelectProcessingStep> {
     const step = await this.processingRepository.createStep({
       jobId,
       stepOrder,
@@ -191,7 +201,7 @@ export class ProcessingService implements IBaseService {
         planStep as DistributorConfig,
         input,
       );
-      await this.processingRepository.updateStep(step.id, {
+      return this.processingRepository.updateStep(step.id, {
         status: "success",
         output: output as Json,
         completedAt: new Date(),
@@ -202,12 +212,15 @@ export class ProcessingService implements IBaseService {
         stack: error instanceof Error ? error.stack : undefined,
         stepName: planStep.plugin,
       };
-      await this.processingRepository.updateStep(step.id, {
+      this.logger.warn(
+        { jobId, stepId: step.id, plugin: planStep.plugin, error },
+        "Distribution step failed. Continuing processing.",
+      );
+      return this.processingRepository.updateStep(step.id, {
         status: "failed",
         error: stepError as Json,
         completedAt: new Date(),
       });
-      throw error;
     }
   }
 

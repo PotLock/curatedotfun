@@ -21,6 +21,8 @@ const badgeVariants = cva(
           "py-[4px] rounded-md border-none text-sm bg-red-100 min-w-[80px]  text-red-600 leading-6 capitalize font-medium",
         pending:
           "py-[4px] rounded-md border-none text-center text-sm bg-yellow-100 min-w-[80px]  text-yellow-600 leading-6 capitalize font-medium",
+        warning:
+          "border-transparent bg-yellow-500 text-neutral-50 shadow hover:bg-yellow-500/80 dark:bg-yellow-900 dark:text-neutral-50 dark:hover:bg-yellow-900/80",
       },
     },
     defaultVariants: {
