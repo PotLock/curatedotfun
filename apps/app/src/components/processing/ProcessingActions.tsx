@@ -9,10 +9,9 @@ import {
   useReprocessJob,
   useRetryProcessingJob,
   useRetryProcessingStep,
-  useTweakAndReprocessStep,
 } from "@/lib/api/processing";
 import type { ProcessingJob, ProcessingStep } from "@curatedotfun/types";
-import { Loader2, RefreshCcw, RotateCw, Wand2 } from "lucide-react";
+import { Loader2, RefreshCcw, RotateCw } from "lucide-react";
 
 interface ProcessingActionsProps {
   job: ProcessingJob;
@@ -23,7 +22,6 @@ export function ProcessingActions({ job, step }: ProcessingActionsProps) {
   const retryJob = useRetryProcessingJob();
   const retryStep = useRetryProcessingStep();
   const reprocessJob = useReprocessJob();
-  const tweakAndReprocessStep = useTweakAndReprocessStep();
 
   const handleRetry = () => {
     if (step) {
@@ -37,65 +35,34 @@ export function ProcessingActions({ job, step }: ProcessingActionsProps) {
     reprocessJob.mutate({ jobId: job.id });
   };
 
-  const handleTweakAndReprocess = (newInput: string) => {
-    if (step) {
-      tweakAndReprocessStep.mutate({ stepId: step.id, newInput });
-    }
-  };
-
   return (
     <TooltipProvider>
       <div className="flex items-center gap-2">
-        {step && (
+        {!step && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  handleTweakAndReprocess(JSON.stringify(step.input, null, 2))
-                }
-                disabled={tweakAndReprocessStep.isPending}
+                onClick={handleReprocessWithLatestConfig}
+                disabled={reprocessJob.isPending}
               >
-                {tweakAndReprocessStep.isPending ? (
+                {reprocessJob.isPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <Wand2 className="mr-2 h-4 w-4" />
+                  <RefreshCcw className="mr-2 h-4 w-4" />
                 )}
-                Tweak
+                Reprocess
               </Button>
             </TooltipTrigger>
             <TooltipContent>
               <p>
-                Modify the input of this step and re-run the job from this
-                point.
+                Create a new processing job for this submission using the latest
+                feed configuration.
               </p>
             </TooltipContent>
           </Tooltip>
         )}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleReprocessWithLatestConfig}
-              disabled={reprocessJob.isPending}
-            >
-              {reprocessJob.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCcw className="mr-2 h-4 w-4" />
-              )}
-              Reprocess
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>
-              Create a new processing job for this submission using the latest
-              feed configuration.
-            </p>
-          </TooltipContent>
-        </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

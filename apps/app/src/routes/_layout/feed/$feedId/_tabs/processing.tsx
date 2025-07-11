@@ -9,14 +9,92 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useCanModerateFeed, useFeedItems } from "@/lib/api/feeds";
+import { useProcessingJobs } from "@/lib/api/processing";
 import { createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { FeedContextSubmission } from "@curatedotfun/types";
 
 export const Route = createFileRoute("/_layout/feed/$feedId/_tabs/processing")({
   component: ProcessingTab,
 });
+
+function SubmissionRow({
+  submission,
+  feedId,
+  isExpanded,
+  onToggleExpand,
+}: {
+  submission: FeedContextSubmission;
+  feedId: string;
+  isExpanded: boolean;
+  onToggleExpand: (submissionId: string) => void;
+}) {
+  const { data: jobs } = useProcessingJobs(submission.tweetId, feedId);
+  const latestJob = jobs?.[0];
+
+  return (
+    <>
+      <TableRow key={submission.tweetId}>
+        <TableCell className="font-medium">
+          {submission.content.length > 100
+            ? `${submission.content.substring(0, 100)}...`
+            : submission.content}
+        </TableCell>
+        <TableCell>
+          {submission.createdAt
+            ? format(new Date(submission.createdAt), "MMM d, yyyy")
+            : "N/A"}
+        </TableCell>
+        <TableCell>
+          {latestJob?.status ? (
+            <Badge
+              variant={
+                latestJob.status === "completed"
+                  ? "secondary"
+                  : latestJob.status === "failed"
+                    ? "destructive"
+                    : latestJob.status === "processing"
+                      ? "default"
+                      : latestJob.status === "completed_with_errors"
+                        ? "warning"
+                        : "outline"
+              }
+            >
+              {latestJob.status}
+            </Badge>
+          ) : (
+            <Badge variant="outline">No Jobs</Badge>
+          )}
+        </TableCell>
+        <TableCell>
+          <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            Approved
+          </span>
+        </TableCell>
+        <TableCell className="text-right">
+          <Button size="sm" onClick={() => onToggleExpand(submission.tweetId)}>
+            {isExpanded ? "Hide Processing Jobs" : "View Processing Jobs"}
+          </Button>
+        </TableCell>
+      </TableRow>
+      {isExpanded && (
+        <TableRow>
+          <TableCell colSpan={5} className="p-0 border-t-0">
+            <div className="p-4 bg-muted/10">
+              <ProcessingHistory
+                submissionId={submission.tweetId}
+                feedId={feedId}
+              />
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
+  );
+}
 
 function ProcessingTab() {
   const { feedId } = Route.useParams();
@@ -24,12 +102,10 @@ function ProcessingTab() {
     string | null
   >(null);
 
-  // Check if user can moderate this feed
   const { data: moderationData, isLoading: isLoadingModeration } =
     useCanModerateFeed(feedId);
   const canModerate = moderationData?.canModerate || false;
 
-  // Get approved submissions for this feed
   const {
     data: submissionsData,
     isLoading: isLoadingSubmissions,
@@ -41,7 +117,6 @@ function ProcessingTab() {
 
   const submissions = submissionsData?.items || [];
 
-  // Handle expanding/collapsing a submission's processing history
   const toggleExpand = (submissionId: string) => {
     setExpandedSubmissionId(
       expandedSubmissionId === submissionId ? null : submissionId,
@@ -78,7 +153,9 @@ function ProcessingTab() {
           disabled={isLoadingSubmissions}
         >
           <RefreshCw
-            className={`mr-2 h-4 w-4 ${isLoadingSubmissions ? "animate-spin" : ""}`}
+            className={`mr-2 h-4 w-4 ${
+              isLoadingSubmissions ? "animate-spin" : ""
+            }`}
           />
           Refresh
         </Button>
@@ -101,68 +178,21 @@ function ProcessingTab() {
               <TableRow>
                 <TableHead className="w-[300px]">Content</TableHead>
                 <TableHead>Submission Date</TableHead>
-                <TableHead>Last Processed</TableHead>
+                <TableHead>Latest Job Status</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {submissions.map((submission) => {
-                const isExpanded = expandedSubmissionId === submission.tweetId;
-
-                return (
-                  <>
-                    <TableRow key={submission.tweetId}>
-                      <TableCell className="font-medium">
-                        {submission.content.length > 100
-                          ? `${submission.content.substring(0, 100)}...`
-                          : submission.content}
-                      </TableCell>
-                      <TableCell>
-                        {submission.createdAt
-                          ? format(
-                              new Date(submission.createdAt),
-                              "MMM d, yyyy",
-                            )
-                          : "N/A"}
-                      </TableCell>
-                      <TableCell>
-                        {submission.updatedAt
-                          ? format(
-                              new Date(submission.updatedAt),
-                              "MMM d, yyyy",
-                            )
-                          : "N/A"}
-                      </TableCell>
-                      <TableCell>
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Approved
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          onClick={() => toggleExpand(submission.tweetId)}
-                        >
-                          {isExpanded ? "Hide Processing" : "View Processing"}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    {isExpanded && (
-                      <TableRow>
-                        <TableCell colSpan={5} className="p-0 border-t-0">
-                          <div className="p-4 bg-muted/10">
-                            <ProcessingHistory
-                              submissionId={submission.tweetId}
-                              feedId={feedId}
-                            />
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </>
-                );
-              })}
+              {submissions.map((submission) => (
+                <SubmissionRow
+                  key={submission.tweetId}
+                  submission={submission}
+                  feedId={feedId}
+                  isExpanded={expandedSubmissionId === submission.tweetId}
+                  onToggleExpand={toggleExpand}
+                />
+              ))}
             </TableBody>
           </Table>
 
