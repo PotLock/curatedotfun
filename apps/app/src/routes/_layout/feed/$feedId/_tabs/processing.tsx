@@ -33,7 +33,11 @@ function SubmissionRow({
   onToggleExpand: (submissionId: string) => void;
 }) {
   const { data: jobs } = useProcessingJobs(submission.tweetId, feedId);
-  const latestJob = jobs?.[0];
+  const latestJob = jobs?.sort((a, b) => {
+    const dateA = a.startedAt ? new Date(a.startedAt).getTime() : 0;
+    const dateB = b.startedAt ? new Date(b.startedAt).getTime() : 0;
+    return dateB - dateA;
+  })[0];
 
   return (
     <>
@@ -47,6 +51,11 @@ function SubmissionRow({
           {submission.createdAt
             ? format(new Date(submission.createdAt), "MMM d, yyyy")
             : "N/A"}
+        </TableCell>
+        <TableCell>
+          <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            Approved
+          </span>
         </TableCell>
         <TableCell>
           {latestJob?.status ? (
@@ -68,11 +77,6 @@ function SubmissionRow({
           ) : (
             <Badge variant="outline">No Jobs</Badge>
           )}
-        </TableCell>
-        <TableCell>
-          <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            Approved
-          </span>
         </TableCell>
         <TableCell className="text-right">
           <Button size="sm" onClick={() => onToggleExpand(submission.tweetId)}>
@@ -178,8 +182,8 @@ function ProcessingTab() {
               <TableRow>
                 <TableHead className="w-[300px]">Content</TableHead>
                 <TableHead>Submission Date</TableHead>
-                <TableHead>Latest Job Status</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Latest Job Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>

@@ -6,7 +6,7 @@ import {
 } from "@curatedotfun/types";
 import { useApiQuery, useApiMutation } from "../../hooks/api-client";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 
 /**
  * Fetch processing jobs for a submission
@@ -92,15 +92,23 @@ export function useRetryProcessingJob() {
     },
     {
       onSuccess: (data) => {
-        toast.success("Job retry triggered successfully.");
+        toast({
+          title: "Success",
+          description: "Job retry triggered successfully.",
+          variant: "success",
+        });
         queryClient.invalidateQueries({
           queryKey: ["processingJobs", data.job.submissionId],
         });
       },
       onError: (error) => {
-        toast.error(
-          `Failed to retry job: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
+        toast({
+          title: "Error",
+          description: `Failed to retry job: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+          variant: "destructive",
+        });
       },
     },
   );
@@ -123,7 +131,11 @@ export function useRetryProcessingStep() {
     },
     {
       onSuccess: (data) => {
-        toast.success("Step retry triggered successfully.");
+        toast({
+          title: "Success",
+          description: "Step retry triggered successfully.",
+          variant: "success",
+        });
         queryClient.invalidateQueries({
           queryKey: ["processingSteps", data.job.id],
         });
@@ -132,9 +144,13 @@ export function useRetryProcessingStep() {
         });
       },
       onError: (error) => {
-        toast.error(
-          `Failed to retry step: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
+        toast({
+          title: "Error",
+          description: `Failed to retry step: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+          variant: "destructive",
+        });
       },
     },
   );
@@ -157,15 +173,23 @@ export function useReprocessJob() {
     },
     {
       onSuccess: (data) => {
-        toast.success("Reprocessing job triggered successfully.");
+        toast({
+          title: "Success",
+          description: "Reprocessing job triggered successfully.",
+          variant: "success",
+        });
         queryClient.invalidateQueries({
           queryKey: ["processingJobs", data.job.submissionId],
         });
       },
       onError: (error) => {
-        toast.error(
-          `Failed to reprocess job: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
+        toast({
+          title: "Error",
+          description: `Failed to reprocess job: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+          variant: "destructive",
+        });
       },
     },
   );
@@ -188,7 +212,11 @@ export function useTweakAndReprocessStep() {
     },
     {
       onSuccess: (data) => {
-        toast.success("Tweak and reprocess triggered successfully.");
+        toast({
+          title: "Success",
+          description: "Tweak and reprocess triggered successfully.",
+          variant: "success",
+        });
         queryClient.invalidateQueries({
           queryKey: ["processingSteps", data.job.id],
         });
@@ -197,9 +225,13 @@ export function useTweakAndReprocessStep() {
         });
       },
       onError: (error) => {
-        toast.error(
-          `Failed to tweak and reprocess: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
+        toast({
+          title: "Error",
+          description: `Failed to tweak and reprocess: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+          variant: "destructive",
+        });
       },
     },
   );
