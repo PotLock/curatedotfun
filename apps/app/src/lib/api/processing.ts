@@ -16,20 +16,6 @@ export function useProcessingJobs(
   feedId: string | null,
   options?: { enabled?: boolean },
 ) {
-  const query = useApiQuery<ProcessingJobsResponse, Error, ProcessingJob[]>(
-    ["processingJobs", submissionId, feedId],
-    `/processing/jobs/${submissionId}?feedId=${feedId}`,
-    {
-      enabled:
-        options?.enabled !== undefined
-          ? options.enabled && !!submissionId && !!feedId
-          : !!submissionId && !!feedId,
-      select: (data) => data.data.jobs,
-    },
-  );
-
-  const isProcessing = query.data?.some((job) => job.status === "processing");
-
   return useApiQuery<ProcessingJobsResponse, Error, ProcessingJob[]>(
     ["processingJobs", submissionId, feedId],
     `/processing/jobs/${submissionId}?feedId=${feedId}`,
@@ -39,7 +25,12 @@ export function useProcessingJobs(
           ? options.enabled && !!submissionId && !!feedId
           : !!submissionId && !!feedId,
       select: (data) => data.data.jobs,
-      refetchInterval: isProcessing ? 5000 : false,
+      refetchInterval: (query) =>
+        query.state.data?.data.jobs.some(
+          (job: ProcessingJob) => job.status === "processing",
+        )
+          ? 5000
+          : false,
     },
   );
 }
@@ -51,18 +42,6 @@ export function useProcessingSteps(
   jobId: string | null,
   options?: { enabled?: boolean },
 ) {
-  const query = useApiQuery<ProcessingStepsResponse, Error, ProcessingStep[]>(
-    ["processingSteps", jobId],
-    `/processing/jobs/${jobId}/steps`,
-    {
-      enabled:
-        options?.enabled !== undefined ? options.enabled && !!jobId : !!jobId,
-      select: (data) => data.data.steps,
-    },
-  );
-
-  const isProcessing = query.data?.some((step) => step.status === "processing");
-
   return useApiQuery<ProcessingStepsResponse, Error, ProcessingStep[]>(
     ["processingSteps", jobId],
     `/processing/jobs/${jobId}/steps`,
@@ -70,7 +49,12 @@ export function useProcessingSteps(
       enabled:
         options?.enabled !== undefined ? options.enabled && !!jobId : !!jobId,
       select: (data) => data.data.steps,
-      refetchInterval: isProcessing ? 5000 : false,
+      refetchInterval: (query) =>
+        query.state.data?.data.steps.some(
+          (step: ProcessingStep) => step.status === "processing",
+        )
+          ? 5000
+          : false,
     },
   );
 }

@@ -104,18 +104,29 @@ export class ProcessingService implements IBaseService {
       }
 
       for (const planStep of globalStepsWithOrder) {
-        const result = await this.executeTransform(
-          job.id,
-          globalOutput,
-          planStep,
-          planStep.order,
-        );
-        executedSteps.push(result.step);
-        globalOutput = result.output;
+        if (planStep.type === "transformation") {
+          const result = await this.executeTransform(
+            job.id,
+            globalOutput,
+            planStep,
+            planStep.order,
+          );
+          executedSteps.push(result.step);
+          globalOutput = result.output;
+        } else if (planStep.type === "distribution") {
+          const step = await this.executeDistribution(
+            job.id,
+            globalOutput,
+            planStep,
+            planStep.order,
+          );
+          executedSteps.push(step);
+        }
       }
 
       const branchPromises = Array.from(branchesWithOrder.values()).map(
         async (branch) => {
+          const branchExecutedSteps: SelectProcessingStep[] = [];
           let branchContent = globalOutput;
           for (const planStep of branch) {
             if (planStep.type === "transformation") {
@@ -125,7 +136,7 @@ export class ProcessingService implements IBaseService {
                 planStep,
                 planStep.order,
               );
-              executedSteps.push(result.step);
+              branchExecutedSteps.push(result.step);
               branchContent = result.output;
             } else if (planStep.type === "distribution") {
               const step = await this.executeDistribution(
@@ -134,13 +145,17 @@ export class ProcessingService implements IBaseService {
                 planStep,
                 planStep.order,
               );
-              executedSteps.push(step);
+              branchExecutedSteps.push(step);
             }
           }
+          return branchExecutedSteps;
         },
       );
 
-      await Promise.all(branchPromises);
+      const branchesExecutedSteps = await Promise.all(branchPromises);
+      branchesExecutedSteps.forEach((branchSteps) => {
+        executedSteps.push(...branchSteps);
+      });
 
       const hasFailures = executedSteps.some((s) => s.status === "failed");
       const finalStatus = hasFailures ? "completed_with_errors" : "completed";
