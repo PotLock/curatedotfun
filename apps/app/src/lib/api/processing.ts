@@ -5,6 +5,8 @@ import {
   ProcessingStepsResponse,
 } from "@curatedotfun/types";
 import { useApiQuery, useApiMutation } from "../../hooks/api-client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "@/hooks/use-toast";
 
 /**
  * Fetch processing jobs for a submission
@@ -14,6 +16,20 @@ export function useProcessingJobs(
   feedId: string | null,
   options?: { enabled?: boolean },
 ) {
+  const query = useApiQuery<ProcessingJobsResponse, Error, ProcessingJob[]>(
+    ["processingJobs", submissionId, feedId],
+    `/processing/jobs/${submissionId}?feedId=${feedId}`,
+    {
+      enabled:
+        options?.enabled !== undefined
+          ? options.enabled && !!submissionId && !!feedId
+          : !!submissionId && !!feedId,
+      select: (data) => data.data.jobs,
+    },
+  );
+
+  const isProcessing = query.data?.some((job) => job.status === "processing");
+
   return useApiQuery<ProcessingJobsResponse, Error, ProcessingJob[]>(
     ["processingJobs", submissionId, feedId],
     `/processing/jobs/${submissionId}?feedId=${feedId}`,
@@ -23,6 +39,7 @@ export function useProcessingJobs(
           ? options.enabled && !!submissionId && !!feedId
           : !!submissionId && !!feedId,
       select: (data) => data.data.jobs,
+      refetchInterval: isProcessing ? 5000 : false,
     },
   );
 }
@@ -34,7 +51,7 @@ export function useProcessingSteps(
   jobId: string | null,
   options?: { enabled?: boolean },
 ) {
-  return useApiQuery<ProcessingStepsResponse, Error, ProcessingStep[]>(
+  const query = useApiQuery<ProcessingStepsResponse, Error, ProcessingStep[]>(
     ["processingSteps", jobId],
     `/processing/jobs/${jobId}/steps`,
     {
@@ -43,12 +60,26 @@ export function useProcessingSteps(
       select: (data) => data.data.steps,
     },
   );
+
+  const isProcessing = query.data?.some((step) => step.status === "processing");
+
+  return useApiQuery<ProcessingStepsResponse, Error, ProcessingStep[]>(
+    ["processingSteps", jobId],
+    `/processing/jobs/${jobId}/steps`,
+    {
+      enabled:
+        options?.enabled !== undefined ? options.enabled && !!jobId : !!jobId,
+      select: (data) => data.data.steps,
+      refetchInterval: isProcessing ? 5000 : false,
+    },
+  );
 }
 
 /**
  * Retry a failed processing job
  */
 export function useRetryProcessingJob() {
+  const queryClient = useQueryClient();
   return useApiMutation<
     { success: boolean; job: ProcessingJob },
     unknown,
@@ -60,9 +91,24 @@ export function useRetryProcessingJob() {
       message: "retryProcessingJob",
     },
     {
-      onSuccess: () => {
-        // Invalidate processing jobs queries to refresh the data
-        // This will be handled by the query client's invalidateQueries method
+      onSuccess: (data) => {
+        toast({
+          title: "Success",
+          description: "Job retry triggered successfully.",
+          variant: "success",
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["processingJobs", data.job.submissionId],
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: `Failed to retry job: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+          variant: "destructive",
+        });
       },
     },
   );
@@ -72,6 +118,7 @@ export function useRetryProcessingJob() {
  * Retry processing from a specific failed step
  */
 export function useRetryProcessingStep() {
+  const queryClient = useQueryClient();
   return useApiMutation<
     { success: boolean; job: ProcessingJob },
     unknown,
@@ -83,9 +130,27 @@ export function useRetryProcessingStep() {
       message: "retryProcessingStep",
     },
     {
-      onSuccess: () => {
-        // Invalidate processing jobs and steps queries to refresh the data
-        // This will be handled by the query client's invalidateQueries method
+      onSuccess: (data) => {
+        toast({
+          title: "Success",
+          description: "Step retry triggered successfully.",
+          variant: "success",
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["processingSteps", data.job.id],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["processingJobs", data.job.submissionId],
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: `Failed to retry step: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+          variant: "destructive",
+        });
       },
     },
   );
@@ -95,6 +160,7 @@ export function useRetryProcessingStep() {
  * Reprocess a job with the latest config
  */
 export function useReprocessJob() {
+  const queryClient = useQueryClient();
   return useApiMutation<
     { success: boolean; job: ProcessingJob },
     unknown,
@@ -106,8 +172,24 @@ export function useReprocessJob() {
       message: "reprocessJob",
     },
     {
-      onSuccess: () => {
-        // Invalidate queries to refresh job list
+      onSuccess: (data) => {
+        toast({
+          title: "Success",
+          description: "Reprocessing job triggered successfully.",
+          variant: "success",
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["processingJobs", data.job.submissionId],
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: `Failed to reprocess job: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+          variant: "destructive",
+        });
       },
     },
   );
@@ -117,6 +199,7 @@ export function useReprocessJob() {
  * Tweak a step's input and reprocess from that point
  */
 export function useTweakAndReprocessStep() {
+  const queryClient = useQueryClient();
   return useApiMutation<
     { success: boolean; job: ProcessingJob },
     unknown,
@@ -128,8 +211,27 @@ export function useTweakAndReprocessStep() {
       message: "tweakAndReprocessStep",
     },
     {
-      onSuccess: () => {
-        // Invalidate queries to refresh job list
+      onSuccess: (data) => {
+        toast({
+          title: "Success",
+          description: "Tweak and reprocess triggered successfully.",
+          variant: "success",
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["processingSteps", data.job.id],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["processingJobs", data.job.submissionId],
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: `Failed to tweak and reprocess: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+          variant: "destructive",
+        });
       },
     },
   );

@@ -21,6 +21,12 @@ import {
 import { Badge } from "../ui/badge";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 
 interface ProcessingHistoryProps {
   submissionId: string;
@@ -56,7 +62,21 @@ export function ProcessingHistory({
   const jobColumns = [
     jobColumnHelper.accessor("id", {
       header: "Job ID",
-      cell: (info) => info.getValue(),
+      cell: (info) => {
+        const jobId = info.getValue();
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <span className="font-mono">{jobId.substring(0, 8)}...</span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{jobId}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      },
     }),
     jobColumnHelper.accessor("status", {
       header: "Status",
@@ -174,6 +194,7 @@ export function ProcessingHistory({
         return (
           <div className="flex items-center gap-2">
             <Button
+              variant="outline"
               size="sm"
               onClick={() => {
                 setSelectedStep(step);
