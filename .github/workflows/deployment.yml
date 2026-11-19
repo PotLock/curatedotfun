@@ -9,6 +9,7 @@ on:
 
 jobs:
   build-and-push:
+    timeout-minutes: 60
     runs-on: ubuntu-latest
     permissions: write-all
 
