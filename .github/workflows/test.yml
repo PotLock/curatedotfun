@@ -5,8 +5,14 @@ on:
     branches:
       - main
 
+# Cancel superseded PR checks; keep every non-PR invocation independent.
+concurrency:
+  group: test.yml-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
+    timeout-minutes: 60
     name: Run Tests
     runs-on: ubuntu-latest
     services:
